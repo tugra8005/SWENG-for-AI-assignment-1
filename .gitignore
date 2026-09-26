@@ -23,3 +23,6 @@ ledger-data/
 .DS_Store
 .idea/
 .vscode/
+
+# Kişisel devam notu
+CLAUDE.local.md
