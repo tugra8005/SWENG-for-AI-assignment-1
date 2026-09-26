@@ -1,0 +1,117 @@
+name: mesveret
+
+x-ledger-common: &ledger-common
+  build: ./ledger
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/health')"]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mesveret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mesveret}
+      POSTGRES_DB: mesveret
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mesveret -d mesveret"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  neo4j:
+    image: neo4j:5-community
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-mesveret-neo4j}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4jdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+
+  ledger-1:
+    <<: *ledger-common
+    environment:
+      NODE_ID: ledger-1
+      ROLE: leader
+      FOLLOWER_URLS: http://ledger-2:8100,http://ledger-3:8100
+      LEDGER_TOKEN: ${LEDGER_TOKEN:-dev-ledger-token}
+      DATA_DIR: /data
+    ports:
+      - "8101:8100"
+    volumes:
+      - ledger1:/data
+
+  ledger-2:
+    <<: *ledger-common
+    environment:
+      NODE_ID: ledger-2
+      ROLE: follower
+      LEADER_URL: http://ledger-1:8100
+      LEDGER_TOKEN: ${LEDGER_TOKEN:-dev-ledger-token}
+      DATA_DIR: /data
+    ports:
+      - "8102:8100"
+    volumes:
+      - ledger2:/data
+
+  ledger-3:
+    <<: *ledger-common
+    environment:
+      NODE_ID: ledger-3
+      ROLE: follower
+      LEADER_URL: http://ledger-1:8100
+      LEDGER_TOKEN: ${LEDGER_TOKEN:-dev-ledger-token}
+      DATA_DIR: /data
+    ports:
+      - "8103:8100"
+    volumes:
+      - ledger3:/data
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      ledger-1:
+        condition: service_healthy
+    environment:
+      ENV: dev
+      DATABASE_URL: postgresql+psycopg://mesveret:${POSTGRES_PASSWORD:-mesveret}@postgres:5432/mesveret
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-mesveret-neo4j}
+      LEDGER_LEADER_URL: http://ledger-1:8100
+      LEDGER_NODE_URLS: http://ledger-1:8100,http://ledger-2:8100,http://ledger-3:8100
+      LEDGER_TOKEN: ${LEDGER_TOKEN:-dev-ledger-token}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+      SHADE_KEY: ${SHADE_KEY:-dev-shade-key-change-me}
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
+  neo4jdata:
+  ledger1:
+  ledger2:
+  ledger3:

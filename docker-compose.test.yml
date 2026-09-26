@@ -1,0 +1,37 @@
+# Entegrasyon testleri için geçici yığın: veriler tmpfs'te, portlar geliştirme yığınından farklı.
+# scripts/test.sh tarafından `-p mesveret-test` proje adıyla başlatılır.
+name: mesveret-test
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mesveret
+      POSTGRES_PASSWORD: mesveret
+      POSTGRES_DB: mesveret_test
+    ports:
+      - "55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mesveret -d mesveret_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/mesveret-test
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 128m
+    ports:
+      - "57687:7687"
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 60

@@ -1,0 +1,9 @@
+{
+  "venvPath": "api",
+  "venv": ".venv",
+  "executionEnvironments": [
+    { "root": "api", "extraPaths": ["api/src"] },
+    { "root": "ledger", "extraPaths": ["ledger/src"] }
+  ],
+  "exclude": ["**/node_modules", "**/.venv", "client"]
+}
