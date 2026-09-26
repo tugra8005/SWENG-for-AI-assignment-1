@@ -9,4 +9,4 @@ RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH" LANG=C.UTF-8
 VOLUME /data
 EXPOSE 8100
-CMD ["uvicorn", "ledger.app:app", "--host", "0.0.0.0", "--port", "8100"]
+CMD ["uvicorn", "--factory", "ledger.app:app_from_env", "--host", "0.0.0.0", "--port", "8100"]
