@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+
+# Env / local data
+.env
+*.sqlite3
+ledger-data/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
