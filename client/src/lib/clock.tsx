@@ -29,9 +29,12 @@ export function ClockProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    sync();
+    const first = setTimeout(sync, 0);
     const id = setInterval(sync, 30_000);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [sync]);
 
   const now = useCallback(() => Date.now() + offsetMs, [offsetMs]);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { api, ApiError } from '@/api/client';
 
@@ -9,36 +9,44 @@ export type Resource<T> = {
   reload: () => Promise<void>;
 };
 
+type State<T> = { path: string | null; data: T | null; error: ApiError | null; done: boolean };
+
 /** Basit veri kancası: ``path`` null ise istek atmaz; ``pollMs`` verilirse periyodik yeniler. */
 export function useApi<T = any>(path: string | null, pollMs?: number): Resource<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
-  const [loading, setLoading] = useState(path !== null);
-  const current = useRef(path);
-  current.current = path;
+  const [state, setState] = useState<State<T>>({ path, data: null, error: null, done: false });
 
-  const reload = useCallback(async () => {
-    if (!path) return;
-    try {
-      const res = await api<T>(path);
-      if (current.current === path) {
-        setData(res);
-        setError(null);
+  const fetchInto = useCallback(
+    async (isAlive: () => boolean) => {
+      if (!path) return;
+      try {
+        const data = await api<T>(path);
+        if (isAlive()) setState({ path, data, error: null, done: true });
+      } catch (e) {
+        if (isAlive()) setState((s) => ({ ...s, path, error: e as ApiError, done: true }));
       }
-    } catch (e) {
-      if (current.current === path) setError(e as ApiError);
-    } finally {
-      if (current.current === path) setLoading(false);
-    }
-  }, [path]);
+    },
+    [path],
+  );
 
   useEffect(() => {
-    setLoading(path !== null);
-    reload();
-    if (!pollMs || !path) return;
-    const id = setInterval(reload, pollMs);
-    return () => clearInterval(id);
-  }, [path, pollMs, reload]);
+    let alive = true;
+    const isAlive = () => alive;
+    const first = setTimeout(() => fetchInto(isAlive), 0);
+    const id = pollMs && path ? setInterval(() => fetchInto(isAlive), pollMs) : undefined;
+    return () => {
+      alive = false;
+      clearTimeout(first);
+      if (id) clearInterval(id);
+    };
+  }, [fetchInto, path, pollMs]);
 
-  return { data, error, loading, reload };
+  const reload = useCallback(() => fetchInto(() => true), [fetchInto]);
+
+  const fresh = state.path === path;
+  return {
+    data: fresh ? state.data : null,
+    error: fresh ? state.error : null,
+    loading: path !== null && !(fresh && state.done),
+    reload,
+  };
 }

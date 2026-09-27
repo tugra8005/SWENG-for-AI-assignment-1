@@ -16,6 +16,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 
 import { AuthProvider } from '@/lib/auth';
 import { ClockProvider } from '@/lib/clock';
@@ -39,6 +40,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
+
+  useEffect(() => {
+    // Büyük harf dönüşümü Türkçe kurallarla yapılsın (i → İ).
+    if (Platform.OS === 'web') document.documentElement.lang = 'tr';
+  }, []);
 
   if (!loaded) return null;
 
