@@ -214,8 +214,8 @@ def _people(w: World) -> None:
         interests = tuple(sorted({areas[i % len(areas)], areas[(i * 5 + 3) % len(areas)],
                                   *POOL_EXTRA_INTERESTS.get(nick, ())}))
         name = f"{nick.title()} {POOL_SURNAMES[i % len(POOL_SURNAMES)]}"
-        w.at(_t(days=400 - i * 3), lambda c, a=(nick, name, CITIES[i % len(CITIES)], birth,
-                                                interests): _user(c, w, *a))
+        args = (nick, name, CITIES[i % len(CITIES)], birth, interests)
+        w.at(_t(days=400 - i * 3), lambda c, a=args: _user(c, w, *a))
         w.pool.append(nick)
 
 

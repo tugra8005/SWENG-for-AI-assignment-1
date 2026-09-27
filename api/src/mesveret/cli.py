@@ -71,74 +71,65 @@ def advance_time(
     to: str | None = typer.Option(None, "--to", help="Hedef an (ISO-8601, saat dilimli)"),
 ) -> None:
     """Sahte saati ileri alır ve aradaki zamanlanmış işleri sırayla, kendi vade anlarında işler."""
-    from mesveret.services import scheduler
+    from mesveret.errors import DomainError
+    from mesveret.services import devtools
 
     with _ctx() as ctx:
-        start = ctx.now
         target = (datetime.fromisoformat(to) if to
-                  else start + timedelta(hours=hours, days=days, minutes=minutes))
-        if target <= start:
-            typer.echo("Hedef an şimdiden sonra olmalı.", err=True)
-            raise typer.Exit(code=1)
-        clock.set_now(ctx.db, target)
-        ctx.db.commit()
-        done = scheduler.tick(ctx.at(target), target)
-        typer.echo(f"{_fmt(start)} → {_fmt(target)}")
-        for line in done:
+                  else ctx.now + timedelta(hours=hours, days=days, minutes=minutes))
+        try:
+            out = devtools.advance(ctx, target)
+        except DomainError as exc:
+            typer.echo(exc.message, err=True)
+            raise typer.Exit(code=1) from exc
+        typer.echo(f"{_fmt(out['from'])} → {_fmt(out['to'])}")
+        for line in out["events"] or ["(vadesi gelen iş yok)"]:
             typer.echo(f"  • {line}")
-        if not done:
-            typer.echo("  (vadesi gelen iş yok)")
+
+
+def _print_items(view: dict) -> None:
+    for item in view["items"]:
+        p, r = item["proposal"], item["result"]
+        if r is None:
+            typer.echo(f"  #{p['id']} [{p['type']}] {p['title']} — seçmen: {item['eligible_count']}")
+        elif r.get("kind") == "approval":
+            outcome = f"kazanan metin #{r['winner']}" if r["winner"] else r["note"]
+            typer.echo(f"  #{p['id']} {p['title']}: {outcome}")
+        else:
+            verdict = "KABUL" if r.get("passed") else "RET"
+            typer.echo(f"  #{p['id']} {p['title']}: {r.get('yes')}/{r.get('cast')} EVET → {verdict}")
 
 
 @app.command("run-karar-saati")
 def run_karar_saati(
-    close: bool = typer.Option(False, "--close", help="Açık oturumu kapat ve sonuçları aç"),
+    close: bool = typer.Option(False, "--close", help="Açık oturumu kapat ve oyları aç"),
     scripted: bool = typer.Option(
         True, "--scripted-votes/--no-scripted-votes",
         help="Tohumdaki oy planına göre tohum kullanıcılarının oylarını ver",
     ),
 ) -> None:
     """Hemen bir Karar Saati oturumu açar (ya da --close ile açık olanı kapatır)."""
-    from mesveret.services import decision_hour, scheduler
+    from mesveret.errors import DomainError
+    from mesveret.services import devtools
 
     with _ctx() as ctx:
+        try:
+            out = (devtools.close_decision_hour(ctx) if close
+                   else devtools.open_decision_hour(ctx, scripted=scripted))
+        except DomainError as exc:
+            typer.echo(exc.message, err=True)
+            raise typer.Exit(code=1) from exc
+        view = out["session"]
         if close:
-            session = decision_hour.open_session_row(ctx)
-            if session is None:
-                typer.echo("Açık bir oturum yok.", err=True)
-                raise typer.Exit(code=1)
-            clock.set_now(ctx.db, max(session.closes_at, ctx.now))
-            ctx.db.commit()
-            done = scheduler.tick(ctx.at(session.closes_at), session.closes_at)
-            typer.echo(f"Oturum #{session.id} kapandı ({_fmt(session.closes_at)}).")
-            for line in done:
-                typer.echo(f"  • {line}")
-            view = decision_hour.session_view(ctx, session.id)
-            for item in view["items"]:
-                p, r = item["proposal"], item["result"] or {}
-                if r.get("kind") == "approval":
-                    outcome = f"kazanan metin #{r['winner']}" if r["winner"] else r["note"]
-                else:
-                    outcome = f"{r.get('yes')}/{r.get('cast')} EVET → " + (
-                        "KABUL" if r.get("passed") else "RET")
-                typer.echo(f"  #{p['id']} {p['title']}: {outcome}")
-            return
-        session = decision_hour.open_session(ctx, scripted=False)
-        typer.echo(f"Karar Saati #{session.id} açıldı: {_fmt(session.opened_at)} → "
-                   f"{_fmt(session.closes_at)}")
-        view = decision_hour.session_view(ctx, session.id)
-        for item in view["items"]:
-            p = item["proposal"]
-            typer.echo(f"  #{p['id']} [{p['type']}] {p['title']} — seçmen: {item['eligible_count']}")
-        if scripted:
-            problems = decision_hour.apply_vote_plan(ctx, session)
-            ctx.commit()
-            typer.echo("Oy planı uygulandı.")
-            for line in problems:
-                typer.echo(f"  ! {line}")
-        typer.echo("Oylarınızı arayüzden verin; kapatmak için: meşveret-dev run-karar-saati --close")
-        scheduler.ensure_state(ctx)
-        ctx.db.commit()
+            typer.echo(f"Karar Saati #{view['id']} kapandı; oylar açıldı.")
+        else:
+            typer.echo(f"Karar Saati #{view['id']} açıldı: {_fmt(view['opened_at'])} → "
+                       f"{_fmt(view['closes_at'])}")
+        _print_items(view)
+        for line in out.get("problems", []):
+            typer.echo(f"  ! {line}")
+        if not close:
+            typer.echo("Oyları arayüzden verin; kapatmak için: meşveret-dev run-karar-saati --close")
 
 
 @app.command()

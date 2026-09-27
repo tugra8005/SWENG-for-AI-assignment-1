@@ -26,3 +26,6 @@ ledger-data/
 
 # Kişisel devam notu
 CLAUDE.local.md
+
+# Docker'sız yerel defter verisi
+.local-ledger/
