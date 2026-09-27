@@ -18,9 +18,12 @@ class Settings(BaseSettings):
     ledger_node_urls: str = "http://localhost:8101,http://localhost:8102,http://localhost:8103"
     ledger_token: str = "dev-ledger-token"
 
-    jwt_secret: str = "dev-jwt-secret-change-me"
+    jwt_secret: str = "dev-jwt-secret-change-me-before-production-0001"
     jwt_ttl_hours: int = 12
     shade_key: str = "dev-shade-key-change-me"
+
+    graph_backend: str = "neo4j"  # neo4j | memory
+    ledger_backend: str = "http"  # http | fake
 
     scheduler_enabled: bool = True
     scheduler_interval_seconds: float = 5.0

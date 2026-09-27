@@ -42,6 +42,9 @@ markers = ["integration: PostgreSQL ve Neo4j test yığını gerektirir"]
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Query", "fastapi.Body"]
+
 [tool.pyright]
 venvPath = "."
 venv = ".venv"

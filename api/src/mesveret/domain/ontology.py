@@ -1,13 +1,12 @@
 """Ontoloji görünümü.
 
 Kurallar ontolojiye yalnızca ``OntologyView`` protokolü üzerinden bakar. Bellek içi
-uygulama testlerde, Neo4j uygulaması (``mesveret.graph.ontology``) serviste kullanılır;
+uygulama testlerde, Neo4j uygulaması (``mesveret.graph.neo4j_store``) serviste kullanılır;
 ikisi de aynı sözleşme testlerinden geçer.
 """
 
 from __future__ import annotations
 
-from collections import deque
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -81,8 +80,7 @@ class InMemoryOntology:
     ):
         self._areas = {a.id: a for a in areas}
         self._children: dict[str | None, list[str]] = {}
-        for a in sorted(self._areas.values(), key=lambda a: a.id):
-            self._children.setdefault(a.parent_id, []).append(a.id)
+        self._rebuild_children()
         self._scopes = {s.id: s for s in scopes}
         self._subset_of = {k: set(v) for k, v in subset_of.items()}
         self._resources = {r.id: r for r in resources}
@@ -103,13 +101,18 @@ class InMemoryOntology:
             current = self._areas[current].parent_id
         return chain
 
+    def _rebuild_children(self) -> None:
+        self._children = {}
+        for a in sorted(self._areas.values(), key=lambda a: a.id):
+            self._children.setdefault(a.parent_id, []).append(a.id)
+
     def _bfs(self, roots: list[str]) -> list[str]:
+        """Seviye sırası: önce derinlik, aynı derinlikte id (Neo4j sorgusuyla aynı sıra)."""
         order: list[str] = []
-        queue = deque(roots)
-        while queue:
-            node = queue.popleft()
-            order.append(node)
-            queue.extend(self._children.get(node, []))
+        level = sorted(roots)
+        while level:
+            order.extend(level)
+            level = sorted(c for n in level for c in self._children.get(n, []))
         return order
 
     def area_descendants_bfs(self, area_id: str) -> list[str]:
@@ -126,7 +129,9 @@ class InMemoryOntology:
         return self._scopes.get(scope_id)
 
     def city_scopes(self) -> list[ScopeInfo]:
-        return [s for s in self._scopes.values() if s.subtype is ScopeSubtype.SEHIR]
+        return sorted(
+            (s for s in self._scopes.values() if s.subtype is ScopeSubtype.SEHIR), key=lambda s: s.id
+        )
 
     def is_strict_subset(self, scope_id: str, of_scope_id: str) -> bool:
         seen: set[str] = set()

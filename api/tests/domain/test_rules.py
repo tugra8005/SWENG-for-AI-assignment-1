@@ -13,16 +13,17 @@ OK_RIGHT = VoteRight(True, None)
 
 
 def ctx(**kw) -> RuleContext:
-    base = dict(onto=ONTO, reg=REG, now=NOW, proposer_right=OK_RIGHT, last_rejection=None)
+    base = {"onto": ONTO, "reg": REG, "now": NOW, "proposer_right": OK_RIGHT,
+            "last_rejection": None}
     base.update(kw)
     return RuleContext(**base)
 
 
 def konu(**kw) -> ProposalDraft:
-    base = dict(
-        type=ProposalType.KONU, proposer_id="u1", scope_id="genel", area_id="sinema",
-        resource_ids=(), title="Film günleri", body="",
-    )
+    base = {
+        "type": ProposalType.KONU, "proposer_id": "u1", "scope_id": "genel",
+        "area_id": "sinema", "resource_ids": (), "title": "Film günleri", "body": "",
+    }
     base.update(kw)
     return ProposalDraft(**base)
 

@@ -8,4 +8,4 @@ COPY src ./src
 RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH" LANG=C.UTF-8
 EXPOSE 8000
-CMD ["uvicorn", "mesveret.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "--factory", "mesveret.main:app_from_env", "--host", "0.0.0.0", "--port", "8000"]

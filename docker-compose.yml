@@ -104,7 +104,7 @@ services:
       LEDGER_LEADER_URL: http://ledger-1:8100
       LEDGER_NODE_URLS: http://ledger-1:8100,http://ledger-2:8100,http://ledger-3:8100
       LEDGER_TOKEN: ${LEDGER_TOKEN:-dev-ledger-token}
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me-before-production-0001}
       SHADE_KEY: ${SHADE_KEY:-dev-shade-key-change-me}
     ports:
       - "8000:8000"

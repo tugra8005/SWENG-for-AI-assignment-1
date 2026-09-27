@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Any
 
-from neo4j import Driver, GraphDatabase
+from neo4j import Driver, GraphDatabase, Query
 
 from mesveret.config import get_settings
 
@@ -19,7 +19,7 @@ def get_driver() -> Driver:
 
 def run(query: str, **params: Any) -> list[dict[str, Any]]:
     """Tek bir Cypher sorgusu çalıştırır ve kayıtları sözlük listesi olarak döner."""
-    records, _, _ = get_driver().execute_query(query, params, database_="neo4j")
+    records, _, _ = get_driver().execute_query(Query(query), params, database_="neo4j")
     return [r.data() for r in records]
 
 

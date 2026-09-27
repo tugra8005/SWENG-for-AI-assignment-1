@@ -6,7 +6,13 @@ Alan ağacı:
     kent ──── ulasim
 """
 
-from mesveret.domain.ontology import AreaInfo, InMemoryOntology, ResourceInfo, ResourceKind, ScopeInfo
+from mesveret.domain.ontology import (
+    AreaInfo,
+    InMemoryOntology,
+    ResourceInfo,
+    ResourceKind,
+    ScopeInfo,
+)
 from mesveret.domain.scopes import ScopeSubtype, ScopeType
 
 

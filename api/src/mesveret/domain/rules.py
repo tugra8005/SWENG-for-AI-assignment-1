@@ -193,9 +193,9 @@ def _check_r6(c: RuleContext, report: RuleReport) -> None:
 
 
 def _check_area(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
-    if d.type in (ProposalType.KONU, ProposalType.ALT_KONU):
-        if d.area_id is None or c.onto.area(d.area_id) is None:
-            report.violations.append(Violation("GECERLILIK", "Alan bulunamadı."))
+    needs_area = d.type in (ProposalType.KONU, ProposalType.ALT_KONU)
+    if needs_area and (d.area_id is None or c.onto.area(d.area_id) is None):
+        report.violations.append(Violation("GECERLILIK", "Alan bulunamadı."))
 
 
 def check_proposal(d: ProposalDraft, c: RuleContext) -> RuleReport:
