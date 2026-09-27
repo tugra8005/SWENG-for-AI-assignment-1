@@ -61,7 +61,7 @@ def install_base(
     for area_id, name, parent, keywords in areas:
         g.upsert_area(AreaInfo(area_id, name, parent, tuple(keywords)))
         g.upsert_scope(
-            ScopeInfo(interest_scope_id(area_id), ScopeType.ILGI, f"{name} ilgi kapsamı", None, area_id),
+            ScopeInfo(interest_scope_id(area_id), ScopeType.ILGI, f"{name} (ilgi)", None, area_id),
             {GENERAL_SCOPE_ID},
         )
         g.upsert_resource(ResourceInfo(f"alan:{area_id}", ResourceKind.ALAN, name, GENERAL_SCOPE_ID))

@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from mesveret.config import Settings, get_settings
 from mesveret.errors import DomainError
-from mesveret.routers import auth, health, users
+from mesveret.routers import auth, health, ontology, proposals, topics, users
 
 
 def default_graph(settings: Settings):
@@ -85,7 +85,7 @@ def create_app(
             status_code=exc.status, content={"detail": exc.message, "violations": exc.violations}
         )
 
-    for module in (health, auth, users):
+    for module in (health, auth, users, ontology, topics, proposals):
         app.include_router(module.router)
     return app
 
