@@ -20,6 +20,7 @@ from mesveret.routers import (
     topics,
     users,
 )
+from mesveret.routers import ledger as ledger_router
 
 
 def default_graph(settings: Settings):
@@ -94,7 +95,8 @@ def create_app(
             status_code=exc.status, content={"detail": exc.message, "violations": exc.violations}
         )
 
-    for module in (health, auth, users, ontology, topics, proposals, decision_hour, cellar):
+    for module in (health, auth, users, ontology, topics, proposals, decision_hour, cellar,
+                   ledger_router):
         app.include_router(module.router)
     return app
 
