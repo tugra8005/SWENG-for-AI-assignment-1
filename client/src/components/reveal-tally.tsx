@@ -3,10 +3,10 @@
  * en sonda KABUL / RET mührü basılır. Azaltılmış hareket tercihinde son durum anında görünür.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, useAnimatedValue, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 import { Button, Kicker, Muted, Seal } from '@/components/paper';
-import { useReducedMotion } from '@/lib/motion';
+import { useAnimatedValue, useReducedMotion } from '@/lib/motion';
 import { fonts, paper } from '@/theme/tokens';
 
 type Vote = {

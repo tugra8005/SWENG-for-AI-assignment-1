@@ -7,7 +7,6 @@ import { router } from 'expo-router';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import {
   Animated,
-  useAnimatedValue,
   ImageBackground,
   Modal,
   Platform,
@@ -21,7 +20,7 @@ import {
   View,
 } from 'react-native';
 
-import { useReducedMotion } from '@/lib/motion';
+import { useAnimatedValue, useReducedMotion } from '@/lib/motion';
 import { cellar, fonts, layout, paper } from '@/theme/tokens';
 
 const scanlines = require('@/assets/images/scanlines.png');

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, Animated } from 'react-native';
 
 /** ``prefers-reduced-motion`` (web) / sistem ayarı (Android). Açıksa animasyonlar kapanır. */
 export function useReducedMotion(): boolean {
@@ -14,4 +14,13 @@ export function useReducedMotion(): boolean {
     };
   }, []);
   return reduced;
+}
+
+/**
+ * ``Animated.Value`` için kararlı referans. React Native'in ``useAnimatedValue`` kancası
+ * react-native-web'de yok; bu sürüm her iki platformda çalışır.
+ */
+export function useAnimatedValue(initial: number): Animated.Value {
+  const [value] = useState(() => new Animated.Value(initial));
+  return value;
 }

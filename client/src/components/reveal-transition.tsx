@@ -4,9 +4,9 @@
  * anında gösterilir.
  */
 import { useEffect, useState } from 'react';
-import { Animated, useAnimatedValue, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
-import { useReducedMotion } from '@/lib/motion';
+import { useAnimatedValue, useReducedMotion } from '@/lib/motion';
 import { cellar, fonts, paper } from '@/theme/tokens';
 
 const DURATION = 1500;
