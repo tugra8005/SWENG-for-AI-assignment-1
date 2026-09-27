@@ -27,7 +27,13 @@ from mesveret.domain.diff import word_diff
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.oracle import label_check, oracle_comment
 from mesveret.domain.regulation import DEFAULT_ARTICLES, RegulationError, validate_value
-from mesveret.domain.rules import ProposalDraft, RuleContext, RuleReport, check_proposal, format_date
+from mesveret.domain.rules import (
+    ProposalDraft,
+    RuleContext,
+    RuleReport,
+    check_proposal,
+    format_date,
+)
 from mesveret.domain.scopes import GENERAL_SCOPE_ID
 from mesveret.domain.text import normalize
 from mesveret.domain.types import ProposalStatus, ProposalType, initial_lane

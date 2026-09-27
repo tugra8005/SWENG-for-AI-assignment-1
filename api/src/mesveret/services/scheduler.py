@@ -63,6 +63,11 @@ def _decision_hour_events(ctx: Ctx, until: datetime, last: datetime | None) -> l
     return decision_hour.due_events(ctx, until, last)
 
 
+def ensure_state(ctx: Ctx) -> SchedulerState:
+    """Zamanlayıcının başlangıç anını kurar (tohum ve testler bunu kurulum anında çağırır)."""
+    return _state(ctx)
+
+
 def _state(ctx: Ctx) -> SchedulerState:
     st = ctx.db.get(SchedulerState, 1)
     if st is None:

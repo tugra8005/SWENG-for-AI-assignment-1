@@ -253,6 +253,7 @@ class SessionItem(Base):
     eligible: Mapped[list[str]] = mapped_column(JSONB)
     resolved: Mapped[dict[str, str]] = mapped_column(JSONB)
     flagged: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    oracle_note: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     result: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
 
 

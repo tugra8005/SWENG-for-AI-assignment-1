@@ -14,7 +14,7 @@ from mesveret.context import Ctx
 from mesveret.db.models import User
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.scopes import ScopeSubtype
-from mesveret.services import auth, ontology, oracle
+from mesveret.services import auth, ontology, oracle, scheduler
 
 AREAS = [
     ("kultur", "Kültür", None, ("kültür", "sanat")),
@@ -40,6 +40,7 @@ RESOURCES = [
 def build_world(ctx: Ctx) -> None:
     ontology.install_base(ctx, AREAS, RESOURCES, cities=["İstanbul", "Ankara", "İzmir"])
     oracle.ensure_oracle(ctx)
+    scheduler.ensure_state(ctx)
     ctx.db.commit()
 
 
