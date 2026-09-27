@@ -88,7 +88,7 @@ def test_delegations_are_locked_while_window_is_open(ctx, client):
 
 
 def test_abstaining_chain_end_does_not_count(ctx):
-    a, b, c = (make_user(ctx, n) for n in ("aylin", "baris", "ceren"))
+    a, _b, c = (make_user(ctx, n) for n in ("aylin", "baris", "ceren"))
     delegation.set_delegation(ctx, a, "baris", None)
     ctx.commit()
     p = queued_konu(ctx, c)
@@ -240,7 +240,7 @@ def test_closure_approval_vote_and_dissent(ctx, client):
 
 
 def test_closure_tie_gives_no_decision(ctx):
-    ctx, (a, b, c), topic, p, texts = _closure_with_three_texts(ctx)
+    ctx, (a, b, _c), _topic, p, texts = _closure_with_three_texts(ctx)
     session = decision_hour.open_session(ctx)
     decision_hour.cast_vote(ctx, a, p.id, [texts[0]])
     decision_hour.cast_vote(ctx, b, p.id, [texts[1]])

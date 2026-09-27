@@ -41,8 +41,6 @@ trap cleanup EXIT
 
 echo "== api: entegrasyon testleri"
 (cd api && \
-  ENV=test \
-  DATABASE_URL="postgresql+psycopg://mesveret:mesveret@localhost:55432/mesveret_test" \
-  NEO4J_URL="bolt://localhost:57687" NEO4J_PASSWORD="mesveret-test" \
-  SCHEDULER_ENABLED=false \
+  TEST_DATABASE_URL="postgresql+psycopg://mesveret:mesveret@localhost:55432/mesveret_test" \
+  TEST_NEO4J_URL="bolt://localhost:57687" TEST_NEO4J_PASSWORD="mesveret-test" \
   uv run pytest -q -m integration)

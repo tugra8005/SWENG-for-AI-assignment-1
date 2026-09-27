@@ -1,6 +1,6 @@
 # Meşveret — Tasarım Belgesi
 
-> Durum: ilk sürüm (kodlamadan önce). Uygulama ilerledikçe güncellenir; son hâli (j) aşamasında yazılır.
+> Durum: uygulamayla güncellenmiş son sürüm. Kurulum ve demo adımları için [README.md](README.md).
 
 ## 1. Amaç ve temel iddia
 
@@ -382,6 +382,8 @@ Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçe
   - `run-karar-saati` — hemen bir oturum açar: anlık görüntü, kilit, baskın tespiti, Hâtif oyu, ardından tohumdaki oy planına göre tohum kullanıcılarının oyları (`--no-scripted-votes` ile kapatılır).
   - `run-karar-saati --close` — saati pencere sonuna ilerletir, oyları açar, sayar ve sonuçları uygular.
   - `seed [--reset]`, `now`.
+- CLI komutları `services/devtools.py` üzerinden çalışır. Docker'sız geliştirme modunda (`scripts/dev_local.sh`, bellek içi graf) aynı işlemler yalnızca o modda açılan `/_dev` uç noktalarından sunulur; CLI ayrı süreçte bellek içi grafa erişemez.
+- **Tohum** (`services/seed.py`) geçmiş tarihli içeriği bir zaman çizelgesine yazar ve zaman sırasıyla oluşturur; defter kayıtlarının zaman damgaları içeriğin zamanıyla aynı olur. Karar Saati senaryolarındaki yüzdeler, Hâtif'in oyu ve havale ağırlıkları hesaba katılarak kurulmuş bir geliştirme oy planına (`dev_vote_plan`) dayanır; `test_seed.py` sekiz senaryonun sonuçlarını doğrular.
 
 ## 13. Tasarım dili
 
@@ -416,7 +418,7 @@ Geçiş, ifşadan sonra başlığı ilk açan herkeste bir kez oynar.
 
 ### 13.4 Genel
 
-Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar `prefers-reduced-motion` (Reanimated `useReducedMotion`) açıkken kapanır; ifşa geçişi o durumda anlık geçiş olur.
+Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oyların düşmesi, mühür, ifşa geçişi) `prefers-reduced-motion` açıkken kapanır; web'de `matchMedia`, Android'de sistem ayarı `AccessibilityInfo.isReduceMotionEnabled` ile okunur. Bu durumda son hâl anında gösterilir. Büyük harf dönüşümünün Türkçe kurallarla (i → İ) yapılması için web'de sayfa dili `tr` olarak ayarlanır.
 
 ## 14. Belgede cevabı olmayan noktalar ve verilen kararlar
 
@@ -436,6 +438,10 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar `prefers-red
 | Doğrulama kanalı | Yalnızca e-posta (kayıtta telefon alanı yok) |
 | Yaş sınırı | 18 (yaş grupları 18'den başlar) |
 | Bekleme süresi dolan yeni maddeler | Baskın ve etkileşim eşikleri, `mahzen_ifsa_esigi` (§5) |
+| Mahzen'de baskın tespitinin katılım anı | Hesabın açılış anı. Başlığa katılım o başlıktaki herkes için yenidir; ortak başlık sinyali tüm katılımcıları birbirine bağladığı için başlığa katılım anı kullanılsaydı genç bir başlıktaki herkes baskın sayılırdı |
+| Hâtif'in onay oylamasındaki oyu | EVET = tüm metinleri onaylar (sıralamayı değiştirmez); HAYIR = hiçbirini |
+| Haftalık oturum anında elle açılmış bir oturum açıksa | Haftalık oturum o hafta atlanır; aynı anda tek oturum açık olabilir |
+| Silinmiş içeriğin mührü | Sansür şeridi içeriğin defter hash'ini taşır; kayıt defterden görüntülenebilir |
 
 ## 15. Bilinçli açıklar
 
@@ -455,6 +461,8 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar `prefers-red
 14. **Mahzen anonimliği sunucuya karşı değildir.** Sunucu gerçek kimliği saklar. ETKILESIM grafı Mahzen etkinliğinden de beslenir. Başlıklar arası eşleştirme yalnızca istemci tarafında imkânsızdır.
 15. **Düşük katılımda Hâtif belirleyici olur.** Yeter sayı yoktur ve Hâtif her oturumda oy verir. Hiçbir yurttaşın oy vermediği bir oylamada Hâtif'in tek oyu sonucu belirler; denetimlerden geçen bir öneri böylece yalnızca bir kural motorunun onayıyla kabul edilebilir. Hâtif'e havale edenler arttıkça bu etki büyür (bkz. 7. madde).
 16. **Silme gizlemedir.** Silinen içerik defterde herkese açık kalır. Silme oylaması içeriği sitenin görünür yüzünden kaldırır, kayıttan kaldırmaz.
+17. **Pencere boyunca kimin oy verdiği bellidir.** Oyun içeriği mühürlüdür ama commit kaydı seçmenin takma adıyla deftere hemen yazılır. Pencere kapanmadan kimin oy verdiği, kimin henüz vermediği görülebilir; bu bilgi son dakika baskısına yol açabilir.
+18. **Mahzen'de oy değiştirmek bir yarışa dönüşebilir.** İfşa, eşiğin aşıldığı an gerçekleşir ve geri alınamaz. Fikrini değiştirmek isteyen bir seçmenin HAYIR'a dönmesi, eşiği aşan son EVET'ten sonra gelirse etkisizdir.
 
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
 
@@ -484,7 +492,33 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar `prefers-red
 | 22 | Kullanıcılar bir grafta | Neo4j: `User`, `HAVALE`, `ETKILESIM`, `UYE` |
 | 23 | Açıklar sorgulanmalı | §15 Bilinçli açıklar |
 
-## 17. Sözlük (Türkçe terim ↔ kod)
+## 17. İstemci
+
+- Expo SDK 57, expo-router (`client/src/app/` altındaki her dosya bir ekran), TypeScript. Web ve Android aynı kod tabanıdır.
+- `src/components/paper.tsx` Meydan bileşenlerini (gazete başlığı, mühür, sansür şeridi, düğme, form alanları, geri sayım), `src/components/cellar.tsx` Mahzen bileşenlerini (CRT katmanı, çürüyen metin, ömür çubuğu, uyarı) içerir.
+- `src/lib/clock.tsx` istemciyi sunucunun sahte saatine eşitler; tüm geri sayımlar bu saate göre işler.
+- `src/components/reveal-tally.tsx` Karar Saati sonuç açıklamasını, `src/components/reveal-transition.tsx` ifşa geçişini oynatır.
+- API adresi `EXPO_PUBLIC_API_URL` ile verilir.
+
+## 18. Testler (§12 gereksinimi → test dosyası)
+
+| Gereksinim | Test |
+|---|---|
+| Havale çözümleme ve miras | `api/tests/domain/test_delegation.py` |
+| Döngü kontrolü (miras üzerinden oluşanlar dahil) | `test_delegation.py`, `tests/integration/test_decision_hour.py::test_cycle_is_rejected_via_api` |
+| Oy ağırlığı hesabı, çekimser zincirler | `api/tests/domain/test_tally.py`, `test_decision_hour.py` |
+| R1–R6, otomatik daralma, üst küme reddi | `api/tests/domain/test_rules.py`, `tests/integration/test_proposals.py` |
+| 2/3 ve kendini koruma | `test_tally.py`, `test_decision_hour.py::test_regulation_change_needs_two_thirds`, `::test_threshold_article_protects_itself` |
+| Anlık görüntü ve kilit kuralları | `test_decision_hour.py::test_electorate_is_snapshotted_when_window_opens`, `::test_delegations_are_locked_while_window_is_open` |
+| Sessiz onay eşiği, red bekleme | `test_proposals.py` |
+| Mahzen seçmen anlık görüntüsü | `tests/integration/test_cellar.py::test_electorate_is_snapshot_of_posters_before_vote_opened` |
+| Başlık kimliğinin başlıklar arasında eşleşmemesi | `api/tests/domain/test_shade.py`, `test_cellar.py` |
+| Defter bütünlüğü ve bozulmuş zincirin tespiti | `ledger/tests/test_chain.py`, `ledger/tests/test_replication.py` |
+| Baskın tespiti | `api/tests/domain/test_raid.py`, `test_decision_hour.py`, `test_cellar.py` |
+| Neo4j graf deposu (bellek içiyle aynı sözleşme) | `api/tests/graph_contract.py` (`test_graph_memory.py`, `tests/integration/test_graph_neo4j.py`) |
+| Sekiz demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
+
+## 19. Sözlük (Türkçe terim ↔ kod)
 
 Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketleri, ilişki adları, enum değerleri (KONU, SILME, GENEL…) ve yönetmelik madde anahtarları belgedeki gibi kalır.
 

@@ -180,11 +180,17 @@ export function ProposalForm({
   const article = regulation.data?.find((a) => a.key === articleKey);
   const needsLabels = (type === 'KONU' && !ctx.reopen) || type === 'ALT_KONU';
   const areaOptions = useMemo(() => {
-    const depth = (id: string | null): number => {
-      const a = areas.data?.find((x) => x.id === id);
-      return a?.parent_id ? 1 + depth(a.parent_id) : 0;
+    // Ağaç sırası (derinlik öncelikli), girintili.
+    const list = areas.data ?? [];
+    const out: { value: string; label: string }[] = [];
+    const walk = (parent: string | null, depth: number) => {
+      for (const a of list.filter((x) => x.parent_id === parent)) {
+        out.push({ value: a.id, label: `${'· '.repeat(depth)}${a.name}` });
+        walk(a.id, depth + 1);
+      }
     };
-    return (areas.data ?? []).map((a) => ({ value: a.id as string, label: `${'· '.repeat(depth(a.id))}${a.name}` }));
+    walk(null, 0);
+    return out;
   }, [areas.data]);
 
   const submit = async () => {
