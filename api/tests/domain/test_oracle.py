@@ -14,6 +14,17 @@ def kinds(findings):
     return [f.kind for f in findings]
 
 
+def test_turkish_genitive_follows_vowel_harmony():
+    from mesveret.domain.text import genitive
+
+    assert genitive("Etkinlik bütçesi") == "Etkinlik bütçesinin"
+    assert genitive("Ortak toplantı salonu") == "Ortak toplantı salonunun"
+    assert genitive("Kent parkı") == "Kent parkının"
+    assert genitive("Gül bahçesi") == "Gül bahçesinin"
+    assert genitive("Yol") == "Yolun"
+    assert genitive("Köprü") == "Köprünün"
+
+
 def test_turkish_normalisation():
     assert normalize("İSTANBUL'a IŞIK") == "istanbula ışık"
     assert tokens("Bütçe'nin %10'u, İzmir!") == ["bütçenin", "10u", "izmir"]
@@ -94,3 +105,15 @@ def test_comment_mentions_suggestions_in_turkish():
 def test_comment_when_everything_agrees():
     text = oracle_comment(RuleReport(), [], ONTO)
     assert "uyumlu" in text
+
+
+def test_comment_explains_narrowing():
+    from mesveret.domain.rules import Narrowing
+
+    report = RuleReport(narrowings=[Narrowing(
+        "butce", "sehir:istanbul", 4000, "Bu karar yalnızca İstanbul payını etkiler (4.000 puan).",
+        total=7000, effect_title="Etkinlik bütçesinin İstanbul payı",
+    )])
+    text = oracle_comment(report, [], ONTO)
+    assert ("Talep kaynağın tamamını hedefliyordu; seçmen kapsamı yalnızca İstanbul payına "
+            "karar verebilir, daraltma uygulandı.") in text

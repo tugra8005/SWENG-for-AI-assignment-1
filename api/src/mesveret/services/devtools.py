@@ -29,7 +29,13 @@ def open_decision_hour(ctx: Ctx, *, scripted: bool) -> dict:
     session = decision_hour.open_session(ctx, scripted=False)
     problems = decision_hour.apply_vote_plan(ctx, session) if scripted else []
     ctx.commit()
-    return {"session": decision_hour.session_view(ctx, session.id), "problems": problems}
+    # Kuyrukta kalanlar olgunlaşmamış önerilerdir: sonraki uygun oturuma kayarlar.
+    maturing = [
+        {"id": q["id"], "title": q["title"], "maturity": q["maturity"]}
+        for q in decision_hour.status(ctx)["queued"]
+    ]
+    return {"session": decision_hour.session_view(ctx, session.id), "problems": problems,
+            "maturing": maturing}
 
 
 def close_decision_hour(ctx: Ctx) -> dict:

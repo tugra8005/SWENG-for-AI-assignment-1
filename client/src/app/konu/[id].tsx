@@ -20,6 +20,7 @@ import {
   Section,
   Tag,
 } from '@/components/paper';
+import { maturityLine, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { fmtDateTime, STATUS_LABELS, TYPE_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -266,7 +267,10 @@ export default function TopicPage() {
               <Text style={st.relNo}>№{p.id}</Text>
               <Tag>{TYPE_LABELS[p.type]}</Tag>
               <Tag tone="seal">{STATUS_LABELS[p.status]}</Tag>
-              <Text style={st.relTitle} numberOfLines={1}>{p.title}</Text>
+              <View style={{ flex: 1, minWidth: 180, gap: 2 }}>
+                <ProposalTitle title={p.title} effective={p.effective_title} style={st.relTitle} />
+                {maturityLine(p.maturity) ? <Text style={st.relMaturing}>{maturityLine(p.maturity)}</Text> : null}
+              </View>
             </PressLink>
           ))}
         </Section>
@@ -345,4 +349,5 @@ const st = StyleSheet.create({
   },
   relNo: { fontFamily: fonts.monoMedium, fontSize: 12, color: paper.seal },
   relTitle: { fontFamily: fonts.serifMedium, fontSize: 16, color: paper.ink, flexShrink: 1 },
+  relMaturing: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 17, color: paper.seal },
 });

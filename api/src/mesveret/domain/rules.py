@@ -12,6 +12,7 @@ from datetime import datetime
 from mesveret.domain.ontology import OntologyView, ResourceInfo, ResourceKind, ScopeInfo
 from mesveret.domain.regulation import Regulation
 from mesveret.domain.scopes import GENERAL_SCOPE_ID, ScopeSubtype
+from mesveret.domain.text import genitive
 from mesveret.domain.types import ProposalType
 
 ISTANBUL_TZ = "Europe/Istanbul"
@@ -59,6 +60,8 @@ class Narrowing:
     scope_id: str
     share: int | None
     message: str
+    total: int | None = None  # kaynağın tamamı (payların toplamı)
+    effect_title: str | None = None  # "Etkinlik bütçesinin İstanbul payı"
 
 
 @dataclass
@@ -137,6 +140,8 @@ def _check_r2_resource(
     report.narrowings.append(Narrowing(
         r.id, scope.id, share,
         f"Bu karar yalnızca {scope.name} payını etkiler ({format_points(share)} puan).",
+        total=sum(r.shares.values()),
+        effect_title=f"{genitive(r.name)} {scope.name} payı",
     ))
 
 

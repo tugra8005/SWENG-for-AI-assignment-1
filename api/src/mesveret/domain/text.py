@@ -33,3 +33,22 @@ def phrase_in(stems: Sequence[str], words: Sequence[str]) -> bool:
 
 def count_stem_hits(stems: Sequence[str], words: Sequence[str]) -> int:
     return sum(1 for w in words if any(w.startswith(s) for s in stems))
+
+
+_BACK = {"a": "ın", "ı": "ın", "o": "un", "u": "un"}
+_FRONT = {"e": "in", "i": "in", "ö": "ün", "ü": "ün"}
+_VOWELS = set(_BACK) | set(_FRONT)
+
+
+def genitive(phrase: str) -> str:
+    """Tamlayan eki (ilgi hâli): "Etkinlik bütçesi" → "Etkinlik bütçesinin".
+
+    Son kelimenin son ünlüsüne göre büyük ünlü uyumu uygulanır; ünlüyle bitenlere "n"
+    kaynaştırması eklenir. Ünsüz yumuşaması (kitap → kitabın) yapılmaz.
+    """
+    word = turkish_lower(phrase.split()[-1]) if phrase.strip() else ""
+    last = next((c for c in reversed(word) if c in _VOWELS), "e")
+    suffix = {**_BACK, **_FRONT}[last]
+    if word and word[-1] in _VOWELS:
+        suffix = "n" + suffix
+    return phrase + suffix

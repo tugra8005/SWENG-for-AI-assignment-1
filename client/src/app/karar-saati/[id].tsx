@@ -15,6 +15,7 @@ import {
   Seal,
   Tag,
 } from '@/components/paper';
+import { ProposalTitle } from '@/components/proposal-title';
 import { RevealTally } from '@/components/reveal-tally';
 import { fmtDateTime, TYPE_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -53,7 +54,7 @@ export default function SessionResults() {
             <Muted style={{ fontSize: 13 }}>seçmen: {it.proposal.scope} · {it.eligible_count} kişi</Muted>
           </View>
           <PressLink href={`/oneri/${it.proposal.id}`}>
-            <Text style={st.title}>{it.proposal.title}</Text>
+            <ProposalTitle title={it.proposal.title} effective={it.proposal.effective_title} style={st.title} />
           </PressLink>
           {it.result ? (
             <RevealTally result={it.result} />

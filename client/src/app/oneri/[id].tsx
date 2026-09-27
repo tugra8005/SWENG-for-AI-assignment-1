@@ -10,7 +10,6 @@ import {
   Countdown,
   ErrorNotice,
   Field,
-  H1,
   InfoNotice,
   Kicker,
   Loading,
@@ -23,8 +22,9 @@ import {
   Tag,
 } from '@/components/paper';
 import { ProposalForm } from '@/components/proposal-form';
+import { maturityDetail, maturityLine, ProposalTitle, ShareBar } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
-import { describeArticleValue, fmtDateTime, STATUS_LABELS, TYPE_LABELS } from '@/lib/format';
+import { describeArticleValue, fmtDateTime, fmtNumber, fmtSession, STATUS_LABELS, TYPE_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -130,7 +130,9 @@ export default function ProposalPage() {
       <Kicker>
         Öneri №{p.id} · {TYPE_LABELS[p.type]} · {lane}
       </Kicker>
-      <H1 style={{ marginTop: 4 }}>{p.title}</H1>
+      <View style={{ marginTop: 4 }}>
+        <ProposalTitle title={p.title} effective={p.effective_title} style={st.h1} heading />
+      </View>
       <View style={st.row}>
         <Tag tone={p.status === 'REJECTED' ? 'muted' : 'seal'}>{STATUS_LABELS[p.status]}</Tag>
         <Muted>
@@ -144,6 +146,7 @@ export default function ProposalPage() {
         <View key={i} style={st.narrow}>
           <Kicker style={{ color: paper.seal }}>R2 · otomatik daralma</Kicker>
           <Text style={st.narrowText}>{n.message}</Text>
+          {n.total ? <ShareBar share={n.share} total={n.total} /> : null}
         </View>
       ))}
 
@@ -235,7 +238,15 @@ export default function ProposalPage() {
           {p.resources?.length ? (
             <Section title="Etkilenen kaynaklar">
               {p.resources.map((r: any) => (
-                <Body key={r.id}>· {r.name}</Body>
+                <Body key={r.id}>
+                  · {r.name}
+                  {r.narrowed ? (
+                    <Text style={{ color: paper.seal }}>
+                      {` — yalnızca ${r.narrowed.scope} payı`}
+                      {r.narrowed.total ? ` (${fmtNumber(r.narrowed.share)} / ${fmtNumber(r.narrowed.total)})` : ''}
+                    </Text>
+                  ) : null}
+                </Body>
               ))}
             </Section>
           ) : null}
@@ -263,8 +274,17 @@ export default function ProposalPage() {
             </Section>
           ) : null}
 
-          {p.status === 'QUEUED' ? (
-            <InfoNotice>Bu öneri bir sonraki Karar Saati&apos;nde oylanacak.</InfoNotice>
+          {p.maturity && !p.maturity.mature ? (
+            <View style={st.maturing}>
+              <Kicker style={{ color: paper.seal }}>Olgunlaşma</Kicker>
+              <Text style={st.maturingText}>{maturityLine(p.maturity)}</Text>
+              <Muted>{maturityDetail(p.maturity)}</Muted>
+            </View>
+          ) : p.status === 'QUEUED' ? (
+            <InfoNotice>
+              Bu öneri {p.maturity ? `${fmtSession(p.maturity.first_session_at)} ` : 'bir sonraki '}
+              Karar Saati&apos;nde oylanacak.
+            </InfoNotice>
           ) : null}
           {p.status === 'VOTING' ? (
             <InfoNotice>
@@ -288,6 +308,9 @@ export default function ProposalPage() {
 
 const st = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 },
+  h1: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, color: paper.ink },
+  maturing: { borderLeftWidth: 3, borderLeftColor: paper.seal, paddingLeft: 12, marginVertical: 12, gap: 4 },
+  maturingText: { fontFamily: fonts.serifBold, fontSize: 19, lineHeight: 25, color: paper.ink },
   narrow: {
     borderWidth: 2,
     borderColor: paper.seal,

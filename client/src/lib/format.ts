@@ -22,11 +22,26 @@ const longFmt = new Intl.DateTimeFormat('tr-TR', {
   year: 'numeric',
 });
 const timeFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+const sessionFmt = new Intl.DateTimeFormat('tr-TR', {
+  timeZone: TZ,
+  day: 'numeric',
+  month: 'long',
+  weekday: 'long',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+const numberFmt = new Intl.NumberFormat('tr-TR');
 
 export const fmtDate = (iso?: string | null) => (iso ? dateFmt.format(new Date(iso)) : '—');
 export const fmtDateTime = (iso?: string | null) => (iso ? dateTimeFmt.format(new Date(iso)) : '—');
 export const fmtLong = (d: Date) => longFmt.format(d);
 export const fmtTime = (iso?: string | null) => (iso ? timeFmt.format(new Date(iso)) : '—');
+
+/** "11 Ekim Pazar 20:00" — Karar Saati oturumunu anmak için. */
+export const fmtSession = (iso?: string | null) => (iso ? sessionFmt.format(new Date(iso)) : '—');
+export const fmtNumber = (n: number) => numberFmt.format(n);
+/** Türkçe yüzde: "%20". */
+export const fmtPercent = (part: number, whole: number) => `%${Math.round((part / whole) * 100)}`;
 
 export const shortHash = (h?: string | null) => (h ? h.slice(0, 8) : '········');
 

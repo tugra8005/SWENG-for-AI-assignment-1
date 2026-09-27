@@ -1,6 +1,6 @@
 """Tohum veriyi kurar ve sekiz demo senaryosunun README'de anlatılan sonuçlarını doğrular."""
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import select
@@ -8,7 +8,7 @@ from sqlalchemy import select
 from mesveret.context import Ctx
 from mesveret.db.models import Message, Proposal, SessionItem, User
 from mesveret.errors import Conflict, DomainError, Forbidden
-from mesveret.services import cellar, decision_hour, delegation, proposals, seed
+from mesveret.services import cellar, decision_hour, delegation, proposals, scheduler, seed
 from mesveret.services.proposals import ProposalInput
 
 
@@ -44,6 +44,8 @@ def test_scenario_1_istanbul(seeded):
     ids = seed.scenario_ids(ctx)
     p = ctx.db.get(Proposal, ids["istanbul"])
     assert p.narrowings[0]["message"] == "Bu karar yalnızca İstanbul payını etkiler (4.000 puan)."
+    assert (p.narrowings[0]["share"], p.narrowings[0]["total"]) == (4000, 20000)
+    assert proposals.effective_title(p) == "Etkinlik bütçesinin İstanbul payı"
     with pytest.raises(DomainError) as err:
         proposals.open_proposal(ctx, user(ctx, "ayse"), ProposalInput(
             type="KONU", title="Toplantı salonu yalnızca İstanbul'a",
@@ -147,3 +149,31 @@ def test_advancing_time_accepts_istanbul_proposal(seeded):
     scheduler.tick(ctx.at(target), target)
     ctx.db.expire_all()
     assert ctx.db.get(Proposal, ids["istanbul"]).status == "ACCEPTED"
+
+
+def test_scenario_9_late_general_proposal_waits_for_maturity(seeded):
+    ctx = seeded
+    ids = seed.scenario_ids(ctx)
+    late = ctx.db.get(Proposal, ids["olgunlasma"])
+    assert late.created_at == seed.SEED_NOW - timedelta(minutes=10)
+    maturity = proposals.proposal_view(ctx, late, None)["maturity"]
+    assert maturity["klass"] == "genel" and maturity["mature"] is False
+    assert maturity["first_session_at"] == datetime(2026, 10, 11, 17, 0, tzinfo=UTC)
+
+    session = decision_hour.open_session(ctx)
+    included = {i.proposal_id for i in decision_hour.items_of(ctx, session)}
+    voting = {ids[k] for k in ("metro", "yonetmelik_60", "yonetmelik_67", "silme", "kapanis",
+                               "baskin", "hatif")}
+    assert voting <= included  # tohumdaki senaryo önerileri olgunlaşmış
+    assert ids["olgunlasma"] not in included
+    later = ctx.at(session.closes_at)
+    decision_hour.close_session(later, session)
+    later.commit()
+
+    # Haftalık oturumlar: 4 Ekim'de hâlâ olgunlaşıyor, 11 Ekim'de oylanıyor.
+    target = datetime(2026, 10, 11, 18, 30, tzinfo=UTC)
+    scheduler.tick(later.at(target), target)
+    later.db.expire_all()
+    late = later.db.get(Proposal, ids["olgunlasma"])
+    s = decision_hour.get_session(later, late.session_id)
+    assert s.scheduled_for == datetime(2026, 10, 11, 17, 0, tzinfo=UTC)

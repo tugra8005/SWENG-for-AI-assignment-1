@@ -118,10 +118,14 @@ def open_session(
     )
     ctx.db.add(session)
     ctx.db.flush()
-    queued = ctx.db.execute(
-        select(Proposal).where(Proposal.status == "QUEUED", Proposal.queued_at <= ctx.now)
-        .order_by(Proposal.id)
-    ).scalars().all()
+    queued = [
+        p for p in ctx.db.execute(
+            select(Proposal).where(Proposal.status == "QUEUED", Proposal.queued_at <= ctx.now)
+            .order_by(Proposal.id)
+        ).scalars()
+        # Olgunlaşmamış öneri bu oturuma alınmaz; kuyrukta kalır ve sonraki uygun oturuma kayar.
+        if proposals.is_mature(ctx, p)
+    ]
     delegations = ctx.graph.delegations()
     items = [(p, _snapshot(ctx, session, p, delegations)) for p in queued]
     ctx.db.flush()
@@ -387,7 +391,9 @@ def status(ctx: Ctx) -> dict:
         "window_minutes": int(spec.window.total_seconds() // 60),
         "last_session": None if last is None else {"id": last.id, "closed_at": last.closed_at},
         "queued": [
-            {"id": p.id, "type": p.type, "title": p.title}
+            {"id": p.id, "type": p.type, "title": p.title,
+             "effective_title": proposals.effective_title(p),
+             "maturity": proposals.maturity(ctx, p)}
             for p in ctx.db.execute(select(Proposal).where(Proposal.status == "QUEUED")
                                     .order_by(Proposal.id)).scalars()
         ],

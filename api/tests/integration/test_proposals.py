@@ -53,7 +53,16 @@ def test_istanbul_budget_proposal_is_narrowed_to_its_share(client, ctx):
     })
     assert r.status_code == 201, r.text
     view = client.get(f"/proposals/{r.json()['id']}").json()
-    assert view["narrowings"][0]["message"] == "Bu karar yalnızca İstanbul payını etkiler (4.000 puan)."
+    n = view["narrowings"][0]
+    assert n["message"] == "Bu karar yalnızca İstanbul payını etkiler (4.000 puan)."
+    assert (n["share"], n["total"]) == (4000, 9000)
+    assert view["title"] == "Etkinlik bütçesinin tamamı İstanbul'a"
+    assert view["effective_title"] == "Etkinlik bütçesinin İstanbul payı"
+    [res] = view["resources"]
+    assert res["narrowed"] == {"scope": "İstanbul", "share": 4000, "total": 9000}
+    assert "Talep kaynağın tamamını hedefliyordu" in view["oracle_comment"]
+    [card] = client.get("/proposals", params={"state": "open"}).json()
+    assert card["effective_title"] == "Etkinlik bütçesinin İstanbul payı"
 
 
 def test_proposer_needs_vote_right_in_scope(ctx):

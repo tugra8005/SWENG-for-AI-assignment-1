@@ -85,6 +85,13 @@ def _articles() -> dict[str, Article]:
                 "Kapanış önerisine rakip karar metni eklenebilen süre."),
         Article("yeniden_acma", "sure", {"gun": 90},
                 "Karara bağlanmış konunun yeniden açılabilmesi için geçmesi gereken süre."),
+        Article("olgunlasma_dar", "sure", {"saat": 48},
+                "Tek bir nitelik kapsamına ya da yaprak alanın ilgi kapsamına sorulan öneri, "
+                "Karar Saati'nde oylanmadan önce en az bu kadar yayında kalır."),
+        Article("olgunlasma_genis", "sure", {"saat": 72},
+                "Daha geniş (yaprak olmayan alanın ilgi kapsamına sorulan) öneri için olgunlaşma."),
+        Article("olgunlasma_genel", "sure", {"gun": 7},
+                "Genel kapsamlı ve yönetmelik önerileri için olgunlaşma."),
         Article("mahzen_kapasite", "tamsayi", {"deger": 100},
                 "Mahzen'de yaşayan en fazla başlık sayısı; aşılınca en alttaki kalıcı silinir."),
         Article("mahzen_ust_sinir", "tamsayi", {"deger": 300},

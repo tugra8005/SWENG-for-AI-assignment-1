@@ -14,6 +14,10 @@ Senaryolar (README'de adım adım):
 6. Mahzen — ifşa oylaması, geçiş animasyonu, öneri taslağı.
 7. Baskın — art arda açılmış bağlantılı hesaplar işaretlenip dışlanır.
 8. Hâtif — etiket önerisi ve deterministik oy.
+9. Olgunlaşma — Karar Saati'nden 10 dakika önce açılan genel kapsamlı öneri 7 gün bekler.
+
+Oylanacak senaryo önerileri, son planlı oturumdan (Pazar 27 Eylül) sonra olgunlaşacak
+biçimde 21–22 Eylül'de açılır; böylece o oturumu kaçırıp kuyrukta bekliyor olmaları tutarlıdır.
 """
 
 from __future__ import annotations
@@ -68,8 +72,8 @@ RESOURCES = [
     ResourceInfo(
         "butce", ResourceKind.ORTAK, "Etkinlik bütçesi", "genel",
         divisible=True, division_type=ScopeSubtype.SEHIR,
-        shares={"sehir:istanbul": 4000, "sehir:ankara": 3000, "sehir:izmir": 2000,
-                "sehir:bursa": 1000},
+        shares={"sehir:istanbul": 4000, "sehir:ankara": 6000, "sehir:izmir": 5000,
+                "sehir:bursa": 5000},
         aliases=("bütçe", "etkinlik bütçe"),
     ),
     ResourceInfo("salon", ResourceKind.ORTAK, "Ortak toplantı salonu", "genel",
@@ -280,7 +284,7 @@ def _scenario_deletion(w: World) -> None:
          "Bu konuyu açanların hepsi cahil; bisikletliler trafiğin baş belası.", _t(days=13))
     _msg(w, "m_bis2", "hale", "bisiklet", "Eleştiri olur, hakaret olmaz.",
          _t(days=13, hours=-1))
-    w.at(_t(days=3), lambda c: w.ids.__setitem__("silme", proposals.open_proposal(
+    w.at(_t(days=8, hours=2), lambda c: w.ids.__setitem__("silme", proposals.open_proposal(
         c, w.users["hale"], ProposalInput(
             type="SILME", target_message_id=w.ids["troll"],
             body="Mesaj tartışmaya katkı sunmuyor, katılımcılara hakaret ediyor.",
@@ -294,7 +298,7 @@ def _scenario_closure(w: World) -> None:
     _msg(w, "m_park1", "burak", "parklar", "22:00 hem güvenli hem yeterli.", _t(days=10))
     _msg(w, "m_park2", "ilker", "parklar", "Yazın gece yarısına kadar açık kalmalı.",
          _t(days=10, hours=-3))
-    opened = _t(days=4)
+    opened = _t(days=8, hours=12)
     w.at(opened, lambda c: w.ids.__setitem__("kapanis", proposals.open_proposal(
         c, w.users["zeynep"], ProposalInput(
             type="KAPANIS", target_topic_id=w.ids["parklar"],
@@ -318,13 +322,13 @@ def _scenarios_voting(w: World) -> None:
         type="KONU", title="Gece metro seferleri",
         body="Metro hafta sonları gece de çalışsın; sefer aralıkları 20 dakika olsun.",
         area_id="ulasim", scope_id="genel",
-    ), _t(days=3, hours=6), ["vedat", "yasemin", "cansu"])
-    w.at(_t(days=2, hours=20), lambda c: w.ids.__setitem__("yonetmelik_60", proposals.open_proposal(
+    ), _t(days=8, hours=8), ["vedat", "yasemin", "cansu"])
+    w.at(_t(days=8), lambda c: w.ids.__setitem__("yonetmelik_60", proposals.open_proposal(
         c, w.users["dogan"], ProposalInput(
             type="YONETMELIK", article_key="red_bekleme", new_value={"gun": 45},
             body="Reddedilen önerilerin hemen geri gelmesini önlemek için süre uzasın.",
         )).id))
-    w.at(_t(days=2, hours=18), lambda c: w.ids.__setitem__("yonetmelik_67", proposals.open_proposal(
+    w.at(_t(days=7, hours=22), lambda c: w.ids.__setitem__("yonetmelik_67", proposals.open_proposal(
         c, w.users["ece"], ProposalInput(
             type="YONETMELIK", article_key="sessiz_onay_suresi", new_value={"saat": 36},
             body="Hafta sonu açılan önerileri kaçırmamak için sessiz onay 36 saat olsun.",
@@ -333,12 +337,12 @@ def _scenarios_voting(w: World) -> None:
         type="KONU", title="Etkinlik bütçesinin tamamı tek bir şehre",
         body="Bütçeyi bölmeyelim; tüm etkinlikler tek şehirde yapılsın.",
         area_id="kent", scope_id="genel", resource_ids=["butce"],
-    ), _t(days=2, hours=10), ["fatih", "gulsen", "harun"])
+    ), _t(days=7, hours=18), ["fatih", "gulsen", "harun"])
     _queued_by_objection(w, "hatif", "ipek", ProposalInput(
         type="KONU", title="Belgesel film gösterimleri",
         body="Her ay bir belgesel izleyip ardından belgesel üzerine konuşalım.",
         area_id="edebiyat", scope_id="genel",
-    ), _t(days=2, hours=4), ["kerem", "melis", "nevzat"])
+    ), _t(days=7, hours=12), ["kerem", "melis", "nevzat"])
 
 
 def _cellar(w: World) -> None:
@@ -404,6 +408,19 @@ def _scenario_istanbul(w: World) -> None:
             type="KONU", title="Etkinlik bütçesinin tamamı İstanbul'a",
             body="İstanbul'daki etkinlikler için tüm bütçe kullanılsın.",
             area_id="kent", scope_id="sehir:istanbul", resource_ids=["butce"],
+        )).id))
+
+
+def _scenario_maturation(w: World) -> None:
+    """9. Olgunlaşma: Genel kapsamlı yönetmelik önerisi Karar Saati'nden 10 dakika önce açılır.
+
+    Genel olgunlaşma süresi (7 gün) dolmadığı için bu oturuma alınmaz; 7 gün dolduktan sonraki
+    ilk oturuma (Pazar 11 Ekim) kayar. Oy planı yok.
+    """
+    w.at(_t(minutes=10), lambda c: w.ids.__setitem__("olgunlasma", proposals.open_proposal(
+        c, w.users["kerem"], ProposalInput(
+            type="YONETMELIK", article_key="musavir_esigi", new_value={"deger": 3},
+            body="Müşavir etiketi daha erken görünsün; eşik 3 havale olsun.",
         )).id))
 
 
@@ -506,6 +523,7 @@ def _build(ctx: Ctx) -> Iterator[str]:
     _cellar(w)
     _raiders(w)
     _scenario_istanbul(w)
+    _scenario_maturation(w)
     w.run(ctx)
     w.users["ayse"].cellar_warned_at = None  # sunumda Mahzen giriş uyarısı görünsün
     _vote_plan(ctx, w)
@@ -516,7 +534,7 @@ def _build(ctx: Ctx) -> Iterator[str]:
            f"Tüm tohum hesaplarının şifresi: {DEMO_PASSWORD}")
     yield "Senaryo önerileri: " + ", ".join(
         f"{k}=#{w.ids[k]}" for k in ("istanbul", "metro", "yonetmelik_60", "yonetmelik_67",
-                                     "silme", "kapanis", "baskin", "hatif"))
+                                     "silme", "kapanis", "baskin", "hatif", "olgunlasma"))
     yield f"Mahzen demo başlığı: #{w.ids['mahzen']}"
     yield "Sonraki adım: README'deki senaryolar (meşveret-dev run-karar-saati)."
 
@@ -531,6 +549,7 @@ def scenario_ids(ctx: Ctx) -> dict[str, int]:
         "kapanis": "Kapanış: Parkların kapanış saati",
         "baskin": "Etkinlik bütçesinin tamamı tek bir şehre",
         "hatif": "Belgesel film gösterimleri",
+        "olgunlasma": "Yönetmelik: musavir_esigi",
     }
     out = {}
     for key, title in titles.items():

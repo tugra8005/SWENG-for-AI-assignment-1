@@ -128,6 +128,10 @@ def run_karar_saati(
         _print_items(view)
         for line in out.get("problems", []):
             typer.echo(f"  ! {line}")
+        for q in out.get("maturing", []):
+            m = q["maturity"]
+            typer.echo(f"  ~ #{q['id']} {q['title']} — olgunlaşıyor ({m['label']}, "
+                       f"{m['hours']} saat); {_fmt(m['first_session_at'])} oturumunda oylanacak")
         if not close:
             typer.echo("Oyları arayüzden verin; kapatmak için: meşveret-dev run-karar-saati --close")
 

@@ -107,7 +107,11 @@ def oracle_comment(report: RuleReport, findings: Sequence[Finding], onto: Ontolo
     else:
         lines.append("Denetimler: " + "; ".join(f"{v.rule} — {v.message}" for v in report.violations))
     for n in report.narrowings:
-        lines.append(f"Daraltma: {n.message}")
+        scope = onto.scope(n.scope_id)
+        lines.append(
+            "Talep kaynağın tamamını hedefliyordu; seçmen kapsamı yalnızca "
+            f"{scope.name if scope else n.scope_id} payına karar verebilir, daraltma uygulandı."
+        )
     if not findings:
         lines.append("Etiketler uyumlu görünüyor.")
         lines.append("Oylamada verilecek oy: EVET (etiketler değişmezse).")

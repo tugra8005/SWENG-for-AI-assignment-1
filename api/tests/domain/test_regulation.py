@@ -91,6 +91,13 @@ def test_decision_hour_spec():
     assert spec.tz == "Europe/Istanbul"
 
 
+def test_maturation_articles():
+    reg = Regulation.defaults()
+    assert reg.duration("olgunlasma_dar") == timedelta(hours=48)
+    assert reg.duration("olgunlasma_genis") == timedelta(hours=72)
+    assert reg.duration("olgunlasma_genel") == timedelta(days=7)
+
+
 def test_every_default_validates():
     for key, article in DEFAULT_ARTICLES.items():
         assert validate_value(key, article.default) == article.default

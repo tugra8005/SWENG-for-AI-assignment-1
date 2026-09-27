@@ -18,6 +18,7 @@ import {
   Section,
   Tag,
 } from '@/components/paper';
+import { maturityLine, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { useClock } from '@/lib/clock';
 import { fmtDateTime, shortHash, TYPE_LABELS } from '@/lib/format';
@@ -49,7 +50,7 @@ function BallotItem({ item, onVoted }: { item: any; onVoted: () => void }) {
         <Muted style={{ fontSize: 13 }}>seçmen: {p.scope}</Muted>
       </View>
       <PressLink href={`/oneri/${p.id}`}>
-        <Text style={st.title}>{p.title}</Text>
+        <ProposalTitle title={p.title} effective={p.effective_title} style={st.title} />
       </PressLink>
       {item.narrowings?.map((n: any, i: number) => (
         <Text key={i} style={{ fontFamily: fonts.serifBold, color: paper.seal }}>{n.message}</Text>
@@ -135,13 +136,23 @@ export default function DecisionHour() {
         </Section>
       ) : (
         <Section title="Kuyruk" aside={<Kicker>{status?.queued.length ?? 0} öneri</Kicker>}>
-          {status?.queued.map((q: any) => (
-            <PressLink key={q.id} href={`/oneri/${q.id}`} style={st.queued}>
-              <Text style={st.no}>№{q.id}</Text>
-              <Tag>{TYPE_LABELS[q.type]}</Tag>
-              <Text style={[st.title, { fontSize: 17, flexShrink: 1 }]}>{q.title}</Text>
-            </PressLink>
-          ))}
+          {status?.queued.map((q: any) => {
+            const maturing = maturityLine(q.maturity);
+            return (
+              <PressLink key={q.id} href={`/oneri/${q.id}`} style={st.queued}>
+                <Text style={st.no}>№{q.id}</Text>
+                <Tag>{TYPE_LABELS[q.type]}</Tag>
+                <View style={{ flex: 1, minWidth: 180, gap: 2 }}>
+                  <ProposalTitle
+                    title={q.title}
+                    effective={q.effective_title}
+                    style={{ ...st.title, fontSize: 17, lineHeight: 22 }}
+                  />
+                  {maturing ? <Text style={st.maturing}>{maturing}</Text> : null}
+                </View>
+              </PressLink>
+            );
+          })}
           {status && status.queued.length === 0 ? <Muted>Kuyruk boş.</Muted> : null}
         </Section>
       )}
@@ -171,6 +182,7 @@ const st = StyleSheet.create({
   textOpt: { flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: paper.hairline, padding: 10 },
   box: { fontFamily: fonts.mono, fontSize: 20, color: paper.seal },
   commit: { fontFamily: fonts.mono, fontSize: 12, color: paper.seal, marginTop: 8 },
+  maturing: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 17, color: paper.seal },
   queued: {
     flexDirection: 'row',
     gap: 10,

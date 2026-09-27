@@ -72,7 +72,9 @@ def test_r2_subset_on_divisible_resource_is_narrowed_to_its_share():
     [n] = report.narrowings
     assert n.resource_id == "butce"
     assert n.share == 4000
+    assert n.total == 7000  # payların toplamı: kaynağın tamamı
     assert n.message == "Bu karar yalnızca İstanbul payını etkiler (4.000 puan)."
+    assert n.effect_title == "Etkinlik bütçesinin İstanbul payı"
 
 
 def test_r2_subset_on_indivisible_resource_is_rejected():

@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Kicker, Muted, PressLink, Tag } from '@/components/paper';
+import { maturityLine, ProposalTitle, type Maturity } from '@/components/proposal-title';
 import { useClock } from '@/lib/clock';
 import { fmtRemaining, STATUS_LABELS, TYPE_LABELS } from '@/lib/format';
 import { fonts, paper } from '@/theme/tokens';
@@ -11,6 +12,8 @@ export type ProposalSummary = {
   status: string;
   lane: string;
   title: string;
+  effective_title?: string | null;
+  maturity?: Maturity | null;
   proposer: string;
   scope: string;
   area_name: string | null;
@@ -23,6 +26,7 @@ export function ProposalRow({ p }: { p: ProposalSummary }) {
     p.deadline_at && (p.status === 'SILENT' || p.status === 'RIVAL_PERIOD')
       ? fmtRemaining(new Date(p.deadline_at).getTime() - now())
       : null;
+  const maturing = maturityLine(p.maturity);
   return (
     <PressLink href={`/oneri/${p.id}`} style={st.row}>
         <Text style={st.number}>№{p.id}</Text>
@@ -33,12 +37,13 @@ export function ProposalRow({ p }: { p: ProposalSummary }) {
               {STATUS_LABELS[p.status] ?? p.status}
             </Tag>
           </View>
-          <Text style={st.title}>{p.title}</Text>
+          <ProposalTitle title={p.title} effective={p.effective_title} style={st.title} />
           <Muted style={{ fontSize: 14 }}>
             {p.proposer} · {p.scope}
             {p.area_name ? ` · ${p.area_name}` : ''}
             {remaining ? ` · ${remaining}` : ''}
           </Muted>
+          {maturing ? <Text style={st.maturing}>{maturing}</Text> : null}
         </View>
     </PressLink>
   );
@@ -62,4 +67,5 @@ const st = StyleSheet.create({
   },
   number: { fontFamily: fonts.monoMedium, fontSize: 13, color: paper.seal, width: 44, paddingTop: 2 },
   title: { fontFamily: fonts.serifMedium, fontSize: 19, lineHeight: 24, color: paper.ink },
+  maturing: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 17, color: paper.seal },
 });

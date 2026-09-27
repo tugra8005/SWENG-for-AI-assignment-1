@@ -43,3 +43,12 @@ def post(ctx: Ctx, user: User, topic: Topic, text: str, reply_to: int | None = N
 def reload(ctx: Ctx, p: Proposal) -> Proposal:
     ctx.db.expire_all()
     return ctx.db.get(Proposal, p.id)
+
+
+def mature(ctx: Ctx, p: Proposal, days: int = 8) -> Proposal:
+    """Karar Saati testleri için: öneriyi olgunlaşmış olacak kadar geriye tarihler."""
+    p.created_at = p.created_at - timedelta(days=days)
+    if p.queued_at is not None:
+        p.queued_at = p.queued_at - timedelta(days=days)
+    ctx.db.commit()
+    return p

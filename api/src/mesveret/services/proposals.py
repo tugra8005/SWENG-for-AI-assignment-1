@@ -8,6 +8,7 @@ Yavaş şerit (Karar Saati): SILME, YONETMELIK, KAPANIS ve itiraz eşiğine ula�
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import UTC
 from typing import Any
 
 from sqlalchemy import func, select
@@ -24,6 +25,13 @@ from mesveret.db.models import (
     User,
 )
 from mesveret.domain.diff import word_diff
+from mesveret.domain.maturation import LABELS as MATURITY_LABELS
+from mesveret.domain.maturation import (
+    first_session_at,
+    matures_at,
+    maturity_class,
+    maturity_duration,
+)
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.oracle import label_check, oracle_comment
 from mesveret.domain.regulation import DEFAULT_ARTICLES, RegulationError, validate_value
@@ -314,7 +322,8 @@ def _start_lane(ctx: Ctx, p: Proposal) -> None:
 
 def _finish_opening(ctx: Ctx, p: Proposal, report: RuleReport) -> None:
     p.narrowings = [
-        {"resource_id": n.resource_id, "scope_id": n.scope_id, "share": n.share, "message": n.message}
+        {"resource_id": n.resource_id, "scope_id": n.scope_id, "share": n.share,
+         "total": n.total, "message": n.message, "effect_title": n.effect_title}
         for n in report.narrowings
     ]
     findings = label_check(oracle_text(p), p.area_id, p.scope_id, p.resource_ids, ctx.graph)
@@ -551,17 +560,53 @@ def reject(ctx: Ctx, p: Proposal, note: str) -> None:
     ctx.db.flush()
 
 
+# --- olgunlaşma ---------------------------------------------------------------------------------
+
+
+def maturity(ctx: Ctx, p: Proposal) -> dict[str, Any]:
+    """Önerinin Karar Saati'nde oylanabilmesi için olgunlaşma durumu (bkz. domain.maturation)."""
+    klass = maturity_class(ProposalType(p.type), ctx.graph.scope(p.scope_id), ctx.graph)
+    at = matures_at(ProposalType(p.type), created_at=p.created_at, queued_at=p.queued_at,
+                    klass=klass, reg=ctx.reg).astimezone(UTC)
+    return {
+        "klass": klass.value,
+        "label": MATURITY_LABELS[klass],
+        "hours": int(maturity_duration(klass, ctx.reg).total_seconds() // 3600),
+        "matures_at": at,
+        "mature": at <= ctx.now,
+        "first_session_at": first_session_at(at, ctx.now, ctx.reg.decision_hour()).astimezone(UTC),
+    }
+
+
+def is_mature(ctx: Ctx, p: Proposal) -> bool:
+    return maturity(ctx, p)["mature"]
+
+
 # --- görünümler ---------------------------------------------------------------------------------
 
 
-def _resource_view(ctx: Ctx, rid: str) -> dict:
+def _resource_view(ctx: Ctx, rid: str, narrowings: list[dict]) -> dict:
     r = ctx.graph.resource(rid)
-    return {"id": rid, "name": r.name if r else rid, "kind": str(r.kind) if r else None}
+    view: dict[str, Any] = {"id": rid, "name": r.name if r else rid,
+                            "kind": str(r.kind) if r else None, "narrowed": None}
+    n = next((n for n in narrowings if n["resource_id"] == rid), None)
+    if n is not None:
+        view["narrowed"] = {"scope": ontology.scope_label(ctx, n["scope_id"]),
+                            "share": n["share"], "total": n.get("total")}
+    return view
+
+
+def effective_title(p: Proposal) -> str | None:
+    """R2 daraltması varsa talebin yerine etkiyi anlatan başlık (kaynak adı + kapsamın payı)."""
+    titles = [n["effect_title"] for n in p.narrowings or [] if n.get("effect_title")]
+    return " ve ".join(titles) if titles else None
 
 
 def summary(ctx: Ctx, p: Proposal, names: dict[str, str]) -> dict:
     return {
         "id": p.id, "type": p.type, "status": p.status, "lane": p.lane, "title": p.title,
+        "effective_title": effective_title(p),
+        "maturity": maturity(ctx, p) if p.status in ("QUEUED", "RIVAL_PERIOD") else None,
         "proposer": names.get(p.proposer_id), "scope": ontology.scope_label(ctx, p.scope_id),
         "scope_id": p.scope_id, "area_id": p.area_id, "area_name": ontology.area_name(ctx, p.area_id)
         if p.area_id else None, "created_at": p.created_at, "deadline_at": p.deadline_at,
@@ -590,7 +635,7 @@ def proposal_view(ctx: Ctx, p: Proposal, viewer: User | None) -> dict:
     body = summary(ctx, p, names)
     body.update({
         "body": p.body, "payload": p.payload, "narrowings": p.narrowings,
-        "resources": [_resource_view(ctx, rid) for rid in p.resource_ids],
+        "resources": [_resource_view(ctx, rid, p.narrowings or []) for rid in p.resource_ids],
         "oracle_comment": p.oracle_comment, "oracle_findings": p.oracle_findings,
         "queued_at": p.queued_at, "session_id": p.session_id, "outcome_note": p.outcome_note,
         "ledger_hash": p.ledger_hash,

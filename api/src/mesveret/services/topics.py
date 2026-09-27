@@ -257,8 +257,12 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
     active = ctx.db.execute(
         select(Proposal).where(Proposal.status.in_(ACTIVE_STATUSES)).order_by(Proposal.id)
     ).scalars().all()
+    from mesveret.services import proposals  # proposals bu modülü içe aktarır
+
     related = [
-        {"id": p.id, "type": p.type, "status": p.status, "title": p.title}
+        {"id": p.id, "type": p.type, "status": p.status, "title": p.title,
+         "effective_title": proposals.effective_title(p),
+         "maturity": proposals.maturity(ctx, p) if p.status in ("QUEUED", "RIVAL_PERIOD") else None}
         for p in active
         if p.payload.get("topic_id") == topic.id or p.payload.get("parent_topic_id") == topic.id
     ]

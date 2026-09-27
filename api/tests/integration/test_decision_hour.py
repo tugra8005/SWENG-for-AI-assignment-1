@@ -8,24 +8,24 @@ from mesveret.domain.commit import verify_commit
 from mesveret.errors import Conflict, DomainError, Forbidden
 from mesveret.services import decision_hour, delegation, ontology, proposals
 from mesveret.services.proposals import ProposalInput
-from tests.integration.helpers import advance, headers_for, open_topic, post, reload
+from tests.integration.helpers import advance, headers_for, mature, open_topic, post, reload
 from tests.integration.world import make_user
 
 
 def queued_regulation(ctx, user, key="red_bekleme", value=None):
-    return proposals.open_proposal(ctx, user, ProposalInput(
+    return mature(ctx, proposals.open_proposal(ctx, user, ProposalInput(
         type="YONETMELIK", article_key=key, new_value=value or {"gun": 45},
-    ))
+    )))
 
 
 def queued_konu(ctx, user, title="Metro gece de çalışsın", area="ulasim", scope="genel",
-                body="Metro gece seferleri."):
+                body="Metro gece seferleri.", matured=True):
     p = proposals.open_proposal(ctx, user, ProposalInput(
         type="KONU", title=title, body=body, area_id=area, scope_id=scope,
     ))
     p.status, p.lane, p.queued_at = "QUEUED", "SLOW", ctx.now
     ctx.db.commit()
-    return p
+    return mature(ctx, p) if matured else p
 
 
 def item_of(ctx, session, p) -> SessionItem:
@@ -187,7 +187,9 @@ def test_deletion_by_vote_hides_message(ctx, client):
     a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
     topic = open_topic(ctx, a, title="Bisiklet yolları", area="ulasim")
     msg = post(ctx, a, topic, "Hakaret içeren mesaj.")
-    p = proposals.open_proposal(ctx, b, ProposalInput(type="SILME", target_message_id=msg.id))
+    p = mature(ctx, proposals.open_proposal(ctx, b, ProposalInput(
+        type="SILME", target_message_id=msg.id,
+    )))
     session = decision_hour.open_session(ctx)
     decision_hour.cast_vote(ctx, b, p.id, True)
     close(ctx, session)
@@ -210,7 +212,7 @@ def _closure_with_three_texts(ctx):
     proposals.add_rival(ctx, c, p.id, "Parklar 24:00'te kapansın.")
     later = advance(ctx, timedelta(hours=49))
     texts = [t.id for t in proposals.closure_texts(later, reload(later, p))]
-    return later, (a, b, c), topic, reload(later, p), texts
+    return later, (a, b, c), topic, mature(later, reload(later, p)), texts
 
 
 def test_closure_approval_vote_and_dissent(ctx, client):
@@ -295,9 +297,9 @@ def test_oracle_votes_deterministically(ctx):
 # --- takvim ------------------------------------------------------------------------------------------
 
 
-def test_weekly_session_opens_and_closes_on_schedule(ctx):
+def test_weekly_sessions_open_on_schedule_and_wait_for_maturity(ctx):
     a = make_user(ctx, "aylin")
-    p = queued_konu(ctx, a)
+    p = queued_konu(ctx, a, matured=False)  # Salı 10:00'da kuyruğa girdi; genel: 7 gün
     later = advance(ctx, timedelta(days=6))  # Salı 10:00 → Pazartesi 10:00
     sessions = later.db.execute(select(DecisionSession)).scalars().all()
     assert len(sessions) == 1
@@ -305,8 +307,10 @@ def test_weekly_session_opens_and_closes_on_schedule(ctx):
     assert s.status == "CLOSED"
     assert s.opened_at == datetime(2026, 10, 4, 17, 0, tzinfo=UTC)
     assert s.closes_at - s.opened_at == timedelta(hours=1)
-    # Kimse oy vermedi; yalnızca Hâtif'in EVET oyu sayıldı ve öneri geçti (bkz. Bilinçli açıklar).
+    assert reload(later, p).status == "QUEUED"  # olgunlaşmadığı için 4 Ekim'e alınmadı
+    later = advance(later, timedelta(days=7))  # 11 Ekim oturumu da geçti
     item = later.db.execute(select(SessionItem).where(SessionItem.proposal_id == p.id)).scalar_one()
+    # Kimse oy vermedi; yalnızca Hâtif'in EVET oyu sayıldı ve öneri geçti (bkz. Bilinçli açıklar).
     assert (item.result["yes"], item.result["cast"]) == (1, 1)
     assert reload(later, p).status == "ACCEPTED"
 
