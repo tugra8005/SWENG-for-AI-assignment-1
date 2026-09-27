@@ -23,13 +23,23 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
+from sqlalchemy import text as sql_text
 
 from mesveret import clock
 from mesveret.context import Ctx
 from mesveret.db.models import DevVotePlan, Proposal, SchedulerState, Topic, User
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.scopes import ScopeSubtype
-from mesveret.services import auth, cellar, delegation, ontology, oracle, proposals, topics
+from mesveret.services import (
+    auth,
+    cellar,
+    delegation,
+    ontology,
+    oracle,
+    proposals,
+    scheduler,
+    topics,
+)
 from mesveret.services.proposals import ProposalInput
 
 SEED_NOW = datetime(2026, 9, 29, 7, 0, tzinfo=UTC)  # Salı 10:00 İstanbul
@@ -465,6 +475,18 @@ def run(ctx: Ctx, *, reset: bool = False) -> Iterator[str]:
     elif ctx.db.execute(select(User.id).limit(1)).first():
         yield "Veritabanı boş değil; yeniden kurmak için: meşveret-dev seed --reset"
         return
+    # Zamanlayıcı (API içindeki arka plan iş parçacığı) tohum kurulurken araya girmesin:
+    # geçmiş tarihli öneriler adım adım kurulurken süresi "dolmuş" görünürler.
+    lock = ctx.db.get_bind().connect()
+    lock.execute(sql_text("SELECT pg_advisory_lock(:k)"), {"k": scheduler.TICK_LOCK_KEY})
+    try:
+        yield from _build(ctx)
+    finally:
+        lock.execute(sql_text("SELECT pg_advisory_unlock(:k)"), {"k": scheduler.TICK_LOCK_KEY})
+        lock.close()
+
+
+def _build(ctx: Ctx) -> Iterator[str]:
     clock.reset_to(ctx.db, SEED_NOW)
     ctx.db.commit()
     ctx = ctx.at(SEED_NOW)
