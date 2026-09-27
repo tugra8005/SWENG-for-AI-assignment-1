@@ -246,7 +246,8 @@ def test_deletion_goes_to_slow_lane_and_hides_content(ctx, client, ledger):
     ctx.db.commit()
     view = client.get(f"/topics/{topic.id}").json()
     deleted = next(m for m in view["messages"] if m["id"] == msg.id)
-    assert deleted == {"id": msg.id, "deleted_by_proposal_id": p.id}
+    assert set(deleted) == {"id", "deleted_by_proposal_id", "ledger_hash"}
+    assert deleted["deleted_by_proposal_id"] == p.id
     assert client.get(f"/messages/{msg.id}/history").status_code == 410
     texts = [r["payload"].get("metin") for r in ledger.records]
     assert "Silinecek mesaj." in texts  # defterde duruyor

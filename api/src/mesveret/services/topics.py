@@ -186,9 +186,11 @@ def message_history(ctx: Ctx, message_id: int) -> dict:
 
 
 def _message_view(ctx: Ctx, msg: Message, names: dict[str, str]) -> dict:
-    if msg.deleted_by_proposal_id is not None:
-        return {"id": msg.id, "deleted_by_proposal_id": msg.deleted_by_proposal_id}
     v = current_version(ctx, msg)
+    if msg.deleted_by_proposal_id is not None:
+        # İçerik gizlenir; mühür (defter hash'i) kalır: silme gizlemedir, kayıttan kaldırmaz.
+        return {"id": msg.id, "deleted_by_proposal_id": msg.deleted_by_proposal_id,
+                "ledger_hash": v.ledger_hash}
     return {
         "id": msg.id,
         "author": names.get(msg.author_id),
