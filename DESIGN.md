@@ -318,7 +318,7 @@ Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçe
 
 **Algoritma** (seçmen anlık görüntüsü alınırken çalışır):
 
-1. Adaylar: katılım anı (`UYE.since`; GENEL'de kayıt anı; Mahzen'de başlıktaki ilk mesaj) anlık görüntüden en fazla `baskin_yeni_uye_suresi` önce olan seçmenler.
+1. Adaylar: katılım anı anlık görüntüden en fazla `baskin_yeni_uye_suresi` önce olan seçmenler. Katılım anı Meydan'da kapsam üyeliğinin başladığı andır (`UYE.since`; GENEL'de kayıt anı). Mahzen'de hesabın açılış anıdır: başlığa katılım o başlıktaki herkes için yenidir ve ortak başlık sinyali tüm katılımcıları birbirine bağlar. Başlığa katılım anı kullanılsaydı genç bir başlıktaki herkes baskın sayılırdı.
 2. Adaylar arasında, iki yönlü toplam ağırlığı en az `baskin_min_agirlik` olan kenarlardan yönsüz bir graf kurulur.
 3. Bağlı bileşenler bulunur. Bir bileşen şu üç koşulu birlikte sağlıyorsa işaretlenir:
    - boyutu en az `baskin_min_kume`,
