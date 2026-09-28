@@ -179,13 +179,19 @@ Tüm eşikler ve süreler `YonetmelikMaddesi` düğümlerinde durur. Kod bunlar�
 | `IK-2` | Hakaret ve tehdit | Kişiyi ya da grubu aşağılayan söz, küfür, zarar verme tehdidi. Sert eleştiri hakaret değildir |
 | `IK-3` | Başkasının kişisel bilgilerini ifşa etme | Başkasının telefonu, adresi, kimlik numarası gibi bilgilerini rızası olmadan paylaşmak |
 
-"Konu dışı" gibi geniş bir kural bilerek yoktur: neyin konu dışı olduğunu çoğunluk belirler ve böyle bir kural, çoğunluğun beğenmediği her görüşü silmenin gerekçesi olur. İçerik kuralları diğer maddeler gibi YONETMELIK önerisiyle ve `yonetmelik_esigi` ile değişir (metin ve anahtar kelimeler); yeni kural ekleme ya da kural kaldırma yolu yoktur (bkz. §15).
+"Konu dışı" gibi geniş bir kural bilerek yoktur: neyin konu dışı olduğunu çoğunluk belirler ve böyle bir kural, çoğunluğun beğenmediği her görüşü silmenin gerekçesi olur. Tohumdaki bu dar küme bir başlangıçtır, sınır değildir. Kural kümesi de oylanır (bkz. §15):
+
+- **Değiştirme:** kuralın başlığı, metni ve anahtar kelimeleri YONETMELIK önerisiyle değişir.
+- **Ekleme:** YONETMELIK önerisi (`article_action: ekle`) yeni kuralın başlığını, metnini ve anahtar kelimelerini taşır. Kod (IK-<n>) öneri açılırken verilir: yürürlükteki, kaldırılmış ve önerilmiş kodların en büyüğünün bir fazlası. Reddedilen ekleme yeni bir kodla hemen geri gelemez; R6'nın hedef anahtarı kuralın başlığıdır.
+- **Kaldırma:** YONETMELIK önerisi (`article_action: kaldir`) yürürlükteki bir kuralı kaldırır. Kaldırılan kurala dayanan yeni silme önerisi R7'de reddedilir; kuyruktaki silme önerilerinde Hâtif HAYIR der (R7 oylama anında yeniden çalışır). Kaldırılan kodun geçmişi yönetmelik sayfasında kalır ve kod bir daha kullanılmaz; böylece eski sansür şeritlerindeki "IK-3 gereğince silindi" ifadesi başka bir kuralı göstermeye başlamaz.
+
+Üçü de diğer yönetmelik değişiklikleri gibi Genel kapsamda, yavaş şeritte, `yonetmelik_esigi` (2/3) ile oylanır. Parametre maddeleri eklenemez ve kaldırılamaz; yalnızca değerleri değişir, çünkü kod onları okur.
 
 Belgede verilen ilk 13 madde aynen alınmıştır. `mahzen_ifsa_esigi`, baskın ve etkileşim maddeleri belgenin "eşikler yönetmelik maddesi olarak durur" gereği eklenmiştir. `olgunlasma_*` maddeleri sonradan istenen olgunlaşma kuralından, `silme_esigi` ve içerik kuralları silmenin sıkılaştırılmasından gelir.
 
 **Değişiklik kuralları:**
 
-- Her madde yalnızca YONETMELIK önerisiyle, GENEL kapsamda, yavaş şeritte, `yonetmelik_esigi` ile değişir (R3).
+- Her madde yalnızca YONETMELIK önerisiyle, GENEL kapsamda, yavaş şeritte, `yonetmelik_esigi` ile değişir (R3). İçerik kuralı eklemek ve kaldırmak da buna dahildir; kural ekleme önerisinin ETKILER etiketi kural kümesidir (`madde:icerik_kurallari`).
 - `yonetmelik_esigi` maddesinin kendisi de aynı eşikle değişir; muafiyet yoktur (kendini koruma). Oylama o anki değerle yapılır.
 - Karar Saati penceresi açılırken tüm madde değerlerinin anlık görüntüsü alınır. O oturumda kabul edilen bir değişiklik bir sonraki oturumdan itibaren geçerlidir. Böylece aynı oturumdaki başka bir oylamanın eşiği sayım sırasında değişmez.
 
@@ -299,7 +305,7 @@ Hocanın ana şartı "tartışmalar silinmez"dir. Silme bu yüzden günlük bir 
 
 *Neden 2/3 ve gerekçe.* Basit çoğunlukla ve gerekçesiz silme, çoğunluğun rahatsız olduğu her görüşü oylamayla gizlemesine izin verir; bu, oylamayla işleyen bir sansürdür (çoğunluk sansürü). Önlem iki katmanlıdır:
 
-1. **Gerekçe, neyin silinebileceğini daraltır.** Silme ancak yönetmelikte yazılı, dar bir ihlale dayanabilir, ve ihlal metinde gösterilmelidir. "Yanlış", "konu dışı", "beğenmedim" silme gerekçesi değildir. Alıntı zorunluluğu tartışmayı görüşten ihlale çeker: seçmenler "bu görüş doğru mu?" diye değil, "bu cümle hakaret mi?" diye oy verir.
+1. **Gerekçe, neyin silinebileceğini daraltır.** Silme ancak yönetmelikte yazılı, dar bir ihlale dayanabilir, ve ihlal metinde gösterilmelidir. Kural kümesini genişletmek (kural eklemek ya da metnini genişletmek) de bir yönetmelik değişikliğidir ve 2/3 ister (§5). "Yanlış", "konu dışı", "beğenmedim" silme gerekçesi değildir. Alıntı zorunluluğu tartışmayı görüşten ihlale çeker: seçmenler "bu görüş doğru mu?" diye değil, "bu cümle hakaret mi?" diye oy verir.
 2. **2/3, kimin silebileceğini daraltır.** Konu açmak ve bir fikri kabul etmek geri alınabilir kararlardır (yeniden açma, yeni öneri). Silme ise bir sesi tartışmadan çıkarır ve çoğunlukla azınlığın sesidir. Nitelikli çoğunluk, silmeyi yalnızca geniş bir uzlaşının olduğu durumlarla sınırlar. Seçmenlerin üçte birinden fazlası bir içeriğin kalmasını istiyorsa, o içerik tartışmanın meşru bir parçası sayılır. Yönetmelik değişikliğiyle aynı eşik bilinçlidir: ikisi de oyun kuralına dokunur.
 
 Kendi mesajında yazarın rızası vardır. Silinen ses, silinmesini isteyen sestir; çoğunluk sansürü riski yoktur. Bu yüzden basit çoğunluk yeter. Oylama yine de gerekir, çünkü başkalarının verdiği yanıtlar o mesaja dayanır (bkz. §15).
@@ -492,7 +498,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Alıntının eşleşmesi | Büyük/küçük harf, noktalama ve kesme işareti farkı yok sayılır; kelimeler bütün ve art arda olmalı |
 | Kendi içeriği istisnası | Yalnızca mesajlar için (açılış mesajı dahil). Konu silme hiçbir zaman "kendi" sayılmaz. Kendi mesajında kural ve alıntı isteğe bağlıdır; verilirse doğrulanır |
 | R7'nin oylama anında yeniden çalışması | Hedefin güncel metniyle; yazar ihlal eden kısmı düzeltirse Hâtif HAYIR der |
-| Yeni içerik kuralı eklemek | Yol yok; mevcut kuralların metni ve anahtar kelimeleri YONETMELIK ile değişir |
+| İçerik kuralı eklemek ve kaldırmak | YONETMELIK önerisiyle ve `yonetmelik_esigi` ile (kullanıcı kararı). Kod öneri açılırken verilir, kaldırılan kod yeniden kullanılmaz; eklemede R6 hedefi kuralın başlığıdır. Bir kuralı değiştiren öneri kabul anında kural kaldırılmışsa uygulanmaz |
 | Etki başlığının üretimi | Kaynak adının tamlayan hâli + kapsam adı + "payı". Tamlayan eki ünlü uyumuyla ve kaynaştırma ünsüzüyle eklenir; ünsüz yumuşaması yapılmaz ("kitap" → "kitapın"), kaynak adları buna göre seçilir |
 
 ## 15. Bilinçli açıklar
@@ -518,7 +524,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 19. **Olgunlaşma acil kararları geciktirir.** Genel kapsamlı bir öneri en az 7 gün bekler; olgunlaşma Pazar oturumundan hemen sonra dolarsa bu neredeyse iki haftaya çıkar. Acil durumlar için hızlandırılmış bir yol yoktur. Süreler yönetmelik maddesidir ve oylamayla kısaltılabilir, ama kısaltma önerisi de 7 gün olgunlaşır. Ayrıca itiraz bir erteleme aracına dönüşebilir: hızlı şeritteki bir öneriye eşik kadar itiraz eden azınlık, onu en az 48 saat, genel kapsamda en az 7 gün geciktirir.
 20. **Hâtif'in içerik denetimi kelimeye bakar, anlama bakmaz.** Anahtar kelime kullanmadan yapılan hakaret (ima, alay, küçümseme) Hâtif'ten HAYIR alır. Bir hakaret kelimesini eleştirmek için anan mesaj ("'cahil' demek yanlış") EVET alabilir. Hâtif tek bir oydur ve gerekçesini açıkça yazar; karar seçmenlerindir.
 21. **2/3 gerçek bir hakareti de koruyabilir.** Seçmenlerin üçte birinden fazlası bir içeriğin kalmasını isterse, gerçekten kural ihlali olsa bile içerik görünür kalır (senaryo 4'te %60 ile silinemeyen hakaret). Reddedilen silme `red_bekleme` süresince yeniden açılamaz. Bu bilinçli bir ödünleşimdir: yayında kalan bir hakaretin zararı, çoğunluğun azınlık görüşlerini silebilmesinin zararından küçük sayılmıştır.
-22. **İçerik kuralları oylamayla genişletilebilir.** Yeni kural eklenemez, ama mevcut bir kuralın metni ve anahtar kelimeleri `yonetmelik_esigi` (2/3) ile değişebilir. 2/3'lük bir çoğunluk IK-1'in metnini "konu dışı iletiler" kapsayacak biçimde genişletebilir. Dar kural koruması yalnızca eşik kadar güçlüdür.
+22. **İçerik kuralları oylamayla genişletilebilir ya da çoğaltılabilir.** 2/3'lük bir çoğunluk mevcut bir kuralın metnini genişletebilir (IK-1'i "konu dışı iletiler"i kapsayacak biçimde) ya da doğrudan geniş bir kural ekleyebilir ("IK-4 Konu dışı"). Aynı çoğunluk, silmeleri engelleyen bir kuralı da kaldırabilir. Tohumdaki dar küme bir tavsiyedir, güvence değildir: çoğunluk sansürüne karşı koruma, kuralların dar olmasından değil, kural kümesini değiştirmenin 2/3 istemesinden gelir. Dar kural koruması yalnızca `yonetmelik_esigi` kadar güçlüdür; bkz. 10. madde (eşik kilitleme).
 23. **Kendi mesajını silmek bağlamı bozar.** Yazar kendi mesajını basit çoğunlukla gizleyebilir; ona verilen yanıtlar bağlamsız kalır, ve yazar sonradan kendisini bağlayan bir sözünü de gizleyebilir. İçerik defterde kalır; sansür şeridi silmenin yazarın isteğiyle olduğunu gösterir.
 
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
@@ -576,6 +582,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Neo4j graf deposu (bellek içiyle aynı sözleşme) | `api/tests/graph_contract.py` (`test_graph_memory.py`, `tests/integration/test_graph_neo4j.py`) |
 | Olgunlaşma: sınıflar, sürenin başladığı an, sonraki oturuma kayma | `api/tests/domain/test_maturation.py`, `tests/integration/test_maturation.py`, `test_seed.py::test_scenario_9_late_general_proposal_waits_for_maturity` |
 | Daralmanın sunumu: pay/toplam, etki başlığı, Hâtif satırı | `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_seed.py::test_scenario_1_istanbul` |
+| İçerik kuralı ekleme ve kaldırma: kod verme, kodun yeniden kullanılmaması, R6, kaldırılan kurala dayanan silme | `test_regulation.py`, `test_proposals.py::test_content_rule_can_be_added_by_regulation_vote`, `::test_content_rule_can_be_removed_and_its_code_is_never_reused`, `test_decision_hour.py::test_pending_deletion_citing_a_removed_rule_gets_oracle_no`, `graph_contract.py` |
 | Silme: içerik kuralları, R7 gerekçesi, 2/3 eşiği, kendi mesajı istisnası, H4, şeritteki kural | `test_regulation.py`, `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_decision_hour.py::test_deletion_needs_two_thirds_but_own_message_needs_simple_majority`, `test_seed.py::test_scenario_4_unjustified_deletion_is_rejected` |
 | Dokuz demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 

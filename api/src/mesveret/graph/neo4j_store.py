@@ -326,6 +326,10 @@ class Neo4jGraph:
             k=key, v=json.dumps(value, ensure_ascii=False, sort_keys=True),
         )
 
+    def delete_article(self, key: str) -> None:
+        # Düğüm kalır (geçmiş ilişkileri için); değeri olmayan madde yürürlükte sayılmaz.
+        self._run("MATCH (m:YonetmelikMaddesi {anahtar: $k}) REMOVE m.deger_json", k=key)
+
     # --- öneri, karar, diskur ---
     def record_proposal(
         self, proposal_id: int, type_: str, scope_id: str, resource_ids: list[str], status: str

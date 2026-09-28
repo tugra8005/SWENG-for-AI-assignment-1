@@ -133,3 +133,18 @@ def test_content_rule_is_a_text_article_that_validates():
                 {**value, "anahtar_kelimeler": "aptal"}):
         with pytest.raises(RegulationError):
             validate_value("IK-2", bad)
+
+
+def test_content_rules_can_be_added_and_removed_as_data():
+    values = dict(REG.values)
+    del values["IK-3"]
+    values["IK-10"] = {"baslik": "Dolandırıcılık", "metin": "Sahte bağış ya da yatırım çağrısı.",
+                       "anahtar_kelimeler": ["bağış", "yatırım"]}
+    values["IK-4"] = {"baslik": "Tehlikeli sağlık tavsiyesi", "metin": "İlaç bırakma çağrısı.",
+                      "anahtar_kelimeler": ["ilacı bırak"]}
+    rules = Regulation(values).content_rules()
+    assert list(rules) == ["IK-1", "IK-2", "IK-4", "IK-10"]  # numara sırasıyla
+    assert validate_value("IK-10", values["IK-10"])["baslik"] == "Dolandırıcılık"
+    for bad_key in ("IK-", "IK-x", "ik-4", "IK-04x"):
+        with pytest.raises(RegulationError):
+            validate_value(bad_key, values["IK-10"])

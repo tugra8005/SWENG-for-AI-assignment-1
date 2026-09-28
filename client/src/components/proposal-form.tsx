@@ -25,6 +25,8 @@ export type FormContext = {
   parent?: string;
   article?: string;
   reopen?: string;
+  /** YONETMELIK: 'degistir' (varsayılan), 'ekle' (yeni içerik kuralı), 'kaldir' (içerik kuralı) */
+  action?: string;
 };
 
 function Chips<T extends string>({
@@ -121,6 +123,21 @@ function ValueEditor({ article, value, onChange }: { article: any; value: any; o
       </View>
     );
   }
+  if (kind === 'icerik_kurali') {
+    const v = value ?? article.value ?? { baslik: '', metin: '', anahtar_kelimeler: [] };
+    return (
+      <View>
+        <Field label="Kuralın başlığı" value={v.baslik} onChangeText={(t) => onChange({ ...v, baslik: t })} />
+        <Field label="Kuralın metni" value={v.metin} multiline onChangeText={(t) => onChange({ ...v, metin: t })} />
+        <Field
+          label="Anahtar kelimeler (virgülle ayırın)"
+          value={(v.anahtar_kelimeler ?? []).join(',')}
+          onChangeText={(t) => onChange({ ...v, anahtar_kelimeler: t.split(',') })}
+          hint="Hâtif, bu kurala dayanan silme önerilerinde bu kelimeleri alıntıda arar."
+        />
+      </View>
+    );
+  }
   if (kind === 'tamsayi' || kind === 'sayi') {
     const v = value ?? article.value;
     return (
@@ -184,9 +201,10 @@ export function ProposalForm({
   const currentText = history.data?.versions?.at(-1)?.text ?? '';
   // Kendi mesajının silinmesi: yazarın rızası; gerekçe gerekmez, basit çoğunluk yeter.
   const ownMessage = type === 'SILME' && !!ctx.message && !!me && history.data?.author === me.nickname;
-  const contentRules = (regulation.data ?? []).filter((a) => a.kind === 'icerik_kurali');
+  const contentRules = (regulation.data ?? []).filter((a) => a.kind === 'icerik_kurali' && a.value);
   const deletionRatio = regulation.data?.find((a) => a.key === 'silme_esigi')?.value?.oran ?? '2/3';
   const article = regulation.data?.find((a) => a.key === articleKey);
+  const regAction = type === 'YONETMELIK' ? (ctx.action ?? 'degistir') : null;
   const needsLabels = (type === 'KONU' && !ctx.reopen) || type === 'ALT_KONU';
   const areaOptions = useMemo(() => {
     // Ağaç sırası (derinlik öncelikli), girintili.
@@ -215,7 +233,13 @@ export function ProposalForm({
       Object.assign(payload, { content_rules: rules, excerpt });
     }
     if (type === 'KAPANIS') payload.target_topic_id = Number(ctx.topic);
-    if (type === 'YONETMELIK') Object.assign(payload, { article_key: articleKey, new_value: newValue ?? article?.value });
+    if (type === 'YONETMELIK') {
+      let value = regAction === 'kaldir' ? null : newValue ?? article?.value;
+      if (value && Array.isArray(value.anahtar_kelimeler)) {
+        value = { ...value, anahtar_kelimeler: value.anahtar_kelimeler.map((k: string) => k.trim()).filter(Boolean) };
+      }
+      Object.assign(payload, { article_action: regAction, article_key: articleKey, new_value: value });
+    }
     try {
       const res = await api(draftId ? `/proposals/${draftId}/submit` : '/proposals', {
         method: 'POST',
@@ -296,12 +320,37 @@ export function ProposalForm({
         />
       ) : null}
 
-      {type === 'YONETMELIK' ? (
+      {regAction === 'ekle' ? (
+        <View>
+          <Muted style={{ marginBottom: 10 }}>
+            Yeni içerik kuralının kodu (IK-…) öneri açılırken verilir. Kural dar olmalı: silme ancak
+            yazılı bir ihlale dayanabilir, &quot;konu dışı&quot; gibi geniş kurallar çoğunluğun beğenmediği
+            görüşü silmenin gerekçesine dönüşür.
+          </Muted>
+          <ValueEditor article={{ kind: 'icerik_kurali', value: null }} value={newValue} onChange={setNewValue} />
+        </View>
+      ) : null}
+
+      {regAction === 'kaldir' && article?.value ? (
+        <InfoNotice>
+          <Kicker>Kaldırılması önerilen kural</Kicker>
+          <Body>
+            <Text style={{ fontFamily: fonts.monoBold, color: paper.seal }}>{article.key}</Text> {article.value.baslik}
+          </Body>
+          <Muted>{article.value.metin}</Muted>
+          <Muted style={{ marginTop: 6 }}>
+            Kural kaldırılırsa ona dayanan yeni silme önerileri R7&apos;de reddedilir; bekleyen önerilerde
+            Hâtif HAYIR der. Kodu bir daha kullanılmaz.
+          </Muted>
+        </InfoNotice>
+      ) : null}
+
+      {regAction === 'degistir' ? (
         <View>
           <Choice
             label="Madde"
             value={articleKey}
-            options={(regulation.data ?? []).map((a) => ({ value: a.key, label: a.key }))}
+            options={(regulation.data ?? []).filter((a) => a.value).map((a) => ({ value: a.key, label: a.key }))}
             onChange={(k) => {
               setArticleKey(k);
               setNewValue(null);

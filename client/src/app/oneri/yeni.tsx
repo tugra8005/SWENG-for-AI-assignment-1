@@ -23,6 +23,7 @@ export default function NewProposal() {
     parent?: string;
     article?: string;
     reopen?: string;
+    action?: string;
   }>();
   const { me } = useAuth();
   const type = params.type ?? 'KONU';
@@ -30,14 +31,22 @@ export default function NewProposal() {
   return (
     <Page>
       <Kicker>İlan taslağı</Kicker>
-      <H1>{params.reopen ? 'Yeniden açma önerisi' : `${TYPE_LABELS[type] ?? type} önerisi`}</H1>
+      <H1>
+        {params.reopen
+          ? 'Yeniden açma önerisi'
+          : params.action === 'ekle'
+            ? 'İçerik kuralı ekleme önerisi'
+            : params.action === 'kaldir'
+              ? 'İçerik kuralı kaldırma önerisi'
+              : `${TYPE_LABELS[type] ?? type} önerisi`}
+      </H1>
       <Muted>{LANE_NOTE[type]}</Muted>
       <Rule double />
       {!me ? (
         <InfoNotice>Öneri açmak için giriş yapın.</InfoNotice>
       ) : (
         <View>
-          {!params.topic && !params.message && !params.parent && !params.reopen ? (
+          {!params.topic && !params.message && !params.parent && !params.reopen && !params.action ? (
             <Choice
               label="Tür"
               value={type}

@@ -34,7 +34,12 @@ from mesveret.domain.maturation import (
 )
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.oracle import ContentCheck, content_check, label_check, oracle_comment
-from mesveret.domain.regulation import DEFAULT_ARTICLES, RegulationError, validate_value
+from mesveret.domain.regulation import (
+    CONTENT_RULE_KIND,
+    RegulationError,
+    article_kind,
+    validate_value,
+)
 from mesveret.domain.rules import (
     ProposalDraft,
     RuleContext,
@@ -72,6 +77,8 @@ class ProposalInput:
     # SILME: dayanılan içerik kuralları (IK-1…) ve kuralı ihlal eden kısım (metinden alıntı).
     content_rules: list[str] = field(default_factory=list)
     excerpt: str = ""
+    # YONETMELIK: "degistir" (değer), "ekle" (yeni içerik kuralı), "kaldir" (içerik kuralı)
+    article_action: str = "degistir"
 
 
 @dataclass
@@ -230,21 +237,7 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
         )
 
     if t is ProposalType.YONETMELIK:
-        key = inp.article_key or ""
-        if key not in DEFAULT_ARTICLES:
-            raise DomainError("Böyle bir yönetmelik maddesi yok.")
-        try:
-            new_value = validate_value(key, inp.new_value or {})
-        except RegulationError as exc:
-            raise DomainError(str(exc)) from exc
-        old_value = ctx.graph.articles().get(key)
-        if new_value == old_value:
-            raise DomainError("Önerilen değer mevcut değerle aynı.")
-        return Prepared(
-            t, _title(inp.title or f"Yönetmelik: {key}"), _body(inp.body, required=False), None,
-            inp.scope_id or GENERAL_SCOPE_ID, [regulation.article_resource_id(key)],
-            f"MADDE:{key}", {"article_key": key, "old_value": old_value, "new_value": new_value},
-        )
+        return _prepare_regulation(ctx, inp)
 
     # KAPANIS
     topic = _live_topic(ctx, inp.target_topic_id)
@@ -264,6 +257,55 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
         t, _title(inp.title or f"Kapanış: {topic.title}"), _body(inp.body, label="Karar metni"),
         topic.area_id, inp.scope_id or topic.owner_scope_id, [topic.resource_id],
         f"KAPANIS:{topic.id}", {"topic_id": topic.id},
+    )
+
+
+def _prepare_regulation(ctx: Ctx, inp: ProposalInput) -> Prepared:
+    action = inp.article_action or "degistir"
+    if action not in regulation.ACTIONS:
+        raise DomainError("Yönetmelik işlemi 'degistir', 'ekle' ya da 'kaldir' olmalı.")
+    body, scope = _body(inp.body, required=False), inp.scope_id or GENERAL_SCOPE_ID
+    current = ctx.graph.articles()
+
+    if action == "ekle":
+        key = regulation.next_content_rule_code(ctx)
+        try:
+            new_value = validate_value(key, inp.new_value or {})
+        except RegulationError as exc:
+            raise DomainError(str(exc)) from exc
+        title = f"Yönetmelik: {key} eklensin ({new_value['baslik']})"
+        # Hedef anahtarı kuralın başlığı: reddedilen ekleme yeni bir kodla hemen geri gelemez (R6).
+        return Prepared(
+            ProposalType.YONETMELIK, _title(inp.title or title), body, None, scope,
+            [regulation.CONTENT_RULES_RESOURCE_ID], f"MADDE:ekle:{normalize(new_value['baslik'])}",
+            {"article_key": key, "action": "ekle", "old_value": None, "new_value": new_value},
+        )
+
+    key = inp.article_key or ""
+    kind = article_kind(key)
+    if kind is None or key not in current:
+        raise DomainError("Böyle bir yönetmelik maddesi yok ya da yürürlükte değil.")
+    old_value = current[key]
+    if action == "kaldir":
+        if kind != CONTENT_RULE_KIND:
+            raise DomainError("Yalnızca içerik kuralları kaldırılabilir; parametrelerin değeri değişir.")
+        title = f"Yönetmelik: {key} kaldırılsın ({old_value['baslik']})"
+        return Prepared(
+            ProposalType.YONETMELIK, _title(inp.title or title), body, None, scope,
+            [regulation.article_resource_id(key)], f"MADDE:{key}",
+            {"article_key": key, "action": "kaldir", "old_value": old_value, "new_value": None},
+        )
+
+    try:
+        new_value = validate_value(key, inp.new_value or {})
+    except RegulationError as exc:
+        raise DomainError(str(exc)) from exc
+    if new_value == old_value:
+        raise DomainError("Önerilen değer mevcut değerle aynı.")
+    return Prepared(
+        ProposalType.YONETMELIK, _title(inp.title or f"Yönetmelik: {key}"), body, None, scope,
+        [regulation.article_resource_id(key)], f"MADDE:{key}",
+        {"article_key": key, "action": "degistir", "old_value": old_value, "new_value": new_value},
     )
 
 
@@ -576,9 +618,11 @@ def _apply(ctx: Ctx, p: Proposal, winner_text_id: int | None) -> None:
             "not": "İçerik sitede gizlendi; defterdeki kayıtları silinmez.",
         })
     elif t is ProposalType.YONETMELIK:
-        regulation.apply_change(ctx, p.payload["article_key"], p.payload["new_value"], p.id)
+        action = p.payload.get("action", "degistir")
+        regulation.apply_change(ctx, p.payload["article_key"], p.payload["new_value"], p.id,
+                                action=action)
         ledger.enqueue(ctx, "YONETMELIK_DEGISTI", {
-            "oneri": p.id, "madde": p.payload["article_key"],
+            "oneri": p.id, "madde": p.payload["article_key"], "islem": action,
             "eski": p.payload["old_value"], "yeni": p.payload["new_value"],
         })
     elif t is ProposalType.KAPANIS:

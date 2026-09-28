@@ -28,6 +28,7 @@ class ProposalIn(BaseModel):
     reopens_topic_id: int | None = None
     content_rules: list[str] = Field(default_factory=list)
     excerpt: str = ""
+    article_action: str = "degistir"
 
 
 class RivalIn(BaseModel):

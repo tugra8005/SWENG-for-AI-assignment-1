@@ -121,6 +121,10 @@ class GraphContract:
         g.set_article("red_bekleme", {"gun": 30})
         g.set_article("red_bekleme", {"gun": 10})
         assert g.articles()["red_bekleme"] == {"gun": 10}
+        g.set_article("IK-4", {"baslik": "Dolandırıcılık"})
+        g.delete_article("IK-4")
+        assert "IK-4" not in g.articles()
+        g.delete_article("IK-4")  # olmayan maddeyi silmek hata değildir
 
     # --- öneri, karar, diskur ---
     def test_proposal_and_discourse_records(self, g):

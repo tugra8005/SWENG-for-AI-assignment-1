@@ -217,7 +217,19 @@ export default function ProposalPage() {
             </Section>
           ) : null}
 
-          {p.type === 'YONETMELIK' ? (
+          {p.type === 'YONETMELIK' && p.payload.action === 'ekle' ? (
+            <Section title={`Yeni içerik kuralı: ${p.payload.article_key}`}>
+              <Body style={{ fontFamily: fonts.serifBold }}>{p.payload.new_value.baslik}</Body>
+              <Body>{p.payload.new_value.metin}</Body>
+              <Muted>Hâtif&apos;in anahtar kelimeleri: {p.payload.new_value.anahtar_kelimeler.join(', ')}</Muted>
+            </Section>
+          ) : p.type === 'YONETMELIK' && p.payload.action === 'kaldir' ? (
+            <Section title={`Kaldırılması önerilen kural: ${p.payload.article_key}`}>
+              <Body style={{ fontFamily: fonts.serifBold }}>{p.payload.old_value.baslik}</Body>
+              <Body>{p.payload.old_value.metin}</Body>
+              <Muted>Kabul edilirse bu kurala dayanan silme önerileri açılamaz; kodu bir daha kullanılmaz.</Muted>
+            </Section>
+          ) : p.type === 'YONETMELIK' ? (
             <Section title={`Madde: ${p.payload.article_key}`}>
               <Body>
                 <Text style={{ fontFamily: fonts.monoMedium }}>{JSON.stringify(p.payload.old_value)}</Text>

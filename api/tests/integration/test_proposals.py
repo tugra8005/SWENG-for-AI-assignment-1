@@ -336,6 +336,114 @@ def test_topic_deletion_is_never_treated_as_own(ctx):
 # --- yönetmelik -----------------------------------------------------------------------------------
 
 
+# --- içerik kuralı ekleme ve kaldırma --------------------------------------------------------------
+
+NEW_RULE = {"baslik": "Dolandırıcılık", "metin": "Sahte bağış ya da yatırım çağrısı.",
+            "anahtar_kelimeler": ["bağış", "yatırım", "havale et"]}
+
+
+def test_content_rule_can_be_added_by_regulation_vote(ctx, client):
+    a, b = make_user(ctx, "ayse"), make_user(ctx, "bora")
+    p = proposals.open_proposal(ctx, a, ProposalInput(
+        type="YONETMELIK", article_action="ekle", new_value=NEW_RULE, body="Dolandırıcılık artıyor.",
+    ))
+    assert p.payload["article_key"] == "IK-4" and p.payload["action"] == "ekle"
+    assert p.payload["old_value"] is None and p.status == "QUEUED" and p.scope_id == "genel"
+    assert proposals.threshold_key(p) == "yonetmelik_esigi"
+    assert p.title == "Yönetmelik: IK-4 eklensin (Dolandırıcılık)"
+    # Aynı anda açılan ikinci ekleme önerisi başka bir kod alır.
+    q = proposals.open_proposal(ctx, b, ProposalInput(
+        type="YONETMELIK", article_action="ekle",
+        new_value={**NEW_RULE, "baslik": "Kimlik taklidi", "anahtar_kelimeler": ["ben aslında"]},
+    ))
+    assert q.payload["article_key"] == "IK-5"
+    proposals.accept(ctx, p)
+    ctx.commit()
+    assert "IK-4" in ctx.reg.content_rules()
+    listing = {a["key"]: a for a in client.get("/regulation").json()}
+    assert listing["IK-4"]["value"]["baslik"] == "Dolandırıcılık"
+    assert listing["IK-4"]["history"][0]["proposal_id"] == p.id
+    # Yeni kurala dayanan silme önerisi açılabilir.
+    topic = open_topic(ctx, a)
+    msg = post(ctx, a, topic, "Acil bağış lazım, hemen hesabıma havale edin.")
+    s = proposals.open_proposal(ctx, b, ProposalInput(
+        type="SILME", target_message_id=msg.id, content_rules=["IK-4"], excerpt="Acil bağış lazım",
+    ))
+    assert "IK-4 (Dolandırıcılık): belirtilen kısımda karşılığı var" in s.oracle_comment
+
+
+def test_content_rule_can_be_removed_and_its_code_is_never_reused(ctx, client, ledger):
+    a, b = make_user(ctx, "ayse"), make_user(ctx, "bora")
+    p = proposals.open_proposal(ctx, a, ProposalInput(
+        type="YONETMELIK", article_action="kaldir", article_key="IK-3", body="Gereksiz.",
+    ))
+    assert p.payload == {"article_key": "IK-3", "action": "kaldir",
+                         "old_value": ctx.reg.raw("IK-3"), "new_value": None}
+    assert p.title == "Yönetmelik: IK-3 kaldırılsın (Başkasının kişisel bilgilerini ifşa etme)"
+    proposals.accept(ctx, p)
+    ctx.commit()
+    assert list(ctx.reg.content_rules()) == ["IK-1", "IK-2"]
+    assert ledger.of_type("YONETMELIK_DEGISTI")[0]["payload"]["islem"] == "kaldir"
+    listing = {a["key"]: a for a in client.get("/regulation").json()}
+    assert listing["IK-3"]["value"] is None and listing["IK-3"]["removed"] is True
+    # Kaldırılan kurala dayanan silme R7'de reddedilir; kaldırılan kod yeniden kullanılmaz.
+    topic = open_topic(ctx, a)
+    msg = post(ctx, a, topic, "Ayşe'nin telefonu 0532 000 00 00.")
+    with pytest.raises(DomainError) as err:
+        proposals.open_proposal(ctx, b, ProposalInput(
+            type="SILME", target_message_id=msg.id, content_rules=["IK-3"], excerpt="telefonu",
+        ))
+    assert "Böyle bir içerik kuralı yok: IK-3" in err.value.violations[0]["message"]
+    n = proposals.open_proposal(ctx, b, ProposalInput(
+        type="YONETMELIK", article_action="ekle", new_value=NEW_RULE,
+    ))
+    assert n.payload["article_key"] == "IK-4"
+    with pytest.raises(DomainError):  # kaldırılmış kural değiştirilemez
+        proposals.open_proposal(ctx, b, ProposalInput(
+            type="YONETMELIK", article_key="IK-3", new_value=NEW_RULE,
+        ))
+
+
+def test_parameters_cannot_be_added_or_removed_and_bad_rules_are_rejected(ctx):
+    a = make_user(ctx, "ayse")
+    for inp in (
+        ProposalInput(type="YONETMELIK", article_action="kaldir", article_key="red_bekleme"),
+        ProposalInput(type="YONETMELIK", article_action="kaldir", article_key="IK-9"),
+        ProposalInput(type="YONETMELIK", article_action="ekle", new_value={"baslik": "Boş"}),
+        ProposalInput(type="YONETMELIK", article_action="sil", article_key="IK-1"),
+    ):
+        with pytest.raises(DomainError):
+            proposals.open_proposal(ctx, a, inp)
+
+
+def test_accepting_a_change_to_a_removed_rule_does_not_resurrect_it(ctx):
+    a, b = make_user(ctx, "ayse"), make_user(ctx, "bora")
+    change = proposals.open_proposal(ctx, a, ProposalInput(
+        type="YONETMELIK", article_key="IK-3", new_value={**NEW_RULE, "baslik": "Kişisel bilgi"},
+    ))
+    removal = proposals.open_proposal(ctx, b, ProposalInput(
+        type="YONETMELIK", article_action="kaldir", article_key="IK-3",
+    ))
+    proposals.accept(ctx, removal)
+    with pytest.raises(DomainError):
+        proposals.accept(ctx, change)
+    assert "IK-3" not in ctx.reg.content_rules()
+
+
+def test_rejected_rule_addition_cannot_return_under_a_new_code(ctx):
+    a = make_user(ctx, "ayse")
+    p = proposals.open_proposal(ctx, a, ProposalInput(
+        type="YONETMELIK", article_action="ekle", new_value=NEW_RULE,
+    ))
+    proposals.reject(ctx, p, "18/30")
+    ctx.commit()
+    with pytest.raises(DomainError) as err:
+        proposals.open_proposal(ctx, a, ProposalInput(
+            type="YONETMELIK", article_action="ekle", new_value={**NEW_RULE, "baslik": "dolandırıcılık"},
+        ))
+    assert err.value.violations[0]["rule"] == "R6"
+
+
 def test_regulation_proposal_validates_value_and_goes_to_slow_lane(ctx):
     a = make_user(ctx, "ayse")
     with pytest.raises(DomainError):

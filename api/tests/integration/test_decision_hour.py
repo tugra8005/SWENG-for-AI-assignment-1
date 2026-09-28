@@ -421,3 +421,17 @@ def test_invalid_choice_is_rejected(ctx):
     decision_hour.open_session(ctx)
     with pytest.raises(DomainError):
         decision_hour.cast_vote(ctx, a, p.id, [1, 2])
+
+
+def test_pending_deletion_citing_a_removed_rule_gets_oracle_no(ctx):
+    from mesveret.services import regulation
+
+    a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
+    topic = open_topic(ctx, a, title="Bisiklet yolları", area="ulasim")
+    msg = post(ctx, a, topic, "Bunu yazanlar cahil.")
+    p = _silme(ctx, b, msg, "yazanlar cahil")
+    regulation.apply_change(ctx, "IK-2", None, None, action="kaldir")
+    ctx.commit()
+    session = decision_hour.open_session(ctx)
+    note = item_of(ctx, session, p).oracle_note
+    assert note["choice"] == "HAYIR" and "Böyle bir içerik kuralı yok: IK-2" in note["reason"]

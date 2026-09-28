@@ -109,6 +109,9 @@ class InMemoryGraph(InMemoryOntology):
     def set_article(self, key: str, value: dict[str, Any]) -> None:
         self._articles[key] = dict(value)
 
+    def delete_article(self, key: str) -> None:
+        self._articles.pop(key, None)
+
     # --- öneri, karar, diskur ---
     def record_proposal(
         self, proposal_id: int, type_: str, scope_id: str, resource_ids: list[str], status: str

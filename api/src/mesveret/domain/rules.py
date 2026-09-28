@@ -217,7 +217,9 @@ def _check_r7(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
         options = "; ".join(f"{r.code} {r.title}" for r in known.values())
         report.violations.append(Violation(
             "R7", f"Silme önerisi en az bir içerik kuralına dayanmalı ({options}). Kendi "
-                  "mesajınızın silinmesi için gerekçe gerekmez.",
+                  "mesajınızın silinmesi için gerekçe gerekmez." if known else
+                  "Yürürlükte içerik kuralı yok; başkasının içeriği silinemez. Kendi mesajınızın "
+                  "silinmesi için gerekçe gerekmez.",
         ))
     part = tokens(d.excerpt)
     if not part:

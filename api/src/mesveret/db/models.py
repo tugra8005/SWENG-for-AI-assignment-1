@@ -217,8 +217,8 @@ class RegulationChange(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     key: Mapped[str] = mapped_column(String(64), index=True)
-    old_value: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
-    new_value: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    old_value: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # None: madde eklendi
+    new_value: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # None: madde kaldırıldı
     proposal_id: Mapped[int | None] = mapped_column(Integer)
     changed_at: Mapped[datetime] = mapped_column(TS)
 

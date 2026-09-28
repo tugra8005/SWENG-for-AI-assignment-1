@@ -4,14 +4,16 @@ Tüm eşikler ve süreler ``YonetmelikMaddesi`` düğümlerinde durur; bu modül
 varsayılanları, değer şemalarını ve tipli okuyucuları tanımlar. İş kodu eşik ya da
 süre sabiti içermez, her zaman bir ``Regulation`` örneğinden okur.
 
-İki tür madde vardır: parametreler (süre, oran, sayı) ve içerik kuralları (``IK-*``). İçerik
+İki tür madde vardır: parametreler (süre, oran, sayı) ve içerik kuralları (``IK-<n>``). İçerik
 kuralı bir metin kuralıdır; başkasının içeriğini silme önerisi en az birine dayanmak zorundadır.
-Kurallar dar tutulur: "konu dışı" gibi geniş bir kural sansür aracına dönüşür.
+Parametrelerin kümesi sabittir, yalnızca değerleri değişir. İçerik kuralları ise yönetmelik
+önerisiyle eklenip kaldırılabilir; tohumdaki üç kural bilerek dardır.
 """
 
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import timedelta
@@ -58,6 +60,12 @@ class ContentRule:
 
 
 CONTENT_RULE_KIND = "icerik_kurali"
+CONTENT_RULE_KEY = re.compile(r"^IK-([1-9][0-9]*)$")
+
+
+def content_rule_number(key: str) -> int | None:
+    m = CONTENT_RULE_KEY.match(key)
+    return int(m.group(1)) if m else None
 
 
 @dataclass(frozen=True)
@@ -285,11 +293,20 @@ _VALIDATORS: dict[str, Callable[[Article, Mapping], dict]] = {
 }
 
 
+def article_kind(key: str) -> str | None:
+    """Maddenin türü. Tohumda olmayan ``IK-<n>`` anahtarları eklenmiş içerik kurallarıdır."""
+    article = DEFAULT_ARTICLES.get(key)
+    if article is not None:
+        return article.kind
+    return CONTENT_RULE_KIND if CONTENT_RULE_KEY.match(key) else None
+
+
 def validate_value(key: str, value: Any) -> dict:
     """Madde değerini doğrular ve normalize eder; geçersizse ``RegulationError``."""
-    article = DEFAULT_ARTICLES.get(key)
-    if article is None:
+    kind = article_kind(key)
+    if kind is None:
         raise RegulationError(f"Böyle bir yönetmelik maddesi yok: {key}.")
+    article = DEFAULT_ARTICLES.get(key) or Article(key, kind, {}, "Eklenmiş içerik kuralı.")
     if not isinstance(value, Mapping):
         raise RegulationError("Madde değeri bir nesne olmalı.")
     return _VALIDATORS[article.kind](article, value)
@@ -356,10 +373,10 @@ class Regulation:
 
     def content_rules(self) -> dict[str, ContentRule]:
         """Yürürlükteki içerik kuralları, koda göre (IK-1, IK-2, …)."""
+        keys = sorted((k for k in self.values if CONTENT_RULE_KEY.match(k)),
+                      key=lambda k: content_rule_number(k) or 0)
         out = {}
-        for key, article in DEFAULT_ARTICLES.items():
-            if article.kind != CONTENT_RULE_KIND or key not in self.values:
-                continue
+        for key in keys:
             v = self.values[key]
             out[key] = ContentRule(key, v["baslik"], v["metin"], tuple(v["anahtar_kelimeler"]))
         return out
