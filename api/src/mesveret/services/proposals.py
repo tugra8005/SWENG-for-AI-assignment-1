@@ -7,7 +7,7 @@ Yavaş şerit (Karar Saati): SILME, YONETMELIK, KAPANIS ve itiraz eşiğine ula�
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC
 from typing import Any
 
@@ -48,6 +48,7 @@ from mesveret.domain.rules import (
     format_date,
 )
 from mesveret.domain.scopes import GENERAL_SCOPE_ID
+from mesveret.domain.shares import ShareImpact, impact_lines, pct, share_impact
 from mesveret.domain.text import normalize
 from mesveret.domain.types import ProposalStatus, ProposalType, initial_lane
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
@@ -79,6 +80,8 @@ class ProposalInput:
     excerpt: str = ""
     # YONETMELIK: "degistir" (değer), "ekle" (yeni içerik kuralı), "kaldir" (içerik kuralı)
     article_action: str = "degistir"
+    # Bölünebilir kaynak: {kaynak: {kapsam: yeni_pay}} (R2'nin ters yönü)
+    share_effect: dict[str, dict[str, Any]] | None = None
 
 
 @dataclass
@@ -174,6 +177,12 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
         if not inp.scope_id:
             raise DomainError("Seçmen kapsamı seçilmeli.")
         payload: dict[str, Any] = {}
+        if inp.share_effect is not None:
+            if not isinstance(inp.share_effect, dict) or not all(
+                isinstance(v, dict) for v in inp.share_effect.values()
+            ):
+                raise DomainError("Pay etkisi {kaynak: {kapsam: yeni_pay}} biçiminde olmalı.")
+            payload["share_effect"] = {rid: dict(eff) for rid, eff in inp.share_effect.items()}
         parent_rid = None
         if t is ProposalType.ALT_KONU:
             parent = _live_topic(ctx, inp.parent_topic_id)
@@ -348,7 +357,24 @@ def draft_of(ctx: Ctx, p: Proposal | Prepared, proposer_id: str) -> ProposalDraf
         excerpt=p.payload.get("excerpt", "") if deletion else "",
         target_text=deletion_target_text(ctx, p.payload) if deletion else "",
         own_content=bool(p.payload.get("own")) if deletion else False,
+        share_effect=p.payload.get("share_effect"),
     )
+
+
+def share_impacts(ctx: Ctx, p: Proposal | Prepared) -> list[ShareImpact]:
+    """Bütünün (kaynak sahibinin) oyladığı pay değişiklikleri. R2 ile daraltılmış öneriler muaf."""
+    out = []
+    for rid, effect in (p.payload.get("share_effect") or {}).items():
+        r = ctx.graph.resource(rid)
+        if r is None or not r.divisible or p.scope_id != r.owner_scope_id:
+            continue
+        out.append(share_impact(rid, r.shares, effect, ctx.reg.number("orantisizlik_esigi")))
+    return out
+
+
+def concurrent_scopes(ctx: Ctx, p: Proposal) -> list[str]:
+    """Orantısız etkilenen ve bu yüzden ayrıca oylayacak alt kapsamlar."""
+    return list(dict.fromkeys(sid for imp in share_impacts(ctx, p) for sid in imp.disproportionate))
 
 
 def deletion_check(ctx: Ctx, p: Proposal) -> ContentCheck | None:
@@ -396,6 +422,9 @@ def oracle_text(p: Proposal) -> str:
 def _start_lane(ctx: Ctx, p: Proposal) -> None:
     t = ProposalType(p.type)
     p.lane = str(initial_lane(t))
+    if p.lane == "FAST" and concurrent_scopes(ctx, p):
+        # Orantısız etkilenen kapsamın vetosu sessiz onayla atlanamaz: doğrudan yavaş şerit.
+        p.lane = "SLOW"
     if t is ProposalType.KAPANIS:
         p.status = ProposalStatus.RIVAL_PERIOD
         p.deadline_at = ctx.now + ctx.reg.duration("kapanis_rakip_suresi")
@@ -414,7 +443,10 @@ def _finish_opening(ctx: Ctx, p: Proposal, report: RuleReport) -> None:
         for n in report.narrowings
     ]
     findings = label_check(oracle_text(p), p.area_id, p.scope_id, p.resource_ids, ctx.graph)
-    p.oracle_comment = oracle_comment(report, findings, ctx.graph, deletion_check(ctx, p))
+    p.oracle_comment = oracle_comment(
+        report, findings, ctx.graph, deletion_check(ctx, p),
+        extra=impact_lines(share_impacts(ctx, p), lambda sid: ontology.scope_label(ctx, sid)),
+    )
     p.oracle_findings = [{"kind": f.kind, "suggestion": f.suggestion, "message": f.message}
                          for f in findings]
     _start_lane(ctx, p)
@@ -574,6 +606,21 @@ def end_rival_period(ctx: Ctx, p: Proposal) -> None:
 # --- sonuç ve etkiler ---------------------------------------------------------------------------
 
 
+def _apply_share_effect(ctx: Ctx, p: Proposal) -> None:
+    """Kabul edilen önerinin bildirdiği yeni paylar kaynağa işlenir."""
+    for rid, effect in (p.payload.get("share_effect") or {}).items():
+        r = ctx.graph.resource(rid)
+        if r is None or not effect:
+            continue
+        new = {sid: int(effect.get(sid, old)) for sid, old in r.shares.items()}
+        if new == dict(r.shares):
+            continue
+        ctx.graph.upsert_resource(replace(r, shares=new))
+        ledger.enqueue(ctx, "PAY_DEGISTI", {
+            "oneri": p.id, "kaynak": rid, "eski": dict(r.shares), "yeni": new,
+        })
+
+
 def _new_topic(ctx: Ctx, p: Proposal, parent_id: int | None) -> Topic:
     topic = Topic(
         title=p.title, area_id=p.area_id, parent_id=parent_id, owner_scope_id=p.scope_id,
@@ -603,6 +650,7 @@ def _apply(ctx: Ctx, p: Proposal, winner_text_id: int | None) -> None:
         ledger.enqueue(ctx, "KONU_YENIDEN_ACILDI", {"konu": topic.id, "oneri": p.id})
     elif t in (ProposalType.KONU, ProposalType.ALT_KONU):
         _new_topic(ctx, p, p.payload.get("parent_topic_id"))
+        _apply_share_effect(ctx, p)
     elif t is ProposalType.DUZENLEME:
         msg = topics.get_message(ctx, p.payload["message_id"])
         topics.add_version(ctx, msg, p.payload["new_text"], p.proposer_id, via_proposal_id=p.id)
@@ -738,6 +786,19 @@ def proposal_view(ctx: Ctx, p: Proposal, viewer: User | None) -> dict:
     })
     if p.status == "SILENT":
         body["objections"] = {"count": objection_count(ctx, p), "threshold": objection_threshold(ctx, p)}
+    impacts = share_impacts(ctx, p)
+    body["share_effect"] = [
+        {"resource_id": imp.resource_id, "name": ctx.graph.resource(imp.resource_id).name,
+         "average_pct": pct(imp.average), "threshold_pp": float(imp.threshold_pp),
+         "rows": [{"scope_id": r.scope_id, "name": ontology.scope_label(ctx, r.scope_id),
+                   "old": r.old, "new": r.new, "change_pct": pct(r.relative),
+                   "disproportionate": r.scope_id in imp.disproportionate} for r in imp.rows]}
+        for imp in impacts
+    ]
+    body["concurrent_scopes"] = [
+        {"id": sid, "name": ontology.scope_label(ctx, sid)}
+        for sid in dict.fromkeys(s for imp in impacts for s in imp.disproportionate)
+    ]
     if p.type == "DUZENLEME":
         msg = ctx.db.get(Message, p.payload["message_id"])
         base = topics.current_version(ctx, msg).text if msg else ""
@@ -770,7 +831,8 @@ def proposal_view(ctx: Ctx, p: Proposal, viewer: User | None) -> dict:
         ).scalar_one_or_none()
     if p.session_id is not None:
         item = ctx.db.execute(select(SessionItem).where(
-            SessionItem.session_id == p.session_id, SessionItem.proposal_id == p.id
+            SessionItem.session_id == p.session_id, SessionItem.proposal_id == p.id,
+            SessionItem.concurrent.is_(False),
         )).scalar_one_or_none()
         body["result"] = item.result if item else None
     viewer_info: dict[str, Any] = {}

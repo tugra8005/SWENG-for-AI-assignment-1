@@ -157,7 +157,7 @@ def _content_lines(content: ContentCheck) -> list[str]:
 
 
 def oracle_comment(report: RuleReport, findings: Sequence[Finding], onto: OntologyView,
-                   content: ContentCheck | None = None) -> str:
+                   content: ContentCheck | None = None, extra: Sequence[str] = ()) -> str:
     lines: list[str] = []
     if report.ok:
         lines.append("Denetimler: R1–R7 geçti.")
@@ -169,6 +169,7 @@ def oracle_comment(report: RuleReport, findings: Sequence[Finding], onto: Ontolo
             "Talep kaynağın tamamını hedefliyordu; seçmen kapsamı yalnızca "
             f"{scope.name if scope else n.scope_id} payına karar verebilir, daraltma uygulandı."
         )
+    lines += list(extra)
     if content is not None:
         lines += _content_lines(content)
     if not findings:

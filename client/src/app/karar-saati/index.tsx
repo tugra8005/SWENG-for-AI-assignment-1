@@ -34,7 +34,8 @@ function BallotItem({ item, onVoted }: { item: any; onVoted: () => void }) {
   const cast = async (body: object) => {
     setError(null);
     try {
-      const r = await api('/decision-hour/votes', { method: 'POST', body: { proposal_id: p.id, ...body } });
+      const scope = item.concurrent ? { vote_scope_id: item.vote_scope.id } : {};
+      const r = await api('/decision-hour/votes', { method: 'POST', body: { proposal_id: p.id, ...scope, ...body } });
       setCommit(r.commit);
       onVoted();
     } catch (e) {
@@ -52,6 +53,16 @@ function BallotItem({ item, onVoted }: { item: any; onVoted: () => void }) {
       <PressLink href={`/oneri/${p.id}`}>
         <ProposalTitle title={p.title} effective={p.effective_title} style={st.title} />
       </PressLink>
+      {item.concurrent ? (
+        <View style={st.concurrent}>
+          <Text style={st.concurrentTitle}>{item.vote_scope.name} oylaması · orantısız etkilenen kapsam</Text>
+          <Muted style={{ fontSize: 13 }}>
+            Öneri {item.vote_scope.name} payını orantısız azaltıyor; yalnızca {item.vote_scope.name} seçmenleri
+            ayrıca oylar ve öneri burada da çoğunluk almalı. Havale yalnızca {item.vote_scope.name} seçmenleri
+            arasında çözülür.
+          </Muted>
+        </View>
+      ) : null}
       {item.narrowings?.map((n: any, i: number) => (
         <Text key={i} style={{ fontFamily: fonts.serifBold, color: paper.seal }}>{n.message}</Text>
       ))}
@@ -132,7 +143,14 @@ export default function DecisionHour() {
         <Section title="Oy pusulası" aside={<Kicker>{open.item_count} öneri</Kicker>}>
           {!me ? <InfoNotice>Oy vermek için giriş yapın.</InfoNotice> : null}
           {ballot.data?.items.map((it: any) => (
-            <BallotItem key={it.proposal.id} item={it} onVoted={() => { ballot.reload(); sync(); }} />
+            <BallotItem
+              key={`${it.proposal.id}:${it.vote_scope.id}`}
+              item={it}
+              onVoted={() => {
+                ballot.reload();
+                sync();
+              }}
+            />
           ))}
         </Section>
       ) : (
@@ -183,6 +201,8 @@ const st = StyleSheet.create({
   textOpt: { flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: paper.hairline, padding: 10 },
   box: { fontFamily: fonts.mono, fontSize: 20, color: paper.seal },
   commit: { fontFamily: fonts.mono, fontSize: 12, color: paper.seal, marginTop: 8 },
+  concurrent: { borderLeftWidth: 3, borderLeftColor: paper.seal, paddingLeft: 10, gap: 2 },
+  concurrentTitle: { fontFamily: fonts.monoBold, fontSize: 13, color: paper.seal },
   maturing: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 17, color: paper.seal },
   queued: {
     flexDirection: 'row',

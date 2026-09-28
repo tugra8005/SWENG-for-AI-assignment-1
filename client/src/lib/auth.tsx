@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-import { api, setToken } from '@/api/client';
+import { api, setAuthLostHandler, setToken } from '@/api/client';
 
 const KEY = 'mesveret.token';
 
@@ -29,6 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(null);
       await AsyncStorage.removeItem(KEY);
     }
+  }, []);
+
+  useEffect(() => {
+    setAuthLostHandler(() => {
+      setMe(null);
+      AsyncStorage.removeItem(KEY).catch(() => undefined);
+    });
+    return () => setAuthLostHandler(null);
   }, []);
 
   useEffect(() => {

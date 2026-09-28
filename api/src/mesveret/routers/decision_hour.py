@@ -14,6 +14,7 @@ class VoteIn(BaseModel):
     proposal_id: int
     approve: bool | None = None
     approvals: list[int] | None = None
+    vote_scope_id: str | None = None  # orantısız etkilenen kapsamın ayrı oylaması
 
 
 class DelegationIn(BaseModel):
@@ -40,7 +41,7 @@ def vote(body: VoteIn, ctx: Ctx = Depends(get_ctx), user: User = Depends(current
     if (body.approve is None) == (body.approvals is None):
         raise DomainError("Oy olarak ya 'approve' (EVET/HAYIR) ya da 'approvals' (metinler) verin.")
     choice = body.approve if body.approve is not None else body.approvals
-    b = decision_hour.cast_vote(ctx, user, body.proposal_id, choice)
+    b = decision_hour.cast_vote(ctx, user, body.proposal_id, choice, body.vote_scope_id)
     return {"commit": b.commit, "message": "Oyunuz mühürlendi; pencere kapanınca açılacak."}
 
 

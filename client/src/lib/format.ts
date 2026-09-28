@@ -118,6 +118,7 @@ export function describeArticleValue(kind: string, value: any): string {
   if (kind === 'oran') return `${value.karsilastirma === '>' ? '>' : '≥'} ${value.oran}`;
   if (kind === 'tamsayi' || kind === 'sayi') return String(value.deger);
   if (kind === 'icerik_kurali') return value.baslik;
+  if (kind === 'yuzde_puani') return `${String(value.deger).replace('.', ',')} yüzde puanı`;
   if (kind === 'itiraz') return `max(${value.min}, aktif üye sayısı × ${value.oran}) · aktif: son ${value.aktiflik_gun} gün`;
   if (kind === 'karar_saati') {
     const day = String(value.gun).charAt(0) + String(value.gun).slice(1).toLowerCase();

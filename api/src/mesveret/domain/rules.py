@@ -6,6 +6,7 @@ aynı kuralları yeniden çalıştırır.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -37,6 +38,8 @@ class ProposalDraft:
     excerpt: str = ""
     target_text: str = ""
     own_content: bool = False
+    # Bölünebilir kaynağın yapılandırılmış etkisi: {kaynak: {kapsam: yeni_pay}}. None: bildirilmedi.
+    share_effect: Mapping[str, Mapping[str, int]] | None = None
 
 
 @dataclass(frozen=True)
@@ -113,6 +116,35 @@ def _check_r1(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
         ))
 
 
+def _check_share_effect(
+    d: ProposalDraft, scope: ScopeInfo, r: ResourceInfo, report: RuleReport
+) -> None:
+    """R2'nin ters yönü: bütünün kaynağı böldüğü öneri etkisini kapsam başına bildirmeli."""
+    effect = (d.share_effect or {}).get(r.id)
+    if scope.id == r.owner_scope_id:
+        if effect is None:
+            example = ", ".join(f"{sid}: {format_points(v)}" for sid, v in list(r.shares.items())[:2])
+            report.violations.append(Violation(
+                "R2", f"'{r.name}' bölünebilir bir kaynak: öneri etkisini kapsam başına yeni "
+                      f"paylarla bildirmeli ({{{example}, …}}); metin tek başına yetmez. Payları "
+                      "değiştirmiyorsa boş bir etki bildirin.",
+            ))
+            return
+    elif effect and set(effect) - {scope.id}:
+        report.violations.append(Violation(
+            "R2", f"Bu öneri '{r.name}' için {scope.name} payına daraltıldı; yalnızca kendi "
+                  "payını değiştirebilir.",
+        ))
+        return
+    for sid, value in (effect or {}).items():
+        if sid not in r.shares:
+            report.violations.append(Violation(
+                "R2", f"'{r.name}' içinde payı olmayan kapsam: {sid}."))
+        elif isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            report.violations.append(Violation(
+                "R2", f"'{r.name}' için yeni pay negatif olmayan tam sayı olmalı ({sid})."))
+
+
 def _check_r2_resource(
     scope: ScopeInfo, r: ResourceInfo, c: RuleContext, report: RuleReport
 ) -> None:
@@ -180,7 +212,15 @@ def _check_r2_r3(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
 
     if scope is not None:
         for r in resources:
+            before = len(report.violations)
             _check_r2_resource(scope, r, c, report)
+            if r.divisible and len(report.violations) == before:
+                _check_share_effect(d, scope, r, report)
+    divisible = {r.id for r in resources if r.divisible}
+    for rid in (d.share_effect or {}):
+        if rid not in divisible:
+            report.violations.append(Violation(
+                "R2", f"Pay etkisi bildirilen kaynak ({rid}) bölünebilir bir ETKILER etiketi değil."))
 
 
 def _check_r5(c: RuleContext, report: RuleReport) -> None:

@@ -148,3 +148,10 @@ def test_content_rules_can_be_added_and_removed_as_data():
     for bad_key in ("IK-", "IK-x", "ik-4", "IK-04x"):
         with pytest.raises(RegulationError):
             validate_value(bad_key, values["IK-10"])
+
+
+def test_disproportion_threshold_in_percentage_points():
+    assert REG.number("orantisizlik_esigi") == 10
+    assert validate_value("orantisizlik_esigi", {"deger": 12.5}) == {"deger": 12.5}
+    with pytest.raises(RegulationError):
+        validate_value("orantisizlik_esigi", {"deger": 150})

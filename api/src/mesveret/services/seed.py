@@ -16,6 +16,9 @@ Senaryolar (README'de adım adım):
 7. Baskın — art arda açılmış bağlantılı hesaplar işaretlenip dışlanır.
 8. Hâtif — etiket önerisi ve deterministik oy.
 9. Olgunlaşma — Karar Saati'nden 10 dakika önce açılan genel kapsamlı öneri 7 gün bekler.
+10. Eşzamanlı çoğunluk — "İstanbul payının yarısı Ankara'ya" Genel'de geçer, İstanbul'un ayrı
+    oylamasında reddedilir; "Tüm şehirlerin payında %10 kesinti" orantısız değildir, tek oylamayla
+    geçer.
 
 Oylanacak senaryo önerileri, son planlı oturumdan (Pazar 27 Eylül) sonra olgunlaşacak
 biçimde 21–22 Eylül'de açılır; böylece o oturumu kaçırıp kuyrukta bekliyor olmaları tutarlıdır.
@@ -350,15 +353,31 @@ def _scenarios_voting(w: World) -> None:
             body="Hafta sonu açılan önerileri kaçırmamak için sessiz onay 36 saat olsun.",
         )).id))
     _queued_by_objection(w, "baskin", "emre", ProposalInput(
-        type="KONU", title="Etkinlik bütçesinin tamamı tek bir şehre",
-        body="Bütçeyi bölmeyelim; tüm etkinlikler tek şehirde yapılsın.",
-        area_id="kent", scope_id="genel", resource_ids=["butce"],
+        type="KONU", title="Parklar sabaha kadar açık kalsın",
+        body="Mahalle parkları gece kapanmasın; parklar sabaha kadar açık kalsın.",
+        area_id="parklar", scope_id="genel",
     ), _t(days=7, hours=18), ["fatih", "gulsen", "harun"])
     _queued_by_objection(w, "hatif", "ipek", ProposalInput(
         type="KONU", title="Belgesel film gösterimleri",
         body="Her ay bir belgesel izleyip ardından belgesel üzerine konuşalım.",
         area_id="edebiyat", scope_id="genel",
     ), _t(days=7, hours=12), ["kerem", "melis", "nevzat"])
+    # 10. Eşzamanlı çoğunluk: orantısız etkilenen İstanbul ayrıca oylar; eşit kesinti tek oylama.
+    w.at(_t(days=7, hours=10), lambda c: w.ids.__setitem__("pay_yarisi", proposals.open_proposal(
+        c, w.users["hale"], ProposalInput(
+            type="KONU", title="İstanbul payının yarısı Ankara'ya",
+            body="Ankara'daki etkinlikler daha kalabalık; etkinlik bütçesinde İstanbul payının "
+                 "yarısı Ankara'ya aktarılsın.",
+            area_id="kent", scope_id="genel", resource_ids=["butce"],
+            share_effect={"butce": {"sehir:istanbul": 2000, "sehir:ankara": 8000}},
+        )).id))
+    _queued_by_objection(w, "kesinti", "dogan", ProposalInput(
+        type="KONU", title="Tüm şehirlerin payında %10 kesinti",
+        body="Etkinlik bütçesinde her şehrin payı %10 azaltılsın; artan kısım yedekte kalsın.",
+        area_id="kent", scope_id="genel", resource_ids=["butce"],
+        share_effect={"butce": {"sehir:istanbul": 3600, "sehir:ankara": 5400,
+                                "sehir:izmir": 4500, "sehir:bursa": 4500}},
+    ), _t(days=7, hours=6), ["okan", "pinar", "rana"])
 
 
 def _cellar(w: World) -> None:
@@ -411,7 +430,7 @@ def _raiders(w: World) -> None:
         w.at(_t(hours=5, minutes=-8 * i), lambda c, nick=nick, i=i: _user(
             c, w, nick, nick.replace("_", " ").title(), "İstanbul", date(2000, 1 + i, 10),
             last_login=_t(hours=4)))
-    _msg(w, "raid0", RAIDERS[0], "parklar", "Tek şehir, tek bütçe!", _t(hours=4))
+    _msg(w, "raid0", RAIDERS[0], "parklar", "Parklar sabaha kadar açık!", _t(hours=4))
     for i, nick in enumerate(RAIDERS[1:], start=1):
         _msg(w, f"raid{i}", nick, "parklar", "Kesinlikle katılıyorum!",
              _t(hours=4, minutes=-5 * i), reply_to="raid0")
@@ -479,8 +498,20 @@ def _vote_plan(ctx: Ctx, w: World) -> None:
     # 8. Hâtif: yanlış alan etiketi; Hâtif (+2 havale) HAYIR. Yurttaşlar 4 EVET, 3 HAYIR.
     plan += [("hatif", n, "EVET" if i < 4 else "HAYIR") for i, n in enumerate(names[18:25])]
 
+    # 10. Eşzamanlı çoğunluk. Genel: 15 + Hâtif = 16/25 = %64 → geçer. İstanbul'un ayrı oylaması
+    #     (Hâtif şehir kapsamının üyesi değil): 2/9 = %22 → reddedilir; öneri reddedilir.
+    #     Eşit kesinti orantısız değil: tek oylama, 12 + Hâtif = 13/21 → geçer.
+    plan += [("pay_yarisi", n, "EVET" if i < 15 else "HAYIR") for i, n in enumerate(names[:24])]
+    scoped = [("pay_yarisi", "sehir:istanbul", n, "EVET" if n in ("mert", "rana") else "HAYIR")
+              for n in ("mert", "rana", "deniz", "hakan", "vedat", "cansu", "gulsen", "melis",
+                        "emre")]
+    plan += [("kesinti", n, "EVET" if i < 12 else "HAYIR") for i, n in enumerate(names[:20])]
+
     for key, nick, choice in plan:
         ctx.db.add(DevVotePlan(proposal_id=w.ids[key], voter_id=w.users[nick].id, choice=choice))
+    for key, scope, nick, choice in scoped:
+        ctx.db.add(DevVotePlan(proposal_id=w.ids[key], voter_id=w.users[nick].id, choice=choice,
+                               vote_scope_id=scope))
     ctx.db.commit()
 
 
@@ -556,7 +587,7 @@ def _build(ctx: Ctx) -> Iterator[str]:
     yield "Senaryo önerileri: " + ", ".join(
         f"{k}=#{w.ids[k]}" for k in ("istanbul", "metro", "yonetmelik_60", "yonetmelik_67",
                                      "silme_60", "silme_67", "silme_kendi", "kapanis", "baskin",
-                                     "hatif", "olgunlasma"))
+                                     "hatif", "pay_yarisi", "kesinti", "olgunlasma"))
     yield f"Mahzen demo başlığı: #{w.ids['mahzen']}"
     yield "Sonraki adım: README'deki senaryolar (meşveret-dev run-karar-saati)."
 
@@ -569,8 +600,10 @@ def scenario_ids(ctx: Ctx) -> dict[str, int]:
         "yonetmelik_60": "Yönetmelik: red_bekleme",
         "yonetmelik_67": "Yönetmelik: sessiz_onay_suresi",
         "kapanis": "Kapanış: Parkların kapanış saati",
-        "baskin": "Etkinlik bütçesinin tamamı tek bir şehre",
+        "baskin": "Parklar sabaha kadar açık kalsın",
         "hatif": "Belgesel film gösterimleri",
+        "pay_yarisi": "İstanbul payının yarısı Ankara'ya",
+        "kesinti": "Tüm şehirlerin payında %10 kesinti",
         "olgunlasma": "Yönetmelik: musavir_esigi",
     }
     out = {}

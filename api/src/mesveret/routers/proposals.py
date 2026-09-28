@@ -29,6 +29,7 @@ class ProposalIn(BaseModel):
     content_rules: list[str] = Field(default_factory=list)
     excerpt: str = ""
     article_action: str = "degistir"
+    share_effect: dict[str, dict[str, Any]] | None = None
 
 
 class RivalIn(BaseModel):

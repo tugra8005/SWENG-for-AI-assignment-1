@@ -544,3 +544,56 @@ def test_api_objection_and_listing(client, ctx):
     view = client.get(f"/proposals/{pid}", headers=headers_for(ctx, b)).json()
     assert view["objections"] == {"count": 1, "threshold": 3}
     assert view["viewer"]["has_objected"] is True
+
+
+
+# --- R2'nin ters yönü: pay etkisi ve orantısızlık -------------------------------------------------
+
+HALF_TO_ANKARA = {"butce": {"sehir:istanbul": 2000, "sehir:ankara": 5000}}
+EQUAL_CUT = {"butce": {"sehir:istanbul": 3600, "sehir:ankara": 2700, "sehir:izmir": 1800}}
+
+
+def budget_input(effect, title="İstanbul payının yarısı Ankara'ya"):
+    return ProposalInput(type="KONU", title=title, body="Etkinlik bütçesi yeniden dağıtılsın.",
+                         area_id="kent", scope_id="genel", resource_ids=["butce"],
+                         share_effect=effect)
+
+
+def test_general_budget_proposal_must_declare_structured_effect(ctx, client):
+    a = make_user(ctx, "aylin", city="Ankara")
+    r = client.post("/proposals", headers=headers_for(ctx, a), json={
+        "type": "KONU", "title": "İstanbul payının yarısı Ankara'ya",
+        "body": "İstanbul payının yarısı Ankara'ya aktarılsın.", "area_id": "kent",
+        "scope_id": "genel", "resource_ids": ["butce"],
+    })
+    assert r.status_code == 422
+    assert r.json()["violations"][0]["rule"] == "R2"
+    assert "kapsam başına yeni paylarla bildirmeli" in r.json()["violations"][0]["message"]
+
+
+def test_disproportionate_proposal_goes_to_slow_lane_and_oracle_lists_scopes(ctx, client):
+    a = make_user(ctx, "aylin", city="Ankara")
+    p = proposals.open_proposal(ctx, a, budget_input(HALF_TO_ANKARA))
+    assert p.status == "QUEUED" and p.lane == "SLOW"  # sessiz onay veto kuralını atlayamaz
+    assert "Orantısız etkilenen kapsam: İstanbul" in p.oracle_comment
+    assert "İstanbul seçmenleri ayrıca oylar" in p.oracle_comment
+    view = client.get(f"/proposals/{p.id}").json()
+    assert view["concurrent_scopes"] == [{"id": "sehir:istanbul", "name": "İstanbul"}]
+    [effect] = view["share_effect"]
+    rows = {r["scope_id"]: r for r in effect["rows"]}
+    assert (rows["sehir:istanbul"]["old"], rows["sehir:istanbul"]["new"]) == (4000, 2000)
+    assert rows["sehir:istanbul"]["disproportionate"] is True
+    assert rows["sehir:izmir"]["change_pct"] == "0,0"
+
+
+def test_equal_cut_stays_in_fast_lane_and_applies_shares_on_acceptance(ctx, client, ledger):
+    a = make_user(ctx, "aylin", city="Ankara")
+    p = proposals.open_proposal(ctx, a, budget_input(EQUAL_CUT, "Tüm şehirlerde %10 kesinti"))
+    assert p.status == "SILENT"
+    assert "orantısız etkilenen kapsam yok" in p.oracle_comment
+    assert client.get(f"/proposals/{p.id}").json()["concurrent_scopes"] == []
+    proposals.accept(ctx.at(p.deadline_at), p)
+    ctx.commit()
+    assert dict(ctx.graph.resource("butce").shares) == EQUAL_CUT["butce"]
+    [rec] = ledger.of_type("PAY_DEGISTI")
+    assert rec["payload"]["kaynak"] == "butce" and rec["payload"]["yeni"] == EQUAL_CUT["butce"]

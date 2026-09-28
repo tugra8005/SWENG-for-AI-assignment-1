@@ -1,7 +1,9 @@
 """Karar Saati: planlı oylama oturumu.
 
 Pencere açılırken her öneri için anlık görüntü alınır (seçmenler, baskın dışlaması, havale
-çözümlemesi, yönetmelik değerleri) ve havale grafı kilitlenir. Oylar pencere boyunca
+çözümlemesi, yönetmelik değerleri) ve havale grafı kilitlenir. Bölünebilir kaynakta orantısız
+etkilenen her alt kapsam için aynı oturumda ayrı bir oylama açılır; öneri ancak hepsinde gerekli
+çoğunluğu alırsa geçer (eşzamanlı çoğunluk). Oylar pencere boyunca
 mühürlüdür: deftere yalnızca commit yazılır. Pencere kapanınca oylar açılır, anlık görüntü
 üzerinden ağırlıklı sayım yapılır ve sonuçlar uygulanır.
 """
@@ -67,33 +69,56 @@ def items_of(ctx: Ctx, session: DecisionSession) -> list[SessionItem]:
     ).scalars())
 
 
-def _item(ctx: Ctx, session: DecisionSession, proposal_id: int) -> SessionItem:
-    item = ctx.db.execute(select(SessionItem).where(
+def _item(ctx: Ctx, session: DecisionSession, proposal_id: int,
+          vote_scope_id: str | None = None) -> SessionItem:
+    """Önerinin ana oylaması ya da ``vote_scope_id`` verilirse o kapsamdaki oylaması."""
+    q = select(SessionItem).where(
         SessionItem.session_id == session.id, SessionItem.proposal_id == proposal_id
-    )).scalar_one_or_none()
+    )
+    q = (q.where(SessionItem.concurrent.is_(False)) if vote_scope_id is None
+         else q.where(SessionItem.vote_scope_id == vote_scope_id))
+    item = ctx.db.execute(q).scalar_one_or_none()
     if item is None:
-        raise NotFound("Bu öneri bu oturumda oylanmıyor.")
+        raise NotFound("Bu oylama bu oturumda yok.")
     return item
+
+
+def _proposal_count(items: list[SessionItem]) -> int:
+    return len({i.proposal_id for i in items})
 
 
 # --- açılış -------------------------------------------------------------------------------------
 
 
-def _snapshot(ctx: Ctx, session: DecisionSession, p: Proposal, delegations) -> SessionItem:
-    members = ontology.eligible_voters(ctx, p.scope_id)
+def _snapshot(ctx: Ctx, session: DecisionSession, p: Proposal, delegations,
+              vote_scope_id: str | None = None) -> SessionItem:
+    concurrent = vote_scope_id is not None
+    scope = vote_scope_id or p.scope_id
+    members = ontology.eligible_voters(ctx, scope)
     joined = {uid: m.since for uid, m in members.items()}
     clusters = detect_raids(joined, ctx.graph.interactions_among(members), ctx.now, ctx.reg)
     flagged = [{"user_id": uid, "reason": c.reason} for c in clusters for uid in sorted(c.members)]
     flagged_ids = {f["user_id"] for f in flagged}
     eligible = sorted(set(members) - flagged_ids)
+    if concurrent:
+        # Alt kapsam oylamasında havale yalnızca o kapsamın seçmenleri arasında çözülür: dışarıya
+        # giden havale bu oylamada uygulanmaz, üye oyunu kendisi verir.
+        inside = set(eligible)
+        delegations = {k: v for k, v in delegations.items() if k[0] in inside and v in inside}
     item = SessionItem(
-        session_id=session.id, proposal_id=p.id, area_id=p.area_id, eligible=eligible,
+        session_id=session.id, proposal_id=p.id, vote_scope_id=scope, concurrent=concurrent,
+        area_id=p.area_id, eligible=eligible,
         resolved=resolve_all(delegations, p.area_id, ctx.graph, eligible), flagged=flagged,
     )
     ctx.db.add(item)
-    p.status, p.session_id = "VOTING", session.id
-    ctx.graph.set_proposal_status(p.id, p.status)
+    if not concurrent:
+        p.status, p.session_id = "VOTING", session.id
+        ctx.graph.set_proposal_status(p.id, p.status)
     return item
+
+
+def _item_key(p: Proposal, item: SessionItem) -> str:
+    return f"{p.id}:{item.vote_scope_id}" if item.concurrent else str(p.id)
 
 
 def _oracle_decision(ctx: Ctx, p: Proposal) -> tuple[bool, str]:
@@ -141,14 +166,21 @@ def open_session(
         if proposals.is_mature(ctx, p)
     ]
     delegations = ctx.graph.delegations()
-    items = [(p, _snapshot(ctx, session, p, delegations)) for p in queued]
+    items: list[tuple[Proposal, SessionItem]] = []
+    concurrent: dict[str, list[str]] = {}
+    for p in queued:
+        items.append((p, _snapshot(ctx, session, p, delegations)))
+        for sid in proposals.concurrent_scopes(ctx, p):
+            items.append((p, _snapshot(ctx, session, p, delegations, sid)))
+            concurrent.setdefault(str(p.id), []).append(sid)
     ctx.db.flush()
     names = nickname_map(ctx, [f["user_id"] for _, it in items for f in it.flagged])
     ledger.enqueue(ctx, "OTURUM_ACILDI", {
         "oturum": session.id, "acilis": ctx.now.isoformat(),
-        "kapanis": session.closes_at.isoformat(), "oneriler": [p.id for p, _ in items],
-        "secmen_sayilari": {str(p.id): len(it.eligible) for p, it in items},
-        "baskin_isaretli": {str(p.id): [names.get(f["user_id"]) for f in it.flagged]
+        "kapanis": session.closes_at.isoformat(), "oneriler": [p.id for p in queued],
+        "secmen_sayilari": {_item_key(p, it): len(it.eligible) for p, it in items},
+        "eszamanli_oylamalar": concurrent,
+        "baskin_isaretli": {_item_key(p, it): [names.get(f["user_id"]) for f in it.flagged]
                             for p, it in items if it.flagged},
     }, ref=session)
 
@@ -173,10 +205,10 @@ def apply_vote_plan(ctx: Ctx, session: DecisionSession) -> list[str]:
     """Yalnızca geliştirme: tohum kullanıcılarının planlı oylarını verir."""
     report = []
     for item in items_of(ctx, session):
-        plan = ctx.db.execute(
-            select(DevVotePlan).where(DevVotePlan.proposal_id == item.proposal_id)
-            .order_by(DevVotePlan.id)
-        ).scalars().all()
+        q = select(DevVotePlan).where(DevVotePlan.proposal_id == item.proposal_id)
+        q = (q.where(DevVotePlan.vote_scope_id == item.vote_scope_id) if item.concurrent
+             else q.where(DevVotePlan.vote_scope_id.is_(None)))
+        plan = ctx.db.execute(q.order_by(DevVotePlan.id)).scalars().all()
         p = ctx.db.get(Proposal, item.proposal_id)
         for row in plan:
             voter = ctx.db.get(User, row.voter_id)
@@ -220,30 +252,39 @@ def _cast(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Proposal, us
         raise Forbidden(f"Bu alanda oyunuzu havale ettiniz (zincir {name} adlı yurttaşta "
                         "bitiyor); oy kullanamazsınız.")
     existing = ctx.db.execute(select(Ballot.id).where(
-        Ballot.session_id == session.id, Ballot.proposal_id == p.id, Ballot.voter_id == user.id
+        Ballot.session_id == session.id, Ballot.proposal_id == p.id,
+        Ballot.vote_scope_id == item.vote_scope_id, Ballot.voter_id == user.id,
     )).first()
     if existing:
-        raise Conflict("Bu öneriye oyunuzu zaten verdiniz; mühürlü oy değiştirilemez.")
+        raise Conflict("Bu oylamada oyunuzu zaten verdiniz; mühürlü oy değiştirilemez.")
     normalized = _normalize_choice(p, choice, ctx)
     salt = new_salt()
-    doc = {"oturum": session.id, "oneri": p.id, "secmen": user.id, "secim": normalized}
-    b = Ballot(session_id=session.id, proposal_id=p.id, voter_id=user.id, choice=normalized,
-               salt=salt, commit=make_commit(doc, salt), created_at=ctx.now)
+    doc = _ballot_doc(session.id, p.id, item.vote_scope_id, user.id, normalized)
+    b = Ballot(session_id=session.id, proposal_id=p.id, vote_scope_id=item.vote_scope_id,
+               voter_id=user.id, choice=normalized, salt=salt, commit=make_commit(doc, salt),
+               created_at=ctx.now)
     ctx.db.add(b)
     ctx.db.flush()
     ledger.enqueue(ctx, "OY_MUHUR", {
-        "oturum": session.id, "oneri": p.id, "secmen": user.nickname, "commit": b.commit,
+        "oturum": session.id, "oneri": p.id, "kapsam": item.vote_scope_id,
+        "secmen": user.nickname, "commit": b.commit,
     }, ref=b, ref_attr="commit_ledger_hash")
     return b
 
 
-def cast_vote(ctx: Ctx, user: User, proposal_id: int, choice: Any) -> Ballot:
+def _ballot_doc(session_id: int, proposal_id: int, scope_id: str, voter_id: str, choice: Any) -> dict:
+    return {"oturum": session_id, "oneri": proposal_id, "kapsam": scope_id, "secmen": voter_id,
+            "secim": choice}
+
+
+def cast_vote(ctx: Ctx, user: User, proposal_id: int, choice: Any,
+              vote_scope_id: str | None = None) -> Ballot:
     session = open_session_row(ctx)
     if session is None:
         raise Conflict("Şu anda açık bir Karar Saati penceresi yok.")
     if ctx.now >= session.closes_at:
         raise Conflict("Oy penceresi kapandı.")
-    item = _item(ctx, session, proposal_id)
+    item = _item(ctx, session, proposal_id, vote_scope_id)
     b = _cast(ctx, session, item, proposals.get_proposal(ctx, proposal_id), user, choice)
     ctx.commit()
     return b
@@ -252,16 +293,17 @@ def cast_vote(ctx: Ctx, user: User, proposal_id: int, choice: Any) -> Ballot:
 # --- kapanış ------------------------------------------------------------------------------------
 
 
-def _reveal(ctx: Ctx, session: DecisionSession, p: Proposal) -> list[Ballot]:
+def _reveal(ctx: Ctx, session: DecisionSession, p: Proposal, item: SessionItem) -> list[Ballot]:
     ballots = list(ctx.db.execute(select(Ballot).where(
-        Ballot.session_id == session.id, Ballot.proposal_id == p.id
+        Ballot.session_id == session.id, Ballot.proposal_id == p.id,
+        Ballot.vote_scope_id == item.vote_scope_id,
     ).order_by(Ballot.id)).scalars())
     names = nickname_map(ctx, [b.voter_id for b in ballots])
     for b in ballots:
-        doc = {"oturum": session.id, "oneri": p.id, "secmen": b.voter_id, "secim": b.choice}
+        doc = _ballot_doc(session.id, p.id, b.vote_scope_id, b.voter_id, b.choice)
         ledger.enqueue(ctx, "OY_ACILDI", {
-            "oturum": session.id, "oneri": p.id, "secmen": names.get(b.voter_id),
-            "oy": doc, "tuz": b.salt, "commit": b.commit,
+            "oturum": session.id, "oneri": p.id, "kapsam": b.vote_scope_id,
+            "secmen": names.get(b.voter_id), "oy": doc, "tuz": b.salt, "commit": b.commit,
         }, ref=b, ref_attr="reveal_ledger_hash")
     return ballots
 
@@ -284,72 +326,111 @@ def _votes_view(ctx: Ctx, item: SessionItem, ballots: list[Ballot], weights: dic
     ]
 
 
-def _close_item(ctx: Ctx, session: DecisionSession, item: SessionItem, reg: Regulation) -> None:
-    p = ctx.db.get(Proposal, item.proposal_id)
-    ballots = _reveal(ctx, session, p)
-    eligible = set(item.eligible)
+def _base_result(ctx: Ctx, item: SessionItem) -> dict[str, Any]:
     flagged_names = nickname_map(ctx, [f["user_id"] for f in item.flagged])
-    base: dict[str, Any] = {
-        "eligible": len(eligible),
+    return {
+        "eligible": len(item.eligible),
         "flagged": [{"nickname": flagged_names.get(f["user_id"]), "reason": f["reason"]}
                     for f in item.flagged],
         "oracle": item.oracle_note,
+        "vote_scope": {"id": item.vote_scope_id,
+                       "name": ontology.scope_label(ctx, item.vote_scope_id)},
+        "concurrent": item.concurrent,
     }
-    if p.type == "KAPANIS":
-        texts = proposals.closure_texts(ctx, p)
-        votes = {b.voter_id: set(b.choice) for b in ballots}
-        t = tally_approval(votes, item.resolved, eligible, [ct.id for ct in texts])
-        tn = nickname_map(ctx, [ct.author_id for ct in texts])
-        result = {
-            **base, "kind": "approval", "winner": t.winner, "tie": t.tie,
-            "scores": [{"text_id": ct.id, "author": tn.get(ct.author_id), "text": ct.text,
-                        "score": t.scores[ct.id]} for ct in texts],
-            "abstained": len(t.abstained), "votes": _votes_view(ctx, item, ballots, t.weights),
-        }
-        if t.winner is not None:
-            result["note"] = "En çok onayı alan metin Karar oldu."
-            item.result = result
-            proposals.accept(ctx, p, winner_text_id=t.winner, note=result["note"])
-        else:
-            result["note"] = ("Eşitlik: Karar çıkmadı." if t.tie else "Hiç onay yok: Karar çıkmadı.")
-            item.result = result
-            proposals.reject(ctx, p, result["note"])
-    else:
-        votes = {b.voter_id: b.choice == YES for b in ballots}
-        t = tally_binary(votes, item.resolved, eligible)
-        key = proposals.threshold_key(p)
-        ratio = reg.ratio(key)
-        passed = ratio.passes(t.yes, t.cast)
-        result = {
-            **base, "kind": "binary", "yes": t.yes, "no": t.no, "cast": t.cast,
-            "abstained": len(t.abstained), "passed": passed,
-            "threshold": {"key": key, "oran": reg.raw(key)["oran"],
-                          "karsilastirma": reg.raw(key).get("karsilastirma", ">=")},
-            "votes": _votes_view(ctx, item, ballots, t.weights),
-        }
-        pct = f"%{decimal_tr(100 * t.yes / t.cast)}" if t.cast else "oy yok"
-        result["note"] = (f"{t.yes}/{t.cast} ağırlıklı EVET ({pct}); eşik {key} "
-                          f"{result['threshold']['karsilastirma']} {result['threshold']['oran']}.")
+
+
+def _binary_result(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Proposal,
+                   reg: Regulation) -> dict[str, Any]:
+    ballots = _reveal(ctx, session, p, item)
+    votes = {b.voter_id: b.choice == YES for b in ballots}
+    t = tally_binary(votes, item.resolved, set(item.eligible))
+    key = proposals.threshold_key(p)
+    passed = reg.ratio(key).passes(t.yes, t.cast)
+    result = {
+        **_base_result(ctx, item), "kind": "binary", "yes": t.yes, "no": t.no, "cast": t.cast,
+        "abstained": len(t.abstained), "passed": passed,
+        "threshold": {"key": key, "oran": reg.raw(key)["oran"],
+                      "karsilastirma": reg.raw(key).get("karsilastirma", ">=")},
+        "votes": _votes_view(ctx, item, ballots, t.weights),
+    }
+    result["note"] = (f"{t.yes}/{t.cast} ağırlıklı EVET ({_pct(t.yes, t.cast)}); eşik {key} "
+                      f"{result['threshold']['karsilastirma']} {result['threshold']['oran']}.")
+    return result
+
+
+def _pct(yes: int, cast: int) -> str:
+    return f"%{decimal_tr(100 * yes / cast)}" if cast else "oy yok"
+
+
+def _pct_whole(yes: int, cast: int) -> str:
+    """Özet satırı için tam sayı yüzde (yarım yukarı yuvarlanır): 7/8 → "%88"."""
+    return f"%{(200 * yes + cast) // (2 * cast)}" if cast else "oy yok"
+
+
+def _close_approval(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Proposal) -> None:
+    ballots = _reveal(ctx, session, p, item)
+    texts = proposals.closure_texts(ctx, p)
+    votes = {b.voter_id: set(b.choice) for b in ballots}
+    t = tally_approval(votes, item.resolved, set(item.eligible), [ct.id for ct in texts])
+    tn = nickname_map(ctx, [ct.author_id for ct in texts])
+    result = {
+        **_base_result(ctx, item), "kind": "approval", "winner": t.winner, "tie": t.tie,
+        "scores": [{"text_id": ct.id, "author": tn.get(ct.author_id), "text": ct.text,
+                    "score": t.scores[ct.id]} for ct in texts],
+        "abstained": len(t.abstained), "votes": _votes_view(ctx, item, ballots, t.weights),
+    }
+    if t.winner is not None:
+        result["note"] = "En çok onayı alan metin Karar oldu."
         item.result = result
+        proposals.accept(ctx, p, winner_text_id=t.winner, note=result["note"])
+    else:
+        result["note"] = ("Eşitlik: Karar çıkmadı." if t.tie else "Hiç onay yok: Karar çıkmadı.")
+        item.result = result
+        proposals.reject(ctx, p, result["note"])
+
+
+def _close_proposal(ctx: Ctx, session: DecisionSession, p: Proposal, items: list[SessionItem],
+                    reg: Regulation) -> None:
+    """Önerinin bütün oylamalarını açar ve sayar; öneri ancak hepsinde çoğunluk alırsa geçer."""
+    main = next(i for i in items if not i.concurrent)
+    subs = [i for i in items if i.concurrent]
+    if p.type == "KAPANIS":
+        _close_approval(ctx, session, main, p)
+    else:
+        results = {it.id: _binary_result(ctx, session, it, p, reg) for it in [main, *subs]}
+        passed = all(r["passed"] for r in results.values())
+        summary = None
+        if subs:
+            parts = [f"{r['vote_scope']['name']}: {_pct_whole(r['yes'], r['cast'])} EVET "
+                     f"{'✓' if r['passed'] else '✗'}" for r in results.values()]
+            summary = " · ".join(parts) + (" → Kabul edildi" if passed else " → Reddedildi")
+        for it in subs:
+            it.result = results[it.id]
+        main.result = {**results[main.id], "overall": {"passed": passed, "summary": summary}}
+        note = summary or results[main.id]["note"]
         if passed:
             try:
-                proposals.accept(ctx, p, note=result["note"])
+                proposals.accept(ctx, p, note=note)
             except DomainError as exc:
                 proposals.reject(ctx, p, f"Kabul edildi ama uygulanamadı: {exc.message}")
         else:
-            proposals.reject(ctx, p, result["note"])
-    ledger.enqueue(ctx, "OYLAMA_SONUCU", {
-        "oturum": session.id, "oneri": p.id,
-        "sonuc": {k: v for k, v in result.items() if k != "votes"},
-    })
+            proposals.reject(ctx, p, note)
+    for it in items:
+        ledger.enqueue(ctx, "OYLAMA_SONUCU", {
+            "oturum": session.id, "oneri": p.id, "kapsam": it.vote_scope_id,
+            "sonuc": {k: v for k, v in (it.result or {}).items() if k != "votes"},
+        })
 
 
 def close_session(ctx: Ctx, session: DecisionSession) -> None:
     if session.status != "OPEN":
         raise Conflict("Oturum zaten kapalı.")
     reg = Regulation(session.regulation)
+    groups: dict[int, list[SessionItem]] = {}
     for item in items_of(ctx, session):
-        _close_item(ctx, session, item, reg)
+        groups.setdefault(item.proposal_id, []).append(item)
+    for pid, items in groups.items():
+        _close_proposal(ctx, session, ctx.db.get(Proposal, pid), items, reg)
     session.status, session.closed_at = "CLOSED", ctx.now
     ledger.enqueue(ctx, "OTURUM_KAPANDI", {"oturum": session.id, "kapanis": ctx.now.isoformat()})
     ctx.db.flush()
@@ -399,7 +480,7 @@ def status(ctx: Ctx) -> dict:
         "now": ctx.now,
         "open_session": None if current is None else {
             "id": current.id, "opened_at": current.opened_at, "closes_at": current.closes_at,
-            "item_count": len(items_of(ctx, current)),
+            "item_count": _proposal_count(items_of(ctx, current)),
         },
         "next_scheduled_at": next_occurrence(ctx.now, spec),
         "window_minutes": int(spec.window.total_seconds() // 60),
@@ -424,10 +505,14 @@ def ballot(ctx: Ctx, user: User) -> dict:
         flagged = {f["user_id"]: f["reason"] for f in item.flagged}
         terminal = item.resolved.get(user.id)
         voted = ctx.db.execute(select(Ballot.id).where(
-            Ballot.session_id == session.id, Ballot.proposal_id == p.id, Ballot.voter_id == user.id
+            Ballot.session_id == session.id, Ballot.proposal_id == p.id,
+            Ballot.vote_scope_id == item.vote_scope_id, Ballot.voter_id == user.id,
         )).first() is not None
         entry: dict[str, Any] = {
             "proposal": proposals.summary(ctx, p, nickname_map(ctx, [p.proposer_id])),
+            "vote_scope": {"id": item.vote_scope_id,
+                           "name": ontology.scope_label(ctx, item.vote_scope_id)},
+            "concurrent": item.concurrent,
             "kind": "approval" if p.type == "KAPANIS" else "binary",
             "voted": voted,
             "weight": sum(1 for e in item.eligible if item.resolved.get(e) == user.id),
@@ -455,7 +540,7 @@ def list_sessions(ctx: Ctx) -> list[dict]:
     rows = ctx.db.execute(select(DecisionSession).order_by(DecisionSession.id.desc())).scalars()
     return [{"id": s.id, "opened_at": s.opened_at, "closes_at": s.closes_at, "status": s.status,
              "closed_at": s.closed_at, "scheduled": s.scheduled_for is not None,
-             "item_count": len(items_of(ctx, s))} for s in rows]
+             "item_count": _proposal_count(items_of(ctx, s))} for s in rows]
 
 
 def session_view(ctx: Ctx, session_id: int) -> dict:
@@ -473,8 +558,12 @@ def session_view(ctx: Ctx, session_id: int) -> dict:
                                for v in item.result.get("votes", [])]
         items.append({
             "proposal": proposals.summary(ctx, p, nickname_map(ctx, [p.proposer_id])),
+            "vote_scope": {"id": item.vote_scope_id,
+                           "name": ontology.scope_label(ctx, item.vote_scope_id)},
+            "concurrent": item.concurrent,
             "eligible_count": len(item.eligible),
-            "sealed_votes": sum(1 for b in commits if b.proposal_id == p.id),
+            "sealed_votes": sum(1 for b in commits if b.proposal_id == p.id
+                                and b.vote_scope_id == item.vote_scope_id),
             "result": result,
         })
     return {"id": s.id, "status": s.status, "opened_at": s.opened_at, "closes_at": s.closes_at,
@@ -492,7 +581,8 @@ def dissent_refusal(ctx: Ctx, d: Decision, user: User) -> Forbidden | Conflict |
     owns_losing = any(ct.author_id == user.id for ct in losing.values())
     p = ctx.db.get(Proposal, d.proposal_id)
     b = ctx.db.execute(select(Ballot).where(
-        Ballot.session_id == p.session_id, Ballot.proposal_id == p.id, Ballot.voter_id == user.id
+        Ballot.session_id == p.session_id, Ballot.proposal_id == p.id,
+        Ballot.vote_scope_id == p.scope_id, Ballot.voter_id == user.id,
     )).scalar_one_or_none() if p and p.session_id else None
     supported_losing = b is not None and bool(set(b.choice or []) & set(losing))
     if not (owns_losing or supported_losing):

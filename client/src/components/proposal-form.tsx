@@ -15,6 +15,7 @@ import {
 } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { describeArticleValue } from '@/lib/format';
+import { shareImpact, toRows } from '@/lib/shares';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -180,7 +181,9 @@ export function ProposalForm({
   const areas = useApi<any[]>('/areas');
   const scopes = useApi<any[]>('/scopes');
   const resources = useApi<any[]>('/resources');
-  const regulation = useApi<any[]>(type === 'YONETMELIK' || type === 'SILME' ? '/regulation' : null);
+  const regulation = useApi<any[]>(
+    type === 'YONETMELIK' || type === 'SILME' || type === 'KONU' || type === 'ALT_KONU' ? '/regulation' : null,
+  );
   const { me } = useAuth();
   const topicId = ctx.topic ?? ctx.parent ?? ctx.reopen;
   const topic = useApi<any>(topicId ? `/topics/${topicId}` : null);
@@ -195,6 +198,8 @@ export function ProposalForm({
   const [articleKey, setArticleKey] = useState<string | null>(ctx.article ?? null);
   const [newValue, setNewValue] = useState<any>(null);
   const [rules, setRules] = useState<string[]>([]);
+  // Bölünebilir kaynağın yapılandırılmış etkisi: {kaynak: {kapsam: yeni_pay (metin)}}
+  const [effect, setEffect] = useState<Record<string, Record<string, string>>>({});
   const [excerpt, setExcerpt] = useState('');
   const [error, setError] = useState<unknown>(null);
 
@@ -206,6 +211,11 @@ export function ProposalForm({
   const article = regulation.data?.find((a) => a.key === articleKey);
   const regAction = type === 'YONETMELIK' ? (ctx.action ?? 'degistir') : null;
   const needsLabels = (type === 'KONU' && !ctx.reopen) || type === 'ALT_KONU';
+  // Sahip kapsamın oyladığı bölünebilir kaynaklar: etkiyi kapsam başına bildirmek zorunlu (R2).
+  const splitResources = (resources.data ?? []).filter(
+    (r) => picked.includes(r.id) && r.divisible && scope === r.owner_scope_id,
+  );
+  const thresholdPP = Number(regulation.data?.find((a) => a.key === 'orantisizlik_esigi')?.value?.deger ?? 10);
   const areaOptions = useMemo(() => {
     // Ağaç sırası (derinlik öncelikli), girintili.
     const list = areas.data ?? [];
@@ -224,6 +234,14 @@ export function ProposalForm({
     setError(null);
     const payload: Record<string, unknown> = { type, title, body };
     if (needsLabels) Object.assign(payload, { area_id: area, scope_id: scope, resource_ids: picked });
+    if (needsLabels && splitResources.length) {
+      payload.share_effect = Object.fromEntries(
+        splitResources.map((r) => [
+          r.id,
+          Object.fromEntries(toRows(r.shares, effect[r.id] ?? {}).map((row) => [row.scopeId, row.next])),
+        ]),
+      );
+    }
     if (type === 'ALT_KONU') payload.parent_topic_id = Number(ctx.parent);
     if (ctx.reopen) payload.reopens_topic_id = Number(ctx.reopen);
     if (type === 'DUZENLEME') Object.assign(payload, { target_message_id: Number(ctx.message), new_text: newText ?? currentText });
@@ -415,6 +433,44 @@ export function ProposalForm({
             selected={picked}
             onToggle={(v) => setPicked((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
           />
+          {splitResources.map((r) => {
+            const rows = toRows(r.shares, effect[r.id] ?? {});
+            const { average, flagged } = shareImpact(rows, thresholdPP);
+            return (
+              <View key={r.id} style={{ marginBottom: 14, gap: 6 }}>
+                <Kicker style={{ color: paper.seal }}>Pay etkisi · {r.name}</Kicker>
+                <Muted>
+                  Bölünebilir kaynağı bütün adına oyluyorsunuz: etkisini kapsam başına yeni paylarla bildirin.
+                  Payı ortalamanın en az {thresholdPP} yüzde puanı altında azalan kapsam ayrıca oylar; öneri
+                  orada da çoğunluk almalı.
+                </Muted>
+                {rows.map((row) => (
+                  <View key={row.scopeId} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <Text style={{ fontFamily: fonts.monoMedium, fontSize: 13, color: paper.ink, width: 90 }}>{row.name}</Text>
+                    <Text style={{ fontFamily: fonts.mono, fontSize: 13, color: paper.muted, width: 60 }}>{row.old}</Text>
+                    <View style={{ width: 110 }}>
+                      <Field
+                        label={`${row.name} yeni pay`}
+                        value={effect[r.id]?.[row.scopeId] ?? String(row.old)}
+                        keyboardType="number-pad"
+                        onChangeText={(t) =>
+                          setEffect((e) => ({ ...e, [r.id]: { ...(e[r.id] ?? {}), [row.scopeId]: t.replace(/[^0-9]/g, '') } }))
+                        }
+                      />
+                    </View>
+                    <Text style={{ fontFamily: fonts.mono, fontSize: 12, color: flagged.includes(row.scopeId) ? paper.seal : paper.muted }}>
+                      {row.relative === null ? '—' : `%${(row.relative * 100).toFixed(1).replace('.', ',')}`}
+                      {flagged.includes(row.scopeId) ? ' · orantısız → ayrı oylama' : ''}
+                    </Text>
+                  </View>
+                ))}
+                <Muted style={{ fontSize: 13 }}>
+                  Ortalama değişim: {average === null ? '—' : `%${(average * 100).toFixed(1).replace('.', ',')}`}
+                  {flagged.length ? ' · orantısız etkilenen kapsam varsa öneri doğrudan Karar Saati kuyruğuna girer.' : ''}
+                </Muted>
+              </View>
+            );
+          })}
         </View>
       ) : null}
 

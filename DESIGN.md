@@ -135,7 +135,7 @@ flowchart LR
 | "Etkinlik bütçesi" (tohum) | GENEL | Evet, şehir bazında; puan cinsinden paylar (İstanbul 4.000, Ankara 6.000, İzmir 5.000, Bursa 5.000) |
 | "Ortak toplantı salonu" (tohum) | GENEL | Hayır |
 
-Bütçe yalnızca paylarıyla temsil edilir; kaynağın toplamı payların toplamıdır (tohumda 20.000 puan). Bir dağıtım motoru yoktur; kararın hangi payı etkilediği öneride ve kararda gösterilir.
+Bütçe yalnızca paylarıyla temsil edilir; kaynağın toplamı payların toplamıdır (tohumda 20.000 puan). Bir dağıtım motoru yoktur; kararın hangi payı etkilediği öneride ve kararda gösterilir. Bütün adına (sahip kapsamda) oylanan öneri etkisini kapsam başına yeni paylarla bildirir (§6, R2); kabul edilen önerinin yeni payları kaynağa işlenir ve deftere `PAY_DEGISTI` olarak yazılır. Sonraki öneriler güncel paylarla hesaplanır.
 
 ## 5. Yönetmelik = veri
 
@@ -151,6 +151,7 @@ Tüm eşikler ve süreler `YonetmelikMaddesi` düğümlerinde durur. Kod bunlar�
 | `basit_cogunluk` | `{oran: 1/2, karsilastirma: ">"}` | Kullanılan oyların yarısından fazlası |
 | `yonetmelik_esigi` | `{oran: 2/3, karsilastirma: ">="}` | Kullanılan oyların en az 2/3'ü |
 | `silme_esigi` | `{oran: 2/3, karsilastirma: ">="}` | Başkasının içeriğini silmek için kullanılan oyların en az 2/3'ü (§7.4) |
+| `orantisizlik_esigi` | 10 yüzde puanı | Bir alt kapsamın payındaki göreli azalma ortalama göreli değişimden en az bu kadar fazlaysa o kapsam ayrıca oylar (§7.7) |
 | `red_bekleme` | 30 gün | Reddedilen hedefe yeniden öneri yasağı |
 | `musavir_esigi` | 5 | Alan bazında doğrudan alınan havale sayısı |
 | `ilgi_bekleme` | 14 gün | ILGI kapsamında oy hakkı beklemesi |
@@ -202,7 +203,7 @@ Her öneri açılırken kurallar çalışır. İhlal varsa öneri kaydedilmez ve
 | Kural | İçerik | Gerekçe |
 |---|---|---|
 | **R1** | ALT_KONU'nun alanı, üst konunun alanının kendisi ya da alt ağacında olmalı | Konu ağacı alan ağacıyla çelişmez; alt konu üst konunun konusundan kopamaz |
-| **R2** | Seçmen kapsamı S, etkilenen her kaynağın sahibi O için: S = O ise geçer. S ⊂ O ise: kaynak S'nin türüne göre bölünebiliyorsa etki S'nin payına daraltılır ve öneride gösterilir ("Bu karar yalnızca İstanbul payını etkiler"); bölünemiyorsa red. S ⊄ O ise (üst küme ya da ilgisiz) red ("Bu kapsam bu kaynak hakkında karar veremez: kaynağın sahibi X") | Karar veren grup, kaynağa sahipliğini ontolojide göstermek zorundadır (ispat yükünün tersine çevrilmesi). Çoğunluk, azınlığa ait kaynak hakkında karar veremez |
+| **R2** | Seçmen kapsamı S, etkilenen her kaynağın sahibi O için: S = O ise geçer. S ⊂ O ise: kaynak S'nin türüne göre bölünebiliyorsa etki S'nin payına daraltılır ve öneride gösterilir ("Bu karar yalnızca İstanbul payını etkiler"); bölünemiyorsa red. S ⊄ O ise (üst küme ya da ilgisiz) red ("Bu kapsam bu kaynak hakkında karar veremez: kaynağın sahibi X"). **Ters yön:** S = O ve kaynak bölünebilirse öneri etkisini yapılandırılmış olarak bildirmeli: kapsam başına yeni pay (`{kapsam: yeni_pay}`); metin tek başına yetmez, bildirmeyen öneri reddedilir. Payları değiştirmeyen öneri boş etki bildirir. Daraltılmış öneri (S ⊂ O) yalnızca kendi payını değiştirebilir | Karar veren grup, kaynağa sahipliğini ontolojide göstermek zorundadır (ispat yükünün tersine çevrilmesi). Çoğunluk, azınlığa ait kaynak hakkında karar veremez. Ters yönde bütün, bir alt kapsamın payını gasp edemez: etkinin yapılandırılmış olması orantısızlığın ölçülebilmesini sağlar (§7.7) |
 | **R3** | YonetmelikMaddesi'ni etkileyen öneri YONETMELIK türünde olmalı; seçmeni GENEL, şeridi yavaş, eşiği `yonetmelik_esigi` | Kurallar herkesi bağlar; hızlı ve sessiz değişemez |
 | **R4** | Havale döngüsü yasak (alan başına; mirası da kapsar, §8.2) | Döngüde oy hiçbir yere varmaz |
 | **R5** | Oy hakkı = kapsam üyeliği + ilgili bekleme süresinin dolmuş olması. Öneri sahibi de seçmen kapsamında oy hakkına sahip olmalı | Bir gruba, o grubun parçası olmayan biri öneri getiremez; yeni katılanlar hemen karar veremez |
@@ -319,6 +320,30 @@ Kendi mesajında yazarın rızası vardır. Silinen ses, silinmesini isteyen ses
 ### 7.6 Tartışma alanı
 
 Kabul edilmiş her konunun altında kalıcı, oylamasız yazılan bir tartışma alanı vardır. Yanıtlar bir mesaja referans verebilir; bu, ETKILESIM sinyalidir.
+
+### 7.7 Eşzamanlı çoğunluk (bölünebilir kaynakta orantısız etki)
+
+R2 bir alt kapsamın bütünün kaynağı hakkında karar vermesini engeller. Bu bölüm ters yönü ele alır: bütünün (ör. Genel) bir alt kapsamın payını gasp etmesi. İstanbul 20.000 puanlık bütçenin 4.000'ine sahipse, Genel'deki bir çoğunluk bu payın yarısını Ankara'ya aktarmayı oylayabilir. Sayıca azınlık olan İstanbul seçmenleri Genel oylamasında her zaman yenilir.
+
+**Kural.**
+
+- **Pay etkisi zorunludur (R2, ters yön).** Bölünebilir kaynağı etkileyen ve bütün adına oylanan öneri etkisini kapsam başına yeni paylarla bildirir. Göreli değişim her alt kapsam için (yeni − eski) / eski'dir.
+- **Orantısızlık.** Bir alt kapsamın payı azalıyor ve bu azalma, payı olan tüm alt kapsamların ortalama göreli değişiminden en az `orantisizlik_esigi` (varsayılan 10) yüzde puanı fazlaysa, o kapsam *orantısız etkilenen* sayılır. Herkese eşit oranda kesinti orantısız değildir: her şehrin payında %10 kesinti ortalamayla aynıdır. "İstanbul payının yarısı Ankara'ya" önerisinde İstanbul %-50, ortalama %-4,2'dir; fark 45,8 puan.
+- **Ayrı oylama.** Orantısız etkilenen her alt kapsam için aynı Karar Saati'nde ayrı bir oylama açılır. Seçmenleri o kapsamda oy hakkı olanlardır. Havale yalnızca o kapsamın seçmenleri arasında çözülür: dışarıya giden havale bu oylamada uygulanmaz ve üye oyunu kendisi verir. Pusulada ayrı bir satırdır ve oy ayrı mühürlenir; aynı kişi iki oylamada farklı oy verebilir.
+- **Eşzamanlı çoğunluk.** Öneri ancak hem kendi seçmen kapsamında hem de orantısız etkilenen her alt kapsamda gerekli çoğunluğu alırsa geçer. Sonuç ekranı her sayımı ayrı gösterir: "Genel: %64 EVET ✓ · İstanbul: %22 EVET ✗ → Reddedildi".
+- **Yavaş şerit.** Orantısız etkilenen kapsamı olan öneri sessiz onayla geçemez (veto atlanmış olurdu); doğrudan Karar Saati kuyruğuna girer. Orantısız etkisi olmayan pay değişikliği (eşit kesinti) normal hızlı şeritte kalır.
+- **Muafiyet.** R2 ile daraltılmış öneriler (yalnızca kendi payını etkileyenler) bu kuraldan muaftır; kendi payı üzerinde karar veren zaten o kapsamdır.
+- **Hâtif** orantısız etkilenen kapsamları önerinin altındaki yorumunda sayılarıyla listeler. Alt kapsam oylamalarında oy vermez; şehir kapsamlarının üyesi değildir.
+
+**Veto yalnızca kendi payı üzerindedir ve geçersiz kılınamaz.** Alt kapsamın ayrı oylaması bir vetodur. Kapsamı dardır: yalnızca o kapsamın payını orantısız azaltan önerileri durdurabilir. Başka kapsamların payları, konunun kendisi ya da orantılı bir kesinti bu vetoya tabi değildir. Vetoyu aşmanın bir yolu (ör. Genel'de 3/4 ile geçersiz kılma) bilinçli olarak yoktur. Böyle bir mekanizma, korunmak istenen durumu (bütünün sayısal çoğunluğunun bir parçayı ezmesi) yalnızca daha yüksek bir eşikle yeniden mümkün kılar; gasp daha pahalı hâle gelir ama yasallaşır. Payını kaybetmek istemeyen kapsamın "hayır"ı kesin kabul edilmiştir. Bedeli §15'te: orantısız ama haklı bir yeniden dağıtım da engellenebilir.
+
+**Neden: hocanın "bölme" ipucu.** Gereksinim 16, çoğunluğun azınlığı ezmesini "uzmanlar ve bölme" ile engellemeyi ister. Kapsam ve R2 bölmenin bir yüzüdür: karar kararı etkilenenlere daraltılır. Eşzamanlı çoğunluk öbür yüzüdür: karar bütünde alınır ama etkilenen parçanın ayrıca onayı gerekir. Fikir yeni değildir:
+
+- **Calhoun'un eşzamanlı çoğunluğu (concurrent majority).** John C. Calhoun (*A Disquisition on Government*, 1851), sayısal çoğunluğun yanında, kararın ağır etkilediği her çıkar grubunun kendi çoğunluğunun da onayını şart koşar. Meşveret bu fikri yalnızca ölçülebilir bir koşulda uygular: payın orantısız azalması. Calhoun'un genel veto hakkına, yani her grubun her karara itiraz edebilmesine dönüşmez. (Calhoun'un fikri tarihte köleliği koruma aracı olarak savunuldu; genel veto azınlık korumasını bir azınlık ayrıcalığına çevirebilir. Veto kapsamının dar ve ölçülebilir tutulmasının bir nedeni de budur.)
+- **ABD'nin iki meclisli yapısı.** Bir yasa hem nüfusa göre seçilen Temsilciler Meclisi'nden hem de her eyaletin eşit temsil edildiği Senato'dan geçmelidir. Nüfus çoğunluğu tek başına yetmez; birimlerin ayrı sesi vardır.
+- **AB Konseyi'nde çifte çoğunluk (nitelikli çoğunluk).** Karar için üye devletlerin %55'i ve AB nüfusunun %65'i gerekir. Aynı oy iki farklı sayımda çoğunluk almalıdır.
+
+Meşveret'teki biçim bunların en dar olanıdır: ikinci sayım yalnızca orantısız etkilenen kapsam(lar) için ve yalnızca o kapsamın payı söz konusu olduğunda açılır.
 
 ## 8. Havale
 
@@ -499,6 +524,12 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Kendi içeriği istisnası | Yalnızca mesajlar için (açılış mesajı dahil). Konu silme hiçbir zaman "kendi" sayılmaz. Kendi mesajında kural ve alıntı isteğe bağlıdır; verilirse doğrulanır |
 | R7'nin oylama anında yeniden çalışması | Hedefin güncel metniyle; yazar ihlal eden kısmı düzeltirse Hâtif HAYIR der |
 | İçerik kuralı eklemek ve kaldırmak | YONETMELIK önerisiyle ve `yonetmelik_esigi` ile (kullanıcı kararı). Kod öneri açılırken verilir, kaldırılan kod yeniden kullanılmaz; eklemede R6 hedefi kuralın başlığıdır. Bir kuralı değiştiren öneri kabul anında kural kaldırılmışsa uygulanmaz |
+| Yapılandırılmış etkinin anlamı | Kapsam başına mutlak yeni pay; bildirilmeyen kapsamın payı aynı kalır. Toplamın korunması gerekmez (kesinti mümkündür). Boş etki "paylar değişmiyor" demektir |
+| Orantısızlık hesabı | Göreli değişim (yeni − eski) / eski. Ortalama, payı olan tüm alt kapsamlar üzerinden alınır, değişmeyenler dahil (ağırlıksız). Yalnızca payı azalan kapsam orantısız sayılabilir; eşik dahildir (fark ≥ `orantisizlik_esigi`) |
+| Alt kapsam oylamasının pusulası | Ayrı pusula satırı ve ayrı mühür; aynı kişi iki oylamada farklı oy verebilir. Havale yalnızca o kapsamın seçmenleri arasında çözülür; dışarıya giden havale uygulanmaz, üye kendisi oy verir. Eşik ana oylamayla aynıdır |
+| Orantısızlığın ne zaman ölçüldüğü | Şerit seçimi ve Hâtif yorumu açılışta; alt oylamalar pencere açılışında güncel paylarla yeniden hesaplanır |
+| Kabul edilen etkinin uygulanması | Yeni paylar kaynağa işlenir ve deftere yazılır (`PAY_DEGISTI`) |
+| Daraltılmış öneride etki | Yalnızca kendi payı değiştirilebilir; daralmanın kendisi yapılandırılmış etkinin yerini tutar |
 | Etki başlığının üretimi | Kaynak adının tamlayan hâli + kapsam adı + "payı". Tamlayan eki ünlü uyumuyla ve kaynaştırma ünsüzüyle eklenir; ünsüz yumuşaması yapılmaz ("kitap" → "kitapın"), kaynak adları buna göre seçilir |
 
 ## 15. Bilinçli açıklar
@@ -526,6 +557,11 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 21. **2/3 gerçek bir hakareti de koruyabilir.** Seçmenlerin üçte birinden fazlası bir içeriğin kalmasını isterse, gerçekten kural ihlali olsa bile içerik görünür kalır (senaryo 4'te %60 ile silinemeyen hakaret). Reddedilen silme `red_bekleme` süresince yeniden açılamaz. Bu bilinçli bir ödünleşimdir: yayında kalan bir hakaretin zararı, çoğunluğun azınlık görüşlerini silebilmesinin zararından küçük sayılmıştır.
 22. **İçerik kuralları oylamayla genişletilebilir ya da çoğaltılabilir.** 2/3'lük bir çoğunluk mevcut bir kuralın metnini genişletebilir (IK-1'i "konu dışı iletiler"i kapsayacak biçimde) ya da doğrudan geniş bir kural ekleyebilir ("IK-4 Konu dışı"). Aynı çoğunluk, silmeleri engelleyen bir kuralı da kaldırabilir. Tohumdaki dar küme bir tavsiyedir, güvence değildir: çoğunluk sansürüne karşı koruma, kuralların dar olmasından değil, kural kümesini değiştirmenin 2/3 istemesinden gelir. Dar kural koruması yalnızca `yonetmelik_esigi` kadar güçlüdür; bkz. 10. madde (eşik kilitleme).
 23. **Kendi mesajını silmek bağlamı bozar.** Yazar kendi mesajını basit çoğunlukla gizleyebilir; ona verilen yanıtlar bağlamsız kalır, ve yazar sonradan kendisini bağlayan bir sözünü de gizleyebilir. İçerik defterde kalır; sansür şeridi silmenin yazarın isteğiyle olduğunu gösterir.
+24. **Salam taktiği.** Kural her öneriyi ayrı ölçer, birikimi izlemez. Her oturumda bir kapsama ortalamadan 9 yüzde puanı fazla kesinti uygulayan öneriler tek tek orantısız sayılmaz; birkaç oturumda payın büyük kısmı erir.
+25. **Ortalama sulandırılabilir.** Ortalama ağırlıksızdır ve bütün alt kapsamları içerir. Hedef dışındaki kapsamlara da kesinti eklenerek fark eşiğin altına indirilebilir: bir kapsama %50, diğerlerine %45 kesinti orantısız sayılmaz. Bu, "herkese eşit kesinti orantısız değildir" ilkesinin bedelidir.
+26. **Veto haklı bir yeniden dağıtımı da durdurur.** Nüfusu azalan bir şehrin payını küçültmek adil olabilir; o şehrin seçmenleri yine de hayır diyebilir ve geçersiz kılma yoktur (bilinçli tercih, §7.7). Yeter sayı olmadığı için alt oylamada hiç oy verilmezse öneri reddedilir: ilgisizlik de vetodur.
+27. **Yalnızca tanımlı paylar korunur.** Koruma, ontolojide payları tanımlı bölünebilir kaynaklarla sınırlıdır. Bir kapsamı dolaylı etkileyen öneri (ör. yalnızca bir şehirde etkinliği yasaklayan) bu kurala girmez.
+28. **Etkiyi öneri sahibi bildirir.** Metinle yapılandırılmış etki arasındaki tutarlılığı sistem denetlemez. "İstanbul payı Ankara'ya" yazıp boş etki bildiren öneri R2'yi geçer ve tek oylamayla oylanır. Kabul edildiğinde uygulanan şey metin değil bildirilen etkidir, yani paylar değişmez; ama seçmen metne bakarak oy vermiş olabilir. Hâtif bu uyuşmazlığı yakalamaz.
 
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
 
@@ -546,7 +582,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | 13 | Herkes eşit; bazıları "daha eşit" | Herkesin kendi oyu 1; havale alan kişinin ağırlığı artar; Müşavir etiketi görünürlüktür, rütbe değildir |
 | 14 | Oy hakkı havale edilebilir | Genel ve alan bazlı HAVALE, miras, zincir, döngü yasağı (R4), pencere kilidi |
 | 15 | Bilirkişiler; API ile bağlı yapay zekâ olabilir | Hâtif: kural tabanlı sembolik bilirkişi (gerçek API bilinçli olarak kapsam dışı) |
-| 16 | Çoğunluğun azınlığı ezmesi engellenmeli (uzmanlar ve bölme) | Bölme: kapsam + R2 otomatik daralma. Uzmanlar: alan bazlı havale ve Müşavirler. Ayrıca nitelikli çoğunluk (yönetmelik ve silme 2/3), gerekçeli silme (R7) ve Şerh |
+| 16 | Çoğunluğun azınlığı ezmesi engellenmeli (uzmanlar ve bölme) | Bölme, iki yönde: (1) kapsam + R2 otomatik daralma (parça bütün adına karar veremez); (2) eşzamanlı çoğunluk (§7.7): bütün bir parçanın payını orantısız azaltırsa parça ayrıca oylar ve öneri ancak iki oylamada da çoğunlukla geçer (Calhoun, ABD iki meclisli yapı, AB çifte çoğunluk). Uzmanlar: alan bazlı havale ve Müşavirler. Ayrıca nitelikli çoğunluk (yönetmelik ve silme 2/3), gerekçeli silme (R7) ve Şerh |
 | 17 | Kalabalık (ölçek) sorunu | Havale (sıvı demokrasi), sessiz onay hızlı şeridi, Karar Saati'nde toplu oylama, seçmeni kapsamla daraltma |
 | 18 | Sonunda uzlaşma; farklı görüşler oylanabilir | KAPANIS: rakip karar metinleri + onay oylaması + Şerh; süre sonra yeniden açma |
 | 19 | Akran öğrenmesi temelli tartışma | Kalıcı tartışma alanı, açık sürüm geçmişi, Müşavir görünürlüğü, Mahzen diskuru; olgunlaşma süresi oylamadan önce tartışmaya en az 48 saat–7 gün ayırır |
@@ -584,7 +620,8 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Daralmanın sunumu: pay/toplam, etki başlığı, Hâtif satırı | `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_seed.py::test_scenario_1_istanbul` |
 | İçerik kuralı ekleme ve kaldırma: kod verme, kodun yeniden kullanılmaması, R6, kaldırılan kurala dayanan silme | `test_regulation.py`, `test_proposals.py::test_content_rule_can_be_added_by_regulation_vote`, `::test_content_rule_can_be_removed_and_its_code_is_never_reused`, `test_decision_hour.py::test_pending_deletion_citing_a_removed_rule_gets_oracle_no`, `graph_contract.py` |
 | Silme: içerik kuralları, R7 gerekçesi, 2/3 eşiği, kendi mesajı istisnası, H4, şeritteki kural | `test_regulation.py`, `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_decision_hour.py::test_deletion_needs_two_thirds_but_own_message_needs_simple_majority`, `test_seed.py::test_scenario_4_unjustified_deletion_is_rejected` |
-| Dokuz demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
+| Pay etkisi ve orantısızlık; R2'nin ters yönü; eşzamanlı çoğunluk (ayrı oylama, üyeler arası havale, sonuç satırı, payların işlenmesi) | `api/tests/domain/test_shares.py`, `test_rules.py`, `test_proposals.py`, `test_decision_hour.py::test_proposal_needs_majority_in_every_disproportionate_scope`, `::test_disproportionately_affected_scope_votes_separately_with_member_only_delegation`, `test_seed.py` (senaryo 10) |
+| On demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
 ## 19. Sözlük (Türkçe terim ↔ kod)
 
@@ -607,6 +644,9 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Defter | `ledger` |
 | Diskur | `Discourse` (Neo4j etiketi `Diskur`) |
 | Baskın | `raid` |
+| Pay etkisi | `share_effect` (`domain/shares.py`) |
+| Orantısız etkilenen kapsam | `disproportionate` |
+| Eşzamanlı çoğunluk, alt kapsam oylaması | `concurrent`, `SessionItem.vote_scope_id` |
 | İçerik kuralı (IK-1…) | `ContentRule` (madde türü `icerik_kurali`) |
 | Silme gerekçesi, alıntı | R7, `content_rules` / `excerpt` |
 | Olgunlaşma (dar / geniş / genel) | `maturation` (`MaturityClass`) |

@@ -138,7 +138,20 @@ function Tally({ result, onReplay }: { result: any; onReplay: () => void }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
           <Stamp
             reduced={reduced}
-            text={binary ? (result.passed ? 'KABUL' : 'RET') : result.winner ? 'KARAR' : 'KARAR YOK'}
+            text={
+              binary
+                ? // Eşzamanlı çoğunlukta tek oylamanın sonucu önerinin kaderi değildir; özet satırı söyler.
+                  result.concurrent || result.overall?.summary
+                  ? result.passed
+                    ? 'ÇOĞUNLUK VAR'
+                    : 'ÇOĞUNLUK YOK'
+                  : result.passed
+                    ? 'KABUL'
+                    : 'RET'
+                : result.winner
+                  ? 'KARAR'
+                  : 'KARAR YOK'
+            }
           />
           <Muted style={{ flex: 1, minWidth: 200 }}>{result.note}</Muted>
         </View>

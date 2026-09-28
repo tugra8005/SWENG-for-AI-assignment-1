@@ -96,6 +96,7 @@ function Result({ p }: { p: any }) {
           {r.yes} EVET · {r.no} HAYIR · {r.abstained} çekimser — {r.passed ? 'eşik aşıldı' : 'eşik aşılamadı'}
         </Body>
       )}
+      {r.overall?.summary ? <Text style={st.summary}>{r.overall.summary}</Text> : null}
       <Link href={`/karar-saati/${p.session_id}`} style={[st.link, { marginTop: 4 }]}>
         Oyların açılışını izle →
       </Link>
@@ -268,6 +269,34 @@ export default function ProposalPage() {
             </Section>
           ) : null}
 
+          {p.share_effect?.map((e: any) => (
+            <Section key={e.resource_id} title={`Pay etkisi · ${e.name}`} aside={<Kicker>ortalama %{e.average_pct}</Kicker>}>
+              {e.rows.map((r: any) => (
+                <View key={r.scope_id} style={st.shareRow}>
+                  <Text style={st.shareScope}>{r.name}</Text>
+                  <Text style={st.shareNums}>
+                    {fmtNumber(r.old)} → {fmtNumber(r.new)}
+                  </Text>
+                  <Text style={[st.shareNums, r.disproportionate && { color: paper.seal, fontFamily: fonts.monoBold }]}>
+                    %{r.change_pct}
+                    {r.disproportionate ? ' · orantısız' : ''}
+                  </Text>
+                </View>
+              ))}
+              {p.concurrent_scopes?.length ? (
+                <Muted style={{ marginTop: 6 }}>
+                  Orantısız etkilenen: {p.concurrent_scopes.map((c: any) => c.name).join(', ')}. Karar Saati&apos;nde bu
+                  kapsamların seçmenleri ayrıca oylar; öneri her oylamada gerekli çoğunluğu almalı (eşzamanlı çoğunluk).
+                  Veto yalnızca kapsamın kendi payı üzerindedir.
+                </Muted>
+              ) : (
+                <Muted style={{ marginTop: 6 }}>
+                  Orantısız etkilenen kapsam yok (eşik {e.threshold_pp} yüzde puanı); tek oylama.
+                </Muted>
+              )}
+            </Section>
+          ))}
+
           {p.resources?.length ? (
             <Section title="Etkilenen kaynaklar">
               {p.resources.map((r: any) => (
@@ -353,6 +382,10 @@ const st = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 },
   h1: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, color: paper.ink },
   link: { fontFamily: fonts.serif, fontSize: 16, color: paper.seal },
+  summary: { fontFamily: fonts.monoBold, fontSize: 14, lineHeight: 20, color: paper.ink, marginTop: 4 },
+  shareRow: { flexDirection: 'row', gap: 12, paddingVertical: 4, flexWrap: 'wrap' },
+  shareScope: { fontFamily: fonts.monoMedium, fontSize: 13, color: paper.ink, width: 90 },
+  shareNums: { fontFamily: fonts.mono, fontSize: 13, color: paper.inkSoft },
   maturing: { borderLeftWidth: 3, borderLeftColor: paper.seal, paddingLeft: 12, marginVertical: 12, gap: 4 },
   maturingText: { fontFamily: fonts.serifBold, fontSize: 19, lineHeight: 25, color: paper.ink },
   cell: { width: 18, height: 18, borderWidth: 1.5, borderColor: paper.seal },

@@ -96,6 +96,10 @@ def _articles() -> dict[str, Article]:
         Article("silme_esigi", "oran", {"oran": "2/3", "karsilastirma": ">="},
                 "Başkasının içeriğini silmek için kullanılan oylar içinde gereken pay. Kendi "
                 "mesajının silinmesi basit çoğunlukla oylanır.", Fraction(1, 2)),
+        Article("orantisizlik_esigi", "yuzde_puani", {"deger": 10},
+                "Bölünebilir kaynakta bir alt kapsamın payındaki göreli azalma, tüm alt "
+                "kapsamların ortalama göreli değişiminden en az bu kadar yüzde puanı fazlaysa o "
+                "kapsam orantısız etkilenir ve öneri o kapsamda ayrıca oylanır."),
         Article("red_bekleme", "sure", {"gun": 30},
                 "Oylamayla reddedilen hedefe yeni öneri açılamayan süre."),
         Article("musavir_esigi", "tamsayi", {"deger": 5},
@@ -227,6 +231,14 @@ def _v_sayi(article: Article, value: Mapping) -> dict:
     return {"deger": _positive_number(value.get("deger"), "Değer")}
 
 
+def _v_yuzde_puani(article: Article, value: Mapping) -> dict:
+    _only_keys(value, {"deger"})
+    v = _positive_number(value.get("deger"), "Yüzde puanı")
+    if v > 100:
+        raise RegulationError("Yüzde puanı 100'den büyük olamaz.")
+    return {"deger": v}
+
+
 def _v_itiraz(article: Article, value: Mapping) -> dict:
     _only_keys(value, {"min", "oran", "aktiflik_gun"})
     frac = _parse_fraction(value.get("oran"))
@@ -286,6 +298,7 @@ _VALIDATORS: dict[str, Callable[[Article, Mapping], dict]] = {
     "oran": _v_oran,
     "tamsayi": _v_tamsayi,
     "sayi": _v_sayi,
+    "yuzde_puani": _v_yuzde_puani,
     "itiraz": _v_itiraz,
     "karar_saati": _v_karar_saati,
     "agirliklar": _v_agirliklar,

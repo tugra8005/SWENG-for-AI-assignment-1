@@ -24,10 +24,13 @@ def user(ctx, nick) -> User:
     return ctx.db.execute(select(User).where(User.nickname == nick)).scalar_one()
 
 
-def result(ctx, session, pid):
-    return ctx.db.execute(select(SessionItem).where(
-        SessionItem.session_id == session.id, SessionItem.proposal_id == pid
-    )).scalar_one().result
+def result(ctx, session, pid, scope=None):
+    """Önerinin ana oylamasının (scope verilirse o alt kapsam oylamasının) sonucu."""
+    q = select(SessionItem).where(SessionItem.session_id == session.id,
+                                  SessionItem.proposal_id == pid)
+    q = q.where(SessionItem.vote_scope_id == scope) if scope else q.where(
+        SessionItem.concurrent.is_(False))
+    return ctx.db.execute(q).scalar_one().result
 
 
 def test_seed_builds_about_forty_accounts_and_three_level_tree(seeded):
@@ -115,6 +118,18 @@ def test_decision_hour_runs_all_voting_scenarios(seeded):
     assert len(rb["flagged"]) == 5
     assert rb["passed"] is False
 
+    # 10. Eşzamanlı çoğunluk: Genel'de geçer, İstanbul'da reddedilir → öneri reddedilir.
+    main, ist = result(later, session, ids["pay_yarisi"]), result(
+        later, session, ids["pay_yarisi"], "sehir:istanbul")
+    assert (main["yes"], main["cast"], main["passed"]) == (16, 25, True)
+    assert (ist["yes"], ist["cast"], ist["passed"]) == (2, 9, False)
+    assert main["overall"]["summary"] == "Genel: %64 EVET ✓ · İstanbul: %22 EVET ✗ → Reddedildi"
+    assert later.db.get(Proposal, ids["pay_yarisi"]).status == "REJECTED"
+    cut = result(later, session, ids["kesinti"])
+    assert (cut["yes"], cut["cast"], cut["passed"], cut["overall"]["summary"]) == (13, 21, True, None)
+    assert dict(later.graph.resource("butce").shares) == {
+        "sehir:istanbul": 3600, "sehir:ankara": 5400, "sehir:izmir": 4500, "sehir:bursa": 4500}
+
     # 8. Hâtif: yanlış alan etiketi yüzünden HAYIR, ağırlığı 3.
     rh = result(later, session, ids["hatif"])
     oracle_vote = next(v for v in rh["votes"] if v["voter"] == "Hâtif")
@@ -170,7 +185,8 @@ def test_scenario_9_late_general_proposal_waits_for_maturity(seeded):
     session = decision_hour.open_session(ctx)
     included = {i.proposal_id for i in decision_hour.items_of(ctx, session)}
     voting = {ids[k] for k in ("metro", "yonetmelik_60", "yonetmelik_67", "silme_60", "silme_67",
-                               "silme_kendi", "kapanis", "baskin", "hatif")}
+                               "silme_kendi", "kapanis", "baskin", "hatif", "pay_yarisi",
+                               "kesinti")}
     assert voting <= included  # tohumdaki senaryo önerileri olgunlaşmış
     assert ids["olgunlasma"] not in included
     later = ctx.at(session.closes_at)

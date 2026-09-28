@@ -16,9 +16,15 @@ export class ApiError extends Error {
 }
 
 let token: string | null = null;
+let onAuthLost: (() => void) | null = null;
 
 export function setToken(value: string | null) {
   token = value;
+}
+
+/** Sunucu anahtarı reddettiğinde (ör. tohum yeniden kurulduktan sonra) çağrılır. */
+export function setAuthLostHandler(handler: (() => void) | null) {
+  onAuthLost = handler;
 }
 
 type Options = {
@@ -78,6 +84,12 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
     });
   } catch {
     throw new ApiError(0, `Sunucuya ulaşılamadı (${API_URL}).`);
+  }
+  if (res.status === 401 && token && headers.Authorization) {
+    // Geçersiz anahtar: bırak, oturumu kapat; okuma isteğini anonim olarak yeniden dene.
+    token = null;
+    onAuthLost?.();
+    if ((opts.method ?? 'GET') === 'GET') return api<T>(path, opts);
   }
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;

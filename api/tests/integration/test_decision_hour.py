@@ -29,8 +29,10 @@ def queued_konu(ctx, user, title="Metro gece de çalışsın", area="ulasim", sc
 
 
 def item_of(ctx, session, p) -> SessionItem:
+    """Önerinin ana oylaması (seçmen kapsamındaki); alt kapsam oylamaları ayrı satırlardır."""
     return ctx.db.execute(select(SessionItem).where(
-        SessionItem.session_id == session.id, SessionItem.proposal_id == p.id
+        SessionItem.session_id == session.id, SessionItem.proposal_id == p.id,
+        SessionItem.concurrent.is_(False),
     )).scalar_one()
 
 
@@ -435,3 +437,90 @@ def test_pending_deletion_citing_a_removed_rule_gets_oracle_no(ctx):
     session = decision_hour.open_session(ctx)
     note = item_of(ctx, session, p).oracle_note
     assert note["choice"] == "HAYIR" and "Böyle bir içerik kuralı yok: IK-2" in note["reason"]
+
+
+
+# --- eşzamanlı çoğunluk: orantısız etkilenen alt kapsamın ayrı oylaması ---------------------------------
+
+HALF_TO_ANKARA = {"butce": {"sehir:istanbul": 2000, "sehir:ankara": 5000}}
+
+
+def _budget_world(ctx):
+    a, b = make_user(ctx, "aylin", city="Ankara"), make_user(ctx, "baris", city="Ankara")
+    c, d = make_user(ctx, "ceren", city="İzmir"), make_user(ctx, "deniz", city="İzmir")
+    i1, i2, i3 = (make_user(ctx, n, city="İstanbul") for n in ("ilker", "irem", "ipek"))
+    delegation.set_delegation(ctx, i2, "ilker", None)  # İstanbul içinde kalan havale
+    delegation.set_delegation(ctx, i3, "aylin", None)  # İstanbul dışına giden havale
+    ctx.commit()
+    p = mature(ctx, proposals.open_proposal(ctx, a, ProposalInput(
+        type="KONU", title="İstanbul payının yarısı Ankara'ya",
+        body="Etkinlik bütçesinde İstanbul payının yarısı Ankara'ya aktarılsın.", area_id="kent",
+        scope_id="genel", resource_ids=["butce"], share_effect=HALF_TO_ANKARA,
+    )))
+    return (a, b, c, d, i1, i2, i3), p
+
+
+def _sub_item(ctx, session, p):
+    return ctx.db.execute(select(SessionItem).where(
+        SessionItem.session_id == session.id, SessionItem.proposal_id == p.id,
+        SessionItem.concurrent.is_(True),
+    )).scalar_one()
+
+
+def test_disproportionately_affected_scope_votes_separately_with_member_only_delegation(ctx):
+    (_a, _b, _c, _d, i1, i2, i3), p = _budget_world(ctx)
+    session = decision_hour.open_session(ctx)
+    sub = _sub_item(ctx, session, p)
+    assert sub.vote_scope_id == "sehir:istanbul"
+    assert set(sub.eligible) == {i1.id, i2.id, i3.id}  # Hâtif şehir kapsamının üyesi değil
+    assert sub.resolved[i2.id] == i1.id  # İstanbul içindeki havale geçerli
+    assert sub.resolved[i3.id] == i3.id  # dışarıya giden havale alt oylamada uygulanmaz
+    with pytest.raises(Forbidden):  # genel oylamada ipek'in oyu aylin'e gidiyor
+        decision_hour.cast_vote(ctx, i3, p.id, False)
+    decision_hour.cast_vote(ctx, i3, p.id, False, vote_scope_id="sehir:istanbul")
+    ballot = decision_hour.ballot(ctx, i1)
+    entries = [e for e in ballot["items"] if e["proposal"]["id"] == p.id]
+    assert [(e["vote_scope"]["name"], e["concurrent"], e["weight"]) for e in entries] == [
+        ("Genel", False, 2), ("İstanbul", True, 2)]
+    # Aynı kişi iki oylamada ayrı oy verir.
+    decision_hour.cast_vote(ctx, i1, p.id, True)
+    decision_hour.cast_vote(ctx, i1, p.id, False, vote_scope_id="sehir:istanbul")
+    with pytest.raises(Conflict):
+        decision_hour.cast_vote(ctx, i1, p.id, True, vote_scope_id="sehir:istanbul")
+
+
+def test_proposal_needs_majority_in_every_disproportionate_scope(ctx):
+    (a, b, c, d, i1, _i2, i3), p = _budget_world(ctx)
+    session = decision_hour.open_session(ctx)
+    for voter in (a, b, c, i1):  # Genel: aylin ×2, baris, ceren, ilker ×2 + Hâtif = 7 EVET
+        decision_hour.cast_vote(ctx, voter, p.id, True)
+    decision_hour.cast_vote(ctx, d, p.id, False)
+    decision_hour.cast_vote(ctx, i1, p.id, False, vote_scope_id="sehir:istanbul")  # ×2 (irem)
+    decision_hour.cast_vote(ctx, i3, p.id, True, vote_scope_id="sehir:istanbul")
+    later = close(ctx, session)
+    main = item_of(later, session, p).result
+    sub = _sub_item(later, session, p).result
+    assert (main["yes"], main["cast"], main["passed"]) == (7, 8, True)
+    assert (sub["yes"], sub["no"], sub["passed"]) == (1, 2, False)
+    assert main["overall"] == {
+        "passed": False,
+        "summary": "Genel: %88 EVET ✓ · İstanbul: %33 EVET ✗ → Reddedildi",
+    }
+    assert reload(later, p).status == "REJECTED"
+    assert dict(later.graph.resource("butce").shares)["sehir:istanbul"] == 4000  # pay korundu
+
+
+def test_proposal_passes_when_every_scope_agrees_and_shares_change(ctx):
+    (a, _b, _c, _d, i1, _i2, i3), p = _budget_world(ctx)
+    session = decision_hour.open_session(ctx)
+    decision_hour.cast_vote(ctx, a, p.id, True)
+    decision_hour.cast_vote(ctx, i1, p.id, True, vote_scope_id="sehir:istanbul")  # ×2
+    decision_hour.cast_vote(ctx, i3, p.id, False, vote_scope_id="sehir:istanbul")
+    later = close(ctx, session)
+    assert item_of(later, session, p).result["overall"]["summary"] == (
+        "Genel: %100 EVET ✓ · İstanbul: %67 EVET ✓ → Kabul edildi")
+    assert reload(later, p).status == "ACCEPTED"
+    assert dict(later.graph.resource("butce").shares)["sehir:istanbul"] == 2000
+    view = decision_hour.session_view(later, session.id)
+    scopes = [(i["proposal"]["id"], i["vote_scope"]["name"], i["concurrent"]) for i in view["items"]]
+    assert scopes == [(p.id, "Genel", False), (p.id, "İstanbul", True)]

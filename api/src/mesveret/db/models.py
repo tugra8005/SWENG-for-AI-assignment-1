@@ -241,14 +241,20 @@ class DecisionSession(Base):
 
 
 class SessionItem(Base):
-    """Bir öneri için pencere açılışındaki anlık görüntü ve kapanıştaki sonuç."""
+    """Bir oylama: pencere açılışındaki anlık görüntü ve kapanıştaki sonuç.
+
+    Her önerinin seçmen kapsamında bir ana oylaması vardır. Bölünebilir kaynakta orantısız
+    etkilenen her alt kapsam için ayrıca bir eşzamanlı oylama açılır (``concurrent``).
+    """
 
     __tablename__ = "session_items"
-    __table_args__ = (UniqueConstraint("session_id", "proposal_id"),)
+    __table_args__ = (UniqueConstraint("session_id", "proposal_id", "vote_scope_id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     session_id: Mapped[int] = mapped_column(ForeignKey("decision_sessions.id"), index=True)
     proposal_id: Mapped[int] = mapped_column(ForeignKey("proposals.id"))
+    vote_scope_id: Mapped[str] = mapped_column(String(64))  # oylamanın seçmen kapsamı
+    concurrent: Mapped[bool] = mapped_column(Boolean, default=False)
     area_id: Mapped[str | None] = mapped_column(String(64))
     eligible: Mapped[list[str]] = mapped_column(JSONB)
     resolved: Mapped[dict[str, str]] = mapped_column(JSONB)
@@ -259,11 +265,12 @@ class SessionItem(Base):
 
 class Ballot(Base):
     __tablename__ = "ballots"
-    __table_args__ = (UniqueConstraint("session_id", "proposal_id", "voter_id"),)
+    __table_args__ = (UniqueConstraint("session_id", "proposal_id", "vote_scope_id", "voter_id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     session_id: Mapped[int] = mapped_column(ForeignKey("decision_sessions.id"), index=True)
     proposal_id: Mapped[int] = mapped_column(ForeignKey("proposals.id"))
+    vote_scope_id: Mapped[str] = mapped_column(String(64))
     voter_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     choice: Mapped[Any] = mapped_column(JSONB)
     salt: Mapped[str] = mapped_column(String(64))
@@ -282,6 +289,7 @@ class DevVotePlan(Base):
     proposal_id: Mapped[int] = mapped_column(ForeignKey("proposals.id"))
     voter_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     choice: Mapped[Any] = mapped_column(JSONB)
+    vote_scope_id: Mapped[str | None] = mapped_column(String(64))  # None: ana oylama
 
 
 # --- defter -------------------------------------------------------------------------------------

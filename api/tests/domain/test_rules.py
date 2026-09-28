@@ -59,7 +59,7 @@ def test_r1_subtopic_outside_parent_subtree_is_rejected():
 
 
 def test_r2_owner_scope_decides_without_narrowing():
-    report = check_proposal(konu(resource_ids=("butce",)), ctx())
+    report = check_proposal(konu(resource_ids=("butce",), share_effect={"butce": {}}), ctx())
     assert report.ok
     assert report.narrowings == []
 
@@ -217,3 +217,41 @@ def test_r7_own_message_needs_no_justification():
 
 def test_r7_applies_only_to_deletion():
     assert check_proposal(konu(content_rules=(), excerpt=""), ctx()).ok
+
+
+
+# --- R2'nin ters yönü: bölünebilir kaynağın yapılandırılmış etkisi ----------------------------------------
+
+
+def budget(**kw) -> ProposalDraft:
+    return konu(area_id="kent", resource_ids=("butce",), **kw)
+
+
+def r2_messages(d) -> list[str]:
+    return [v.message for v in check_proposal(d, ctx()).violations if v.rule == "R2"]
+
+
+def test_general_proposal_on_divisible_resource_must_declare_share_effect():
+    [msg] = r2_messages(budget())
+    assert "kapsam başına yeni paylarla bildirmeli" in msg
+    assert check_proposal(budget(share_effect={"butce": {"sehir:istanbul": 2000}}), ctx()).ok
+    # Payları değiştirmeyen öneri de bunu açıkça bildirir (boş etki).
+    assert check_proposal(budget(share_effect={"butce": {}}), ctx()).ok
+
+
+def test_share_effect_must_name_share_holders_with_non_negative_points():
+    assert any("payı olmayan kapsam" in m
+               for m in r2_messages(budget(share_effect={"butce": {"sehir:izmir": 10}})))
+    assert any("negatif olmayan tam sayı" in m
+               for m in r2_messages(budget(share_effect={"butce": {"sehir:istanbul": -5}})))
+    assert any("ETKILER" in m
+               for m in r2_messages(konu(area_id="kent", share_effect={"butce": {}})))
+
+
+def test_narrowed_proposal_may_only_change_its_own_share():
+    d = konu(area_id="kent", scope_id="sehir:istanbul", resource_ids=("butce",))
+    assert check_proposal(d, ctx()).ok  # daralma yapılandırılmış etkinin yerini tutar
+    own = replace(d, share_effect={"butce": {"sehir:istanbul": 3000}})
+    assert check_proposal(own, ctx()).ok
+    other = replace(d, share_effect={"butce": {"sehir:ankara": 2000}})
+    assert any("yalnızca kendi payını" in m for m in r2_messages(other))
