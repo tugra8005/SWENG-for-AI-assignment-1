@@ -185,6 +185,10 @@ def _articles() -> dict[str, Article]:
         Article("musavir_esigi", "tamsayi", {"deger": 5},
                 "Bir alanda Müşavir etiketi için gereken doğrudan havale sayısı.",
                 allowed=_num(3, 50, "3 – 50 havale")),
+        Article("havale_suresi", "sure", {"gun": 180},
+                "Havalenin verildiği ya da yenilendiği andan itibaren geçerli kaldığı süre; sonunda "
+                "oy sahibine döner. Değişiklik yalnızca yeni verilen ve yenilenen havaleleri etkiler.",
+                allowed=_days(30, 365)),
         Article("ilgi_bekleme", "sure", {"gun": 14},
                 "İlgi kapsamına katıldıktan sonra oy hakkının doğması için geçen süre.",
                 allowed=_days(0, 30)),

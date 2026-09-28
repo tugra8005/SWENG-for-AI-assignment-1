@@ -165,7 +165,9 @@ def open_session(
         # Olgunlaşmamış öneri bu oturuma alınmaz; kuyrukta kalır ve sonraki uygun oturuma kayar.
         if proposals.is_mature(ctx, p)
     ]
-    delegations = ctx.graph.delegations()
+    # Açılış anında yürürlükteki havaleler: pencere sırasında süresi dolan havale bu oturum için
+    # geçerli kalır, bitişi açılıştan önce gelmiş (zamanlayıcının henüz silmediği) havale alınmaz.
+    delegations = ctx.graph.delegations(active_at=ctx.now)
     items: list[tuple[Proposal, SessionItem]] = []
     concurrent: dict[str, list[str]] = {}
     for p in queued:

@@ -14,6 +14,7 @@ from typing import Any
 
 from neo4j import Driver, Query
 
+from mesveret.domain.delegation import DelegationEdge
 from mesveret.domain.ontology import AreaInfo, ResourceInfo, ResourceKind, ScopeInfo
 from mesveret.domain.scopes import Membership, MembershipReason, ScopeSubtype, ScopeType
 
@@ -255,35 +256,62 @@ class Neo4jGraph:
         return {r["u"]: Membership(scope_id, _dt(r["since"]), MembershipReason(r["neden"])) for r in rows}
 
     # --- havale ---
-    def delegations(self) -> dict[tuple[str, str | None], str]:
-        rows = self._run(
-            "MATCH (u:User)-[r:HAVALE]->(t:User) RETURN u.id AS u, r.alan_id AS a, t.id AS t"
-        )
-        return {(r["u"], r["a"]): r["t"] for r in rows}
+    # Bitiş anı ilişkinin ``bitis`` özelliğidir; ``active_at`` verilirse bitişi geçmişler elenir.
+    _ACTIVE = "($at IS NULL OR r.bitis IS NULL OR r.bitis > $at)"
 
-    def outgoing_delegations(self, user_id: str) -> list[tuple[str | None, str, datetime]]:
+    def delegation_edges(self, active_at: datetime | None = None) -> list[DelegationEdge]:
         rows = self._run(
-            "MATCH (:User {id: $u})-[r:HAVALE]->(t:User) "
-            "RETURN r.alan_id AS a, t.id AS t, r.since AS since",
-            u=user_id,
+            f"MATCH (u:User)-[r:HAVALE]->(t:User) WHERE {self._ACTIVE} "
+            "RETURN u.id AS u, r.alan_id AS a, t.id AS t, r.since AS since, r.bitis AS bitis",
+            at=active_at,
         )
-        out = [(r["a"], r["t"], _dt(r["since"])) for r in rows]
-        return sorted(out, key=lambda x: (x[0] is not None, x[0] or ""))
+        return [DelegationEdge(r["u"], r["a"], r["t"], _dt(r["since"]),
+                               _dt(r["bitis"]) if r["bitis"] is not None else None) for r in rows]
 
-    def incoming_delegations(self, user_id: str) -> dict[str | None, int]:
+    def delegations(self, active_at: datetime | None = None) -> dict[tuple[str, str | None], str]:
+        return {(e.user_id, e.area_id): e.target_id for e in self.delegation_edges(active_at)}
+
+    def outgoing_delegations(
+        self, user_id: str, active_at: datetime | None = None
+    ) -> list[DelegationEdge]:
         rows = self._run(
-            "MATCH (:User)-[r:HAVALE]->(:User {id: $u}) RETURN r.alan_id AS a, count(*) AS n",
-            u=user_id,
+            f"MATCH (u:User {{id: $u}})-[r:HAVALE]->(t:User) WHERE {self._ACTIVE} "
+            "RETURN u.id AS u, r.alan_id AS a, t.id AS t, r.since AS since, r.bitis AS bitis",
+            u=user_id, at=active_at,
+        )
+        out = [DelegationEdge(r["u"], r["a"], r["t"], _dt(r["since"]),
+                              _dt(r["bitis"]) if r["bitis"] is not None else None) for r in rows]
+        return sorted(out, key=lambda e: (e.area_id is not None, e.area_id or ""))
+
+    def incoming_delegations(
+        self, user_id: str, active_at: datetime | None = None
+    ) -> dict[str | None, int]:
+        rows = self._run(
+            f"MATCH (:User)-[r:HAVALE]->(:User {{id: $u}}) WHERE {self._ACTIVE} "
+            "RETURN r.alan_id AS a, count(*) AS n",
+            u=user_id, at=active_at,
         )
         return {r["a"]: r["n"] for r in rows}
 
-    def set_delegation(self, user_id: str, target_id: str, area_id: str | None, since: datetime) -> None:
+    def set_delegation(
+        self, user_id: str, target_id: str, area_id: str | None, since: datetime,
+        expires_at: datetime | None = None,
+    ) -> None:
         self.remove_delegation(user_id, area_id)
         self._run(
             "MATCH (u:User {id: $u}), (t:User {id: $t}) "
-            "CREATE (u)-[r:HAVALE {since: $since}]->(t) SET r.alan_id = $a",
-            u=user_id, t=target_id, a=area_id, since=since,
+            "CREATE (u)-[r:HAVALE {since: $since}]->(t) SET r.alan_id = $a, r.bitis = $bitis",
+            u=user_id, t=target_id, a=area_id, since=since, bitis=expires_at,
         )
+
+    def renew_delegation(self, user_id: str, area_id: str | None, expires_at: datetime) -> bool:
+        rows = self._run(
+            "MATCH (:User {id: $u})-[r:HAVALE]->() "
+            "WHERE coalesce(r.alan_id, '') = coalesce($a, '') "
+            "SET r.bitis = $bitis RETURN count(*) AS n",
+            u=user_id, a=area_id, bitis=expires_at,
+        )
+        return bool(rows and rows[0]["n"])
 
     def remove_delegation(self, user_id: str, area_id: str | None) -> bool:
         rows = self._run(

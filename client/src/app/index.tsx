@@ -14,6 +14,7 @@ import {
   PressLink,
   Section,
 } from '@/components/paper';
+import { DelegationExpiryStrip } from '@/components/delegation-expiry';
 import { EmptyLine, ProposalRow, type ProposalSummary } from '@/components/proposal-row';
 import { ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
@@ -83,6 +84,7 @@ export default function Home() {
   return (
     <Page>
       <DecisionHourBand />
+      {me ? <DelegationExpiryStrip /> : null}
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, gap: 12, flexWrap: 'wrap' }}>
         <Body style={{ flex: 1, minWidth: 240, fontFamily: fonts.serifItalic, color: paper.inkSoft }}>

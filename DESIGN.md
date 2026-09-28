@@ -242,6 +242,7 @@ Açık 29'daki sorun şuydu: taban ilkeleri korur ama onları çevreleyen parame
 | `adres_bekleme` | 90 gün | 0 – 180 gün | Aynı mantık; şehir değiştirmek ilgi alanı değiştirmekten ağır olduğu için üst sınır daha yüksek |
 | `orantisizlik_esigi` | 10 yüzde puanı | 5 – 30 yüzde puanı | 5'in altında her yuvarlama farkı bir veto doğurur; 30'un üstü D5'i boşaltır |
 | `musavir_esigi` | 5 | 3 – 50 havale | 3'ün altında etiket anlamsızlaşır; 50'nin üstünde küçük bir toplulukta kimse Müşavir olamaz |
+| `havale_suresi` | 180 gün | 30 – 365 gün | Bir aydan kısası güveni sürekli yenileme angaryasına çevirir ve havaleyi fiilen kullanışsız yapar; bir yıldan uzunu unutulmuş havalelerin birikmesini (§8.5) yeniden mümkün kılar |
 | `kapanis_rakip_suresi` | 48 saat | 24 saat – 7 gün | Rakip metin yazmaya en az bir gün; bir haftadan uzunu kapanışı sürüncemede bırakır |
 | `yeniden_acma` | 90 gün | 30 – 365 gün | Bir aydan kısası kararı anlamsızlaştırır; bir yıldan uzunu kararı fiilen kalıcı yapar |
 | `karar_saati` (pencere) | 60 dakika | 30 – 180 dakika | Uygulamada ben seçtim: yarım saatten kısası oy vermeyi zorlaştırır; üç saatten uzunu "saat" olmaktan çıkar. Gün ve saat sayısal değildir, aralıkları yoktur |
@@ -250,7 +251,6 @@ Açık 29'daki sorun şuydu: taban ilkeleri korur ama onları çevreleyen parame
 | `mahzen_ifsa_esigi` | > 1/2 | > 1/2 – ≥ 3/4 | Uygulamada ben seçtim. Yarının altında bir azınlık herkesi ifşa eder; 3/4'ün üstünde ifşa fiilen imkânsızlaşır |
 | `baskin_*`, `etkilesim_agirliklari` | §9 | yeni üye 1–30 gün; katılım aralığı 1 saat – 7 gün; en küçük küme 3–20; yoğunluk ≥ 1/3 – ≥ 1; en düşük ağırlık 0,5–10; ağırlıklar 0,1–10; pencereler 5–240 dakika | Uygulamada ben seçtim. Tespitin tamamen kapatılmasını (ör. en küçük küme 1000) ya da herkesin işaretlenmesini (ör. en küçük küme 1) engeller |
 
-Görevde anılan `havale_suresi` Meşveret'te yoktur: havale geri alınana kadar geçerlidir. Bu yüzden aralığı da yoktur.
 
 ### 5.3 Yönetmeliğin defterdeki izi
 
@@ -443,9 +443,23 @@ Meşveret'teki biçim bunların en dar olanıdır: ikinci sayım yalnızca orant
 
 ### 8.4 Müşavir
 
-Bir alanda doğrudan `musavir_esigi` sayıda havale alan kişi o alanın Müşaviri olarak görünür. Atama yoktur; etiket, eşik altına düşünce kendiliğinden kalkar. Rütbe değildir, bir görünürlük etiketidir.
+Bir alanda doğrudan `musavir_esigi` sayıda yürürlükteki havale alan kişi o alanın Müşaviri olarak görünür. Atama yoktur; etiket, eşik altına düşünce kendiliğinden kalkar, süresi dolan havaleler düştükçe de (§8.5). Rütbe değildir, bir görünürlük etiketidir.
 
-### 8.5 Hâtif
+### 8.5 Havale süresi
+
+Her havale verildiği anda bir bitiş anı alır: `verildiği an + havale_suresi` (180 gün, izinli aralık 30 – 365 gün; §5.2). Bitişte havale kendiliğinden sona erer ve oy sahibine döner.
+
+**Neden üst sınır değil, süre dolumu.** Süper-delege birikimine (§15, 6. madde) iki cevap vardır. Birincisi, bir kişinin alabileceği havaleye üst sınır koymaktır. Bu, güvenilen birine gönüllü olarak verilen güveni cezalandırır: sınırı dolan kişiye havale vermek isteyen, istemediği ikinci bir kişiye yönelir. Asıl sorunu da çözmez, çünkü birikmiş gücün kaynağı büyük ölçüde güven değil unutkanlıktır: yıllar önce verilip bir daha düşünülmemiş havaleler. Meşveret ikinci cevabı seçer, süre dolumunu. Birikmiş güç düzenli olarak sıfırlanır; gönüllü olarak yenilenen güven korunur. Yenilemek tek tıklamadır ve bilinçli bir karardır; hiçbir şey yapmamak oyu sahibine geri verir.
+
+- **Madde değişikliği geriye işlemez.** `havale_suresi` değişirse yalnızca yeni verilen ve yenilenen havaleler etkilenir; mevcut havalelerin bitiş anı verildikleri andaki değerle sabittir. Bitiş anı grafta HAVALE ilişkisinin `bitis` özelliğidir.
+- **Yenileme.** Havale sayfasında, profilde ve uyarı şeridinde tek tıklamayla yapılır. Süreyi baştan başlatır: yeni bitiş, şimdi artı yürürlükteki `havale_suresi`. Hedef ve veriliş anı değişmez. Pencere açıkken, havale verme ve geri alma gibi, kilitlidir. Deftere `HAVALE_YENILENDI` yazılır.
+- **Süre dolumu.** Zamanlayıcı bitiş anında havaleyi graftan siler ve deftere `HAVALE_SURESI_DOLDU` yazar (veren, alan, alan_id, veriliş, bitiş). Okumalar ayrıca o ana göre süzülür: bitişi geçmiş ama zamanlayıcının henüz silmediği bir havale yürürlükte sayılmaz.
+- **Karar Saati anlık görüntüsü esastır.** Pencere açıldığında yürürlükte olan havale o oturum için geçerlidir, pencere sırasında süresi dolsa bile. Dolum işlenir ve deftere yazılır, ama oturumun seçmen listesi ve ağırlıkları açılışta alındığı için oylamayı etkilemez.
+- **Zincir.** Ortadaki bir havalenin süresi dolarsa zincir o noktada kopar; alttaki havaleler üstteki kişide biter. A → B → C'de B → C dolarsa A'nın oyu B'ye gider, B kendi oyunu ve A'nınkini kullanır.
+- **Uyarı.** Bildirim sistemi yoktur. Süresi 14 gün içinde dolacak havaleler, girişten sonra açılan ana sayfada, profilde ve Havale sayfasında bir uyarı şeridinde gösterilir. Verilen havale için şeritte **Yenile** vardır; alınan havaleyi yalnızca veren yenileyebilir. 14 gün bir görüntü sabitidir, yönetmelik maddesi değildir (§14).
+- **Profil.** Verilen ve alınan havaleler kalan süreleriyle görünür.
+
+### 8.6 Hâtif
 
 Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçek bir yapay zekâ API'si kullanmaz.
 
@@ -582,6 +596,10 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Yönetmelik hash'inin zamanı | Kurulumda ve her oturum kapanışında; meşru değişiklikler yalnızca oturum kapanışında uygulanır |
 | Oylamasız farkın tespiti ve geri alınması | Kapanışın ilk adımı; oylar sayılmadan ve oturumun değişiklikleri uygulanmadan önce. Madde başına bir tespit ve bir geri alma kaydı. Karşılaştırmanın referansı outbox'taki son durum satırıdır, deftere ulaştıysa defterdeki kopyası |
 | Kod düzeyindeki fark | İzinli aralık ve kodla eklenen madde tespit edilip yazılır, geri alınamaz |
+| Havale bitişinin yeri | HAVALE ilişkisinin `bitis` özelliği; verildiği ya da yenilendiği andaki `havale_suresi` ile hesaplanır, madde değişince yeniden hesaplanmaz |
+| Yenilemede veriliş anı | Değişmez; yalnızca bitiş baştan başlar. Pencere açıkken kilitli |
+| Pencere içinde dolan havale | Zamanlayıcı dolumu vade anında işler ve deftere yazar; oturum açılış anlık görüntüsünü kullandığı için oylama etkilenmez |
+| Süre uyarısı | 14 gün, bir görüntü sabiti (`EXPIRY_WARNING`); yönetmelik maddesi değildir, çünkü hiçbir hakkı ya da sonucu değiştirmez |
 | Mahzen ifşa oylamasının süresi ve eşiği | Süresiz; seçmen listesinin yarısı aşılınca anında geçer; oy değiştirilebilir (kullanıcı kararı) |
 | Zincirde oy hakkı olmayan ara halka | Geçirgen; ağırlığa yalnızca oy hakkı olanlar katkı verir |
 | Miras ile döngü | Alt ağaçtaki tüm alanlar kontrol edilir |
@@ -621,7 +639,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 3. **Sahte hesap.** Gerçek çözüm kimlik doğrulaması (e-Devlet) gerektirir; kapsam dışıdır. E-posta doğrulaması hesap çoğaltmayı yalnızca yavaşlatır. Ek olarak, belge bekleme süresini yalnızca adres *değişikliğine* koyduğu için kayıtta seçilen şehirde oy hakkı hemen doğar. Sahte hesaplar şehir kapsamına beklemeden girebilir. Baskın tespiti bunu kısmen hafifletir.
 4. **Commit-reveal'da sunucuya güven.** Tuzları ve seçimleri pencere boyunca sunucu tutar. Sunucu, pencere açıkken oyları okuyabilir ya da seçmen adına oy verebilir. Defter, commit'lerin sonradan değiştirilmediğini kanıtlar; sunucunun dürüst olduğunu kanıtlamaz. Gerçek çözüm, tuzun istemcide üretilip saklanmasıdır (istemci kaybolursa oy açılamaz); bu ödevde yapılmamıştır.
 5. **Etiketleme öneri sahibinde.** Seçmen kapsamını ve etkilenen kaynakları öneriyi açan seçer. Kaynak etiketini hiç koymayan biri R2'yi atlatabilir. İtiraz eşiği ve Hâtif'in H2 denetimi bunu hafifletir; engellemez.
-6. **Havale yoğunlaşması ve süper-delegeler.** Zincirleme serbesttir; oylar birkaç kişide toplanabilir. Müşavir etiketi yoğunlaşmayı görünür yapar ama sınırlamaz. Havale alma üst sınırı yoktur.
+6. **Havale yoğunlaşması ve süper-delegeler.** Zincirleme serbesttir; oylar birkaç kişide toplanabilir. Müşavir etiketi yoğunlaşmayı görünür yapar ama sınırlamaz. Havale alma üst sınırı yoktur. Süre dolumu (§8.5) unutulmuş havalelerden birikmiş gücü düzenli olarak sıfırlar, ama bilinçli olarak yenilenen havalelerin yoğunlaşmasını sınırlamaz; bu bilinçli bir seçimdir.
 7. **Hâtif'e verilen oylar fiilen operatörünün eline geçer.** Hâtif'in davranışı kural tabanlıdır ve kuralları sistemi işleten yazar. Hâtif'e havale eden, oyunu kural yazarına emanet etmiş olur. Hâtif sembolik olsa da havale alabildiği için bu etki gerçektir.
 8. **Baskın tespitinin yanlış pozitifleri.** Aynı gün birlikte katılan ve birbirine yanıt veren gerçek bir arkadaş grubu, bir sınıf ya da bir dernek baskın gibi görünür ve oylamadan dışlanabilir. Tespit yalnızca yapıya bakar, niyete bakamaz. Dışlanan hesaplara gerekçe gösterilir, içerikleri silinmez ve eşikler oylamayla değiştirilebilir. Buna karşılık, sabırlı bir baskın (hesapları haftalara yayıp birbirine yanıt vermeyen) tespit edilemez.
 9. **Kapsam problemi prensipte çözümsüzdür.** Bir karardan kimin etkilendiğine kimin karar verdiği sorusu sonsuz geriye gider. Meşveret bunu çözmez; ispat yükünü tersine çevirerek hafifletir. Karar veren kapsam, kaynağa sahipliğini ontolojide göstermek zorundadır. Gösteremeyen kapsam karar veremez ya da kendi payına daraltılır. Ontolojinin kendisi (kimin neye sahip olduğu) ise tohumla kurulur ve bu ödevde oylamayla değiştirilemez.
@@ -677,7 +695,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | 11 | Forumda her şey oylamayla | Tüm yapısal değişiklikler (konu, alt konu, düzenleme, silme, yönetmelik, kapanış) öneri akışından geçer; kendi mesajını silmek de. Tartışmaya yazmak oylamasızdır. **Bilinçli istisna:** değiştirilemez maddeler (D1–D7) ve parametrelerin izinli aralıkları oylamanın dışındadır (§5.1–5.2) |
 | 12 | Konu kabulüne yalnızca ilgili kullanıcılar katılır | Seçmen kapsamı (NITELIK / ILGI), R2 (sahiplik), R5 (üyelik + bekleme) |
 | 13 | Herkes eşit; bazıları "daha eşit" | Herkesin kendi oyu 1; havale alan kişinin ağırlığı artar; Müşavir etiketi görünürlüktür, rütbe değildir |
-| 14 | Oy hakkı havale edilebilir | Genel ve alan bazlı HAVALE, miras, zincir, döngü yasağı (R4), pencere kilidi |
+| 14 | Oy hakkı havale edilebilir | Genel ve alan bazlı HAVALE, miras, zincir, döngü yasağı (R4), pencere kilidi, havale süresi ve yenileme (§8.5) |
 | 15 | Bilirkişiler; API ile bağlı yapay zekâ olabilir | Hâtif: kural tabanlı sembolik bilirkişi (gerçek API bilinçli olarak kapsam dışı) |
 | 16 | Çoğunluğun azınlığı ezmesi engellenmeli (uzmanlar ve bölme) | Bölme, iki yönde: (1) kapsam + R2 otomatik daralma (parça bütün adına karar veremez); (2) eşzamanlı çoğunluk (§7.7): bütün bir parçanın payını orantısız azaltırsa parça ayrıca oylar ve öneri ancak iki oylamada da çoğunlukla geçer (Calhoun, ABD iki meclisli yapı, AB çifte çoğunluk). Uzmanlar: alan bazlı havale ve Müşavirler. Ayrıca nitelikli çoğunluk (yönetmelik ve silme 2/3), gerekçeli silme (R7) ve Şerh |
 | 17 | Kalabalık (ölçek) sorunu | Havale (sıvı demokrasi), sessiz onay hızlı şeridi, Karar Saati'nde toplu oylama, seçmeni kapsamla daraltma |
@@ -706,6 +724,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Oy ağırlığı hesabı, çekimser zincirler | `api/tests/domain/test_tally.py`, `test_decision_hour.py` |
 | R1–R8, otomatik daralma, üst küme reddi | `api/tests/domain/test_rules.py`, `tests/integration/test_proposals.py` |
 | 2/3 ve kendini koruma | `test_tally.py`, `test_decision_hour.py::test_regulation_change_needs_two_thirds`, `::test_threshold_article_protects_itself` |
+| Havale süresi (bitiş, madde değişikliğinin geriye işlememesi, yenileme ve kilit, zincirin kopması, pencere içinde dolan havale, zamanlayıcıdan önce okunan bitiş, 14 gün uyarısı, Müşavir etiketinin düşmesi) | `tests/integration/test_delegation_expiry.py`, `test_seed.py::test_scenario_13_delegations_expire_after_181_days`, `graph_contract.py::test_delegation_expiry` (bellek içi ve Neo4j) |
 | Anlık görüntü ve kilit kuralları | `test_decision_hour.py::test_electorate_is_snapshotted_when_window_opens`, `::test_delegations_are_locked_while_window_is_open` |
 | Sessiz onay eşiği, red bekleme | `test_proposals.py` |
 | Mahzen seçmen anlık görüntüsü | `tests/integration/test_cellar.py::test_electorate_is_snapshot_of_posters_before_vote_opened` |
@@ -735,6 +754,7 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Alan / Kapsam / Kaynak | `Area` / `Scope` / `Resource` |
 | Konu / Öneri / Karar / Şerh | `Topic` / `Proposal` / `Decision` / `Dissent` |
 | Havale | `Delegation` |
+| Havale süresi, bitiş | `havale_suresi`, `DelegationEdge.expires_at` (graf: `bitis`), `HAVALE_YENILENDI`, `HAVALE_SURESI_DOLDU` |
 | İtiraz / sessiz onay | `Objection` / `silent_approval` |
 | Hızlı / yavaş şerit | `fast_lane` / `slow_lane` |
 | Karar Saati | `DecisionHour` |

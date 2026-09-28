@@ -8,7 +8,8 @@ Olay kaynakları:
 - sessiz onay süresi biten hızlı şerit önerileri,
 - rakip metin süresi biten kapanış önerileri,
 - penceresi kapanan Karar Saati oturumu,
-- haftalık Karar Saati açılışı (``karar_saati`` maddesine göre).
+- haftalık Karar Saati açılışı (``karar_saati`` maddesine göre),
+- süresi dolan havaleler (``havale_suresi``).
 """
 
 from __future__ import annotations
@@ -57,6 +58,18 @@ def _proposal_events(ctx: Ctx, until: datetime) -> list[Event]:
     return events
 
 
+def _delegation_events(ctx: Ctx, until: datetime) -> list[Event]:
+    from mesveret.services import delegation
+
+    edge = delegation.next_expiry(ctx, until)
+    if edge is None or edge.expires_at is None:
+        return []
+    giver, target = delegation.nicknames(ctx, [edge.user_id, edge.target_id])
+    area = f" ({edge.area_id})" if edge.area_id else ""
+    return [(edge.expires_at, f"havale süresi doldu: {giver} → {target}{area}",
+             lambda c, u=edge.user_id, a=edge.area_id: delegation.expire(c, u, a))]
+
+
 def _decision_hour_events(ctx: Ctx, until: datetime, last: datetime | None) -> list[Event]:
     from mesveret.services import decision_hour
 
@@ -84,7 +97,10 @@ def tick(ctx: Ctx, until: datetime | None = None) -> list[str]:
     st = _state(ctx)
     done: list[str] = []
     while True:
-        events = _proposal_events(ctx, until) + _decision_hour_events(ctx, until, st.last_tick_at)
+        # Aynı andaki olaylarda havale dolumu önce gelir (min ilk en küçüğü seçer): o anda açılan
+        # oturumun anlık görüntüsü zaten bitişi gelmiş havaleyi almaz.
+        events = (_delegation_events(ctx, until) + _proposal_events(ctx, until)
+                  + _decision_hour_events(ctx, until, st.last_tick_at))
         if not events:
             break
         when, label, run = min(events, key=lambda e: e[0])

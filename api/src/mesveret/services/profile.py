@@ -36,7 +36,8 @@ def nickname_map(ctx: Ctx, ids) -> dict[str, str]:
 
 
 def public_profile(ctx: Ctx, user: User, viewer: User | None = None) -> dict:
-    incoming = ctx.graph.incoming_delegations(user.id)
+    # Müşavir etiketi yürürlükteki havalelerden hesaplanır; süresi dolanlar düştükçe kaybolabilir.
+    incoming = ctx.graph.incoming_delegations(user.id, active_at=ctx.now)
     counselor = counselor_areas(incoming, ctx.reg)
     roles = [ROLE_LABELS.get(user.role, user.role)]
     if counselor:
@@ -67,15 +68,17 @@ def private_profile(ctx: Ctx, user: User) -> dict:
         "birth_date": user.birth_date,
         "address": {"city": user.city, "district": user.district, "address_line": user.address_line},
         "memberships": [ontology.membership_view(ctx, m) for m in ctx.graph.memberships(user.id)],
-        "delegations_given": [
-            {
-                "area_id": area,
-                "area_name": ontology.area_name(ctx, area),
-                "target": nickname_of(ctx, target),
-                "since": since,
-            }
-            for area, target, since in ctx.graph.outgoing_delegations(user.id)
-        ],
+    })
+    # Verilen ve alınan havaleler kalan süreleriyle (Havale sayfasıyla aynı görünüm).
+    from mesveret.services import delegation
+
+    mine = delegation.my_delegations(ctx, user)
+    body.update({
+        "delegations_given": mine["given"],
+        "delegations_received_list": mine["received_list"],
+        "expiring_given": mine["expiring_given"],
+        "expiring_received": mine["expiring_received"],
+        "warning_days": mine["warning_days"],
     })
     return body
 

@@ -105,8 +105,9 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 | №17, №18 | 10 · Eşzamanlı çoğunluk |
 | — | 11 · Yönetmeliğin tabanı (açılışta reddedilen öneriler, izinli aralıklar, yönetmelik hash'i) |
 | — | 12 · Operatörün sessiz değişikliği (Karar Saati oturumu açıkken) |
+| — | 13 · Havale süresi (zamanı 181 gün ilerletir; en son oynatın) |
 
-Senaryo 1, 6 ve 11 anında oynatılır; senaryo 12 Karar Saati oturumu açıkken oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin.
+Senaryo 1, 6 ve 11 anında oynatılır; senaryo 12 Karar Saati oturumu açıkken oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin. Senaryo 13 saati 181 gün ilerlettiği için en son oynatılır.
 
 ### 1. İstanbul vakası: otomatik daralma ve red
 
@@ -236,6 +237,32 @@ docker compose exec api meşveret-dev advance-time --to 2026-10-11T20:30:00+03:0
 ```
 
 №19 gibi sessiz onaydaki öneriler, itiraz eşiğine ulaşmadıysa süre dolunca kabul edilir ve konuya dönüşür. İtiraz etmek için öneri sayfasındaki **İtiraz et** düğmesi kullanılır; eşik max(3, aktif üyelerin %5'i) kadar itirazdır.
+
+### 13. Havale süresi
+
+Her havale verildiği ya da yenilendiği andan `havale_suresi` (180 gün) sonra kendiliğinden sona erer ve oy sahibine döner. Unutulmuş havalelerden birikmiş güç böylece düzenli olarak sıfırlanır; bilinçli olarak yenilenen güven korunur (DESIGN.md §8.5). Tohumdaki havaleler tohum anından 30 gün önce verildi: kalan süre 150 gün.
+
+1. **Yönetmelik** sayfasında `havale_suresi` **180 gün** gösterir, altında kilitli **izinli: 30 – 365 gün**.
+2. **aylin** olarak **Havale** sayfası: *Genel* aylin → baris, altında **bitiş 26 Şubat 2027 · 150 gün kaldı** ve **Yenile** / **Geri al**. **ceren** olarak: *Size gelen havaleler* Ulaşım: 1, **baris · Ulaşım · bitiş 26 Şubat 2027 · 150 gün kaldı**. Zincir aylin → baris → ceren'dir: Ulaşım önerilerinde ceren'in ağırlığı 3'tür.
+3. Saati 140 gün ilerletin; havalelerin dolmasına 10 gün kalır:
+
+   ```bash
+   docker compose exec api meşveret-dev advance-time --days 140
+   ```
+
+4. **aylin** olarak giriş yapın. Ana sayfanın başında bordo çerçeveli uyarı şeridi durur: **"Genel havaleniz (baris) 26 Şubat 2027 tarihinde doluyor, 10 gün kaldı. Dolunca oyunuz size döner."** ve **Yenile** düğmesi. Aynı şerit profilde ve Havale sayfasında da görünür; profilde verilen ve alınan havaleler kalan süreleriyle listelenir. **ceren** olarak şerit alınan havaleyi gösterir: *"Size verilen 1 havalenin süresi doluyor: baris (Ulaşım, 10 gün kaldı). Yenilemek havaleyi verenin elindedir."* Bildirim gönderilmez.
+5. (İsteğe bağlı) **deniz** olarak şeritteki **Yenile**'ye basın. Felsefe havalesinin (deniz → selin) süresi baştan başlar: Havale sayfasında **bitiş 15 Ağustos 2027 · 180 gün kaldı**. Deftere `HAVALE_YENILENDI` yazılır.
+6. Saati 41 gün daha ilerletin (toplam 181 gün):
+
+   ```bash
+   docker compose exec api meşveret-dev advance-time --days 41
+   ```
+
+   Çıktıda her dolum bir satırdır: `havale süresi doldu: aylin → baris`, `havale süresi doldu: baris → ceren (ulasim)` ve diğerleri. Her dolum deftere `HAVALE_SURESI_DOLDU` olarak yazılır.
+7. **aylin** ve **baris** olarak Havale sayfası: *"Havale vermediniz; oyunuzu kendiniz kullanıyorsunuz."* İkisi de oylarını geri aldı. **ceren**: *"Size doğrudan havale veren yok."* Ulaşım önerilerinde ağırlığı 3'ten 1'e düştü.
+8. **selin**'in profilinde Müşavir damgası kalkmıştır: felsefedeki beş havaleden süresi dolanlar düştü. 5. adımı yaptıysanız deniz'in yenilediği havale kalır (*Aldığı havaleler: Felsefe: 1*); eşik 5 olduğu için etiket yine yoktur.
+
+Pencere açıkken süresi dolan havale o oturum için geçerli kalır: oturum seçmen listesini ve ağırlıkları açılışta alır. Bunu `api/tests/integration/test_delegation_expiry.py` gösterir.
 
 ## Testler
 

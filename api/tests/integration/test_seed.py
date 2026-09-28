@@ -231,3 +231,29 @@ def test_scenario_11_floor_of_the_regulation(seeded):
             proposals.open_proposal(ctx, kerem, inp)
         assert err.value.violations[0]["rule"] == "R8"
     assert ctx.reg.raw("yonetmelik_esigi")["oran"] == "2/3"
+
+
+def test_scenario_13_delegations_expire_after_181_days(seeded, client, ledger):
+    ctx = seeded
+    aylin, baris, ceren = (user(ctx, n) for n in ("aylin", "baris", "ceren"))
+    [given] = delegation.my_delegations(ctx, aylin)["given"]
+    assert (given["target"], given["days_left"]) == ("baris", 150)  # Ulaşım'da zincir ceren'e akar
+    assert delegation.my_delegations(ctx, ceren)["received"] == [
+        {"area_id": "ulasim", "area_name": "Ulaşım", "count": 1}]
+
+    target = ctx.now + timedelta(days=140)  # 10 gün kala uyarı
+    scheduler.tick(ctx.at(target), target)
+    mid = ctx.at(target)
+    assert delegation.my_delegations(mid, aylin)["expiring_given"][0]["days_left"] == 10
+
+    target = ctx.now + timedelta(days=181)
+    scheduler.tick(ctx.at(target), target)
+    later = ctx.at(target)
+    assert delegation.my_delegations(later, aylin)["given"] == []  # aylin oyunu geri aldı
+    assert delegation.my_delegations(later, baris)["given"] == []  # baris de
+    assert delegation.my_delegations(later, ceren)["received"] == []  # ceren'in ağırlığı 1
+    assert "Müşavir" not in client.get("/users/selin").json()["roles"]
+    expired = {(r["payload"]["veren"], r["payload"]["alan"])
+               for r in ledger.of_type("HAVALE_SURESI_DOLDU")}
+    assert {("aylin", "baris"), ("baris", "ceren")} <= expired
+    assert len(expired) == 9

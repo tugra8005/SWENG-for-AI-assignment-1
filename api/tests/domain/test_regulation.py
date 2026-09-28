@@ -203,6 +203,7 @@ def test_ranges_from_the_task():
         "musavir_esigi": [{"deger": 3}, {"deger": 50}],
         "kapanis_rakip_suresi": [{"saat": 24}, {"gun": 7}],
         "yeniden_acma": [{"gun": 30}, {"gun": 365}],
+        "havale_suresi": [{"gun": 30}, {"gun": 180}, {"gun": 365}],
     }
     bad = {
         "basit_cogunluk": [{"oran": "1/2", "karsilastirma": ">="}, {"oran": "3/4", "karsilastirma": ">="}],
@@ -223,6 +224,7 @@ def test_ranges_from_the_task():
         "musavir_esigi": [{"deger": 2}, {"deger": 51}],
         "kapanis_rakip_suresi": [{"saat": 23}, {"gun": 8}],
         "yeniden_acma": [{"gun": 29}, {"gun": 366}],
+        "havale_suresi": [{"gun": 29}, {"gun": 366}, {"saat": 24}],
     }
     for key, values in ok.items():
         for v in values:
@@ -241,6 +243,7 @@ def test_range_descriptions_are_readable():
     assert text["ilgi_bekleme"] == "0 – 30 gün"
     assert text["itiraz_esigi"] == "en az 3–20 itiraz · oran %2 – %20 · aktiflik 7–90 gün"
     assert text["orantisizlik_esigi"] == "5 – 30 yüzde puanı"
+    assert text["havale_suresi"] == "30 – 365 gün"
     assert text["D1"] is None
 
 

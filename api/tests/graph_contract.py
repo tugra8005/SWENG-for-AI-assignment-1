@@ -106,7 +106,31 @@ class GraphContract:
         assert not g.remove_delegation("a", "sinema")
         assert ("a", "sinema") not in g.delegations()
         outgoing = g.outgoing_delegations("a")
-        assert [(area, target) for area, target, _ in outgoing] == [(None, "b")]
+        assert [(e.area_id, e.target_id, e.expires_at) for e in outgoing] == [(None, "b", None)]
+
+    def test_delegation_expiry(self, g):
+        end = T0 + timedelta(days=180)
+        g.set_delegation("a", "b", None, T0, end)
+        g.set_delegation("b", "c", "sinema", T0, T0 + timedelta(days=10))
+        g.set_delegation("c", "a", "sinema", T0)  # bitişsiz (süre dolumundan önceki havale)
+        [edge] = g.outgoing_delegations("a")
+        assert (edge.target_id, edge.since, edge.expires_at) == ("b", T0, end)
+        # Bitişi geçen havale, silinmemiş olsa da o ana göre okunduğunda yürürlükte değildir.
+        later = T0 + timedelta(days=10)
+        assert g.delegations(active_at=later) == {("a", None): "b", ("c", "sinema"): "a"}
+        assert g.incoming_delegations("c", active_at=later) == {}
+        assert g.incoming_delegations("c") == {"sinema": 1}
+        assert g.incoming_delegations("a", active_at=later) == {"sinema": 1}
+        assert g.outgoing_delegations("b", active_at=later) == []
+        assert {(e.user_id, e.area_id) for e in g.delegation_edges(active_at=later)} == {
+            ("a", None), ("c", "sinema")}
+        assert len(g.delegation_edges()) == 3
+        # Yenileme yalnızca bitişi değiştirir; hedef ve veriliş anı kalır.
+        assert g.renew_delegation("b", "sinema", later + timedelta(days=180))
+        [edge] = g.outgoing_delegations("b", active_at=later)
+        assert (edge.target_id, edge.since, edge.expires_at) == (
+            "c", T0, later + timedelta(days=180))
+        assert not g.renew_delegation("b", None, later)
 
     # --- etkileşim ---
     def test_interactions_accumulate(self, g):

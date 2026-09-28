@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from typing import Any
 
+from mesveret.domain.delegation import DelegationEdge
 from mesveret.domain.ontology import AreaInfo, InMemoryOntology, ResourceInfo, ScopeInfo
 from mesveret.domain.scopes import Membership
 
@@ -27,7 +28,7 @@ class InMemoryGraph(InMemoryOntology):
         self._topic_parents: dict[str, str] = {}
         self._users: dict[str, dict] = {}
         self._members: dict[str, dict[str, Membership]] = {}
-        self._delegations: dict[tuple[str, str | None], tuple[str, datetime]] = {}
+        self._delegations: dict[tuple[str, str | None], DelegationEdge] = {}
         self._interactions: dict[tuple[str, str], float] = {}
         self._articles: dict[str, dict[str, Any]] = {}
         self._unchangeable: set[str] = set()
@@ -73,22 +74,41 @@ class InMemoryGraph(InMemoryOntology):
         return dict(self._members.get(scope_id, {}))
 
     # --- havale ---
-    def delegations(self) -> dict[tuple[str, str | None], str]:
-        return {k: t for k, (t, _) in self._delegations.items()}
+    def delegation_edges(self, active_at: datetime | None = None) -> list[DelegationEdge]:
+        return [e for e in self._delegations.values() if active_at is None or e.active_at(active_at)]
 
-    def outgoing_delegations(self, user_id: str) -> list[tuple[str | None, str, datetime]]:
-        rows = [(a, t, s) for (u, a), (t, s) in self._delegations.items() if u == user_id]
-        return sorted(rows, key=lambda r: (r[0] is not None, r[0] or ""))
+    def delegations(self, active_at: datetime | None = None) -> dict[tuple[str, str | None], str]:
+        return {(e.user_id, e.area_id): e.target_id for e in self.delegation_edges(active_at)}
 
-    def incoming_delegations(self, user_id: str) -> dict[str | None, int]:
+    def outgoing_delegations(
+        self, user_id: str, active_at: datetime | None = None
+    ) -> list[DelegationEdge]:
+        rows = [e for e in self.delegation_edges(active_at) if e.user_id == user_id]
+        return sorted(rows, key=lambda e: (e.area_id is not None, e.area_id or ""))
+
+    def incoming_delegations(
+        self, user_id: str, active_at: datetime | None = None
+    ) -> dict[str | None, int]:
         counts: dict[str | None, int] = {}
-        for (_, a), (t, _) in self._delegations.items():
-            if t == user_id:
-                counts[a] = counts.get(a, 0) + 1
+        for e in self.delegation_edges(active_at):
+            if e.target_id == user_id:
+                counts[e.area_id] = counts.get(e.area_id, 0) + 1
         return counts
 
-    def set_delegation(self, user_id: str, target_id: str, area_id: str | None, since: datetime) -> None:
-        self._delegations[(user_id, area_id)] = (target_id, since)
+    def set_delegation(
+        self, user_id: str, target_id: str, area_id: str | None, since: datetime,
+        expires_at: datetime | None = None,
+    ) -> None:
+        self._delegations[(user_id, area_id)] = DelegationEdge(
+            user_id, area_id, target_id, since, expires_at)
+
+    def renew_delegation(self, user_id: str, area_id: str | None, expires_at: datetime) -> bool:
+        e = self._delegations.get((user_id, area_id))
+        if e is None:
+            return False
+        self._delegations[(user_id, area_id)] = DelegationEdge(
+            user_id, area_id, e.target_id, e.since, expires_at)
+        return True
 
     def remove_delegation(self, user_id: str, area_id: str | None) -> bool:
         return self._delegations.pop((user_id, area_id), None) is not None

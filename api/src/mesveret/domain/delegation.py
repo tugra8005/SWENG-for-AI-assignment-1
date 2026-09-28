@@ -1,16 +1,33 @@
 """Havale: çözümleme, miras, zincir ve döngü kontrolü (R4).
 
 Havaleler ``{(kullanıcı, alan_id | None): temsilci}`` sözlüğüyle temsil edilir; her
-kullanıcının alan başına (ve genel olarak) en fazla bir çıkan havalesi vardır.
+kullanıcının alan başına (ve genel olarak) en fazla bir çıkan havalesi vardır. Her havalenin bir
+bitiş anı vardır (``havale_suresi``); bitişi geçmiş havale yürürlükte sayılmaz.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from datetime import datetime
 
 from mesveret.domain.ontology import AreaTree
 
 Delegations = Mapping[tuple[str, str | None], str]
+
+
+@dataclass(frozen=True)
+class DelegationEdge:
+    """Graftaki tek bir havale: kim, hangi alanda, kime, ne zamandan beri, ne zamana kadar."""
+
+    user_id: str
+    area_id: str | None
+    target_id: str
+    since: datetime
+    expires_at: datetime | None  # None: süresiz (süre dolumundan önce verilmiş havale)
+
+    def active_at(self, t: datetime) -> bool:
+        return self.expires_at is None or self.expires_at > t
 
 
 class DelegationError(ValueError):

@@ -75,6 +75,18 @@ def set_delegation(body: DelegationIn, ctx: Ctx = Depends(get_ctx),
     return {"message": "Havale kaydedildi."}
 
 
+class RenewIn(BaseModel):
+    area_id: str | None = None
+
+
+@router.post("/delegations/renew")
+def renew_delegation(body: RenewIn, ctx: Ctx = Depends(get_ctx),
+                     user: User = Depends(current_user)) -> dict:
+    expires_at = delegation.renew_delegation(ctx, user, body.area_id or None)
+    ctx.commit()
+    return {"message": "Havale yenilendi.", "expires_at": expires_at}
+
+
 @router.delete("/delegations")
 def revoke_delegation(area_id: str | None = None, ctx: Ctx = Depends(get_ctx),
                       user: User = Depends(current_user)) -> dict:

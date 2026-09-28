@@ -17,6 +17,7 @@ import {
   Rule,
   Section,
 } from '@/components/paper';
+import { DelegationExpiryStrip, daysLeftLabel, renewDelegation } from '@/components/delegation-expiry';
 import { useAuth } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -51,6 +52,15 @@ export default function Delegations() {
       setError(e);
     }
   };
+  const renew = async (areaId: string | null) => {
+    setError(null);
+    try {
+      await renewDelegation(areaId);
+      mine.reload();
+    } catch (e) {
+      setError(e);
+    }
+  };
   const revoke = async (areaId: string | null) => {
     setError(null);
     try {
@@ -68,9 +78,12 @@ export default function Delegations() {
       <Muted>
         Oyunuzu genel olarak ya da bir alan için güvendiğiniz birine devredebilirsiniz. Alan havalesi o
         alanda genel havaleyi ezer; alt alanlar üst alanın havalesini miras alır. Zincir son kişiye kadar
-        akar. Havale ettiğiniz alanda kendiniz oy kullanamazsınız.
+        akar. Havale ettiğiniz alanda kendiniz oy kullanamazsınız. Her havale verildiği ya da
+        yenilendiği andan {d?.havale_suresi_gun ?? 180} gün sonra kendiliğinden sona erer ve oy size döner
+        (havale_suresi); süreyi dilediğiniz an baştan başlatabilirsiniz.
       </Muted>
       <Rule double />
+      {d ? <DelegationExpiryStrip data={d} onRenewed={mine.reload} /> : null}
       {d?.locked ? (
         <InfoNotice>
           <Text style={{ fontFamily: fonts.serifBold, color: paper.seal }}>
@@ -86,10 +99,16 @@ export default function Delegations() {
               <Kicker>{g.area_name}</Kicker>
               <Text style={st.chain}>{g.chain.join('  →  ')}</Text>
               <Muted style={{ fontSize: 13 }}>
-                zincir {g.terminal} adlı yurttaşta bitiyor · {fmtDate(g.since)}
+                zincir {g.terminal} adlı yurttaşta bitiyor · verildi {fmtDate(g.since)}
               </Muted>
+              <Text style={[st.expiry, g.expiring && { color: paper.seal }]}>
+                bitiş {fmtDate(g.expires_at)} · {daysLeftLabel(g.days_left)}
+              </Text>
             </View>
-            <Button label="Geri al" variant="quiet" onPress={() => revoke(g.area_id)} />
+            <View style={{ alignItems: 'flex-end', gap: 8 }}>
+              <Button label="Yenile" variant="quiet" onPress={() => renew(g.area_id)} disabled={d?.locked} />
+              <Button label="Geri al" variant="quiet" onPress={() => revoke(g.area_id)} />
+            </View>
           </View>
         ))}
         {d && d.given.length === 0 ? <Muted>Havale vermediniz; oyunuzu kendiniz kullanıyorsunuz.</Muted> : null}
@@ -100,6 +119,11 @@ export default function Delegations() {
           <Body key={r.area_id ?? 'genel'}>
             {r.area_name}: <Text style={{ fontFamily: fonts.monoBold }}>{r.count}</Text>
           </Body>
+        ))}
+        {d?.received_list.map((r: any) => (
+          <Text key={`${r.from}-${r.area_id ?? 'genel'}`} style={[st.expiry, r.expiring && { color: paper.seal }]}>
+            {r.from} · {r.area_name} · bitiş {fmtDate(r.expires_at)} · {daysLeftLabel(r.days_left)}
+          </Text>
         ))}
         {d && d.received.length === 0 ? <Muted>Size doğrudan havale veren yok.</Muted> : null}
       </Section>
@@ -125,4 +149,5 @@ export default function Delegations() {
 const st = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: paper.hairline },
   chain: { fontFamily: fonts.monoMedium, fontSize: 15, color: paper.ink },
+  expiry: { fontFamily: fonts.mono, fontSize: 12, color: paper.inkSoft },
 });

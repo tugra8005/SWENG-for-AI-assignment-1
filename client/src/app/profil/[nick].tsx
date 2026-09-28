@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '@/api/client';
 import { CityPicker } from '@/components/city-picker';
+import { DelegationExpiryStrip, daysLeftLabel } from '@/components/delegation-expiry';
 import {
   Button,
   ErrorNotice,
@@ -58,6 +59,31 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
   return (
     <View style={st.private}>
       <Kicker style={{ color: paper.seal }}>Yalnızca size görünür</Kicker>
+      <Kicker style={{ marginTop: 6 }}>Verdiğiniz havaleler (kalan süre)</Kicker>
+      {p.delegations_given.length ? (
+        p.delegations_given.map((g: any) => (
+          <Line key={`g-${g.area_id ?? 'genel'}`} label={`${g.area_name} → ${g.target}`}>
+            <Text style={[st.lineValue, g.expiring && { color: paper.seal }]}>
+              {fmtDate(g.expires_at)} · {daysLeftLabel(g.days_left)}
+            </Text>
+          </Line>
+        ))
+      ) : (
+        <Muted style={{ fontSize: 14 }}>Havale vermediniz.</Muted>
+      )}
+      <Kicker style={{ marginTop: 6 }}>Aldığınız havaleler (kalan süre)</Kicker>
+      {p.delegations_received_list.length ? (
+        p.delegations_received_list.map((r: any) => (
+          <Line key={`r-${r.from}-${r.area_id ?? 'genel'}`} label={`${r.from} · ${r.area_name}`}>
+            <Text style={[st.lineValue, r.expiring && { color: paper.seal }]}>
+              {fmtDate(r.expires_at)} · {daysLeftLabel(r.days_left)}
+            </Text>
+          </Line>
+        ))
+      ) : (
+        <Muted style={{ fontSize: 14 }}>Size doğrudan havale veren yok.</Muted>
+      )}
+      <Rule faint />
       <Line label="Ad soyad">{p.full_name}</Line>
       <Line label="E-posta">{p.email}</Line>
       <Line label="Doğum tarihi">{fmtDate(p.birth_date)}</Line>
@@ -139,6 +165,7 @@ export default function Profile() {
 
   return (
     <Page>
+      {isSelf ? <DelegationExpiryStrip data={p} onRenewed={own.reload} /> : null}
       <View style={st.doc}>
         <View style={st.docInner}>
           <Text style={st.docHead}>MEŞVERET</Text>
