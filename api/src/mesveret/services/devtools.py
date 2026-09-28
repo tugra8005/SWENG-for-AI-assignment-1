@@ -14,7 +14,7 @@ from mesveret import clock
 from mesveret.context import Ctx
 from mesveret.domain.regulation import RegulationError, range_violations, validate_value
 from mesveret.errors import Conflict, DomainError
-from mesveret.services import decision_hour, scheduler
+from mesveret.services import decision_hour, regulation, scheduler
 
 
 def advance(ctx: Ctx, target: datetime) -> dict:
@@ -38,7 +38,8 @@ def open_decision_hour(ctx: Ctx, *, scripted: bool) -> dict:
         for q in decision_hour.status(ctx)["queued"]
     ]
     return {"session": decision_hour.session_view(ctx, session.id), "problems": problems,
-            "maturing": maturing}
+            "maturing": maturing,
+            "silent": regulation.session_silent_changes(ctx, session.id, "acilis")}
 
 
 def close_decision_hour(ctx: Ctx) -> dict:
@@ -49,7 +50,8 @@ def close_decision_hour(ctx: Ctx) -> dict:
     clock.set_now(ctx.db, target)
     ctx.db.commit()
     done = scheduler.tick(ctx.at(session.closes_at), session.closes_at)
-    return {"session": decision_hour.session_view(ctx, session.id), "events": done}
+    return {"session": decision_hour.session_view(ctx, session.id), "events": done,
+            "silent": regulation.session_silent_changes(ctx, session.id, "kapanis")}
 
 
 def tamper_regulation(ctx: Ctx, key: str, value: Any) -> dict:

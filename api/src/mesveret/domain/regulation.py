@@ -189,6 +189,10 @@ def _articles() -> dict[str, Article]:
                 "Havalenin verildiği ya da yenilendiği andan itibaren geçerli kaldığı süre; sonunda "
                 "oy sahibine döner. Değişiklik yalnızca yeni verilen ve yenilenen havaleleri etkiler.",
                 allowed=_days(30, 365)),
+        Article("havale_uyari_suresi", "sure", {"gun": 14},
+                "Süresi bu kadar içinde dolacak havaleler için girişte, profilde ve Havale "
+                "sayfasında uyarı şeridi gösterilir (bildirim sistemi yok).",
+                allowed=_days(3, 30)),
         Article("ilgi_bekleme", "sure", {"gun": 14},
                 "İlgi kapsamına katıldıktan sonra oy hakkının doğması için geçen süre.",
                 allowed=_days(0, 30)),

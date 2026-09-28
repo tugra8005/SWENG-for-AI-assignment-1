@@ -150,13 +150,17 @@ def open_session(
 ) -> DecisionSession:
     if open_session_row(ctx) is not None:
         raise Conflict("Açık bir Karar Saati oturumu var.")
-    spec = ctx.reg.decision_hour()
     session = DecisionSession(
-        scheduled_for=scheduled_for, opened_at=ctx.now, closes_at=ctx.now + spec.window,
-        status="OPEN", regulation=ctx.graph.articles(), scripted=scripted,
+        scheduled_for=scheduled_for, opened_at=ctx.now, closes_at=ctx.now,
+        status="OPEN", regulation={}, scripted=scripted,
     )
     ctx.db.add(session)
     ctx.db.flush()
+    # Anlık görüntülerden (pencere uzunluğu, yönetmelik değerleri, seçmenler, havaleler) önce:
+    # oylamasız farkları deftere yaz ve son oylanmış hâle dön. Oturum oylamasız değerle açılmaz.
+    regulation.restore_voted_state(ctx, session.id, stage="acilis")
+    session.closes_at = ctx.now + ctx.reg.decision_hour().window
+    session.regulation = ctx.graph.articles()
     queued = [
         p for p in ctx.db.execute(
             select(Proposal).where(Proposal.status == "QUEUED", Proposal.queued_at <= ctx.now)
@@ -428,7 +432,7 @@ def close_session(ctx: Ctx, session: DecisionSession) -> None:
     if session.status != "OPEN":
         raise Conflict("Oturum zaten kapalı.")
     # Oturumun değişikliklerinden önce: oylamasız farkları deftere yaz ve son oylanmış hâle dön.
-    regulation.restore_voted_state(ctx, session.id)
+    regulation.restore_voted_state(ctx, session.id, stage="kapanis")
     reg = Regulation(session.regulation)
     groups: dict[int, list[SessionItem]] = {}
     for item in items_of(ctx, session):

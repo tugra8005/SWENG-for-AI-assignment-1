@@ -242,6 +242,7 @@ Açık 29'daki sorun şuydu: taban ilkeleri korur ama onları çevreleyen parame
 | `adres_bekleme` | 90 gün | 0 – 180 gün | Aynı mantık; şehir değiştirmek ilgi alanı değiştirmekten ağır olduğu için üst sınır daha yüksek |
 | `orantisizlik_esigi` | 10 yüzde puanı | 5 – 30 yüzde puanı | 5'in altında her yuvarlama farkı bir veto doğurur; 30'un üstü D5'i boşaltır |
 | `musavir_esigi` | 5 | 3 – 50 havale | 3'ün altında etiket anlamsızlaşır; 50'nin üstünde küçük bir toplulukta kimse Müşavir olamaz |
+| `havale_uyari_suresi` | 14 gün | 3 – 30 gün | 3 günden kısası hafta sonu giriş yapmayan kişiye uyarıyı kaçırtır; 30 günden uzunu şeridi neredeyse sürekli açık tutar ve uyarıyı anlamsızlaştırır |
 | `havale_suresi` | 180 gün | 30 – 365 gün | Bir aydan kısası güveni sürekli yenileme angaryasına çevirir ve havaleyi fiilen kullanışsız yapar; bir yıldan uzunu unutulmuş havalelerin birikmesini (§8.5) yeniden mümkün kılar |
 | `kapanis_rakip_suresi` | 48 saat | 24 saat – 7 gün | Rakip metin yazmaya en az bir gün; bir haftadan uzunu kapanışı sürüncemede bırakır |
 | `yeniden_acma` | 90 gün | 30 – 365 gün | Bir aydan kısası kararı anlamsızlaştırır; bir yıldan uzunu kararı fiilen kalıcı yapar |
@@ -254,16 +255,20 @@ Açık 29'daki sorun şuydu: taban ilkeleri korur ama onları çevreleyen parame
 
 ### 5.3 Yönetmeliğin defterdeki izi
 
-Değiştirilemezlik bir yazılım kuralıdır (§15, 30. madde): sunucuyu işleten, kodu ya da veriyi değiştirerek R8'i ve aralıkları atlatabilir. Bu engellenemez. Meşveret veri düzeyindeki değişikliği tespit eder, deftere yazar ve bir sonraki Karar Saati kapanışında geri alır: oylamasız hiçbir değer bir oturumdan fazla yaşamaz.
+Değiştirilemezlik bir yazılım kuralıdır (§15, 30. madde): sunucuyu işleten, kodu ya da veriyi değiştirerek R8'i ve aralıkları atlatabilir. Bu engellenemez. Meşveret veri düzeyindeki değişikliği tespit eder, deftere yazar ve bir sonraki Karar Saati açılışında ya da kapanışında geri alır: hiçbir oturum oylamasız bir değerle açılmaz ya da sayılmaz.
 
 - **Kayıt.** Yönetmeliğin tam hâli kurulumda (başlangıç kaydı) ve her Karar Saati oturumunun sonunda, o oturumda kabul edilen değişiklikler uygulandıktan sonra `YONETMELIK_DURUMU` kaydı olarak deftere yazılır. Tam hâl, madde başına değer, `degistirilemez` bayrağı ve izinli aralıktır; aralık hem metniyle hem uygulanan sınırlarıyla girer, böylece metnine dokunmadan genişletilen bir sınır da hash'i değiştirir. Kayıt tam hâli ve kanonik JSON'unun SHA-256 hash'ini taşır.
-- **Kapanışta tespit ve geri alma.** Karar Saati kapanışının ilk adımı, oylar sayılmadan ve kabul edilen değişiklikler uygulanmadan önce, yönetmeliğin o anki hâlini son `YONETMELIK_DURUMU` kaydıyla karşılaştırmaktır. Meşru değişiklikler yalnızca oturum sonunda uygulanıp hemen ardından kaydedildiği için, bu karşılaştırmada bulunan her fark oylamasızdır. Her farklı madde için sırayla:
-  1. `OYLAMASIZ_DEGISIKLIK` kaydı: madde, kayıttaki hâli, bulunan hâli, tespit zamanı, oturum ve karşılaştırılan kaydın numarası.
+- **Açılışta ve kapanışta tespit ve geri alma.** Yönetmeliğin o anki hâli son `YONETMELIK_DURUMU` kaydıyla iki yerde karşılaştırılır:
+  - **Açılışta:** oturum satırı oluşturulduktan hemen sonra, pencere uzunluğu, yönetmelik değerleri, seçmen listeleri ve havaleler anlık görüntüye alınmadan önce. Oturum son oylanmış değerlerle açılır.
+  - **Kapanışta:** oylar sayılmadan ve kabul edilen değişiklikler uygulanmadan önce. Pencere açıkken yapılan değişiklik burada yakalanır; sayım zaten açılış anlık görüntüsüyle yapıldığı için oylamayı etkilememiştir.
+
+  Meşru değişiklikler yalnızca oturum sonunda uygulanıp hemen ardından kaydedildiği için, bu karşılaştırmalarda bulunan her fark oylamasızdır. Her farklı madde için sırayla:
+  1. `OYLAMASIZ_DEGISIKLIK` kaydı: madde, kayıttaki hâli, bulunan hâli, tespit zamanı, oturum, aşama (açılış ya da kapanış) ve karşılaştırılan kaydın numarası.
   2. Geri alma: değer ve `degistirilemez` bayrağı kayıttaki hâline döndürülür. Kayıtta olmayan bir içerik kuralı silinir, kayıttaki ama grafta olmayan bir kural geri yazılır.
   3. `OYLAMASIZ_DEGISIKLIK_GERI_ALINDI` kaydı: geri alınan alanlar, geri alınamayanlar ve maddenin yeni hâli.
 
-  Sonra oturumun sonuçları uygulanır ve yeni `YONETMELIK_DURUMU` yazılır. Aynı maddeye hem sessiz değişiklik hem oylanmış değişiklik geldiyse önce geri alınır, sonra oylanan değer uygulanır; değişiklik geçmişinde eski değer son oylanmış değerdir.
-- **Kod düzeyindeki fark geri alınamaz.** İzinli aralıklar ve maddelerin kendisi çalışan koddan gelir. Kodda genişletilen bir aralık ya da kayıttan sonra kodla eklenen bir madde tespit edilir ve deftere yazılır, ama veriden geri alınamaz; geri alma kaydı bunu "geri alınamayan" olarak belirtir. Yeni kayıt kodun hâlini yazar.
+  Açılışta bundan sonra anlık görüntüler alınır. Kapanışta oturumun sonuçları uygulanır ve yeni `YONETMELIK_DURUMU` yazılır. Aynı maddeye hem sessiz değişiklik hem oylanmış değişiklik geldiyse önce geri alınır, sonra oylanan değer uygulanır; değişiklik geçmişinde eski değer son oylanmış değerdir.
+- **Kod düzeyindeki fark geri alınamaz.** İzinli aralıklar ve maddelerin kendisi çalışan koddan gelir. Kodda genişletilen bir aralık ya da kayıttan sonra kodla eklenen bir madde tespit edilir ve deftere yazılır, ama veriden geri alınamaz; geri alma kaydı bunu "geri alınamayan" olarak belirtir. Açılışta böyle bir fark kalırsa hemen yeni bir `YONETMELIK_DURUMU` kaydı (aşama: açılış) yazılır; aksi hâlde aynı fark kapanışta ikinci kez tespit edilirdi. Sonraki kayıtlar kodun hâlini yazar.
 - **Karşılaştırmanın referansı.** Referans outbox'taki en son `YONETMELIK_DURUMU` satırıdır. Satır deftere ulaştıysa defterdeki kopyası kullanılır; defter otoritedir. Defter kapalıyken önceki oturumun kaydı outbox'ta beklerken defterdeki son kayıt daha eskidir. Onunla karşılaştırmak, önceki oturumda oylanan değişikliği oylamasız sayıp geri alırdı.
 - **Doğrulama.** `/ledger/verify`, çalışan kodun uyguladığı yönetmeliğin hash'ini yeniden hesaplar ve defterdeki son `YONETMELIK_DURUMU` kaydıyla karşılaştırır. Değerler graftan, bayraklar graf düğümlerinden, aralıklar çalışan koddan okunur. Durumlar "tutarlı", "farklı" ve "kayıt yok"tur. "Farklı" durumunda hangi maddelerin değiştiği listelenir. Doğrulama ayrıca defterin tamamındaki `OYLAMASIZ_DEGISIKLIK` kayıtlarını geri alma kayıtlarıyla eşleştirip döner. Defter ekranındaki "Yönetmelik bütünlüğü" kutusu şu anki durumu ve altında kalıcı "Geçmişte tespit edilen oylamasız değişiklikler" listesini gösterir. Liste defterden kurulduğu için hiç boşalmaz.
 - **Demo.** `meşveret-dev tamper-regulation` bir değeri oylamasız değiştirir (§12); README senaryo 12.
@@ -456,7 +461,7 @@ Her havale verildiği anda bir bitiş anı alır: `verildiği an + havale_suresi
 - **Süre dolumu.** Zamanlayıcı bitiş anında havaleyi graftan siler ve deftere `HAVALE_SURESI_DOLDU` yazar (veren, alan, alan_id, veriliş, bitiş). Okumalar ayrıca o ana göre süzülür: bitişi geçmiş ama zamanlayıcının henüz silmediği bir havale yürürlükte sayılmaz.
 - **Karar Saati anlık görüntüsü esastır.** Pencere açıldığında yürürlükte olan havale o oturum için geçerlidir, pencere sırasında süresi dolsa bile. Dolum işlenir ve deftere yazılır, ama oturumun seçmen listesi ve ağırlıkları açılışta alındığı için oylamayı etkilemez.
 - **Zincir.** Ortadaki bir havalenin süresi dolarsa zincir o noktada kopar; alttaki havaleler üstteki kişide biter. A → B → C'de B → C dolarsa A'nın oyu B'ye gider, B kendi oyunu ve A'nınkini kullanır.
-- **Uyarı.** Bildirim sistemi yoktur. Süresi 14 gün içinde dolacak havaleler, girişten sonra açılan ana sayfada, profilde ve Havale sayfasında bir uyarı şeridinde gösterilir. Verilen havale için şeritte **Yenile** vardır; alınan havaleyi yalnızca veren yenileyebilir. 14 gün bir görüntü sabitidir, yönetmelik maddesi değildir (§14).
+- **Uyarı.** Bildirim sistemi yoktur. Süresi `havale_uyari_suresi` (14 gün, izinli aralık 3 – 30 gün) içinde dolacak havaleler, girişten sonra açılan ana sayfada, profilde ve Havale sayfasında bir uyarı şeridinde gösterilir. Verilen havale için şeritte **Yenile** vardır; alınan havaleyi yalnızca veren yenileyebilir. Pencere yönetmelik maddesidir; hash'e ve oylamasız değişiklik tespitine dahildir.
 - **Profil.** Verilen ve alınan havaleler kalan süreleriyle görünür.
 
 ### 8.6 Hâtif
@@ -594,12 +599,12 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | İzinli aralıklar | Parametre tanımının parçasıdır (`Article.allowed`), graf değeri değildir; çalışan kodla gelir ve yönetmelik hash'ine girer. Önceki iki taban maddesi aralıkların alt ucuna dönüştü. Oranlarda karşılaştırma katılıkla yapılır |
 | Süre sıfır olabilir mi | Biçim olarak evet (`ilgi_bekleme` 0 gün); alt sınırı aralık belirler |
 | Yönetmelik hash'inin zamanı | Kurulumda ve her oturum kapanışında; meşru değişiklikler yalnızca oturum kapanışında uygulanır |
-| Oylamasız farkın tespiti ve geri alınması | Kapanışın ilk adımı; oylar sayılmadan ve oturumun değişiklikleri uygulanmadan önce. Madde başına bir tespit ve bir geri alma kaydı. Karşılaştırmanın referansı outbox'taki son durum satırıdır, deftere ulaştıysa defterdeki kopyası |
+| Oylamasız farkın tespiti ve geri alınması | Açılışta anlık görüntülerden önce ve kapanışta oylar sayılmadan önce. Madde başına bir tespit ve bir geri alma kaydı; kayıt aşamayı taşır. Karşılaştırmanın referansı outbox'taki son durum satırıdır, deftere ulaştıysa defterdeki kopyası |
 | Kod düzeyindeki fark | İzinli aralık ve kodla eklenen madde tespit edilip yazılır, geri alınamaz |
 | Havale bitişinin yeri | HAVALE ilişkisinin `bitis` özelliği; verildiği ya da yenilendiği andaki `havale_suresi` ile hesaplanır, madde değişince yeniden hesaplanmaz |
 | Yenilemede veriliş anı | Değişmez; yalnızca bitiş baştan başlar. Pencere açıkken kilitli |
 | Pencere içinde dolan havale | Zamanlayıcı dolumu vade anında işler ve deftere yazar; oturum açılış anlık görüntüsünü kullandığı için oylama etkilenmez |
-| Süre uyarısı | 14 gün, bir görüntü sabiti (`EXPIRY_WARNING`); yönetmelik maddesi değildir, çünkü hiçbir hakkı ya da sonucu değiştirmez |
+| Süre uyarısı | `havale_uyari_suresi` maddesi (14 gün, 3 – 30 gün): "kod hiçbir eşiği sabit yazmaz" ilkesi gereği, yalnızca görüntüyü etkilese de bir sabit değil maddedir |
 | Mahzen ifşa oylamasının süresi ve eşiği | Süresiz; seçmen listesinin yarısı aşılınca anında geçer; oy değiştirilebilir (kullanıcı kararı) |
 | Zincirde oy hakkı olmayan ara halka | Geçirgen; ağırlığa yalnızca oy hakkı olanlar katkı verir |
 | Miras ile döngü | Alt ağaçtaki tüm alanlar kontrol edilir |
@@ -665,14 +670,14 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 29. **Parametreler ilkeleri içten zayıflatabilir; aralıklar bunu yalnızca sınırlar.** Her sayısal parametrenin değiştirilemez bir izinli aralığı vardır (§5.2); `ilgi_bekleme` en fazla 30 gün, `orantisizlik_esigi` en fazla 30 yüzde puanı olabilir. İlkeler artık tamamen boşaltılamaz, ama aralık içinde zayıflatılabilir: `adres_bekleme` 180 gün, `orantisizlik_esigi` 30 puan olduğunda D2 ve D5 hâlâ yürürlüktedir ama eskisinden zayıftır. Aralıkların kendisi tasarımcının keyfî seçimidir; hiçbir ölçüme dayanmaz ve yanlış seçildiyse oylamayla düzeltilemez.
 30. **Değiştirilemezlik bir yazılım kuralıdır; hafifletme veri düzeyindedir, davranış düzeyinde değil.** R8'i uygulayan kod ve onu işleten kişi dışarıdan bağlanmamıştır. Sunucuyu işleten, kodu ya da veriyi değiştirerek R8'i ve aralıkları atlatabilir. Hafifletme (§5.3):
     - Yönetmeliğin tam hâli her Karar Saati sonunda hash'iyle deftere yazılır.
-    - Kapanışta oylamasız farklar `OYLAMASIZ_DEGISIKLIK` olarak deftere yazılır ve geri alınır.
+    - Karar Saati açılışında ve kapanışında oylamasız farklar `OYLAMASIZ_DEGISIKLIK` olarak deftere yazılır ve geri alınır.
     - `/verify` şu anki durumu ve defterin tamamındaki geçmişi gösterir.
 
     Kalan açıklar:
-    - **Operatör kodu değiştirerek bu denetimi de kaldırabilir.** Karşılaştırmayı ve geri almayı yapan kod, R8 gibi, operatörün elindedir. Denetim veriyi izler (değerler, bayraklar, aralıklar), davranışı değil. Kapanıştaki karşılaştırmayı silen, R8'i atlayan ya da yönetmeliği okuyan kodun bir değeri yok saymasını sağlayan operatör, aynı hash'i üreten ama farklı davranan bir sistem çalıştırabilir.
-    - **Oylamasız değer bir sonraki kapanışa kadar yürürlüktedir.** Hızlı şerit, zamanlayıcı ve o arada açılan oturumun anlık görüntüsü değiştirilmiş değeri kullanır. Değişiklikten sonra açılan bir oturum, oyları değiştirilmiş eşik ya da seçmen listesiyle sayar; kapanış değeri geri alır ama o oturumun sonuçlarını geri almaz. Kapanıştaki karşılaştırmanın açılışta da yapılması bu açığı daraltır; yapılmadı.
+    - **Operatör kodu değiştirerek bu denetimi de kaldırabilir.** Karşılaştırmayı ve geri almayı yapan kod, R8 gibi, operatörün elindedir. Denetim veriyi izler (değerler, bayraklar, aralıklar), davranışı değil. Açılış ve kapanıştaki karşılaştırmayı silen, R8'i atlayan ya da yönetmeliği okuyan kodun bir değeri yok saymasını sağlayan operatör, aynı hash'i üreten ama farklı davranan bir sistem çalıştırabilir.
+    - **Oylamasız değer iki oturum arasında yürürlüktedir.** Hiçbir oturum değiştirilmiş değerle açılmaz ya da sayılmaz: açılıştan önceki değişiklik açılışta, pencere içindeki değişiklik kapanışta geri alınır ve sayım açılış anlık görüntüsüyle yapılır. Ama değer, geri alınana kadar oturum dışındaki işlemlerde kullanılır: hızlı şeritteki sessiz onay süresi ve itiraz eşiği, öneri açılışındaki denetimler, havale verilirken hesaplanan bitiş, Mahzen parametreleri. Bu arada değiştirilmiş değerle üretilmiş sonuçlar geri alınmaz; örneğin o arada verilmiş bir havalenin bitişi ya da sessiz onayla kabul edilmiş bir öneri kalır.
     - **Kod düzeyindeki fark yalnızca kaydedilir.** Genişletilen bir aralık ya da kodla eklenen bir madde deftere yazılır ama geri alınamaz; sonraki kayıt kodun hâlini yazar.
-    - **Referans kaydı sahtelenebilir.** Lider düğümü yöneten operatör, değiştirilmiş hâli yansıtan bir `YONETMELIK_DURUMU` kaydını deftere ekleyebilir. Kapanıştaki karşılaştırma o kayda göre yapılır ve farkı görmez. Kayıt defterde görünür ve bir oturum kapanışının ardından gelmediği için dikkatli bir okuyucu fark eder, ama sistem bunu işaretlemez. Deftere henüz ulaşmamış bir kayıt için referans PostgreSQL'deki outbox satırıdır; veritabanını yöneten operatör onu da değiştirebilir.
+    - **Referans kaydı sahtelenebilir.** Lider düğümü yöneten operatör, değiştirilmiş hâli yansıtan bir `YONETMELIK_DURUMU` kaydını deftere ekleyebilir. Açılış ve kapanıştaki karşılaştırmalar o kayda göre yapılır ve farkı görmez. Kayıt defterde görünür ve bir oturum kapanışının ardından gelmediği için dikkatli bir okuyucu fark eder, ama sistem bunu işaretlemez. Deftere henüz ulaşmamış bir kayıt için referans PostgreSQL'deki outbox satırıdır; veritabanını yöneten operatör onu da değiştirebilir.
 
     Anayasalardaki karşılığı mahkemeler ve anayasa kültürüdür; Meşveret'te yoktur.
 31. **Ölü el.** Bugünkü kurucular yarının topluluğunu bağlar. D1–D7 metinlerindeki ya da izinli aralıklardaki (§5.2) bir hata ya da eksik oylamayla düzeltilemez. Tek çıkış forumu baştan kurmaktır (yeni tohum, yeni defter). Temel Yasa'nın sonsuzluk maddesinin bedeli de budur.
@@ -724,7 +729,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Oy ağırlığı hesabı, çekimser zincirler | `api/tests/domain/test_tally.py`, `test_decision_hour.py` |
 | R1–R8, otomatik daralma, üst küme reddi | `api/tests/domain/test_rules.py`, `tests/integration/test_proposals.py` |
 | 2/3 ve kendini koruma | `test_tally.py`, `test_decision_hour.py::test_regulation_change_needs_two_thirds`, `::test_threshold_article_protects_itself` |
-| Havale süresi (bitiş, madde değişikliğinin geriye işlememesi, yenileme ve kilit, zincirin kopması, pencere içinde dolan havale, zamanlayıcıdan önce okunan bitiş, 14 gün uyarısı, Müşavir etiketinin düşmesi) | `tests/integration/test_delegation_expiry.py`, `test_seed.py::test_scenario_13_delegations_expire_after_181_days`, `graph_contract.py::test_delegation_expiry` (bellek içi ve Neo4j) |
+| Havale süresi (bitiş, madde değişikliğinin geriye işlememesi, yenileme ve kilit, zincirin kopması, pencere içinde dolan havale, zamanlayıcıdan önce okunan bitiş, uyarı penceresi (`havale_uyari_suresi`), Müşavir etiketinin düşmesi) | `tests/integration/test_delegation_expiry.py`, `test_seed.py::test_scenario_13_delegations_expire_after_181_days`, `graph_contract.py::test_delegation_expiry` (bellek içi ve Neo4j) |
 | Anlık görüntü ve kilit kuralları | `test_decision_hour.py::test_electorate_is_snapshotted_when_window_opens`, `::test_delegations_are_locked_while_window_is_open` |
 | Sessiz onay eşiği, red bekleme | `test_proposals.py` |
 | Mahzen seçmen anlık görüntüsü | `tests/integration/test_cellar.py::test_electorate_is_snapshot_of_posters_before_vote_opened` |
@@ -738,7 +743,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Silme: içerik kuralları, R7 gerekçesi, 2/3 eşiği, kendi mesajı istisnası, H4, şeritteki kural | `test_regulation.py`, `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_decision_hour.py::test_deletion_needs_two_thirds_but_own_message_needs_simple_majority`, `test_seed.py::test_scenario_4_unjustified_deletion_is_rejected` |
 | Pay etkisi ve orantısızlık; R2'nin ters yönü; eşzamanlı çoğunluk (ayrı oylama, üyeler arası havale, sonuç satırı, payların işlenmesi) | `api/tests/domain/test_shares.py`, `test_rules.py`, `test_proposals.py`, `test_decision_hour.py::test_proposal_needs_majority_in_every_disproportionate_scope`, `::test_disproportionately_affected_scope_votes_separately_with_member_only_delegation`, `test_seed.py` (senaryo 10) |
 | Değiştirilemez maddeler ve izinli aralıklar (R8, aralık karşılaştırması, graf bayrağı, ikinci savunma hattı) | `test_regulation.py::test_ranges_from_the_task`, `::test_every_numeric_parameter_has_a_range_and_defaults_lie_inside` ve aşağıdakiler |
-| Yönetmeliğin defterdeki izi (başlangıç kaydı, oturum sonu kaydı, sessiz değişikliğin ve metni aynı kalan sınır genişletmesinin tespiti, kapanışta tespit ve geri alma, bayrak ve içerik kuralı geri alma, kod düzeyindeki fark, bekleyen kaydın referans olması, kalıcı geçmiş, `tamper-regulation` aracı ve `/_dev` karşılığı) | `tests/integration/test_regulation_integrity.py`, `ledger/tests/test_replication.py::test_last_record_of_a_type_is_served_by_every_node` |
+| Yönetmeliğin defterdeki izi (başlangıç kaydı, oturum sonu kaydı, sessiz değişikliğin ve metni aynı kalan sınır genişletmesinin tespiti, açılışta tespit ve anlık görüntülerin son oylanmış değerlerle alınması, değiştirilmiş eşiğin sayılmaması, kapanışta tespit ve geri alma, bayrak ve içerik kuralı geri alma, kod düzeyindeki fark, bekleyen kaydın referans olması, kalıcı geçmiş, `tamper-regulation` aracı ve `/_dev` karşılığı) | `tests/integration/test_regulation_integrity.py`, `ledger/tests/test_replication.py::test_last_record_of_a_type_is_served_by_every_node` |
 | Değiştirilemez maddeler (ayrıntı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
@@ -754,7 +759,7 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Alan / Kapsam / Kaynak | `Area` / `Scope` / `Resource` |
 | Konu / Öneri / Karar / Şerh | `Topic` / `Proposal` / `Decision` / `Dissent` |
 | Havale | `Delegation` |
-| Havale süresi, bitiş | `havale_suresi`, `DelegationEdge.expires_at` (graf: `bitis`), `HAVALE_YENILENDI`, `HAVALE_SURESI_DOLDU` |
+| Havale süresi, bitiş, uyarı | `havale_suresi`, `havale_uyari_suresi`, `DelegationEdge.expires_at` (graf: `bitis`), `HAVALE_YENILENDI`, `HAVALE_SURESI_DOLDU` |
 | İtiraz / sessiz onay | `Objection` / `silent_approval` |
 | Hızlı / yavaş şerit | `fast_lane` / `slow_lane` |
 | Karar Saati | `DecisionHour` |

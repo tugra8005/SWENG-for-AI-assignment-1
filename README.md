@@ -104,10 +104,10 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 | №20 | 9 · Olgunlaşma |
 | №17, №18 | 10 · Eşzamanlı çoğunluk |
 | — | 11 · Yönetmeliğin tabanı (açılışta reddedilen öneriler, izinli aralıklar, yönetmelik hash'i) |
-| — | 12 · Operatörün sessiz değişikliği (Karar Saati oturumu açıkken) |
+| — | 12 · Operatörün sessiz değişikliği (Karar Saati oturumunun açılışından önce ve oturum açıkken) |
 | — | 13 · Havale süresi (zamanı 181 gün ilerletir; en son oynatın) |
 
-Senaryo 1, 6 ve 11 anında oynatılır; senaryo 12 Karar Saati oturumu açıkken oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin. Senaryo 13 saati 181 gün ilerlettiği için en son oynatılır.
+Senaryo 1, 6 ve 11 anında oynatılır; senaryo 12'nin A parçası Karar Saati oturumu açılmadan önce, B parçası oturum açıkken oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin. Senaryo 13 saati 181 gün ilerlettiği için en son oynatılır.
 
 ### 1. İstanbul vakası: otomatik daralma ve red
 
@@ -132,25 +132,36 @@ Senaryo 1, 6 ve 11 anında oynatılır; senaryo 12 Karar Saati oturumu açıkken
 1. **Yönetmelik** sayfasının başında çift çerçeveli **Değiştirilemez Maddeler** bölümü durur: D1–D7 ilkeleri, her biri kilit işaretiyle, altında **İzinli aralıklar** paragrafı. Her sayısal parametrenin değerinin altında kilitli bir **izinli: …** satırı görünür: `yonetmelik_esigi` için "≥ 2/3 – ≥ 3/4", `sessiz_onay_suresi` için "12 saat – 72 saat", `mahzen_kapasite` için "30 – 300 başlık". Aralıklar tasarımcının seçimidir; gerekçeleri DESIGN.md §5.2'dedir.
 2. **kerem** olarak giriş yapın. Yönetmelik sayfasında `yonetmelik_esigi` → **Değişiklik öner** → yeni oran `1/2` → **Öneriyi aç**. Öneri açılmaz: *"R8 — yonetmelik_esigi değiştirilemez izinli aralığın dışında: ≥ 2/3 – ≥ 3/4. İzinli aralıklar oylamayla genişletilemez (D7)."* `4/5` de aynı gerekçeyle reddedilir (3/4'ün üstü fiilen kilitler); `3/4` denerseniz öneri açılır.
 3. Şerh hakkını kaldırmayı deneyin: `/oneri/yeni?type=YONETMELIK&action=kaldir&article=D3` adresini açın. Form maddenin değiştirilemez olduğunu kilitle gösterir; **Öneriyi aç** deyin: *"R8 — Bu madde değiştirilemez: D3 (Kaybeden taraf Şerh ekleyebilir; Şerh silinemez.) …"* Öneri kuyruğa girmez; değişiklik teklif bile edilemez.
-4. **Defter → Doğrula**: düğümlerin altındaki **Yönetmelik bütünlüğü** kutusu TUTARLI der. Çalışan kodun yönetmeliğinin hash'i, defterdeki son `YONETMELIK_DURUMU` kaydıyla (kurulumda yazılan başlangıç kaydı) aynıdır. Karar Saati kapandıktan sonra aynı kutu o oturumun sonunda yazılan kaydı gösterir. Oylamasız bir değişiklikte (veritabanına ya da grafa elle yazılan bir değer, kodda genişletilen bir aralık) kutu FARKLI der ve değişen maddeleri listeler; bir sonraki Karar Saati kapanışında değişiklik deftere yazılır ve geri alınır (senaryo 12).
+4. **Defter → Doğrula**: düğümlerin altındaki **Yönetmelik bütünlüğü** kutusu TUTARLI der. Çalışan kodun yönetmeliğinin hash'i, defterdeki son `YONETMELIK_DURUMU` kaydıyla (kurulumda yazılan başlangıç kaydı) aynıdır. Karar Saati kapandıktan sonra aynı kutu o oturumun sonunda yazılan kaydı gösterir. Oylamasız bir değişiklikte (veritabanına ya da grafa elle yazılan bir değer, kodda genişletilen bir aralık) kutu FARKLI der ve değişen maddeleri listeler; bir sonraki Karar Saati açılışında ya da kapanışında değişiklik deftere yazılır ve geri alınır (senaryo 12).
 
 ### 12. Operatörün sessiz değişikliği
 
-Değiştirilemezlik bir yazılım kuralıdır; sunucuyu işleten onu atlatabilir. Meşveret oylamasız değişikliği engellemez; tespit eder, deftere yazar ve bir sonraki Karar Saati kapanışında geri alır (DESIGN.md §5.3). Senaryo 12, aşağıdaki Karar Saati oturumu **açıkken** oynatılır: `run-karar-saati`'den sonra, `run-karar-saati --close`'dan önce. Oturumun seçmen listesi ve yönetmelik değerleri açılışta alındığı için değişiklik oylamaları etkilemez.
+Değiştirilemezlik bir yazılım kuralıdır; sunucuyu işleten onu atlatabilir. Meşveret oylamasız değişikliği engellemez; tespit eder, deftere yazar ve bir sonraki Karar Saati açılışında ya da kapanışında geri alır (DESIGN.md §5.3). Hiçbir oturum oylamasız bir değerle açılmaz ya da sayılmaz. Senaryo 12, aşağıdaki Karar Saati oturumunun çevresinde iki parça olarak oynatılır: **A** oturum açılmadan önce, **B** oturum açıkken.
+
+**A. Açılışta tespit** (`run-karar-saati`'den önce):
 
 1. **Defter → Doğrula**: **Yönetmelik bütünlüğü** kutusu TUTARLI der; altındaki **Geçmişte tespit edilen oylamasız değişiklikler** listesi boştur ("Henüz yok").
-2. Operatör olarak adres değişikliğinden sonraki bekleme süresini oylamasız, izinli aralığın (0 – 180 gün) dışına çekin:
+2. Operatör olarak yönetmelik değişikliği eşiğini oylamasız 1/2'ye, izinli aralığın (≥ 2/3 – ≥ 3/4) dışına çekin:
+
+   ```bash
+   docker compose exec api meşveret-dev tamper-regulation yonetmelik_esigi '{"oran": "1/2", "karsilastirma": ">"}'
+   ```
+
+   Komut eski ve yeni değeri yazar, değerin izinli aralığın dışında olduğunu ve R8'in atlandığını bildirir, son satırda doğrulamanın sonucunu verir: **Yönetmelik bütünlüğü: FARKLI**. Öneri açılmaz, deftere kayıt düşmez. **Yönetmelik** sayfasında `yonetmelik_esigi` artık **> 1/2** gösterir; altında hâlâ "izinli: ≥ 2/3 – ≥ 3/4" yazar ve öneri numaralı bir geçmiş satırı yoktur. Bu eşikle senaryo 3'teki %60'lık №13 geçerdi.
+3. Karar Saati bölümündeki gibi oturumu açın (`run-karar-saati`). Açılış, pencere uzunluğunu, yönetmelik değerlerini, seçmenleri ve havaleleri anlık görüntüye almadan önce yönetmeliği son `YONETMELIK_DURUMU` kaydıyla karşılaştırır. Fark deftere `OYLAMASIZ_DEGISIKLIK` olarak yazılır, madde son oylanmış değerine döndürülür ve geri alma `OYLAMASIZ_DEGISIKLIK_GERI_ALINDI` olarak yazılır. Komut çıktısında `! oylamasız değişiklik açılışta tespit edildi ve geri alındı: yonetmelik_esigi` satırı görünür.
+4. **Defter → Doğrula**: kutu yeniden **TUTARLI** der. Geçmiş listesinde: **yonetmelik_esigi · #1 numaralı oturumun açılışında · … · kayıtta ≥ 2/3 → bulunan > 1/2 · GERİ ALINDI**. Oturum 2/3 ile açıldı; kapanışta №13 yine reddedilir (senaryo 3).
+
+**B. Kapanışta tespit** (oturum açıkken, `run-karar-saati --close`'dan önce):
+
+5. Adres değişikliğinden sonraki bekleme süresini oylamasız, izinli aralığın (0 – 180 gün) dışına çekin:
 
    ```bash
    docker compose exec api meşveret-dev tamper-regulation adres_bekleme '{"gun": 1000}'
    ```
 
-   Komut eski ve yeni değeri yazar, değerin izinli aralığın dışında olduğunu ve R8'in atlandığını bildirir, son satırda doğrulamanın sonucunu verir: **Yönetmelik bütünlüğü: FARKLI**. Öneri açılmaz, deftere kayıt düşmez.
-3. **Yönetmelik** sayfasında `adres_bekleme` artık **1000 gün** gösterir ve altında hâlâ "izinli: 0 – 180 gün" yazar. Oylamayla değişen maddelerin altında tarih ve öneri numarasıyla bir geçmiş satırı görünür; burada yoktur.
-4. **Defter → Doğrula**: kutu bordo **FARKLI** der ve **farklı maddeler: adres_bekleme** yazar. Üç defter düğümü tutarlıdır: defterin kendisine dokunulmamıştır.
-5. Oturumu kapatın (Karar Saati bölümündeki `run-karar-saati --close`). Kapanışta, kabul edilen değişiklikler uygulanmadan önce yönetmelik son `YONETMELIK_DURUMU` kaydıyla karşılaştırılır. Fark deftere `OYLAMASIZ_DEGISIKLIK` olarak yazılır, madde son oylanmış değerine döndürülür ve geri alma `OYLAMASIZ_DEGISIKLIK_GERI_ALINDI` olarak yazılır. Ardından oturumun sonuçları uygulanır.
-6. **Defter → Doğrula**: kutu yeniden **TUTARLI** der. Geçmiş listesinde şu satır durur: **adres_bekleme · #1 numaralı oturumun kapanışında · … · kayıtta 90 gün → bulunan 1000 gün · GERİ ALINDI**. **defterde: ⌗ …** bağlantısı tespit kaydını açar. Liste defterden kurulur ve hiç boşalmaz.
-7. **Yönetmelik** sayfasında `adres_bekleme` yeniden **90 gün**dür. Oylamasız hiçbir değer bir oturumdan fazla yaşamaz.
+   **Yönetmelik** sayfasında `adres_bekleme` **1000 gün** gösterir. **Defter → Doğrula**: kutu bordo **FARKLI** der ve **farklı maddeler: adres_bekleme** yazar. Üç defter düğümü tutarlıdır: defterin kendisine dokunulmamıştır. Oturumun seçmen listesi açılışta alındığı için bu değişiklik oylamayı etkilemez.
+6. Oturumu kapatın (`run-karar-saati --close`). Kapanışta, oylar sayılmadan önce aynı karşılaştırma yapılır: fark yazılır ve geri alınır, ardından oturumun sonuçları uygulanır.
+7. **Defter → Doğrula**: kutu **TUTARLI** der. Geçmiş listesinde iki satır durur, en yenisi üstte: **adres_bekleme · #1 numaralı oturumun kapanışında · kayıtta 90 gün → bulunan 1000 gün · GERİ ALINDI** ve açılıştaki `yonetmelik_esigi` satırı. **defterde: ⌗ …** bağlantısı tespit kaydını açar. Liste defterden kurulur ve hiç boşalmaz. **Yönetmelik** sayfasında `adres_bekleme` yeniden **90 gün**, `yonetmelik_esigi` **≥ 2/3**'tür.
 
 Docker'sız geliştirme modunda aynı değişiklik `POST /_dev/tamper-regulation` ile yapılır: gövde `{"key": "adres_bekleme", "value": {"gun": 1000}}`.
 
@@ -174,7 +185,7 @@ Docker'sız geliştirme modunda aynı değişiklik `POST /_dev/tamper-regulation
 docker compose exec api meşveret-dev run-karar-saati
 ```
 
-Komut oturumu açar ve tohumdaki oy planını uygular. Senaryo 12'yi oynatacaksanız şimdi, oturumu kapatmadan önce oynatın. Beş baskın hesabının oyları reddedilir; çıktıda "baskın şüphesiyle işaretlendiniz" satırları görünür. №20 oturuma alınmaz; çıktının sonunda `~ #20 Yönetmelik: musavir_esigi — olgunlaşıyor (genel, 168 saat); 2026-10-11 20:00:00 (Pazar) İstanbul oturumunda oylanacak` satırı görünür ve oy pusulasında yer almaz.
+Senaryo 12'yi oynatacaksanız A parçasını bu komuttan önce, B parçasını oturumu kapatmadan önce oynatın. Komut oturumu açar ve tohumdaki oy planını uygular. Beş baskın hesabının oyları reddedilir; çıktıda "baskın şüphesiyle işaretlendiniz" satırları görünür. №20 oturuma alınmaz; çıktının sonunda `~ #20 Yönetmelik: musavir_esigi — olgunlaşıyor (genel, 168 saat); 2026-10-11 20:00:00 (Pazar) İstanbul oturumunda oylanacak` satırı görünür ve oy pusulasında yer almaz.
 
 - **Senaryo 2, kilit:** **aylin** olarak **Havale** sayfasında genel havaleyi **Geri al**'a basın: *"Karar Saati penceresi açık: havale grafı bu oturum için kilitli."* **Karar Saati** sayfasında aylin'in pusulasında "Oyunuz havale zinciriyle ceren adlı yurttaşa gidiyor" yazar.
 - **Senaryo 10, ayrı oylama:** İstanbul'da oturan **ayse** olarak **Karar Saati** pusulasında №17 iki kez görünür: Genel oylaması ve altında *"İstanbul oylaması · orantısız etkilenen kapsam"*. İstanbul oylamasında havale yalnızca İstanbul seçmenleri arasında çözülür. Beklenen sonuç için ayse'nin №17'de oy vermemesi gerekir (verirse İstanbul yüzdesi değişir).
@@ -242,7 +253,7 @@ docker compose exec api meşveret-dev advance-time --to 2026-10-11T20:30:00+03:0
 
 Her havale verildiği ya da yenilendiği andan `havale_suresi` (180 gün) sonra kendiliğinden sona erer ve oy sahibine döner. Unutulmuş havalelerden birikmiş güç böylece düzenli olarak sıfırlanır; bilinçli olarak yenilenen güven korunur (DESIGN.md §8.5). Tohumdaki havaleler tohum anından 30 gün önce verildi: kalan süre 150 gün.
 
-1. **Yönetmelik** sayfasında `havale_suresi` **180 gün** gösterir, altında kilitli **izinli: 30 – 365 gün**.
+1. **Yönetmelik** sayfasında `havale_suresi` **180 gün** gösterir, altında kilitli **izinli: 30 – 365 gün**; `havale_uyari_suresi` **14 gün**, **izinli: 3 – 30 gün**.
 2. **aylin** olarak **Havale** sayfası: *Genel* aylin → baris, altında **bitiş 26 Şubat 2027 · 150 gün kaldı** ve **Yenile** / **Geri al**. **ceren** olarak: *Size gelen havaleler* Ulaşım: 1, **baris · Ulaşım · bitiş 26 Şubat 2027 · 150 gün kaldı**. Zincir aylin → baris → ceren'dir: Ulaşım önerilerinde ceren'in ağırlığı 3'tür.
 3. Saati 140 gün ilerletin; havalelerin dolmasına 10 gün kalır:
 
@@ -250,7 +261,7 @@ Her havale verildiği ya da yenilendiği andan `havale_suresi` (180 gün) sonra 
    docker compose exec api meşveret-dev advance-time --days 140
    ```
 
-4. **aylin** olarak giriş yapın. Ana sayfanın başında bordo çerçeveli uyarı şeridi durur: **"Genel havaleniz (baris) 26 Şubat 2027 tarihinde doluyor, 10 gün kaldı. Dolunca oyunuz size döner."** ve **Yenile** düğmesi. Aynı şerit profilde ve Havale sayfasında da görünür; profilde verilen ve alınan havaleler kalan süreleriyle listelenir. **ceren** olarak şerit alınan havaleyi gösterir: *"Size verilen 1 havalenin süresi doluyor: baris (Ulaşım, 10 gün kaldı). Yenilemek havaleyi verenin elindedir."* Bildirim gönderilmez.
+4. **aylin** olarak giriş yapın. Süresi `havale_uyari_suresi` (14 gün) içinde dolacağı için ana sayfanın başında bordo çerçeveli uyarı şeridi durur: **"Genel havaleniz (baris) 26 Şubat 2027 tarihinde doluyor, 10 gün kaldı. Dolunca oyunuz size döner."** ve **Yenile** düğmesi. Aynı şerit profilde ve Havale sayfasında da görünür; profilde verilen ve alınan havaleler kalan süreleriyle listelenir. **ceren** olarak şerit alınan havaleyi gösterir: *"Size verilen 1 havalenin süresi doluyor: baris (Ulaşım, 10 gün kaldı). Yenilemek havaleyi verenin elindedir."* Bildirim gönderilmez.
 5. (İsteğe bağlı) **deniz** olarak şeritteki **Yenile**'ye basın. Felsefe havalesinin (deniz → selin) süresi baştan başlar: Havale sayfasında **bitiş 15 Ağustos 2027 · 180 gün kaldı**. Deftere `HAVALE_YENILENDI` yazılır.
 6. Saati 41 gün daha ilerletin (toplam 181 gün):
 

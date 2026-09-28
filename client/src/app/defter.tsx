@@ -56,7 +56,7 @@ function SilentChange({ h }: { h: any }) {
   return (
     <View style={st.silent}>
       <Text style={st.silentHead}>
-        {h.madde} · {h.oturum ? `#${h.oturum} numaralı oturumun kapanışında` : 'kapanışta'} ·{' '}
+        {h.madde} · #{h.oturum} numaralı oturumun {h.asama === 'acilis' ? 'açılışında' : 'kapanışında'} ·{' '}
         {fmtDateTime(h.tespit_zamani)}
       </Text>
       {lines.map((l) => (
@@ -145,7 +145,8 @@ export default function Ledger() {
         <Body style={{ marginBottom: 10 }}>
           Üç düğümün zincirleri baştan yeniden hesaplanır ve birbiriyle karşılaştırılır. Çalışan kodun
           uyguladığı yönetmelik, defterdeki son yönetmelik kaydının hash&apos;iyle karşılaştırılır; Karar
-          Saati kapanışlarında tespit edilip geri alınan oylamasız değişiklikler defterin tamamından listelenir.
+          Saati açılış ve kapanışlarında tespit edilip geri alınan oylamasız değişiklikler defterin
+          tamamından listelenir.
         </Body>
         <Button label="Doğrula" onPress={runVerify} />
         {verify ? (

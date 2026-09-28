@@ -10,7 +10,7 @@ sırasında süresi dolan havale o oturum için geçerli kalır.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from sqlalchemy import select
 
@@ -31,8 +31,6 @@ LOCK_MESSAGE = (
     "Karar Saati penceresi açık: havale grafı bu oturum için kilitli. "
     "Havaleyi pencere kapandıktan sonra değiştirebilirsiniz."
 )
-# Süresi bu kadar içinde dolacak havaleler için uyarı şeridi (bildirim sistemi yok).
-EXPIRY_WARNING = timedelta(days=14)
 
 
 def window_open(ctx: Ctx) -> bool:
@@ -134,7 +132,8 @@ def _expiry_view(ctx: Ctx, e: DelegationEdge) -> dict:
         "since": e.since,
         "expires_at": e.expires_at,
         "days_left": max(0, left.days + (1 if left.seconds or left.microseconds else 0)) if left else None,
-        "expiring": left is not None and left <= EXPIRY_WARNING,
+        # Uyarı şeridi (bildirim sistemi yok): süresi havale_uyari_suresi içinde dolacaklar.
+        "expiring": left is not None and left <= ctx.reg.duration("havale_uyari_suresi"),
     }
 
 
@@ -171,7 +170,7 @@ def my_delegations(ctx: Ctx, user: User) -> dict:
         "received_list": received_list,
         "expiring_given": [g for g in given if g["expiring"]],
         "expiring_received": [r for r in received_list if r["expiring"]],
-        "warning_days": EXPIRY_WARNING.days,
+        "warning_days": ctx.reg.duration("havale_uyari_suresi").days,
         "havale_suresi_gun": ctx.reg.duration("havale_suresi").days,
         "locked": window_open(ctx),
     }

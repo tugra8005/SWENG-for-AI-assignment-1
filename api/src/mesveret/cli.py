@@ -130,6 +130,10 @@ def run_karar_saati(
             typer.echo(f"Karar Saati #{view['id']} açıldı: {_fmt(view['opened_at'])} → "
                        f"{_fmt(view['closes_at'])}")
         _print_items(view)
+        for key in out.get("silent", []):
+            stage = "kapanışta" if close else "açılışta"
+            typer.echo(f"  ! oylamasız değişiklik {stage} tespit edildi ve geri alındı: {key} "
+                       "(Defter → Doğrula)")
         for line in out.get("problems", []):
             typer.echo(f"  ! {line}")
         for q in out.get("maturing", []):

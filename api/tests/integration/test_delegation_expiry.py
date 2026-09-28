@@ -160,3 +160,16 @@ def test_counselor_label_fades_as_delegations_expire_but_renewed_trust_stays(ctx
     assert incoming == {"sinema": 1}  # yalnızca yenilenen kaldı
     assert counselor_areas(incoming, later.reg) == []
     assert "Müşavir" not in client.get("/users/musavir").json()["roles"]
+
+
+def test_warning_window_is_the_havale_uyari_suresi_article(ctx):
+    a = make_user(ctx, "aylin")
+    make_user(ctx, "baris")
+    delegation.set_delegation(ctx, a, "baris", None)
+    ctx.commit()
+    later = ctx.at(ctx.now + 150 * DAY)  # 30 gün kaldı
+    assert delegation.my_delegations(later, a)["expiring_given"] == []  # varsayılan 14 gün
+    later.graph.set_article("havale_uyari_suresi", {"gun": 30})  # oylamayla değişmiş gibi
+    later.invalidate_regulation()
+    mine = delegation.my_delegations(later, a)
+    assert (mine["warning_days"], [g["days_left"] for g in mine["expiring_given"]]) == (30, [30])

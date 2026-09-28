@@ -6,8 +6,9 @@ Parametre maddelerinin yalnızca değeri değişir. İçerik kuralları (IK-<n>)
 Yönetmeliğin tam hâli (değerler, değiştirilemez bayrakları, izinli aralıklar) kurulumda ve her
 Karar Saati sonunda hash'iyle deftere yazılır (``YONETMELIK_DURUMU``). ``/ledger/verify`` çalışan
 kodun uyguladığı yönetmeliği defterdeki son kayıtla karşılaştırır: operatörün oylamasız
-değişikliği engellenmez ama tespit edilir. Karar Saati kapanışında oylamasız farklar deftere
-yazılır ve maddeler son oylanmış hâline döndürülür; oylamasız bir değer bir oturumdan fazla yaşamaz.
+değişikliği engellenmez ama tespit edilir. Karar Saati açılışında (anlık görüntülerden önce) ve
+kapanışında (oylar sayılmadan önce) oylamasız farklar deftere yazılır ve maddeler son oylanmış
+hâline döndürülür: hiçbir oturum oylamasız bir değerle açılmaz ya da sayılmaz.
 """
 
 from __future__ import annotations
@@ -164,9 +165,15 @@ def state_hash(st: dict) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
-def record_state(ctx: Ctx, session_id: int | None) -> None:
+def record_state(ctx: Ctx, session_id: int | None, stage: str | None = None) -> None:
     st = state(ctx)
-    ledger.enqueue(ctx, STATE_RECORD, {"oturum": session_id, "hash": state_hash(st), "durum": st})
+    payload = {"oturum": session_id, "hash": state_hash(st), "durum": st}
+    if stage:
+        payload["asama"] = stage
+    ledger.enqueue(ctx, STATE_RECORD, payload)
+
+
+STAGES = {"acilis": "açılışında", "kapanis": "kapanışında"}
 
 
 def _differences(current: dict, recorded: dict) -> list[str]:
@@ -187,7 +194,8 @@ def verify_state(ctx: Ctx) -> dict:
     recorded = payload.get("durum", {})
     differences = _differences(current, recorded)
     same = payload.get("hash") == current_hash
-    where = f"#{payload['oturum']} numaralı oturumun sonunda" if payload.get("oturum") else "kurulumda"
+    where = (f"#{payload['oturum']} numaralı oturumun {STAGES.get(payload.get('asama'), 'sonunda')}"
+             if payload.get("oturum") else "kurulumda")
     return {
         "status": "tutarli" if same else "farkli",
         "current_hash": current_hash,
@@ -202,7 +210,7 @@ def verify_state(ctx: Ctx) -> dict:
         "message": (f"Çalışan kodun yönetmeliği {where} deftere yazılan hâliyle aynı." if same else
                     f"Çalışan kodun yönetmeliği {where} deftere yazılan hâlinden farklı: "
                     f"{', '.join(differences)}. Bu değişiklik oylamasız yapılmış olabilir; bir "
-                    "sonraki Karar Saati kapanışında geri alınır."),
+                    "sonraki Karar Saati açılışında ya da kapanışında geri alınır."),
     }
 
 
@@ -260,10 +268,14 @@ def _restore(ctx: Ctx, key: str, was: dict | None, found: dict | None) -> tuple[
     return restored, not_restored
 
 
-def restore_voted_state(ctx: Ctx, session_id: int) -> list[str]:
-    """Karar Saati kapanışında, oturumun değişikliklerinden önce: yönetmeliği son kayıtla
-    karşılaştırır; her fark için ``OYLAMASIZ_DEGISIKLIK`` yazar, maddeyi son oylanmış hâline
-    döndürür ve geri almayı ``OYLAMASIZ_DEGISIKLIK_GERI_ALINDI`` olarak yazar. Farklı maddeleri döner.
+def restore_voted_state(ctx: Ctx, session_id: int, stage: str = "kapanis") -> list[str]:
+    """Karar Saati açılışında (anlık görüntülerden önce) ya da kapanışında (oylar sayılmadan önce):
+    yönetmeliği son kayıtla karşılaştırır; her fark için ``OYLAMASIZ_DEGISIKLIK`` yazar, maddeyi son
+    oylanmış hâline döndürür ve geri almayı ``OYLAMASIZ_DEGISIKLIK_GERI_ALINDI`` olarak yazar.
+    Farklı maddeleri döner.
+
+    Açılışta geri alınamayan (kod düzeyindeki) bir fark kaldıysa yeni bir durum kaydı yazılır; aksi
+    hâlde aynı fark kapanışta ikinci kez tespit edilirdi.
     """
     ref = reference_state(ctx)
     if ref is None:
@@ -271,22 +283,35 @@ def restore_voted_state(ctx: Ctx, session_id: int) -> list[str]:
     recorded = ref.get("durum", {})
     current = state(ctx)
     differences = _differences(current, recorded)
+    unrestored = False
     for key in differences:
         was, found = recorded.get(key), current.get(key)
         ledger.enqueue(ctx, SILENT_CHANGE, {
             "madde": key, "kayittaki": was, "bulunan": found, "tespit_zamani": ctx.now.isoformat(),
-            "oturum": session_id, "karsilastirilan_kayit": ref.get("kayit_seq"),
+            "oturum": session_id, "asama": stage, "karsilastirilan_kayit": ref.get("kayit_seq"),
         })
         restored, not_restored = _restore(ctx, key, was, found)
+        unrestored = unrestored or bool(not_restored)
         ledger.enqueue(ctx, SILENT_REVERT, {
-            "madde": key, "oturum": session_id, "geri_alinan": restored,
+            "madde": key, "oturum": session_id, "asama": stage, "geri_alinan": restored,
             "geri_alinamayan": not_restored, "simdiki": state(ctx).get(key),
             "not": ("Kod düzeyindeki fark (izinli aralık ya da kodla eklenen madde) veriden geri "
                     "alınamaz." if not_restored else "Madde son oylanmış hâline döndü."),
         })
     if differences:
         ctx.invalidate_regulation()
+    if unrestored and stage == "acilis":
+        record_state(ctx, session_id, stage)
     return differences
+
+
+def session_silent_changes(ctx: Ctx, session_id: int, stage: str) -> list[str]:
+    """Bir oturumun açılışında ya da kapanışında tespit edilen maddeler (outbox'tan; CLI çıktısı)."""
+    rows = ctx.db.execute(
+        select(LedgerOutbox).where(LedgerOutbox.type == SILENT_CHANGE).order_by(LedgerOutbox.id)
+    ).scalars()
+    return [r.payload["madde"] for r in rows
+            if r.payload.get("oturum") == session_id and r.payload.get("asama") == stage]
 
 
 def silent_change_history(ctx: Ctx) -> list[dict] | None:
@@ -295,12 +320,15 @@ def silent_change_history(ctx: Ctx) -> list[dict] | None:
     reverts = ledger.records_of_type(ctx.ledger, SILENT_REVERT)
     if found is None:
         return None
-    by_key = {(r["payload"].get("oturum"), r["payload"].get("madde")): r for r in reverts or []}
+    def key(p: dict) -> tuple:
+        return p.get("oturum"), p.get("asama", "kapanis"), p.get("madde")
+
+    by_key = {key(r["payload"]): r for r in reverts or []}
     out = []
     for rec in reversed(found):
         p = rec["payload"]
         was, now = p.get("kayittaki") or {}, p.get("bulunan") or {}
-        revert = by_key.get((p.get("oturum"), p.get("madde")))
+        revert = by_key.get(key(p))
         rp = revert["payload"] if revert else {}
         out.append({
             "madde": p.get("madde"),
@@ -313,6 +341,7 @@ def silent_change_history(ctx: Ctx) -> list[dict] | None:
             "bulunan_aralik": now.get("izinli_aralik"),
             "tespit_zamani": p.get("tespit_zamani"),
             "oturum": p.get("oturum"),
+            "asama": p.get("asama", "kapanis"),
             "hash": rec.get("hash"),
             "seq": rec.get("seq"),
             "geri_alinan": rp.get("geri_alinan"),
