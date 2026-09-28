@@ -132,10 +132,10 @@ flowchart LR
 | Alan | GENEL | Hayır |
 | YonetmelikMaddesi | GENEL | Hayır |
 | Konu | Konuyu kabul eden önerinin seçmen kapsamı | Hayır |
-| "Etkinlik bütçesi" (tohum) | GENEL | Evet, şehir bazında; puan cinsinden paylar |
+| "Etkinlik bütçesi" (tohum) | GENEL | Evet, şehir bazında; puan cinsinden paylar (İstanbul 4.000, Ankara 6.000, İzmir 5.000, Bursa 5.000) |
 | "Ortak toplantı salonu" (tohum) | GENEL | Hayır |
 
-Bütçe yalnızca paylarıyla temsil edilir. Bir dağıtım motoru yoktur; kararın hangi payı etkilediği öneride ve kararda gösterilir.
+Bütçe yalnızca paylarıyla temsil edilir; kaynağın toplamı payların toplamıdır (tohumda 20.000 puan). Bir dağıtım motoru yoktur; kararın hangi payı etkilediği öneride ve kararda gösterilir.
 
 ## 5. Yönetmelik = veri
 
@@ -166,8 +166,11 @@ Tüm eşikler ve süreler `YonetmelikMaddesi` düğümlerinde durur. Kod bunlar�
 | `baskin_yogunluk_esigi` | 1/2 | Kümedeki kenar yoğunluğu eşiği |
 | `baskin_min_agirlik` | 1 | Kümeleme için en düşük ETKILESIM ağırlığı |
 | `etkilesim_agirliklari` | `{yanit: 1, havale: 2, yakin_kayit: 1, yakin_kayit_dk: 60, ortak_baslik: 0.5, ortak_baslik_dk: 30}` | ETKILESIM sinyal ağırlıkları |
+| `olgunlasma_dar` | 48 saat | Dar etkili önerinin Karar Saati'nden önce yayında kalma süresi (§7.2) |
+| `olgunlasma_genis` | 72 saat | Geniş etkili öneri için aynı süre |
+| `olgunlasma_genel` | 7 gün | Genel kapsamlı ve yönetmelik önerileri için aynı süre |
 
-Belgede verilen ilk 13 madde aynen alınmıştır. Sonraki maddeler, belgenin "eşikler yönetmelik maddesi olarak durur" gereği eklenmiştir.
+Belgede verilen ilk 13 madde aynen alınmıştır. `mahzen_ifsa_esigi`, baskın ve etkileşim maddeleri belgenin "eşikler yönetmelik maddesi olarak durur" gereği eklenmiştir. `olgunlasma_*` maddeleri sonradan istenen olgunlaşma kuralından gelir.
 
 **Değişiklik kuralları:**
 
@@ -189,6 +192,8 @@ Her öneri açılırken kurallar çalışır. İhlal varsa öneri kaydedilmez ve
 | **R6** | Aynı hedefe oylamayla reddedilmiş öneri `red_bekleme` süresince yeniden açılamaz | Aynı öneriyi üst üste açarak yıpratmayı önler |
 
 **red_bekleme hedef anahtarı:** KONU → (alan, normalize başlık); ALT_KONU → (üst konu, normalize başlık); DUZENLEME ve SILME → içerik; YONETMELIK → madde; KAPANIS → konu. Yalnızca oylamayla reddedilen öneriler sayılır; açılışta denetimden dönenler kayda girmez.
+
+**Daralmanın sunumu.** Daralan öneride oylanan şey talep değil etkidir; arayüz bunu başlıkta gösterir. Başlık alanı iki satırdır: üstte küçük ve üstü çizili "Talep: Etkinlik bütçesinin tamamı İstanbul'a", altta büyük "Etki: Etkinlik bütçesinin İstanbul payı". Etki başlığı otomatik üretilir: kaynak adının tamlayan hâli + kapsam adı + "payı". Daralma kutusu oranı ("4.000 / 20.000 puan (%20)") ve bir çubuğu gösterir: kaynağın tamamı gri, etkilenen pay bordo. Etkilenen kaynaklar listesinde kaynak "Etkinlik bütçesi — yalnızca İstanbul payı (4.000 / 20.000)" diye yazılır. Hâtif'in yorumu da daralmayı anar: "Talep kaynağın tamamını hedefliyordu; seçmen kapsamı yalnızca İstanbul payına karar verebilir, daraltma uygulandı." Öneri listelerindeki kartlar aynı düzeni kullanır.
 
 **Türe özgü geçerlilik:** hedef mevcut ve açık olmalı; kendi tartışma mesajı için DUZENLEME açılamaz (serbest sürümleme var); Şerh hiçbir önerinin hedefi olamaz; aynı konuda ikinci KAPANIS açılamaz (rakip metin olarak eklenir); yeniden açma `yeniden_acma` süresine bağlıdır.
 
@@ -216,7 +221,7 @@ stateDiagram-v2
   SILENT --> ACCEPTED: süre doldu, itiraz < eşik
   SILENT --> QUEUED: itiraz ≥ eşik (hemen)
   RIVAL_PERIOD --> QUEUED: kapanis_rakip_suresi doldu
-  QUEUED --> VOTING: Karar Saati penceresi açıldı
+  QUEUED --> VOTING: Karar Saati penceresi açıldı ve öneri olgunlaştı
   VOTING --> ACCEPTED
   VOTING --> REJECTED
 ```
@@ -226,11 +231,11 @@ stateDiagram-v2
 - KONU, ALT_KONU ve DUZENLEME `sessiz_onay_suresi` boyunca açık kalır.
 - Seçmen kapsamında R5'e göre oy hakkı olan herkes bir kez itiraz edebilir. İtiraz kişiseldir; havale uygulanmaz.
 - Eşik `itiraz_esigi`dir ve kapsamdaki aktif üye sayısına göre itiraz anında hesaplanır.
-- Eşiğe ulaşan öneri hemen bir sonraki Karar Saati'nin kuyruğuna geçer. Orada `basit_cogunluk` ile oylanır.
+- Eşiğe ulaşan öneri hemen yavaş şeride düşer. Olgunlaştıktan sonraki ilk Karar Saati'nde `basit_cogunluk` ile oylanır (§7.2).
 
 ### 7.2 Yavaş şerit ve Karar Saati
 
-- Haftalık oturum `karar_saati` maddesine göre açılır. Pencere açılırken kuyrukta bekleyen tüm öneriler (KAPANIS için rakip süresi dolmuş olanlar) oturuma alınır.
+- Haftalık oturum `karar_saati` maddesine göre açılır. Pencere açılırken kuyrukta bekleyen ve olgunlaşmış öneriler (KAPANIS için rakip süresi de dolmuş olanlar) oturuma alınır.
 - **Anlık görüntü** (pencere açılırken, öneri başına):
   - seçmen listesi (R5 + baskın dışlaması, §9),
   - önerinin alanı için çözülmüş havale haritası,
@@ -244,6 +249,20 @@ stateDiagram-v2
   - Meydan'da oy bir kez verilir ve pencere boyunca değiştirilemez.
 - **Eşikler:** YONETMELIK için `yonetmelik_esigi`; SILME ve itiraz almış hızlı şerit önerileri için `basit_cogunluk`. Oranlar yalnızca kullanılan (çekimser olmayan) ağırlıklar üzerinden hesaplanır. Yeter sayı (kuorum) yoktur; hiç oy kullanılmamışsa öneri reddedilir.
 - **Sonuç açıklama ekranı:** açılan oylar tek tek düşer (takma ad, ağırlık, seçim); yanında çubuk ve eşik çizgisi ilerler.
+
+**Olgunlaşma.** Bir öneri Karar Saati'nde ancak yeterince uzun süre yayında kaldıktan sonra oylanır. Süre önerinin etkisiyle ölçeklenir; etki, seçmen kapsamının genişliğiyle ölçülür:
+
+| Sınıf | Seçmen kapsamı | Madde | Süre |
+|---|---|---|---|
+| dar | Tek bir NITELIK kapsamı (şehir, yaş grubu) ya da yaprak alanın ILGI kapsamı | `olgunlasma_dar` | 48 saat |
+| geniş | Yaprak olmayan alanın ILGI kapsamı | `olgunlasma_genis` | 72 saat |
+| genel | GENEL kapsam ve tüm YONETMELIK önerileri | `olgunlasma_genel` | 7 gün |
+
+- Süre, önerinin yavaş şeritte yayına girdiği andan sayılır. Yavaş şeritte doğan türlerde (SILME, YONETMELIK, KAPANIS) bu açılış anıdır. Hızlı şeritten itirazla düşen önerilerde düştüğü andır (`queued_at`); sessiz onayda geçen süre olgunlaşmaya sayılmaz.
+- Pencere açıldığında olgunlaşmamış öneri o oturuma alınmaz. Kuyrukta kalır ve olgunlaştıktan sonraki ilk oturuma kayar. Arayüz öneri sayfasında, kartlarda ve Karar Saati kuyruğunda bunu "Olgunlaşıyor — 11 Ekim Pazar 20:00 oturumunda oylanacak" diye gösterir. `run-karar-saati` de oturuma alınmayan önerileri listeler.
+- Olgunlaşma maddeleri de pencere açılırken okunur. Süreyi değiştiren bir karar sonraki oturumdan itibaren uygulanır.
+
+*Gerekçe.* Önlenen şey son dakika öneri sıkıştırmadır: pencereden hemen önce açılan bir öneri, seçmenler okuyup tartışamadan oylanır. Takvime bağlı bir kesim ("Pazar 18:00'den sonra açılanlar sonraki haftaya") bunu çözmez. Kesimden bir dakika önce açılan öneri yine yalnızca birkaç saat yayında kalır. Kesim, etkisi tek bir şehirle sınırlı bir öneriye de herkesi bağlayan bir yönetmelik değişikliğine de aynı süreyi tanır. Öneri başına süre, sıkıştırmayı açılış anından bağımsız olarak engeller ve etkisi geniş olan öneriye daha uzun inceleme süresi verir. Son dakikada oy kaydırmak için ayrıca bir önlem gerekmez. Oylar pencere boyunca mühürlüdür; kimse ara sonucu görüp ona göre oy veremez (yalnızca kimin oy verdiği görülür; bkz. §15, 17. madde).
 
 ### 7.3 Kapanış, Karar ve Şerh
 
@@ -379,11 +398,11 @@ Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçe
 - **Zamanlayıcı:** API içindeki arka plan iş parçacığı 5 saniyede bir `tick(now)` çağırır. CLI ile eşzamanlı çalışmayı bir PostgreSQL advisory lock engeller.
 - **`meşveret-dev`** (ASCII takma adı `mesveret-dev`), yalnızca `ENV=dev` iken çalışır:
   - `advance-time --hours N | --days N | --to ISO` — ofseti ilerletir; aradaki işleri (sessiz onay bitişi, rakip süresi bitişi, haftalık Karar Saati açılış ve kapanışı) sırayla, her birini kendi vade anında işler.
-  - `run-karar-saati` — hemen bir oturum açar: anlık görüntü, kilit, baskın tespiti, Hâtif oyu, ardından tohumdaki oy planına göre tohum kullanıcılarının oyları (`--no-scripted-votes` ile kapatılır).
+  - `run-karar-saati` — hemen bir oturum açar: anlık görüntü, kilit, baskın tespiti, Hâtif oyu, ardından tohumdaki oy planına göre tohum kullanıcılarının oyları (`--no-scripted-votes` ile kapatılır). Olgunlaşmamış öneriler oturuma alınmaz; komut bunları ve oylanacakları ilk oturumu listeler.
   - `run-karar-saati --close` — saati pencere sonuna ilerletir, oyları açar, sayar ve sonuçları uygular.
   - `seed [--reset]`, `now`.
 - CLI komutları `services/devtools.py` üzerinden çalışır. Docker'sız geliştirme modunda (`scripts/dev_local.sh`, bellek içi graf) aynı işlemler yalnızca o modda açılan `/_dev` uç noktalarından sunulur; CLI ayrı süreçte bellek içi grafa erişemez.
-- **Tohum** (`services/seed.py`) geçmiş tarihli içeriği bir zaman çizelgesine yazar ve zaman sırasıyla oluşturur; defter kayıtlarının zaman damgaları içeriğin zamanıyla aynı olur. Karar Saati senaryolarındaki yüzdeler, Hâtif'in oyu ve havale ağırlıkları hesaba katılarak kurulmuş bir geliştirme oy planına (`dev_vote_plan`) dayanır; `test_seed.py` sekiz senaryonun sonuçlarını doğrular.
+- **Tohum** (`services/seed.py`) geçmiş tarihli içeriği bir zaman çizelgesine yazar ve zaman sırasıyla oluşturur; defter kayıtlarının zaman damgaları içeriğin zamanıyla aynı olur. Karar Saati senaryolarındaki yüzdeler, Hâtif'in oyu ve havale ağırlıkları hesaba katılarak kurulmuş bir geliştirme oy planına (`dev_vote_plan`) dayanır; `test_seed.py` senaryoların sonuçlarını doğrular. Oylanacak senaryo önerileri 21–22 Eylül'de açılır ve son planlı oturumdan (Pazar 27 Eylül) sonra olgunlaşır; böylece o oturumu kaçırıp kuyrukta beklemeleri tutarlıdır. Senaryo 9'un önerisi tohum anından 10 dakika önce açılır ve olgunlaşmamıştır.
 
 ## 13. Tasarım dili
 
@@ -442,6 +461,10 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Hâtif'in onay oylamasındaki oyu | EVET = tüm metinleri onaylar (sıralamayı değiştirmez); HAYIR = hiçbirini |
 | Haftalık oturum anında elle açılmış bir oturum açıksa | Haftalık oturum o hafta atlanır; aynı anda tek oturum açık olabilir |
 | Silinmiş içeriğin mührü | Sansür şeridi içeriğin defter hash'ini taşır; kayıt defterden görüntülenebilir |
+| Olgunlaşmada "dar" ve "geniş" | Seçmen kapsamına göre: NITELIK kapsamı ve yaprak alanın ILGI kapsamı dar; yaprak olmayan alanın ILGI kapsamı geniş; GENEL ve YONETMELIK genel. Yaprak olmayan alan, alt alanlarıyla birlikte bir konu ağacını kapsar; o alanın ilgi kapsamındaki bir karar bu ağacın tamamını ilgilendirebilir |
+| Olgunlaşmanın başladığı an | Yavaş şeritte doğan türlerde açılış; itirazla düşenlerde düşüş anı |
+| Daralma oranındaki toplam | Kaynağın şehir paylarının toplamı; ayrı bir toplam alanı tutulmaz |
+| Etki başlığının üretimi | Kaynak adının tamlayan hâli + kapsam adı + "payı". Tamlayan eki ünlü uyumuyla ve kaynaştırma ünsüzüyle eklenir; ünsüz yumuşaması yapılmaz ("kitap" → "kitapın"), kaynak adları buna göre seçilir |
 
 ## 15. Bilinçli açıklar
 
@@ -463,6 +486,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 16. **Silme gizlemedir.** Silinen içerik defterde herkese açık kalır. Silme oylaması içeriği sitenin görünür yüzünden kaldırır, kayıttan kaldırmaz.
 17. **Pencere boyunca kimin oy verdiği bellidir.** Oyun içeriği mühürlüdür ama commit kaydı seçmenin takma adıyla deftere hemen yazılır. Pencere kapanmadan kimin oy verdiği, kimin henüz vermediği görülebilir; bu bilgi son dakika baskısına yol açabilir.
 18. **Mahzen'de oy değiştirmek bir yarışa dönüşebilir.** İfşa, eşiğin aşıldığı an gerçekleşir ve geri alınamaz. Fikrini değiştirmek isteyen bir seçmenin HAYIR'a dönmesi, eşiği aşan son EVET'ten sonra gelirse etkisizdir.
+19. **Olgunlaşma acil kararları geciktirir.** Genel kapsamlı bir öneri en az 7 gün bekler; olgunlaşma Pazar oturumundan hemen sonra dolarsa bu neredeyse iki haftaya çıkar. Acil durumlar için hızlandırılmış bir yol yoktur. Süreler yönetmelik maddesidir ve oylamayla kısaltılabilir, ama kısaltma önerisi de 7 gün olgunlaşır. Ayrıca itiraz bir erteleme aracına dönüşebilir: hızlı şeritteki bir öneriye eşik kadar itiraz eden azınlık, onu en az 48 saat, genel kapsamda en az 7 gün geciktirir.
 
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
 
@@ -486,7 +510,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | 16 | Çoğunluğun azınlığı ezmesi engellenmeli (uzmanlar ve bölme) | Bölme: kapsam + R2 otomatik daralma. Uzmanlar: alan bazlı havale ve Müşavirler. Ayrıca nitelikli çoğunluk ve Şerh |
 | 17 | Kalabalık (ölçek) sorunu | Havale (sıvı demokrasi), sessiz onay hızlı şeridi, Karar Saati'nde toplu oylama, seçmeni kapsamla daraltma |
 | 18 | Sonunda uzlaşma; farklı görüşler oylanabilir | KAPANIS: rakip karar metinleri + onay oylaması + Şerh; süre sonra yeniden açma |
-| 19 | Akran öğrenmesi temelli tartışma | Kalıcı tartışma alanı, açık sürüm geçmişi, Müşavir görünürlüğü, Mahzen diskuru |
+| 19 | Akran öğrenmesi temelli tartışma | Kalıcı tartışma alanı, açık sürüm geçmişi, Müşavir görünürlüğü, Mahzen diskuru; olgunlaşma süresi oylamadan önce tartışmaya en az 48 saat–7 gün ayırır |
 | 20 | Web sitesi ve Android uygulaması | Expo (React Native + react-native-web) tek kod tabanı |
 | 21 | Dağıtık defter | Üç düğümlü, hash zincirli, sadece eklenebilir defter; `/verify` ve istemcide doğrulama ekranı |
 | 22 | Kullanıcılar bir grafta | Neo4j: `User`, `HAVALE`, `ETKILESIM`, `UYE` |
@@ -498,6 +522,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 - `src/components/paper.tsx` Meydan bileşenlerini (gazete başlığı, mühür, sansür şeridi, düğme, form alanları, geri sayım), `src/components/cellar.tsx` Mahzen bileşenlerini (CRT katmanı, çürüyen metin, ömür çubuğu, uyarı) içerir.
 - `src/lib/clock.tsx` istemciyi sunucunun sahte saatine eşitler; tüm geri sayımlar bu saate göre işler.
 - `src/components/reveal-tally.tsx` Karar Saati sonuç açıklamasını, `src/components/reveal-transition.tsx` ifşa geçişini oynatır.
+- `src/components/proposal-title.tsx` daralan önerinin talep/etki başlığını, pay çubuğunu ve olgunlaşma satırını üretir; öneri sayfası, kartlar, konu sayfası ve Karar Saati ekranları bunu kullanır.
 - API adresi `EXPO_PUBLIC_API_URL` ile verilir.
 
 ## 18. Testler (§12 gereksinimi → test dosyası)
@@ -516,7 +541,9 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Defter bütünlüğü ve bozulmuş zincirin tespiti | `ledger/tests/test_chain.py`, `ledger/tests/test_replication.py` |
 | Baskın tespiti | `api/tests/domain/test_raid.py`, `test_decision_hour.py`, `test_cellar.py` |
 | Neo4j graf deposu (bellek içiyle aynı sözleşme) | `api/tests/graph_contract.py` (`test_graph_memory.py`, `tests/integration/test_graph_neo4j.py`) |
-| Sekiz demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
+| Olgunlaşma: sınıflar, sürenin başladığı an, sonraki oturuma kayma | `api/tests/domain/test_maturation.py`, `tests/integration/test_maturation.py`, `test_seed.py::test_scenario_9_late_general_proposal_waits_for_maturity` |
+| Daralmanın sunumu: pay/toplam, etki başlığı, Hâtif satırı | `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_seed.py::test_scenario_1_istanbul` |
+| Dokuz demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
 ## 19. Sözlük (Türkçe terim ↔ kod)
 
@@ -539,3 +566,5 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Defter | `ledger` |
 | Diskur | `Discourse` (Neo4j etiketi `Diskur`) |
 | Baskın | `raid` |
+| Olgunlaşma (dar / geniş / genel) | `maturation` (`MaturityClass`) |
+| Talep / etki başlığı | `title` / `effective_title` |

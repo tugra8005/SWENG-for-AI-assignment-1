@@ -100,13 +100,17 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 | Mahzen No.91 | 6 · Mahzen |
 | №13 | 7 · Baskın |
 | №14 | 8 · Hâtif |
+| №16 | 9 · Olgunlaşma |
 
-Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7 ve 8 aynı Karar Saati oturumunda oynatılır; önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin.
+Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7 ve 8 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin.
 
 ### 1. İstanbul vakası: otomatik daralma ve red
 
 1. **ayse** olarak giriş yapın (İstanbul'da oturuyor).
-2. Ana sayfada **№15 "Etkinlik bütçesinin tamamı İstanbul'a"** önerisini açın. Bu öneriyi İstanbul kapsamındaki emre açtı; etkilenen kaynak Genel kapsama ait ve şehir bazında bölünebilir. Sayfanın üstündeki bordo bant R2'nin sonucunu gösterir: **"Bu karar yalnızca İstanbul payını etkiler (4.000 puan)."**
+2. Ana sayfada **№15 "Etkinlik bütçesinin tamamı İstanbul'a"** önerisini açın. Bu öneriyi İstanbul kapsamındaki emre açtı; etkilenen kaynak Genel kapsama ait ve şehir bazında bölünebilir. Başlık iki satırdır: üstte küçük ve üstü çizili *"Talep: Etkinlik bütçesinin tamamı İstanbul'a"*, altta büyük **"Etki: Etkinlik bütçesinin İstanbul payı"**. Ana sayfadaki kart da aynı düzendedir.
+   - Başlığın altındaki bordo çerçeveli kutu R2'nin sonucunu gösterir: **"Bu karar yalnızca İstanbul payını etkiler (4.000 puan)."** Altında oran (**4.000 / 20.000 puan (%20)**) ve bir çubuk durur: bütçenin tamamı gri, İstanbul payı bordo.
+   - **Etkilenen kaynaklar** listesinde *"Etkinlik bütçesi — yalnızca İstanbul payı (4.000 / 20.000)"* yazar.
+   - Sayfanın altındaki Hâtif görüşü: *"Talep kaynağın tamamını hedefliyordu; seçmen kapsamı yalnızca İstanbul payına karar verebilir, daraltma uygulandı."*
 3. Aynı denemeyi bölünemez bir kaynakla yapın: **Konu öner** → başlık ve metin girin → Alan: *Kent* → Seçmen kapsamı: *İstanbul* → Etkilenen kaynak: *Ortak toplantı salonu* → **Öneriyi aç**. Öneri açılmaz: *"R2 — Bu kapsam bu kaynak hakkında karar veremez: 'Ortak toplantı salonu' bölünemez ve sahibi Genel kapsam."*
 4. (İsteğe bağlı) Seçmen kapsamını *Genel* yapıp aynı kaynakla deneyin: öneri açılır.
 
@@ -116,13 +120,14 @@ Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7 ve 8 aynı Karar Saati
 2. Liste kapasiteye yakındır (91/100). Alt sıralardaki başlıklar soluklaşır, karakterleri bozulur; ömür çubukları kısalır. Sağ üstteki **crt** anahtarı tarama çizgilerini kapatır.
 3. En üstteki **"Çoğunluk haklı olabilir mi?"** başlığını açın. Beş yazarı var; ayse'nin açtığı ifşa oylamasında iki EVET bir HAYIR oy var ve geçmek için 3 EVET gerekiyor. Ara sayım gösterilmez.
 4. **[ evet ]** deyin. EVET sayısı seçmen listesinin yarısını aştığı an ifşa gerçekleşir. Yaklaşık 1,5 saniyelik geçişte siyah zemin kâğıda, amber yazı mürekkebe döner, mono yazı serife geçer ve Gölge kimliklerinin üzerine takma adlar yazılır.
-5. Başlık artık Meydan görünümünde, herkesin takma adıyla ve defter mührüyle durur. **Öneri taslağı №16 →** ile taslağı açın; alanı ve seçmen kapsamını seçip **Taslağı öneri olarak gönder** deyin. Öneri normal akışa (sessiz onay) girer.
+5. Başlık artık Meydan görünümünde, herkesin takma adıyla ve defter mührüyle durur. **Öneri taslağı №17 →** ile taslağı açın (senaryo 1'in isteğe bağlı 4. adımını yaptıysanız numara №18 olur); alanı ve seçmen kapsamını seçip **Taslağı öneri olarak gönder** deyin. Öneri normal akışa (sessiz onay) girer.
 
-### Karar Saati: senaryo 2, 3, 4, 5, 7 ve 8
+### Karar Saati: senaryo 2, 3, 4, 5, 7, 8 ve 9
 
 **Oturum açılmadan önce:**
 
 - **Senaryo 8:** **№14 "Belgesel film gösterimleri"** önerisini açın. Öneren onu *Edebiyat* alanına etiketledi. Sayfanın altındaki **Bilirkişi görüşü · Hâtif** bölümü alanın *Belgesel* olması gerektiğini söyler ve "Oylamada verilecek oy: HAYIR" der.
+- **Senaryo 9:** **№16 "Yönetmelik: musavir_esigi"** önerisini açın. kerem onu tohum anından 10 dakika önce açtı (müşavir eşiği 5 → 3). Genel kapsamlı ve yönetmelik önerileri Karar Saati'nden önce en az 7 gün yayında kalır. Sayfada ve ana sayfadaki kartta **"Olgunlaşıyor — 11 Ekim Pazar 20:00 oturumunda oylanacak"** yazar. Süre 6 Ekim'de dolar; o haftanın Pazar oturumu (4 Ekim) daha önce olduğu için öneri 11 Ekim'e kayar. Karar Saati sayfasının **Kuyruk** bölümü de aynı satırı gösterir.
 - **Senaryo 2, döngü denemesi:** zincir şöyle kuruludur: aylin → baris (genel havale), baris → ceren (*Ulaşım* alanında). **ceren** olarak giriş yapın → **Havale** → takma ad `aylin`, alan *Ulaşım* → **Havale et**. Havale reddedilir: *"R4: Bu havale döngü oluşturur — Ulaşım alanında zincir size geri dönüyor (ceren → aylin → baris → ceren)."*
 
 **Oturumu açın:**
@@ -131,7 +136,7 @@ Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7 ve 8 aynı Karar Saati
 docker compose exec api meşveret-dev run-karar-saati
 ```
 
-Komut oturumu açar ve tohumdaki oy planını uygular. Beş baskın hesabının oyları reddedilir; çıktıda "baskın şüphesiyle işaretlendiniz" satırları görünür.
+Komut oturumu açar ve tohumdaki oy planını uygular. Beş baskın hesabının oyları reddedilir; çıktıda "baskın şüphesiyle işaretlendiniz" satırları görünür. №16 oturuma alınmaz; çıktının sonunda `~ #16 Yönetmelik: musavir_esigi — olgunlaşıyor (genel, 168 saat); 2026-10-11 20:00:00 (Pazar) İstanbul oturumunda oylanacak` satırı görünür ve oy pusulasında yer almaz.
 
 - **Senaryo 2, kilit:** **aylin** olarak **Havale** sayfasında genel havaleyi **Geri al**'a basın: *"Karar Saati penceresi açık: havale grafı bu oturum için kilitli."* **Karar Saati** sayfasında aylin'in pusulasında "Oyunuz havale zinciriyle ceren adlı yurttaşa gidiyor" yazar.
 - **Senaryo 2, ağırlık:** **ceren** olarak **Karar Saati** → oy pusulası. №9 "Gece metro seferleri" için **Oy ağırlığınız: 3** yazar. **Evet** deyin; oy mühürlenir ve ekranda commit görünür. Diğer önerilere oy vermeyin; yüzdeler oy planına göre ayarlandı.
@@ -176,6 +181,12 @@ docker compose exec api meşveret-dev run-karar-saati --close
 docker compose exec api meşveret-dev advance-time --hours 25
 ```
 
+Senaryo 9'un devamı: oturumu kapattıktan sonra saati 11 Ekim oturumuna ilerletin. 4 Ekim oturumu №16'yı almaz (olgunlaşmamış), 11 Ekim oturumu alır.
+
+```bash
+docker compose exec api meşveret-dev advance-time --to 2026-10-11T20:30:00+03:00
+```
+
 №15 gibi sessiz onaydaki öneriler, itiraz eşiğine ulaşmadıysa süre dolunca kabul edilir ve konuya dönüşür. İtiraz etmek için öneri sayfasındaki **İtiraz et** düğmesi kullanılır; eşik max(3, aktif üyelerin %5'i) kadar itirazdır.
 
 ## Testler
@@ -186,7 +197,7 @@ scripts/test.sh
 
 - `api` birim testleri: saf alan mantığı, bellek içi graf, defter karşılaştırması.
 - `ledger` testleri: zincir bütünlüğü, bozulmuş zincirin tespiti, üç düğümlü çoğaltma.
-- Entegrasyon testleri: `docker-compose.test.yml` ile geçici PostgreSQL ve Neo4j (tmpfs, 55432 ve 57687 portları) başlatılır. API servisleri, sekiz senaryonun tohum provası ve Neo4j graf deposunun sözleşme testleri çalışır.
+- Entegrasyon testleri: `docker-compose.test.yml` ile geçici PostgreSQL ve Neo4j (tmpfs, 55432 ve 57687 portları) başlatılır. API servisleri, dokuz senaryonun tohum provası ve Neo4j graf deposunun sözleşme testleri çalışır.
 
 Docker yoksa yalnızca Docker gerektirmeyen testler çalışır:
 

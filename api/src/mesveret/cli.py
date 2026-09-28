@@ -24,8 +24,12 @@ def _require_dev() -> None:
         raise typer.Exit(code=2)
 
 
+DAYS = ("Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar")
+
+
 def _fmt(dt: datetime) -> str:
-    return dt.astimezone(clock.ISTANBUL).strftime("%Y-%m-%d %H:%M:%S (%A) İstanbul")
+    local = dt.astimezone(clock.ISTANBUL)
+    return f"{local:%Y-%m-%d %H:%M:%S} ({DAYS[local.weekday()]}) İstanbul"
 
 
 @contextmanager
