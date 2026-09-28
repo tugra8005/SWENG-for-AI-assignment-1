@@ -5,7 +5,7 @@ import { DiffText } from '@/components/diff';
 import { Body, ErrorNotice, H1, Kicker, Loading, Muted, Page, Rule, Seal } from '@/components/paper';
 import { fmtDateTime } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
-import { paper } from '@/theme/tokens';
+import { fonts, paper } from '@/theme/tokens';
 
 export default function History() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -15,7 +15,7 @@ export default function History() {
       <Kicker>Mesaj #{id} · sürüm geçmişi</Kicker>
       <H1>Sürümler</H1>
       {h.data ? (
-        <Link href={`/konu/${h.data.topic_id}`} style={{ color: paper.seal }}>
+        <Link href={`/konu/${h.data.topic_id}`} style={{ color: paper.seal, fontFamily: fonts.serif, fontSize: 16 }}>
           ← konuya dön
         </Link>
       ) : null}

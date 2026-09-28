@@ -212,10 +212,16 @@ def topic_summary(ctx: Ctx, topic: Topic) -> dict:
             Message.topic_id == topic.id, Message.is_opening.is_(False)
         )
     ).scalar_one()
+    from mesveret.services import proposals  # proposals bu modülü içe aktarır
+
+    accepted = ctx.db.get(Proposal, topic.accepted_proposal_id) if topic.accepted_proposal_id else None
     return {
         "id": topic.id, "title": topic.title, "area_id": topic.area_id,
+        # R2 daraltmasıyla kabul edilen konuda başlık talebi, etki başlığı kararın kapsamını anlatır.
+        "effective_title": proposals.effective_title(accepted) if accepted else None,
         "area_name": ontology.area_name(ctx, topic.area_id), "parent_id": topic.parent_id,
         "status": topic.status, "owner_scope": ontology.scope_label(ctx, topic.owner_scope_id),
+        "proposed_at": accepted.created_at if accepted else topic.created_at,
         "created_at": topic.created_at, "message_count": count,
     }
 
@@ -228,6 +234,8 @@ def list_topics(ctx: Ctx, area_id: str | None = None) -> list[dict]:
 
 
 def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
+    from mesveret.services import decision_hour, proposals  # ikisi de bu modülü içe aktarır
+
     topic = get_topic(ctx, topic_id)
     if topic.deleted_by_proposal_id is not None:
         return topic_summary(ctx, topic)
@@ -253,12 +261,18 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
                  "created_at": d.created_at, "ledger_hash": d.ledger_hash}
                 for d in dissents
             ],
+            "viewer_can_dissent": viewer is not None
+            and decision_hour.dissent_refusal(ctx, decision, viewer) is None,
         }
     active = ctx.db.execute(
         select(Proposal).where(Proposal.status.in_(ACTIVE_STATUSES)).order_by(Proposal.id)
     ).scalars().all()
-    from mesveret.services import proposals  # proposals bu modülü içe aktarır
-
+    accepted = ctx.db.get(Proposal, topic.accepted_proposal_id) if topic.accepted_proposal_id else None
+    narrowings = [
+        {"scope": ontology.scope_label(ctx, n["scope_id"]), "share": n["share"],
+         "total": n.get("total"), "message": n["message"]}
+        for n in (accepted.narrowings if accepted else None) or []
+    ]
     related = [
         {"id": p.id, "type": p.type, "status": p.status, "title": p.title,
          "effective_title": proposals.effective_title(p),
@@ -275,6 +289,7 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
         "opening": _message_view(ctx, opening, names) if opening else None,
         "messages": [_message_view(ctx, m, names) for m in messages if not m.is_opening],
         "decision": decision_view,
+        "narrowings": narrowings,
         "subtopics": [topic_summary(ctx, t) for t in subtopics],
         "proposals": related,
         "parent": topic_summary(ctx, get_topic(ctx, topic.parent_id)) if topic.parent_id else None,

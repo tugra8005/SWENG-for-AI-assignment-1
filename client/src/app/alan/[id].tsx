@@ -16,6 +16,7 @@ import {
   Rule,
   Section,
 } from '@/components/paper';
+import { ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -77,7 +78,7 @@ export default function AreaPage() {
             <CensorStrip key={t.id} proposalId={t.deleted_by_proposal_id} />
           ) : (
             <PressLink key={t.id} href={`/konu/${t.id}`} style={st.row}>
-              <Text style={st.name}>{t.title}</Text>
+              <ProposalTitle title={t.title} effective={t.effective_title} style={st.name} />
               <Muted style={{ fontSize: 13 }}>{t.area_name} · {t.message_count} mesaj · sahibi {t.owner_scope}</Muted>
             </PressLink>
           ),

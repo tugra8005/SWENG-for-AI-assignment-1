@@ -49,7 +49,8 @@ function Chips<T extends string>({
               disabled={o.disabled}
               onPress={() => onToggle(o.value)}
               accessibilityRole="checkbox"
-              accessibilityState={{ checked: on, disabled: o.disabled }}
+              aria-checked={on}
+              aria-disabled={o.disabled}
               style={{
                 borderWidth: 1,
                 borderColor: on ? paper.seal : paper.ink,

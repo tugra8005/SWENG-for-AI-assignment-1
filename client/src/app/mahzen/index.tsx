@@ -32,7 +32,7 @@ function NewThread({ onCreated }: { onCreated: (id: number) => void }) {
     <View style={st.box}>
       <AmberField label="başlık" value={title} onChangeText={setTitle} maxLength={120} />
       <AmberField label="ilk düşünce" value={text} onChangeText={setText} multiline />
-      <Pressable onPress={() => setAck((a) => !a)} accessibilityRole="checkbox" accessibilityState={{ checked: ack }}>
+      <Pressable onPress={() => setAck((a) => !a)} accessibilityRole="checkbox" aria-checked={ack}>
         <Term style={{ fontSize: 13 }}>
           [{ack ? 'x' : ' '}] Bu başlık katılımcılarının oylamasıyla öneriye dönüştürülürse, burada yazan
           herkesin takma adı açığa çıkar.

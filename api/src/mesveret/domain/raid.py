@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from fractions import Fraction
 
 from mesveret.domain.regulation import Regulation
+from mesveret.domain.text import decimal_tr
 
 
 @dataclass(frozen=True)
@@ -88,10 +89,10 @@ def detect_raids(
         if not density_ratio.passes(inside, possible) or span > max_span:
             continue
         density = Fraction(inside, possible)
-        hours = span.total_seconds() / 3600
+        hours = decimal_tr(span.total_seconds() / 3600)
         clusters.append(RaidCluster(
             frozenset(comp), density, span,
             f"{n} hesaplık yeni ve yoğun bağlantılı küme (yoğunluk %{float(density) * 100:.0f}, "
-            f"katılım yayılımı {hours:.1f} saat): baskın şüphesi.",
+            f"katılım yayılımı {hours} saat): baskın şüphesi.",
         ))
     return clusters

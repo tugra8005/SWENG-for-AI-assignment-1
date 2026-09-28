@@ -34,6 +34,7 @@ from mesveret.domain.oracle import label_check, oracle_vote
 from mesveret.domain.raid import detect_raids
 from mesveret.domain.regulation import Regulation
 from mesveret.domain.tally import tally_approval, tally_binary
+from mesveret.domain.text import decimal_tr
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
 from mesveret.services import ledger, ontology, proposals, topics
 from mesveret.services.oracle import ORACLE_ID
@@ -313,7 +314,7 @@ def _close_item(ctx: Ctx, session: DecisionSession, item: SessionItem, reg: Regu
                           "karsilastirma": reg.raw(key).get("karsilastirma", ">=")},
             "votes": _votes_view(ctx, item, ballots, t.weights),
         }
-        pct = f"%{100 * t.yes / t.cast:.1f}" if t.cast else "oy yok"
+        pct = f"%{decimal_tr(100 * t.yes / t.cast)}" if t.cast else "oy yok"
         result["note"] = (f"{t.yes}/{t.cast} ağırlıklı EVET ({pct}); eşik {key} "
                           f"{result['threshold']['karsilastirma']} {result['threshold']['oran']}.")
         item.result = result
@@ -470,10 +471,8 @@ def session_view(ctx: Ctx, session_id: int) -> dict:
 # --- şerh ---------------------------------------------------------------------------------------
 
 
-def add_dissent(ctx: Ctx, user: User, decision_id: int, text: str) -> Dissent:
-    d = ctx.db.get(Decision, decision_id)
-    if d is None:
-        raise NotFound("Karar bulunamadı.")
+def dissent_refusal(ctx: Ctx, d: Decision, user: User) -> Forbidden | Conflict | None:
+    """Kullanıcı bu karara şerh ekleyemiyorsa nedenini (hata olarak) döner; ekleyebiliyorsa None."""
     losing = {ct.id: ct for ct in ctx.db.execute(select(ClosureText).where(
         ClosureText.proposal_id == d.proposal_id, ClosureText.id != d.closure_text_id
     )).scalars()}
@@ -484,11 +483,20 @@ def add_dissent(ctx: Ctx, user: User, decision_id: int, text: str) -> Dissent:
     )).scalar_one_or_none() if p and p.session_id else None
     supported_losing = b is not None and bool(set(b.choice or []) & set(losing))
     if not (owns_losing or supported_losing):
-        raise Forbidden("Şerhi yalnızca kaybeden metinlerin sahipleri ya da destekçileri ekleyebilir.")
+        return Forbidden("Şerhi yalnızca kaybeden metinlerin sahipleri ya da destekçileri ekleyebilir.")
     if ctx.db.execute(select(Dissent.id).where(
         Dissent.decision_id == d.id, Dissent.author_id == user.id
     )).first():
-        raise Conflict("Bu karara zaten şerh düştünüz; şerh düzenlenemez.")
+        return Conflict("Bu karara zaten şerh düştünüz; şerh düzenlenemez.")
+    return None
+
+
+def add_dissent(ctx: Ctx, user: User, decision_id: int, text: str) -> Dissent:
+    d = ctx.db.get(Decision, decision_id)
+    if d is None:
+        raise NotFound("Karar bulunamadı.")
+    if (refusal := dissent_refusal(ctx, d, user)) is not None:
+        raise refusal
     text = topics.check_square_text(text, max_len=5000)
     dissent = Dissent(decision_id=d.id, author_id=user.id, text=text, created_at=ctx.now)
     ctx.db.add(dissent)

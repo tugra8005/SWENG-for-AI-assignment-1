@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useState } from 'react';
+import { View } from 'react-native';
 
 import { api } from '@/api/client';
+import { CityPicker } from '@/components/city-picker';
 import {
   Body,
   Button,
@@ -14,8 +15,7 @@ import {
   Page,
   Rule,
 } from '@/components/paper';
-import { useApi } from '@/lib/useApi';
-import { fonts, paper } from '@/theme/tokens';
+import { paper } from '@/theme/tokens';
 
 /** "GG.AA.YYYY" → "YYYY-AA-GG" */
 function parseDate(text: string): string | null {
@@ -23,46 +23,6 @@ function parseDate(text: string): string | null {
   if (!m) return null;
   const [, d, mo, y] = m;
   return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
-}
-
-function CityPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const cities = useApi<string[]>('/cities');
-  const [query, setQuery] = useState(value);
-  const matches = useMemo(() => {
-    const q = query.toLocaleLowerCase('tr-TR');
-    return (cities.data ?? []).filter((c) => c.toLocaleLowerCase('tr-TR').startsWith(q)).slice(0, 6);
-  }, [cities.data, query]);
-  return (
-    <View>
-      <Field
-        label="İl"
-        value={query}
-        onChangeText={(t) => {
-          setQuery(t);
-          onChange('');
-        }}
-        placeholder="ör. İstanbul"
-        hint={value ? `Seçilen il: ${value}` : 'Listeden seçin (81 il).'}
-      />
-      {!value && query.length > 0 ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: -6, marginBottom: 12 }}>
-          {matches.map((c) => (
-            <Pressable
-              key={c}
-              onPress={() => {
-                setQuery(c);
-                onChange(c);
-              }}
-              accessibilityRole="button"
-              style={{ borderWidth: 1, borderColor: paper.ink, paddingHorizontal: 8, paddingVertical: 4 }}
-            >
-              <Text style={{ fontFamily: fonts.mono, fontSize: 12, color: paper.ink }}>{c}</Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
-    </View>
-  );
 }
 
 export default function Register() {

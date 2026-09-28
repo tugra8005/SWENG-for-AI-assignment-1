@@ -230,8 +230,16 @@ def test_closure_approval_vote_and_dissent(ctx, client):
     assert view["status"] == "CLOSED"
     assert view["decision"]["text"] == "Parklar 22:00'de kapansın."
     decision_id = view["decision"]["id"]
+
+    def can_dissent(user):
+        body = client.get(f"/topics/{topic.id}", headers=headers_for(later, user)).json()
+        return body["decision"]["viewer_can_dissent"]
+
+    assert view["decision"]["viewer_can_dissent"] is False  # giriş yapmamış
+    assert (can_dissent(a), can_dissent(b), can_dissent(c)) == (True, False, True)
     # c kaybeden metnin sahibi; a kaybeden bir metni (20:00) onayladı; b yalnızca kazananı onayladı.
     decision_hour.add_dissent(later, c, decision_id, "Gece yarısı daha adil olurdu.")
+    assert can_dissent(c) is False  # kişi başına karar başına bir şerh
     decision_hour.add_dissent(later, a, decision_id, "Erken kapanış güvenlik için gerekliydi.")
     with pytest.raises(Forbidden):
         decision_hour.add_dissent(later, b, decision_id, "Ben de yazayım.")

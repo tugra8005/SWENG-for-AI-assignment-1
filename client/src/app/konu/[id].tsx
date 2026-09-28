@@ -9,7 +9,6 @@ import {
   CensorStrip,
   ErrorNotice,
   Field,
-  H1,
   Kicker,
   Loading,
   Muted,
@@ -20,9 +19,9 @@ import {
   Section,
   Tag,
 } from '@/components/paper';
-import { maturityLine, ProposalTitle } from '@/components/proposal-title';
+import { maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
-import { fmtDateTime, STATUS_LABELS, TYPE_LABELS } from '@/lib/format';
+import { fmtDateTime, STATUS_LABELS, TYPE_LABELS, withDative } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -69,7 +68,7 @@ function Message({ m, topic, onChanged }: { m: Msg; topic: any; onChanged: () =>
           {m.author}
         </Link>
         <Text style={st.meta}>#{m.id} · {fmtDateTime(m.created_at)}</Text>
-        {m.reply_to ? <Text style={st.meta}>↳ #{m.reply_to}&apos;e yanıt</Text> : null}
+        {m.reply_to ? <Text style={st.meta}>↳ #{withDative(m.reply_to)} yanıt</Text> : null}
         {m.edited_at ? (
           <Link href={`/mesaj/${m.id}`} style={[st.meta, { textDecorationLine: 'underline' }]}>
             düzenlendi (sürüm {m.version})
@@ -142,7 +141,7 @@ function Decision({ d, onChanged }: { d: any; onChanged: () => void }) {
           <Seal hash={x.ledger_hash} label="şerh" />
         </View>
       ))}
-      {me ? (
+      {me && d.viewer_can_dissent ? (
         open ? (
           <View style={{ marginTop: 12 }}>
             <Field
@@ -215,11 +214,16 @@ export default function TopicPage() {
       <Kicker>
         Konu №{t.id} · sahibi: {t.owner_scope} · {t.status === 'CLOSED' ? 'karara bağlandı' : 'açık'}
       </Kicker>
-      <H1 style={{ marginTop: 4 }}>{t.title}</H1>
+      <View style={{ marginTop: 4 }}>
+        <ProposalTitle title={t.title} effective={t.effective_title} style={st.h1} heading />
+      </View>
       <Muted>
-        {t.author} tarafından önerildi · {fmtDateTime(t.created_at)}
+        {t.author} önerdi · {fmtDateTime(t.proposed_at)} · kabul: {fmtDateTime(t.created_at)}
       </Muted>
       <Rule double />
+      {t.narrowings?.map((n: any, i: number) => (
+        <NarrowingBox key={i} message={n.message} share={n.share} total={n.total} />
+      ))}
 
       {t.opening ? (
         <View>
@@ -283,7 +287,7 @@ export default function TopicPage() {
               <CensorStrip key={s.id} proposalId={s.deleted_by_proposal_id} />
             ) : (
               <PressLink key={s.id} href={`/konu/${s.id}`} style={st.related}>
-                <Text style={st.relTitle}>└ {s.title}</Text>
+                <Text style={st.relTitle}>└ {s.effective_title ?? s.title}</Text>
                 <Muted style={{ fontSize: 13 }}>{s.area_name}</Muted>
               </PressLink>
             ),
@@ -320,6 +324,7 @@ export default function TopicPage() {
 }
 
 const st = StyleSheet.create({
+  h1: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, color: paper.ink },
   crumbs: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 6 },
   crumb: { fontFamily: fonts.monoMedium, fontSize: 12, color: paper.inkSoft, letterSpacing: 0.6 },
   opening: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 30, color: paper.ink, marginBottom: 10 },

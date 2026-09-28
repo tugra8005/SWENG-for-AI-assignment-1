@@ -107,7 +107,7 @@ RAIDERS = ["mavi_kus", "sari_kedi", "yesil_at", "mor_balik", "turuncu_ari"]
 
 MAHZEN_PROMPTS = [
     "Bir ağaç ormanda devrilirse ve kimse duymazsa ses çıkar mı?",
-    "Tesla'nın gemisi: parçaları tek tek değişen şey hâlâ aynı mıdır?",
+    "Theseus'un gemisi: parçaları tek tek değişen şey hâlâ aynı mıdır?",
     "Özgür irade bir yanılsama ise ceza adil olabilir mi?",
     "Bilmediğimizi bilmek bir tür bilgi midir?",
     "Dil düşünceyi mi belirler, düşünce dili mi?",

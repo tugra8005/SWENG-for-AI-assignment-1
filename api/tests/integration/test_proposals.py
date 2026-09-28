@@ -64,6 +64,19 @@ def test_istanbul_budget_proposal_is_narrowed_to_its_share(client, ctx):
     [card] = client.get("/proposals", params={"state": "open"}).json()
     assert card["effective_title"] == "Etkinlik bütçesinin İstanbul payı"
 
+    # Kabul edilince doğan konu da talebi değil etkiyi başlık yapar; öneri konuya bağlanır.
+    p = ctx.db.get(Proposal, view["id"])
+    proposals.accept(ctx.at(p.deadline_at), p)
+    ctx.db.commit()
+    view = client.get(f"/proposals/{p.id}").json()
+    topic = client.get(f"/topics/{view['topic_id']}").json()
+    assert topic["title"] == "Etkinlik bütçesinin tamamı İstanbul'a"
+    assert topic["effective_title"] == "Etkinlik bütçesinin İstanbul payı"
+    assert topic["narrowings"][0]["share"] == 4000
+    assert topic["proposed_at"] < topic["created_at"]  # önerilme anı ≠ kabul anı
+    [listed] = [t for t in client.get("/topics").json() if t["id"] == topic["id"]]
+    assert listed["effective_title"] == "Etkinlik bütçesinin İstanbul payı"
+
 
 def test_proposer_needs_vote_right_in_scope(ctx):
     u = make_user(ctx, "ayse", city="Ankara")
@@ -325,6 +338,9 @@ def test_closure_needs_participant_and_collects_rivals(ctx):
     later = advance(ctx, timedelta(hours=48, seconds=1))
     p = reload(later, p)
     assert p.status == "QUEUED" and p.queued_at == p.deadline_at
+    # Açılış metni de rakip metinler gibi kendi defter kaydıyla mühürlenir.
+    texts = proposals.closure_texts(later, p)
+    assert len(texts) == 2 and all(t.ledger_hash for t in texts)
     with pytest.raises(Conflict):
         proposals.add_rival(later, a, p.id, "Geç kalan metin.")
 

@@ -169,7 +169,7 @@ docker compose exec api meşveret-dev run-karar-saati --close
 
 1. **Parkların kapanış saati** konusunda en üstteki çift çerçeveli **Karar** bölümünde kazanan metin görünür: *"Parklar her gün 22:00'de kapansın."* Konu artık salt okunurdur.
 2. **ilker** olarak giriş yapın. Kaybeden metin "yazın 24:00, kışın 22:00" onundu. **Şerh ekle** → metni yazın → **Şerhi mühürle**. Şerh karara eklenir, düzenlenemez ve silinemez, deftere yazılır.
-3. Kazanan metnin sahibi **burak** olarak denerseniz şerh reddedilir.
+3. Kazanan metnin sahibi **burak** olarak girerseniz **Şerh ekle** düğmesi görünmez; şerh hakkı yalnızca kaybeden metinlerin sahiplerine ve destekçilerine aittir (sunucu da reddeder).
 
 ### 7. Baskın
 

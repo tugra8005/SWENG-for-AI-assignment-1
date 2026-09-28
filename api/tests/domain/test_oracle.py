@@ -14,6 +14,14 @@ def kinds(findings):
     return [f.kind for f in findings]
 
 
+def test_turkish_decimal_uses_comma():
+    from mesveret.domain.text import decimal_tr
+
+    assert decimal_tr(61.538) == "61,5"
+    assert decimal_tr(0.5) == "0,5"
+    assert decimal_tr(100.0) == "100,0"
+
+
 def test_turkish_genitive_follows_vowel_harmony():
     from mesveret.domain.text import genitive
 

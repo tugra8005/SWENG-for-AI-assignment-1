@@ -189,7 +189,7 @@ export default function Thread() {
       <View style={{ marginTop: 16 }}>
         <AmberField label="yanıt" value={text} onChangeText={setText} multiline />
         {t.viewer?.needs_thread_warning ? (
-          <Pressable onPress={() => setAck((a) => !a)} accessibilityRole="checkbox" accessibilityState={{ checked: ack }}>
+          <Pressable onPress={() => setAck((a) => !a)} accessibilityRole="checkbox" aria-checked={ack}>
             <Term style={{ fontSize: 13 }}>[{ack ? 'x' : ' '}] {t.warning}</Term>
           </Pressable>
         ) : null}

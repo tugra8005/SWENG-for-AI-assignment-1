@@ -332,9 +332,6 @@ def _finish_opening(ctx: Ctx, p: Proposal, report: RuleReport) -> None:
                          for f in findings]
     _start_lane(ctx, p)
     ctx.db.flush()
-    if p.type == "KAPANIS":
-        ctx.db.add(ClosureText(proposal_id=p.id, author_id=p.proposer_id, text=p.body,
-                               created_at=ctx.now))
     ctx.graph.record_proposal(p.id, p.type, p.scope_id, list(p.resource_ids), p.status)
     proposer = ctx.db.get(User, p.proposer_id)
     ledger.enqueue(ctx, "ONERI_ACILDI", {
@@ -343,6 +340,15 @@ def _finish_opening(ctx: Ctx, p: Proposal, report: RuleReport) -> None:
         "secmen": p.scope_id, "alan": p.area_id, "etkiler": list(p.resource_ids),
         "daraltma": [n["message"] for n in p.narrowings], "ayrinti": p.payload,
     }, ref=p)
+    if p.type == "KAPANIS":
+        # Açılış metni de rakip metinler gibi kendi kaydıyla mühürlenir (metin_no oylamada anılır).
+        ct = ClosureText(proposal_id=p.id, author_id=p.proposer_id, text=p.body, created_at=ctx.now)
+        ctx.db.add(ct)
+        ctx.db.flush()
+        ledger.enqueue(ctx, "KAPANIS_METNI", {
+            "oneri": p.id, "metin_no": ct.id,
+            "yazar": proposer.nickname if proposer else p.proposer_id, "metin": ct.text,
+        }, ref=ct)
 
 
 def open_proposal(ctx: Ctx, user: User, inp: ProposalInput) -> Proposal:
@@ -657,6 +663,10 @@ def proposal_view(ctx: Ctx, p: Proposal, viewer: User | None) -> dict:
                          for ct in texts]
         d = ctx.db.execute(select(Decision).where(Decision.proposal_id == p.id)).scalar_one_or_none()
         body["decision_id"] = d.id if d else None
+    if p.type in ("KONU", "ALT_KONU") and p.status == "ACCEPTED":
+        body["topic_id"] = ctx.db.execute(
+            select(Topic.id).where(Topic.accepted_proposal_id == p.id)
+        ).scalar_one_or_none()
     if p.session_id is not None:
         item = ctx.db.execute(select(SessionItem).where(
             SessionItem.session_id == p.session_id, SessionItem.proposal_id == p.id

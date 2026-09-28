@@ -46,6 +46,9 @@ export default function SessionResults() {
           <Muted>Oylar açılmadan sayılmaz; deftere şimdilik yalnızca mühürler (commit) yazıldı.</Muted>
         </InfoNotice>
       ) : null}
+      {!open && data.items.length === 0 ? (
+        <InfoNotice>Bu oturumda oylanacak öneri yoktu; kuyruktaki öneriler henüz olgunlaşmamıştı ya da kuyruk boştu.</InfoNotice>
+      ) : null}
       {data.items.map((it: any) => (
         <View key={it.proposal.id} style={st.item}>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>

@@ -27,11 +27,35 @@ type Options = {
   query?: Record<string, string | number | boolean | null | undefined>;
 };
 
+/** Sunucunun doğrulama hatalarındaki alan adları → formlardaki Türkçe etiketler. */
+const FIELD_LABELS: Record<string, string> = {
+  full_name: 'Ad soyad',
+  email: 'E-posta',
+  nickname: 'Takma ad',
+  password: 'Şifre',
+  birth_date: 'Doğum tarihi',
+  city: 'İl',
+  district: 'İlçe',
+  address_line: 'Açık adres',
+  code: 'Doğrulama kodu',
+  identifier: 'Takma ad ya da e-posta',
+  title: 'Başlık',
+  body: 'Metin',
+  text: 'Metin',
+  new_text: 'Yeni metin',
+  new_value: 'Yeni değer',
+  area_id: 'Alan',
+  scope_id: 'Seçmen kapsamı',
+  resource_ids: 'Etkilenen kaynaklar',
+  target: 'Takma ad',
+};
+
 function describeValidation(detail: unknown): string {
   if (Array.isArray(detail)) {
     const fields = detail
       .map((d: { loc?: unknown[] }) => (Array.isArray(d.loc) ? String(d.loc[d.loc.length - 1]) : ''))
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((f) => FIELD_LABELS[f] ?? f);
     return fields.length ? `Formdaki alanları kontrol edin: ${fields.join(', ')}.` : 'Form geçersiz.';
   }
   return typeof detail === 'string' ? detail : 'Beklenmeyen bir hata oluştu.';

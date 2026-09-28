@@ -21,7 +21,7 @@ import {
 import { maturityLine, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { useClock } from '@/lib/clock';
-import { fmtDateTime, shortHash, TYPE_LABELS } from '@/lib/format';
+import { fmtDateTime, fmtWeekdayTime, shortHash, TYPE_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -72,7 +72,7 @@ function BallotItem({ item, onVoted }: { item: any; onVoted: () => void }) {
                   key={t.id}
                   onPress={() => setPicked((x) => (on ? x.filter((i) => i !== t.id) : [...x, t.id]))}
                   accessibilityRole="checkbox"
-                  accessibilityState={{ checked: on }}
+                  aria-checked={on}
                   style={[st.textOpt, on && { borderColor: paper.seal, backgroundColor: paper.sealWash }]}
                 >
                   <Text style={st.box}>{on ? '☒' : '☐'}</Text>
@@ -114,8 +114,9 @@ export default function DecisionHour() {
       <Kicker>Planlı oylama oturumu</Kicker>
       <H1>Karar Saati</H1>
       <Muted>
-        Her Pazar 20:00&apos;de bir saatlik pencere açılır. Açılış anında seçmen listesi ve havale grafı
-        kilitlenir; oylar pencere boyunca mühürlüdür, kapanışta tek tek açılır.
+        Oturum haftada bir açılır ({fmtWeekdayTime(status?.next_scheduled_at)},{' '}
+        {status?.window_minutes ?? '…'} dakika; yönetmelikteki karar_saati maddesi). Açılış anında seçmen
+        listesi ve havale grafı kilitlenir; oylar pencere boyunca mühürlüdür, kapanışta tek tek açılır.
       </Muted>
       <Rule double />
 

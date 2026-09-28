@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '@/api/client';
+import { CityPicker } from '@/components/city-picker';
 import {
   Button,
   ErrorNotice,
@@ -65,7 +66,7 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
       </Line>
       {editing ? (
         <View style={{ marginTop: 10 }}>
-          <Field label="İl" value={addr.city} onChangeText={(t) => setAddr({ ...addr, city: t })} />
+          <CityPicker value={addr.city} onChange={(city) => setAddr({ ...addr, city })} />
           <Field label="İlçe" value={addr.district} onChangeText={(t) => setAddr({ ...addr, district: t })} />
           <Field label="Açık adres" value={addr.address_line} onChangeText={(t) => setAddr({ ...addr, address_line: t })} />
           <Muted>Yeni şehrin kapsamında oy hakkınız 90 gün sonra doğar.</Muted>
@@ -110,7 +111,14 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
         {(areas.data ?? []).map((a) => {
           const on = memberOf.has(`ilgi:${a.id}`);
           return (
-            <Button key={a.id} small variant={on ? 'primary' : 'secondary'} label={a.name} onPress={() => toggleInterest(a.id)} />
+            <Button
+              key={a.id}
+              small
+              variant={on ? 'primary' : 'secondary'}
+              checked={on}
+              label={a.name}
+              onPress={() => toggleInterest(a.id)}
+            />
           );
         })}
       </View>

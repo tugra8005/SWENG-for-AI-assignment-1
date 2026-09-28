@@ -30,7 +30,14 @@ const sessionFmt = new Intl.DateTimeFormat('tr-TR', {
   hour: '2-digit',
   minute: '2-digit',
 });
+const weekdayTimeFmt = new Intl.DateTimeFormat('tr-TR', {
+  timeZone: TZ,
+  weekday: 'long',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 const numberFmt = new Intl.NumberFormat('tr-TR');
+const decimalFmt = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 export const fmtDate = (iso?: string | null) => (iso ? dateFmt.format(new Date(iso)) : '—');
 export const fmtDateTime = (iso?: string | null) => (iso ? dateTimeFmt.format(new Date(iso)) : '—');
@@ -40,8 +47,23 @@ export const fmtTime = (iso?: string | null) => (iso ? timeFmt.format(new Date(i
 /** "11 Ekim Pazar 20:00" — Karar Saati oturumunu anmak için. */
 export const fmtSession = (iso?: string | null) => (iso ? sessionFmt.format(new Date(iso)) : '—');
 export const fmtNumber = (n: number) => numberFmt.format(n);
+/** "Pazar 20:00" */
+export const fmtWeekdayTime = (iso?: string | null) => (iso ? weekdayTimeFmt.format(new Date(iso)) : '—');
 /** Türkçe yüzde: "%20". */
 export const fmtPercent = (part: number, whole: number) => `%${Math.round((part / whole) * 100)}`;
+/** Tek ondalıklı Türkçe yüzde: 0.615 → "%61,5". */
+export const fmtPercent1 = (ratio: number) => `%${decimalFmt.format(ratio * 100)}`;
+
+const UNIT_DATIVE = ['', "'e", "'ye", "'e", "'e", "'e", "'ya", "'ye", "'e", "'a"];
+const TENS_DATIVE = ['', "'a", "'ye", "'a", "'a", "'ye", "'a", "'e", "'e", "'a"];
+
+/** Sayının yönelme hâli, okunuşuna göre: 5 → "5'e", 7 → "7'ye", 19 → "19'a", 20 → "20'ye". */
+export function withDative(n: number): string {
+  if (n % 10) return `${n}${UNIT_DATIVE[n % 10]}`;
+  if (n % 100) return `${n}${TENS_DATIVE[(n % 100) / 10]}`;
+  if (n % 1_000_000) return `${n}'e`; // yüz, bin
+  return `${n}'a`; // milyon, milyar
+}
 
 export const shortHash = (h?: string | null) => (h ? h.slice(0, 8) : '········');
 
@@ -95,7 +117,7 @@ export function describeArticleValue(kind: string, value: any): string {
   }
   if (kind === 'oran') return `${value.karsilastirma === '>' ? '>' : '≥'} ${value.oran}`;
   if (kind === 'tamsayi' || kind === 'sayi') return String(value.deger);
-  if (kind === 'itiraz') return `max(${value.min}, aktif üyelerin ${value.oran}'i) · aktif: son ${value.aktiflik_gun} gün`;
+  if (kind === 'itiraz') return `max(${value.min}, aktif üye sayısı × ${value.oran}) · aktif: son ${value.aktiflik_gun} gün`;
   if (kind === 'karar_saati') {
     const day = String(value.gun).charAt(0) + String(value.gun).slice(1).toLowerCase();
     return `${day} ${value.saat} · ${value.pencere_dakika} dk pencere`;

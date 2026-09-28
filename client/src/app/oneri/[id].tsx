@@ -22,7 +22,7 @@ import {
   Tag,
 } from '@/components/paper';
 import { ProposalForm } from '@/components/proposal-form';
-import { maturityDetail, maturityLine, ProposalTitle, ShareBar } from '@/components/proposal-title';
+import { maturityDetail, maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { describeArticleValue, fmtDateTime, fmtNumber, fmtSession, STATUS_LABELS, TYPE_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -96,7 +96,7 @@ function Result({ p }: { p: any }) {
           {r.yes} EVET · {r.no} HAYIR · {r.abstained} çekimser — {r.passed ? 'eşik aşıldı' : 'eşik aşılamadı'}
         </Body>
       )}
-      <Link href={`/karar-saati/${p.session_id}`} style={{ color: paper.seal, marginTop: 4 }}>
+      <Link href={`/karar-saati/${p.session_id}`} style={[st.link, { marginTop: 4 }]}>
         Oyların açılışını izle →
       </Link>
     </InfoNotice>
@@ -143,11 +143,7 @@ export default function ProposalPage() {
       <Rule double />
 
       {p.narrowings?.map((n: any, i: number) => (
-        <View key={i} style={st.narrow}>
-          <Kicker style={{ color: paper.seal }}>R2 · otomatik daralma</Kicker>
-          <Text style={st.narrowText}>{n.message}</Text>
-          {n.total ? <ShareBar share={n.share} total={n.total} /> : null}
-        </View>
+        <NarrowingBox key={i} message={n.message} share={n.share} total={n.total} />
       ))}
 
       {p.payload?.cellar_thread_id ? (
@@ -192,7 +188,7 @@ export default function ProposalPage() {
                   {p.target_preview.text ?? p.target_preview.title}
                 </Body>
               </View>
-              <Link href={`/konu/${p.payload.topic_id}`} style={{ color: paper.seal }}>konuya git →</Link>
+              <Link href={`/konu/${p.payload.topic_id}`} style={st.link}>konuya git →</Link>
             </Section>
           ) : null}
 
@@ -228,7 +224,7 @@ export default function ProposalPage() {
               ) : null}
               {p.viewer?.can_add_rival ? <Rival id={p.id} onDone={res.reload} /> : null}
               {p.decision_id ? (
-                <Link href={`/konu/${p.payload.topic_id}`} style={{ color: paper.seal, marginTop: 8 }}>
+                <Link href={`/konu/${p.payload.topic_id}`} style={[st.link, { marginTop: 8 }]}>
                   Karar ve şerhler →
                 </Link>
               ) : null}
@@ -293,6 +289,16 @@ export default function ProposalPage() {
             </InfoNotice>
           ) : null}
           {p.outcome_note && !p.result ? <InfoNotice>{p.outcome_note}</InfoNotice> : null}
+          {p.topic_id ? (
+            <InfoNotice>
+              <Body>
+                Öneri kabul edildi ve konu oldu.{' '}
+                <Link href={`/konu/${p.topic_id}`} style={{ color: paper.seal }}>
+                  Konuya git →
+                </Link>
+              </Body>
+            </InfoNotice>
+          ) : null}
           <Result p={p} />
         </View>
       )}
@@ -309,16 +315,9 @@ export default function ProposalPage() {
 const st = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 },
   h1: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, color: paper.ink },
+  link: { fontFamily: fonts.serif, fontSize: 16, color: paper.seal },
   maturing: { borderLeftWidth: 3, borderLeftColor: paper.seal, paddingLeft: 12, marginVertical: 12, gap: 4 },
   maturingText: { fontFamily: fonts.serifBold, fontSize: 19, lineHeight: 25, color: paper.ink },
-  narrow: {
-    borderWidth: 2,
-    borderColor: paper.seal,
-    padding: 12,
-    marginVertical: 8,
-    backgroundColor: paper.sealWash,
-  },
-  narrowText: { fontFamily: fonts.serifBold, fontSize: 20, color: paper.seal, marginTop: 4 },
   cell: { width: 18, height: 18, borderWidth: 1.5, borderColor: paper.seal },
   oracle: {
     marginTop: 24,

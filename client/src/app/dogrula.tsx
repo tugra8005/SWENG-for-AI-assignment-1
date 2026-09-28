@@ -26,7 +26,7 @@ export default function Verify() {
     setError(null);
     try {
       await api('/auth/verify', { method: 'POST', body: { email, code } });
-      router.replace('/giris');
+      router.replace({ pathname: '/giris', params: { dogrulandi: '1' } });
     } catch (e) {
       setError(e);
     }

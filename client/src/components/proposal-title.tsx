@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View, type TextStyle } from 'react-native';
 
+import { Kicker } from '@/components/paper';
 import { fmtNumber, fmtPercent, fmtSession } from '@/lib/format';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -63,6 +64,17 @@ export function ShareBar({ share, total, unit = 'puan' }: { share: number; total
   );
 }
 
+/** R2 daraltma kutusu: gerekçe cümlesi, oran ve pay çubuğu. Öneri ve ondan doğan konu kullanır. */
+export function NarrowingBox({ message, share, total }: { message: string; share: number; total?: number | null }) {
+  return (
+    <View style={st.narrow}>
+      <Kicker style={{ color: paper.seal }}>R2 · otomatik daralma</Kicker>
+      <Text style={st.narrowText}>{message}</Text>
+      {total ? <ShareBar share={share} total={total} /> : null}
+    </View>
+  );
+}
+
 const fmtDuration = (hours: number) => (hours % 24 === 0 && hours > 72 ? `${hours / 24} gün` : `${hours} saat`);
 
 /** Kısa satır: "Olgunlaşıyor — 11 Ekim Pazar 20:00 oturumunda oylanacak". */
@@ -91,4 +103,12 @@ const st = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: { height: '100%', backgroundColor: paper.seal },
+  narrow: {
+    borderWidth: 2,
+    borderColor: paper.seal,
+    padding: 12,
+    marginVertical: 8,
+    backgroundColor: paper.sealWash,
+  },
+  narrowText: { fontFamily: fonts.serifBold, fontSize: 20, color: paper.seal, marginTop: 4 },
 });

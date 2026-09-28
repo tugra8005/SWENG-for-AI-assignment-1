@@ -25,6 +25,7 @@ def test_new_dense_cluster_joined_in_quick_succession_is_flagged():
     assert cluster.members == frozenset(RAIDERS)
     assert cluster.density == 1
     assert "baskın" in cluster.reason
+    assert "katılım yayılımı 1,3 saat" in cluster.reason  # Türkçe ondalık virgül
 
 
 def test_old_accounts_are_not_candidates_even_if_dense():

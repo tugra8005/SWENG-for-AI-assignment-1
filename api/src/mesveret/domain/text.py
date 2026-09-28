@@ -52,3 +52,8 @@ def genitive(phrase: str) -> str:
     if word and word[-1] in _VOWELS:
         suffix = "n" + suffix
     return phrase + suffix
+
+
+def decimal_tr(value: float, digits: int = 1) -> str:
+    """Türkçe ondalık yazımı: 61.538 → "61,5"."""
+    return f"{value:.{digits}f}".replace(".", ",")

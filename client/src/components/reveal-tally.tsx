@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 import { Button, Kicker, Muted, Seal } from '@/components/paper';
+import { fmtPercent1 } from '@/lib/format';
 import { useAnimatedValue, useReducedMotion } from '@/lib/motion';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -186,13 +187,13 @@ function BinaryBoard({ result, yes, no }: { result: any; yes: number; no: number
           <Kicker style={{ color: paper.seal }}>Evet</Kicker>
           <Text style={[st.count, { color: paper.seal }]}>{yes}</Text>
         </View>
-        <Text style={st.pct}>{total ? `%${(pct * 100).toFixed(1)}` : '—'}</Text>
+        <Text style={st.pct}>{total ? fmtPercent1(pct) : '—'}</Text>
         <View style={{ alignItems: 'flex-end' }}>
           <Kicker>Hayır</Kicker>
           <Text style={st.count}>{no}</Text>
         </View>
       </View>
-      <View style={st.bar} accessibilityLabel={`Evet oranı yüzde ${(pct * 100).toFixed(1)}`}>
+      <View style={st.bar} aria-label={`Evet oranı ${fmtPercent1(pct)}`}>
         <View style={[st.barYes, { width: `${pct * 100}%` }]} />
         <View style={[st.threshold, { left: `${ratio * 100}%` }]} />
       </View>

@@ -269,10 +269,16 @@ export function ErrorNotice({ error }: { error: unknown }) {
   );
 }
 
+const isTextChild = (c: ReactNode) =>
+  typeof c === 'string' || typeof c === 'number' || typeof c === 'boolean' || c == null;
+
 export function InfoNotice({ children }: { children: ReactNode }) {
+  // "Bu öneri {tarih} oylanacak." gibi araya değer giren metin bir dizi olarak gelir; View içinde
+  // çıplak metin Android'de çöker, bu yüzden yalnızca metinden oluşan içerik Body'ye sarılır.
+  const textual = Array.isArray(children) ? children.every(isTextChild) : isTextChild(children);
   return (
     <View style={[s.notice, { borderLeftColor: paper.ink }]}>
-      {typeof children === 'string' ? <Body style={{ fontSize: 15 }}>{children}</Body> : children}
+      {textual ? <Body style={{ fontSize: 15 }}>{children}</Body> : children}
     </View>
   );
 }
@@ -283,9 +289,11 @@ type ButtonProps = {
   variant?: 'primary' | 'secondary' | 'quiet';
   disabled?: boolean;
   small?: boolean;
+  /** Aç/kapa düğmesi (ör. ilgi alanı): verilirse düğme onay kutusu olarak duyurulur. */
+  checked?: boolean;
 };
 
-export function Button({ label, onPress, variant = 'primary', disabled, small }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', disabled, small, checked }: ButtonProps) {
   const [busy, setBusy] = useState(false);
   const press = async () => {
     if (busy) return;
@@ -309,8 +317,10 @@ export function Button({ label, onPress, variant = 'primary', disabled, small }:
     <Pressable
       onPress={press}
       disabled={isDisabled}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled, busy }}
+      accessibilityRole={checked === undefined ? 'button' : 'checkbox'}
+      aria-checked={checked}
+      aria-disabled={isDisabled}
+      aria-busy={busy}
       style={({ pressed }) => [
         s.button,
         small && { paddingVertical: 6, paddingHorizontal: 10 },
@@ -333,6 +343,7 @@ export function Field({ label, hint, ...props }: TextInputProps & { label: strin
       <Kicker style={{ marginBottom: 4 }}>{label}</Kicker>
       <TextInput
         placeholderTextColor={paper.muted}
+        aria-label={label}
         {...props}
         onFocus={(e) => {
           setFocused(true);
@@ -378,7 +389,8 @@ export function Choice<T extends string>({
               disabled={o.disabled}
               onPress={() => onChange(o.value)}
               accessibilityRole="radio"
-              accessibilityState={{ checked: on, disabled: o.disabled }}
+              aria-checked={on}
+              aria-disabled={o.disabled}
               style={[s.choice, on && s.choiceOn, o.disabled && { opacity: 0.4 }]}
             >
               <Text style={[s.choiceText, on && { color: paper.sheet }]}>{o.label}</Text>

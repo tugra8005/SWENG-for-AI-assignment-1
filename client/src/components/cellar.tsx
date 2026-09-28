@@ -216,7 +216,7 @@ export function CellarPage({ children }: { children: ReactNode }) {
             <Pressable onPress={() => router.push('/')} accessibilityRole="link">
               <Text style={[s.term, s.dimText, { fontSize: 12 }]}>&lt; meydan</Text>
             </Pressable>
-            <Pressable onPress={toggle} accessibilityRole="switch" accessibilityState={{ checked: on }}>
+            <Pressable onPress={toggle} accessibilityRole="switch" aria-checked={on}>
               <Text style={[s.term, s.dimText, { fontSize: 12 }]}>crt: {on ? 'açık' : 'kapalı'}</Text>
             </Pressable>
           </View>

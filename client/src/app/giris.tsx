@@ -1,13 +1,14 @@
-import { Link, router } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { Body, Button, ErrorNotice, Field, H1, Kicker, Muted, Page, Rule } from '@/components/paper';
+import { Body, Button, ErrorNotice, Field, H1, InfoNotice, Kicker, Muted, Page, Rule } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { paper } from '@/theme/tokens';
 
 export default function Login() {
   const { login } = useAuth();
+  const { dogrulandi } = useLocalSearchParams<{ dogrulandi?: string }>();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<unknown>(null);
@@ -28,6 +29,7 @@ export default function Login() {
         <Kicker>Kimlik denetimi</Kicker>
         <H1>Giriş</H1>
         <Rule />
+        {dogrulandi ? <InfoNotice>E-postanız doğrulandı; şimdi giriş yapabilirsiniz.</InfoNotice> : null}
         <Field
           label="Takma ad ya da e-posta"
           value={identifier}

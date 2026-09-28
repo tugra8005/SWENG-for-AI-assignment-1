@@ -15,6 +15,7 @@ import {
   Section,
 } from '@/components/paper';
 import { EmptyLine, ProposalRow, type ProposalSummary } from '@/components/proposal-row';
+import { ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { useClock } from '@/lib/clock';
 import { fmtDateTime } from '@/lib/format';
@@ -119,7 +120,7 @@ export default function Home() {
                 <CensorStrip key={t.id} proposalId={t.deleted_by_proposal_id} />
               ) : (
                 <PressLink key={t.id} href={`/konu/${t.id}`} style={st.topicRow}>
-                  <Text style={st.topicTitle}>{t.title}</Text>
+                  <ProposalTitle title={t.title} effective={t.effective_title} style={st.topicTitle} />
                   <Muted style={{ fontSize: 14 }}>
                     {t.area_name} · {t.message_count} mesaj
                     {t.status === 'CLOSED' ? ' · karara bağlandı' : ''}

@@ -85,6 +85,7 @@ def test_decision_hour_runs_all_voting_scenarios(seeded):
 
     r = result(later, session, ids["metro"])
     assert (r["yes"], r["no"], r["passed"]) == (8, 5, True)
+    assert "8/13 ağırlıklı EVET (%61,5)" in r["note"]
 
     # 3. Yönetmelik: %60 geçemez, 2/3 geçer.
     r60, r67 = result(later, session, ids["yonetmelik_60"]), result(later, session, ids["yonetmelik_67"])
