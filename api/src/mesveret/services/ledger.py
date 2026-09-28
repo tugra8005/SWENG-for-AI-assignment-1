@@ -107,6 +107,8 @@ class FakeLedgerClient:
         if path.startswith("/records/last-of-type/"):
             type_ = path.rsplit("/", 1)[1]
             return next((r for r in reversed(self.records) if r["type"] == type_), None)
+        if path.startswith("/records/of-type/"):
+            return self.of_type(path.rsplit("/", 1)[1])
         if path.startswith("/records/by-hash/"):
             prefix = path.rsplit("/", 1)[1]
             return next((r for r in self.records if r["hash"].startswith(prefix)), None)
@@ -270,6 +272,25 @@ def last_of_type(client: LedgerClient, type_: str) -> dict | None:
             return client.get(url, f"/records/last-of-type/{type_}")
         except Exception as exc:  # noqa: BLE001
             log.info("son %s kaydı okunamadı (%s): %s", type_, url, exc)
+    return None
+
+
+def records_of_type(client: LedgerClient, type_: str) -> list[dict] | None:
+    """Belirli türdeki bütün kayıtlar, sırayla. Hiçbir düğüme ulaşılamazsa ``None``."""
+    for url in client.node_urls():
+        try:
+            return client.get(url, f"/records/of-type/{type_}") or []
+        except Exception as exc:  # noqa: BLE001
+            log.info("%s kayıtları okunamadı (%s): %s", type_, url, exc)
+    return None
+
+
+def record_at(client: LedgerClient, seq: int) -> dict | None:
+    for url in client.node_urls():
+        try:
+            return client.get(url, f"/records/{seq}")
+        except Exception as exc:  # noqa: BLE001
+            log.info("#%s kaydı okunamadı (%s): %s", seq, url, exc)
     return None
 
 

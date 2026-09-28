@@ -218,6 +218,10 @@ def create_app(cfg: NodeConfig, client_factory: ClientFactory | None = None) -> 
             raise HTTPException(404, "Bu türde kayıt yok.")
         return rec.to_dict()
 
+    @app.get("/records/of-type/{type_}")
+    def of_type(type_: str) -> list[dict]:
+        return [r.to_dict() for r in store.of_type(type_)]
+
     @app.get("/records/{seq}")
     def record(seq: int) -> dict:
         rec = store.get(seq)

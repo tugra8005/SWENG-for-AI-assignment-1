@@ -15,7 +15,7 @@ import {
   Rule,
   Section,
 } from '@/components/paper';
-import { shortHash } from '@/lib/format';
+import { describeArticleValue, fmtDateTime, shortHash } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -41,7 +41,47 @@ function LedgerRecord({ rec }: { rec: any }) {
   );
 }
 
-/** Çalışan kodun yönetmeliği ile defterdeki son YONETMELIK_DURUMU kaydının karşılaştırması. */
+function SilentChange({ h }: { h: any }) {
+  const lines: string[] = [];
+  if (h.alanlar.includes('deger')) {
+    lines.push(
+      `kayıtta ${describeArticleValue(h.tur, h.kayittaki)} → bulunan ${h.bulunan ? describeArticleValue(h.tur, h.bulunan) : 'madde yok'}`,
+    );
+  }
+  if (h.alanlar.includes('degistirilemez')) lines.push('değiştirilemez bayrağı değişmişti');
+  if (h.alanlar.includes('izinli_aralik')) {
+    lines.push(`izinli aralık: ${h.kayittaki_aralik ?? '—'} → ${h.bulunan_aralik ?? '—'} (kod düzeyinde)`);
+  }
+  const failed = h.geri_alinamayan?.length;
+  return (
+    <View style={st.silent}>
+      <Text style={st.silentHead}>
+        {h.madde} · {h.oturum ? `#${h.oturum} numaralı oturumun kapanışında` : 'kapanışta'} ·{' '}
+        {fmtDateTime(h.tespit_zamani)}
+      </Text>
+      {lines.map((l) => (
+        <Text key={l} style={st.silentText}>
+          {l}
+        </Text>
+      ))}
+      <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'baseline' }}>
+        <Text style={[st.nodeStatus, { color: failed ? paper.seal : paper.ok }]}>
+          {failed ? 'GERİ ALINAMADI · kod düzeyinde' : 'GERİ ALINDI · son oylanmış hâline döndü'}
+        </Text>
+        <Text
+          style={st.silentLink}
+          accessibilityRole="link"
+          onPress={() => router.setParams({ h: h.hash })}
+        >
+          defterde: ⌗ {shortHash(h.hash)}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/** Çalışan kodun yönetmeliği ile defterdeki son YONETMELIK_DURUMU kaydının karşılaştırması ve
+ * defterin tamamındaki oylamasız değişiklikler (kalıcı liste; hiç boşalmaz). */
 function RegulationIntegrity({ r }: { r: any }) {
   const tone = r.status === 'tutarli' ? paper.ok : paper.seal;
   const label = { tutarli: 'TUTARLI', farkli: 'FARKLI', kayit_yok: 'KAYIT YOK' }[r.status as string] ?? r.status;
@@ -59,6 +99,17 @@ function RegulationIntegrity({ r }: { r: any }) {
       {r.differences?.length ? (
         <Text style={[st.field, { color: paper.seal }]}>farklı maddeler: {r.differences.join(', ')}</Text>
       ) : null}
+      <Rule faint />
+      <Kicker>Geçmişte tespit edilen oylamasız değişiklikler</Kicker>
+      {r.history == null ? (
+        <Muted style={{ fontSize: 14 }}>Defterdeki geçmiş okunamadı.</Muted>
+      ) : r.history.length ? (
+        r.history.map((h: any) => <SilentChange key={h.hash} h={h} />)
+      ) : (
+        <Muted style={{ fontSize: 14 }}>
+          Henüz yok. Liste defterdeki kayıtlardan kurulur ve hiç boşalmaz.
+        </Muted>
+      )}
     </View>
   );
 }
@@ -93,7 +144,8 @@ export default function Ledger() {
       <Section title="Defteri doğrula">
         <Body style={{ marginBottom: 10 }}>
           Üç düğümün zincirleri baştan yeniden hesaplanır ve birbiriyle karşılaştırılır. Çalışan kodun
-          uyguladığı yönetmelik, defterdeki son yönetmelik kaydının hash&apos;iyle karşılaştırılır.
+          uyguladığı yönetmelik, defterdeki son yönetmelik kaydının hash&apos;iyle karşılaştırılır; Karar
+          Saati kapanışlarında tespit edilip geri alınan oylamasız değişiklikler defterin tamamından listelenir.
         </Body>
         <Button label="Doğrula" onPress={runVerify} />
         {verify ? (
@@ -143,4 +195,8 @@ const st = StyleSheet.create({
   record: { marginTop: 14, borderWidth: 1, borderColor: paper.ink, padding: 12, backgroundColor: paper.sheet, gap: 2 },
   field: { fontFamily: fonts.mono, fontSize: 12, color: paper.ink },
   payload: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 18, color: paper.inkSoft },
+  silent: { borderLeftWidth: 3, borderLeftColor: paper.seal, paddingLeft: 10, paddingVertical: 4, gap: 2, marginTop: 4 },
+  silentHead: { fontFamily: fonts.monoMedium, fontSize: 12, color: paper.ink },
+  silentText: { fontFamily: fonts.serif, fontSize: 15, lineHeight: 21, color: paper.ink },
+  silentLink: { fontFamily: fonts.mono, fontSize: 12, color: paper.seal, textDecorationLine: 'underline' },
 });

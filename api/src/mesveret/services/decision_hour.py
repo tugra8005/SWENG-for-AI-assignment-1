@@ -425,6 +425,8 @@ def _close_proposal(ctx: Ctx, session: DecisionSession, p: Proposal, items: list
 def close_session(ctx: Ctx, session: DecisionSession) -> None:
     if session.status != "OPEN":
         raise Conflict("Oturum zaten kapalı.")
+    # Oturumun değişikliklerinden önce: oylamasız farkları deftere yaz ve son oylanmış hâle dön.
+    regulation.restore_voted_state(ctx, session.id)
     reg = Regulation(session.regulation)
     groups: dict[int, list[SessionItem]] = {}
     for item in items_of(ctx, session):

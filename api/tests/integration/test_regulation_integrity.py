@@ -133,3 +133,116 @@ def test_tamper_cli_command(ctx, client, monkeypatch):
     back = runner.invoke(cli.app, ["tamper-regulation", "sessiz_onay_suresi", '{"saat": 24}'])
     assert back.exit_code == 0 and _verify(client)["status"] == "tutarli"
     assert "Yönetmelik bütünlüğü: TUTARLI." in back.output
+
+
+# --- kapanışta tespit ve geri alma ---------------------------------------------------------------
+
+
+def _session_round(ctx, *, change: tuple[str, dict] | None = None, tag: str = "a"):
+    """Bir Karar Saati oturumu açar ve kapatır; ``change`` verilirse o yönetmelik önerisi kabul edilir."""
+    voters = [make_user(ctx, f"secmen_{tag}{i}") for i in range(3)]
+    p = None
+    if change:
+        p = mature(ctx, proposals.open_proposal(ctx, voters[0], ProposalInput(
+            type="YONETMELIK", article_key=change[0], new_value=change[1],
+        )))
+    session = decision_hour.open_session(ctx)
+    if p is not None:
+        for v in voters:
+            decision_hour.cast_vote(ctx, v, p.id, True)
+    later = ctx.at(session.closes_at)
+    decision_hour.close_session(later, session)
+    later.commit()
+    return later, session
+
+
+def test_close_detects_the_silent_change_reverts_it_and_history_stays(ctx, client, ledger):
+    ctx.commit()
+    devtools.tamper_regulation(ctx, "sessiz_onay_suresi", {"saat": 2})
+    assert _verify(client)["status"] == "farkli"
+    later, session = _session_round(ctx)
+    assert later.graph.articles()["sessiz_onay_suresi"] == {"saat": 24}  # geri alındı
+    [found] = ledger.of_type("OYLAMASIZ_DEGISIKLIK")
+    p = found["payload"]
+    assert (p["madde"], p["kayittaki"]["deger"], p["bulunan"]["deger"], p["oturum"]) == (
+        "sessiz_onay_suresi", {"saat": 24}, {"saat": 2}, session.id)
+    assert p["tespit_zamani"] == later.now.isoformat()
+    [revert] = ledger.of_type("OYLAMASIZ_DEGISIKLIK_GERI_ALINDI")
+    assert revert["payload"]["geri_alinan"] == ["deger"]
+    assert revert["seq"] > found["seq"]
+    # Sıra: tespit → geri alma → oturum kapanışı → yeni durum kaydı.
+    types = [r["type"] for r in ledger.records[found["seq"] - 1:]]
+    assert types[:2] == ["OYLAMASIZ_DEGISIKLIK", "OYLAMASIZ_DEGISIKLIK_GERI_ALINDI"]
+    assert types[-2:] == ["OTURUM_KAPANDI", "YONETMELIK_DURUMU"]
+
+    body = _verify(client)
+    assert body["status"] == "tutarli"
+    [item] = body["history"]
+    assert (item["madde"], item["kayittaki"], item["bulunan"], item["alanlar"]) == (
+        "sessiz_onay_suresi", {"saat": 24}, {"saat": 2}, ["deger"])
+    assert (item["oturum"], item["geri_alinan"], item["tur"]) == (session.id, ["deger"], "sure")
+
+    # Geçmiş hiç boşalmaz: ikinci oturumda başka bir değişiklik, ikisi de listede.
+    devtools.tamper_regulation(later, "adres_bekleme", {"gun": 1000})
+    later.commit()
+    _session_round(later, tag="b")
+    history = _verify(client)["history"]
+    assert [h["madde"] for h in history] == ["adres_bekleme", "sessiz_onay_suresi"]
+
+
+def test_silent_change_on_an_article_the_session_changes_by_vote(ctx, ledger):
+    ctx.commit()
+    devtools.tamper_regulation(ctx, "red_bekleme", {"gun": 8})
+    later, _ = _session_round(ctx, change=("red_bekleme", {"gun": 45}))
+    assert later.graph.articles()["red_bekleme"] == {"gun": 45}  # önce geri alındı, sonra oylanan
+    [found] = ledger.of_type("OYLAMASIZ_DEGISIKLIK")
+    assert found["payload"]["bulunan"]["deger"] == {"gun": 8}
+    [change] = later.db.execute(select(RegulationChange)).scalars().all()
+    assert (change.old_value, change.new_value) == ({"gun": 30}, {"gun": 45})
+
+
+def test_silent_flag_removal_and_content_rule_changes_are_reverted(ctx, client, ledger):
+    ctx.commit()
+    ik2 = ctx.graph.articles()["IK-2"]
+    ctx.graph.clear_unchangeable("D3")  # Şerh güvencesi sessizce değiştirilebilir yapıldı
+    ctx.graph.delete_article("IK-2")  # kural sessizce kaldırıldı
+    ctx.graph.set_article("IK-9", {**ik2, "baslik": "Sessiz kural"})  # kural sessizce eklendi
+    assert set(_verify(client)["differences"]) == {"D3", "IK-2", "IK-9"}
+    later, _ = _session_round(ctx)
+    assert "D3" in later.graph.unchangeable_articles()
+    assert later.graph.articles()["IK-2"] == ik2
+    assert "IK-9" not in later.graph.articles()
+    reverts = {r["payload"]["madde"]: r["payload"]["geri_alinan"]
+               for r in ledger.of_type("OYLAMASIZ_DEGISIKLIK_GERI_ALINDI")}
+    assert reverts == {"D3": ["degistirilemez"], "IK-2": ["deger"], "IK-9": ["deger"]}
+    assert _verify(client)["status"] == "tutarli"
+
+
+def test_code_level_range_change_is_recorded_but_cannot_be_reverted(ctx, client, ledger, monkeypatch):
+    ctx.commit()
+    article = reg_domain.DEFAULT_ARTICLES["orantisizlik_esigi"]
+    monkeypatch.setitem(reg_domain.DEFAULT_ARTICLES, "orantisizlik_esigi",
+                        replace(article, allowed=reg_domain._num(5, 100, "5 – 100 yüzde puanı")))
+    _session_round(ctx)
+    [revert] = ledger.of_type("OYLAMASIZ_DEGISIKLIK_GERI_ALINDI")
+    assert (revert["payload"]["geri_alinan"], revert["payload"]["geri_alinamayan"]) == (
+        [], ["izinli_aralik"])
+    body = _verify(client)
+    [item] = body["history"]
+    assert item["alanlar"] == ["izinli_aralik"]
+    assert (item["kayittaki_aralik"], item["bulunan_aralik"]) == (
+        "5 – 30 yüzde puanı", "5 – 100 yüzde puanı")
+    # Kod düzeyindeki fark yeni kayda girer; tespit veri düzeyindedir (açık 30).
+    assert body["status"] == "tutarli"
+
+
+def test_a_pending_state_record_is_the_reference_not_an_older_ledger_record(ctx, ledger):
+    ctx.commit()
+    ledger.fail = True  # defter kapalı: oturum kaydı outbox'ta bekler
+    later, _ = _session_round(ctx, change=("red_bekleme", {"gun": 45}))
+    assert later.graph.articles()["red_bekleme"] == {"gun": 45}
+    _session_round(later, tag="b")  # defterdeki son kayıt hâlâ kurulumdaki (30 gün)
+    ledger.fail = False
+    later.commit()
+    assert later.graph.articles()["red_bekleme"] == {"gun": 45}  # oylanan değer geri alınmadı
+    assert ledger.of_type("OYLAMASIZ_DEGISIKLIK") == []

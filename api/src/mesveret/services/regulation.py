@@ -6,7 +6,8 @@ Parametre maddelerinin yalnızca değeri değişir. İçerik kuralları (IK-<n>)
 Yönetmeliğin tam hâli (değerler, değiştirilemez bayrakları, izinli aralıklar) kurulumda ve her
 Karar Saati sonunda hash'iyle deftere yazılır (``YONETMELIK_DURUMU``). ``/ledger/verify`` çalışan
 kodun uyguladığı yönetmeliği defterdeki son kayıtla karşılaştırır: operatörün oylamasız
-değişikliği engellenmez ama tespit edilir.
+değişikliği engellenmez ama tespit edilir. Karar Saati kapanışında oylamasız farklar deftere
+yazılır ve maddeler son oylanmış hâline döndürülür; oylamasız bir değer bir oturumdan fazla yaşamaz.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from typing import Any
 from sqlalchemy import select
 
 from mesveret.context import Ctx
-from mesveret.db.models import Proposal, RegulationChange
+from mesveret.db.models import LedgerOutbox, Proposal, RegulationChange
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.regulation import (
     CONTENT_RULE_KIND,
@@ -168,18 +169,23 @@ def record_state(ctx: Ctx, session_id: int | None) -> None:
     ledger.enqueue(ctx, STATE_RECORD, {"oturum": session_id, "hash": state_hash(st), "durum": st})
 
 
+def _differences(current: dict, recorded: dict) -> list[str]:
+    return sorted(k for k in set(current) | set(recorded) if current.get(k) != recorded.get(k))
+
+
 def verify_state(ctx: Ctx) -> dict:
-    """Çalışan kodun yönetmeliğini defterdeki son ``YONETMELIK_DURUMU`` kaydıyla karşılaştırır."""
+    """Çalışan kodun yönetmeliğini defterdeki son ``YONETMELIK_DURUMU`` kaydıyla karşılaştırır ve
+    defterin tamamındaki ``OYLAMASIZ_DEGISIKLIK`` kayıtlarını geçmiş olarak ekler."""
     current = state(ctx)
     current_hash = state_hash(current)
+    past = silent_change_history(ctx)
     rec = ledger.last_of_type(ctx.ledger, STATE_RECORD)
     if rec is None:
         return {"status": "kayit_yok", "current_hash": current_hash, "recorded_hash": None,
-                "differences": [], "message": "Defterde yönetmelik kaydı yok."}
+                "differences": [], "history": past, "message": "Defterde yönetmelik kaydı yok."}
     payload = rec["payload"]
     recorded = payload.get("durum", {})
-    differences = sorted(k for k in set(current) | set(recorded)
-                         if current.get(k) != recorded.get(k))
+    differences = _differences(current, recorded)
     same = payload.get("hash") == current_hash
     where = f"#{payload['oturum']} numaralı oturumun sonunda" if payload.get("oturum") else "kurulumda"
     return {
@@ -192,7 +198,125 @@ def verify_state(ctx: Ctx) -> dict:
         "recorded_at": rec.get("ts"),
         "record_consistent": state_hash(recorded) == payload.get("hash"),
         "differences": differences,
+        "history": past,
         "message": (f"Çalışan kodun yönetmeliği {where} deftere yazılan hâliyle aynı." if same else
                     f"Çalışan kodun yönetmeliği {where} deftere yazılan hâlinden farklı: "
-                    f"{', '.join(differences)}. Bu değişiklik oylamasız yapılmış olabilir."),
+                    f"{', '.join(differences)}. Bu değişiklik oylamasız yapılmış olabilir; bir "
+                    "sonraki Karar Saati kapanışında geri alınır."),
     }
+
+
+# --- oylamasız değişikliğin kapanışta tespiti ve geri alınması -----------------------------------
+
+SILENT_CHANGE = "OYLAMASIZ_DEGISIKLIK"
+SILENT_REVERT = "OYLAMASIZ_DEGISIKLIK_GERI_ALINDI"
+CODE_LEVEL = ("izinli_aralik", "izinli_sinirlar")
+
+
+def reference_state(ctx: Ctx) -> dict | None:
+    """Son oylanmış hâl: en son ``YONETMELIK_DURUMU`` kaydı.
+
+    Kaynak outbox'taki son satırdır, çünkü defterde henüz olmayan (bekleyen) bir kayıt defterdeki
+    son kayıttan yenidir; eski kayıtla karşılaştırmak oylanmış bir değişikliği oylamasız sayardı.
+    Satır deftere ulaştıysa defterdeki kopyası esas alınır; defter otoritedir.
+    """
+    row = ctx.db.execute(
+        select(LedgerOutbox).where(LedgerOutbox.type == STATE_RECORD)
+        .order_by(LedgerOutbox.id.desc()).limit(1)
+    ).scalar_one_or_none()
+    if row is None:
+        return None
+    if row.ledger_seq is not None:
+        rec = ledger.record_at(ctx.ledger, row.ledger_seq)
+        if rec is not None and rec.get("type") == STATE_RECORD:
+            return {**rec["payload"], "kayit_seq": rec["seq"], "kayit_hash": rec["hash"]}
+    return {**row.payload, "kayit_seq": row.ledger_seq, "kayit_hash": row.ledger_hash}
+
+
+def _restore(ctx: Ctx, key: str, was: dict | None, found: dict | None) -> tuple[list, list]:
+    """Maddeyi kayıttaki hâline döndürür. Değer ve bayrak veridir, geri alınır; izinli aralık ve
+    kodla gelen yeni madde çalışan koddandır, veriden geri alınamaz."""
+    restored: list[str] = []
+    not_restored: list[str] = []
+    found = found or {}
+    if was is None and key in DEFAULT_ARTICLES:
+        return restored, ["madde"]  # kayıttan sonra kodla eklenmiş madde
+    was = was or {"deger": None, "degistirilemez": False}
+    if found.get("deger") != was.get("deger"):
+        if was.get("deger") is None:
+            ctx.graph.delete_article(key)
+        else:
+            _article_resource(ctx, key)
+            ctx.graph.set_article(key, was["deger"])
+        restored.append("deger")
+    if bool(found.get("degistirilemez")) != bool(was.get("degistirilemez")):
+        if was.get("degistirilemez"):
+            ctx.graph.set_unchangeable(key)
+        else:
+            ctx.graph.clear_unchangeable(key)
+        restored.append("degistirilemez")
+    if any(found.get(f) != was.get(f) for f in CODE_LEVEL):
+        not_restored.append("izinli_aralik")
+    return restored, not_restored
+
+
+def restore_voted_state(ctx: Ctx, session_id: int) -> list[str]:
+    """Karar Saati kapanışında, oturumun değişikliklerinden önce: yönetmeliği son kayıtla
+    karşılaştırır; her fark için ``OYLAMASIZ_DEGISIKLIK`` yazar, maddeyi son oylanmış hâline
+    döndürür ve geri almayı ``OYLAMASIZ_DEGISIKLIK_GERI_ALINDI`` olarak yazar. Farklı maddeleri döner.
+    """
+    ref = reference_state(ctx)
+    if ref is None:
+        return []
+    recorded = ref.get("durum", {})
+    current = state(ctx)
+    differences = _differences(current, recorded)
+    for key in differences:
+        was, found = recorded.get(key), current.get(key)
+        ledger.enqueue(ctx, SILENT_CHANGE, {
+            "madde": key, "kayittaki": was, "bulunan": found, "tespit_zamani": ctx.now.isoformat(),
+            "oturum": session_id, "karsilastirilan_kayit": ref.get("kayit_seq"),
+        })
+        restored, not_restored = _restore(ctx, key, was, found)
+        ledger.enqueue(ctx, SILENT_REVERT, {
+            "madde": key, "oturum": session_id, "geri_alinan": restored,
+            "geri_alinamayan": not_restored, "simdiki": state(ctx).get(key),
+            "not": ("Kod düzeyindeki fark (izinli aralık ya da kodla eklenen madde) veriden geri "
+                    "alınamaz." if not_restored else "Madde son oylanmış hâline döndü."),
+        })
+    if differences:
+        ctx.invalidate_regulation()
+    return differences
+
+
+def silent_change_history(ctx: Ctx) -> list[dict] | None:
+    """Defterin tamamındaki oylamasız değişiklikler, en yenisi önce. Deftere ulaşılamazsa ``None``."""
+    found = ledger.records_of_type(ctx.ledger, SILENT_CHANGE)
+    reverts = ledger.records_of_type(ctx.ledger, SILENT_REVERT)
+    if found is None:
+        return None
+    by_key = {(r["payload"].get("oturum"), r["payload"].get("madde")): r for r in reverts or []}
+    out = []
+    for rec in reversed(found):
+        p = rec["payload"]
+        was, now = p.get("kayittaki") or {}, p.get("bulunan") or {}
+        revert = by_key.get((p.get("oturum"), p.get("madde")))
+        rp = revert["payload"] if revert else {}
+        out.append({
+            "madde": p.get("madde"),
+            "tur": article_kind(p["madde"]) if p.get("madde") else None,
+            "kayittaki": was.get("deger"),
+            "bulunan": now.get("deger"),
+            "alanlar": [f for f in ("deger", "degistirilemez", "izinli_aralik")
+                        if was.get(f) != now.get(f)],
+            "kayittaki_aralik": was.get("izinli_aralik"),
+            "bulunan_aralik": now.get("izinli_aralik"),
+            "tespit_zamani": p.get("tespit_zamani"),
+            "oturum": p.get("oturum"),
+            "hash": rec.get("hash"),
+            "seq": rec.get("seq"),
+            "geri_alinan": rp.get("geri_alinan"),
+            "geri_alinamayan": rp.get("geri_alinamayan"),
+            "geri_alma_hash": revert.get("hash") if revert else None,
+        })
+    return out

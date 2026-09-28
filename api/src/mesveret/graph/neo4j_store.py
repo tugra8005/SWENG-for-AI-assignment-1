@@ -329,6 +329,10 @@ class Neo4jGraph:
     def set_unchangeable(self, key: str) -> None:
         self._run("MERGE (m:YonetmelikMaddesi {anahtar: $k}) SET m.degistirilemez = true", k=key)
 
+    def clear_unchangeable(self, key: str) -> None:
+        # Yalnızca oylamasız değişikliğin geri alınmasında kullanılır (bayrak oylamayla kalkmaz).
+        self._run("MATCH (m:YonetmelikMaddesi {anahtar: $k}) REMOVE m.degistirilemez", k=key)
+
     def unchangeable_articles(self) -> frozenset[str]:
         rows = self._run(
             "MATCH (m:YonetmelikMaddesi) WHERE m.degistirilemez = true RETURN m.anahtar AS k")

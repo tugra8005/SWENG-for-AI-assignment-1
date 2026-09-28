@@ -129,6 +129,11 @@ class GraphContract:
         g.set_unchangeable("D1")
         g.set_article("D1", {"baslik": "Her yurttaşın bir temel oyu vardır."})  # bayrak kalır
         assert g.unchangeable_articles() == frozenset({"D1"})
+        g.clear_unchangeable("D1")
+        assert g.unchangeable_articles() == frozenset()
+        g.clear_unchangeable("D1")  # bayrağı olmayan maddede hata değildir
+        g.set_unchangeable("D1")
+        assert g.unchangeable_articles() == frozenset({"D1"})
 
     # --- öneri, karar, diskur ---
     def test_proposal_and_discourse_records(self, g):

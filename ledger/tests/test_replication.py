@@ -145,3 +145,13 @@ def test_last_record_of_a_type_is_served_by_every_node(cluster):
         rec = cluster.clients[url].get("/records/last-of-type/YONETMELIK_DURUMU").json()
         assert (rec["seq"], rec["payload"]) == (3, {"i": 3})
     assert c.get("/records/last-of-type/YOK").status_code == 404
+
+
+def test_all_records_of_a_type_in_order(cluster):
+    c = cluster.clients[LEADER]
+    for i, type_ in enumerate(("OYLAMASIZ_DEGISIKLIK", "TEST", "OYLAMASIZ_DEGISIKLIK"), start=1):
+        c.post("/append", json={"type": type_, "payload": {"i": i}, "ts": f"2026-09-29T10:00:{i:02d}Z"})
+    for url in (LEADER, F2, F3):
+        recs = cluster.clients[url].get("/records/of-type/OYLAMASIZ_DEGISIKLIK").json()
+        assert [(r["seq"], r["payload"]) for r in recs] == [(1, {"i": 1}), (3, {"i": 3})]
+    assert c.get("/records/of-type/YOK").json() == []

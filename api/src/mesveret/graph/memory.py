@@ -116,6 +116,9 @@ class InMemoryGraph(InMemoryOntology):
     def set_unchangeable(self, key: str) -> None:
         self._unchangeable.add(key)
 
+    def clear_unchangeable(self, key: str) -> None:
+        self._unchangeable.discard(key)
+
     def unchangeable_articles(self) -> frozenset[str]:
         return frozenset(self._unchangeable)
 

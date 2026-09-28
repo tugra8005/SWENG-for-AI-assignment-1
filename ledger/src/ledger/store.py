@@ -100,6 +100,13 @@ class Store:
             ).fetchone()
         return _row_to_record(row) if row else None
 
+    def of_type(self, type_: str) -> list[Record]:
+        with self.lock:
+            rows = self._conn.execute(
+                f"SELECT {_COLUMNS} FROM records WHERE type = ? ORDER BY seq", (type_,),
+            ).fetchall()
+        return [_row_to_record(row) for row in rows]
+
     def wipe(self) -> None:
         """Yalnızca geliştirme sıfırlaması: dosyayı siler ve boş depo açar (DELETE kullanılmaz)."""
         with self.lock:
