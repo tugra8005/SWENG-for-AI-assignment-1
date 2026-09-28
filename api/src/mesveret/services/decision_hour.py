@@ -134,7 +134,7 @@ def _oracle_decision(ctx: Ctx, p: Proposal) -> tuple[bool, str]:
     vote = oracle_vote(report, findings, content)
     if not vote:
         return vote, " ".join(parts)
-    reason = "R1–R7 geçti; etiketler uyumlu."
+    reason = "R1–R8 geçti; etiketler uyumlu."
     if content is not None and content.own:
         reason += " Yazar kendi mesajının silinmesini istiyor."
     elif content is not None:

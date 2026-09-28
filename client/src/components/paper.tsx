@@ -225,6 +225,32 @@ export function Seal({ hash, label }: { hash?: string | null; label?: string }) 
 }
 
 /** Oylamayla silinmiş içeriğin yerine konan şerit. */
+/** Değiştirilemez madde işareti: bordo gövde ve açık kilit halkası. */
+export function LockIcon({ size = 14, color = paper.seal }: { size?: number; color?: string }) {
+  const w = size * 0.8;
+  return (
+    <View
+      accessibilityRole="image"
+      aria-label="değiştirilemez"
+      style={{ width: w, height: size, alignItems: 'center', justifyContent: 'flex-end' }}
+    >
+      <View
+        style={{
+          width: w * 0.62,
+          height: size * 0.5,
+          borderWidth: Math.max(1.5, size / 9),
+          borderBottomWidth: 0,
+          borderColor: color,
+          borderTopLeftRadius: w,
+          borderTopRightRadius: w,
+          marginBottom: -1,
+        }}
+      />
+      <View style={{ width: w, height: size * 0.56, backgroundColor: color, borderRadius: 1.5 }} />
+    </View>
+  );
+}
+
 export type DeletionBasis = { rules: string[]; own: boolean };
 
 /** "#214 · IK-2 gereğince silindi" — silmenin dayandığı içerik kuralı ya da yazarın isteği. */

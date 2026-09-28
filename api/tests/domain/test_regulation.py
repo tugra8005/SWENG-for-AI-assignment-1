@@ -62,7 +62,7 @@ def test_values_come_from_the_given_mapping_not_constants():
 
 def test_validate_rejects_ratio_outside_bounds():
     with pytest.raises(RegulationError):
-        validate_value("yonetmelik_esigi", {"oran": "2/5", "karsilastirma": ">="})
+        validate_value("basit_cogunluk", {"oran": "2/5", "karsilastirma": ">"})
     with pytest.raises(RegulationError):
         validate_value("basit_cogunluk", {"oran": "3/2", "karsilastirma": ">"})
 
@@ -155,3 +155,36 @@ def test_disproportion_threshold_in_percentage_points():
     assert validate_value("orantisizlik_esigi", {"deger": 12.5}) == {"deger": 12.5}
     with pytest.raises(RegulationError):
         validate_value("orantisizlik_esigi", {"deger": 150})
+
+
+
+# --- değiştirilemez maddeler ve tabanlar ---------------------------------------------------------
+
+
+def test_unchangeable_articles_are_the_seven_principles_and_the_two_floors():
+    principles = [k for k, a in DEFAULT_ARTICLES.items() if a.kind == "temel_ilke"]
+    assert principles == [f"D{i}" for i in range(1, 8)]
+    assert REG.raw("D3")["baslik"] == "Kaybeden taraf Şerh ekleyebilir; Şerh silinemez."
+    assert REG.raw("D7")["baslik"] == "Bu listenin kendisi."
+    assert REG.unchangeable == frozenset(
+        [*principles, "yonetmelik_esigi_tabani", "silme_esigi_tabani"])
+    assert not REG.is_unchangeable("yonetmelik_esigi")  # değer değişir, tabanı değişmez
+    assert REG.floor_for("yonetmelik_esigi") == ("yonetmelik_esigi_tabani", Ratio(Fraction(2, 3), ">="))
+    assert REG.floor_for("silme_esigi")[0] == "silme_esigi_tabani"
+    assert REG.floor_for("basit_cogunluk") is None
+
+
+def test_floor_allows_only_equal_or_stricter_thresholds():
+    floor = Ratio(Fraction(2, 3), ">=")
+    ok = [("2/3", ">="), ("2/3", ">"), ("3/4", ">="), ("1", ">=")]
+    bad = [("1/2", ">="), ("3/5", ">"), ("13/20", ">")]
+    for oran, cmp in ok:
+        assert Ratio(Fraction(oran), cmp).at_least_as_strict_as(floor), oran
+    for oran, cmp in bad:
+        assert not Ratio(Fraction(oran), cmp).at_least_as_strict_as(floor), oran
+    assert not Ratio(Fraction(2, 3), ">=").at_least_as_strict_as(Ratio(Fraction(2, 3), ">"))
+
+
+def test_principle_and_floor_values_validate():
+    assert validate_value("D1", REG.raw("D1")) == REG.raw("D1")
+    assert validate_value("yonetmelik_esigi_tabani", REG.raw("yonetmelik_esigi_tabani"))["oran"] == "2/3"

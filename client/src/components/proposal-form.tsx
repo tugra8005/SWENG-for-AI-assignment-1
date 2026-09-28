@@ -10,6 +10,7 @@ import {
   Field,
   InfoNotice,
   Kicker,
+  LockIcon,
   Muted,
   Rule,
 } from '@/components/paper';
@@ -349,7 +350,20 @@ export function ProposalForm({
         </View>
       ) : null}
 
-      {regAction === 'kaldir' && article?.value ? (
+      {regAction !== null && article?.unchangeable ? (
+        <InfoNotice>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <LockIcon size={14} />
+            <Kicker style={{ color: paper.seal }}>Değiştirilemez madde · {article.key}</Kicker>
+          </View>
+          <Body>
+            Bu madde yönetmeliğin tabanıdır: oylamayla değiştirilemez, kaldırılamaz, değiştirilmesi
+            önerilemez (D7). Öneri açılışta R8 ile reddedilir.
+          </Body>
+        </InfoNotice>
+      ) : null}
+
+      {regAction === 'kaldir' && article?.value && !article.unchangeable ? (
         <InfoNotice>
           <Kicker>Kaldırılması önerilen kural</Kicker>
           <Body>
@@ -368,7 +382,9 @@ export function ProposalForm({
           <Choice
             label="Madde"
             value={articleKey}
-            options={(regulation.data ?? []).filter((a) => a.value).map((a) => ({ value: a.key, label: a.key }))}
+            options={(regulation.data ?? [])
+              .filter((a) => a.value)
+              .map((a) => ({ value: a.key, label: a.key, note: a.unchangeable ? 'değiştirilemez' : undefined }))}
             onChange={(k) => {
               setArticleKey(k);
               setNewValue(null);
@@ -477,7 +493,7 @@ export function ProposalForm({
       <ErrorNotice error={error} />
       <Button label={draftId ? 'Taslağı öneri olarak gönder' : 'Öneriyi aç'} onPress={submit} />
       <Muted style={{ marginTop: 10, fontSize: 13 }}>
-        Öneri açılırken R1–R7 denetimleri çalışır; ihlal varsa gerekçesiyle reddedilir.
+        Öneri açılırken R1–R8 denetimleri çalışır; ihlal varsa gerekçesiyle reddedilir.
       </Muted>
     </View>
   );

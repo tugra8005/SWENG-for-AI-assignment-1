@@ -8,13 +8,16 @@ süre sabiti içermez, her zaman bir ``Regulation`` örneğinden okur.
 kuralı bir metin kuralıdır; başkasının içeriğini silme önerisi en az birine dayanmak zorundadır.
 Parametrelerin kümesi sabittir, yalnızca değerleri değişir. İçerik kuralları ise yönetmelik
 önerisiyle eklenip kaldırılabilir; tohumdaki üç kural bilerek dardır.
+
+Yönetmeliğin bir tabanı vardır: değiştirilemez maddeler (D1–D7 temel ilkeleri ve eşik tabanları).
+Bunlar oylamayla değiştirilemez, kaldırılamaz; eşikler tabanlarının altına indirilemez (R8).
 """
 
 from __future__ import annotations
 
 import math
 import re
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import timedelta
 from fractions import Fraction
@@ -35,6 +38,12 @@ class Ratio:
             return False
         share = Fraction(part) / Fraction(whole)
         return share > self.value if self.comparison == ">" else share >= self.value
+
+    def at_least_as_strict_as(self, other: Ratio) -> bool:
+        """Bu eşiği geçen her pay ``other`` eşiğini de geçer mi (taban karşılaştırması)."""
+        if self.value != other.value:
+            return self.value > other.value
+        return other.comparison == ">=" or self.comparison == ">"
 
     def describe(self) -> str:
         op = "fazlası" if self.comparison == ">" else "en az"
@@ -76,9 +85,35 @@ class Article:
     description: str
     min_ratio: Fraction = Fraction(0)
     max_ratio: Fraction = Fraction(1)
+    unchangeable: bool = False  # YonetmelikMaddesi.degistirilemez
 
 
 WEEKDAYS = ["PAZARTESI", "SALI", "CARSAMBA", "PERSEMBE", "CUMA", "CUMARTESI", "PAZAR"]
+
+# (anahtar, ilke, açıklama). Metinler bilgilendiricidir; ilkeleri kod uygular, bu maddeler
+# yalnızca onların oylamayla kaldırılamayacağını kayda geçirir.
+PRINCIPLES = [
+    ("D1", "Her yurttaşın bir temel oyu vardır.",
+     ("Oy havale edilebilir ama elden alınamaz; havale pencere dışında her an geri alınır. "
+      "Hiçbir oylama bir yurttaşın oyunu sıfırlayamaz.")),
+    ("D2", "Her yurttaş öneri açabilir.",
+     ("Seçmen kapsamında oy hakkı olan her yurttaş öneri açabilir; öneri açma hakkı bir role, "
+      "rütbeye ya da onaya bağlanamaz.")),
+    ("D3", "Kaybeden taraf Şerh ekleyebilir; Şerh silinemez.",
+     ("Kapanış oylamasında kaybeden metnin sahibi ve destekçileri Karar'a Şerh ekler. Şerh "
+      "düzenlenemez, hiçbir önerinin hedefi olamaz.")),
+    ("D4", "İçerik yalnızca oylamayla silinebilir.",
+     ("Hiçbir rol ya da yönetici içerik silemez; silme bir öneridir ve Karar Saati'nde oylanır. "
+      "Silinen içerik defterde kalır.")),
+    ("D5", "Eşzamanlı çoğunluk ilkesi.",
+     ("Bölünebilir bir kaynakta payı orantısız azaltılan alt kapsam ayrıca oylar; öneri o "
+      "kapsamda da çoğunluk almadan geçemez.")),
+    ("D6", "Defter değiştirilemez.",
+     "Deftere yazılan kayıt güncellenemez ve silinemez; zincir herkes tarafından doğrulanabilir."),
+    ("D7", "Bu listenin kendisi.",
+     ("D1–D7 ve eşik tabanları değiştirilemez; listeye madde eklenemez, listeden madde "
+      "çıkarılamaz, bir madde değiştirilebilir yapılamaz.")),
+]
 
 
 def _articles() -> dict[str, Article]:
@@ -90,12 +125,14 @@ def _articles() -> dict[str, Article]:
                 "max(min, kapsamdaki aktif üyelerin oranı). Aktif: son aktiflik_gun günde giriş."),
         Article("basit_cogunluk", "oran", {"oran": "1/2", "karsilastirma": ">"},
                 "Kullanılan oylar içinde kabul için gereken pay.", Fraction(1, 2)),
+        # Alt sınırı değiştirilemez taban maddesidir (yonetmelik_esigi_tabani); doğrulayıcı
+        # yalnızca biçime bakar, taban R8'de denetlenir.
         Article("yonetmelik_esigi", "oran", {"oran": "2/3", "karsilastirma": ">="},
                 "Yönetmelik değişikliği için kullanılan oylar içinde gereken pay. "
-                "Bu maddenin kendisi de bu eşikle değişir.", Fraction(1, 2)),
+                "Bu maddenin kendisi de bu eşikle değişir; tabanı 2/3'tür."),
         Article("silme_esigi", "oran", {"oran": "2/3", "karsilastirma": ">="},
                 "Başkasının içeriğini silmek için kullanılan oylar içinde gereken pay. Kendi "
-                "mesajının silinmesi basit çoğunlukla oylanır.", Fraction(1, 2)),
+                "mesajının silinmesi basit çoğunlukla oylanır; tabanı 2/3'tür."),
         Article("orantisizlik_esigi", "yuzde_puani", {"deger": 10},
                 "Bölünebilir kaynakta bir alt kapsamın payındaki göreli azalma, tüm alt "
                 "kapsamların ortalama göreli değişiminden en az bu kadar yüzde puanı fazlaysa o "
@@ -143,6 +180,15 @@ def _articles() -> dict[str, Article]:
                 {"yanit": 1, "havale": 2, "yakin_kayit": 1, "yakin_kayit_dk": 60,
                  "ortak_baslik": 0.5, "ortak_baslik_dk": 30},
                 "İlişki grafındaki sinyallerin ağırlıkları ve zaman pencereleri."),
+        # Değiştirilemez maddeler: yönetmeliğin tabanı (bkz. DESIGN.md §5.1).
+        *(Article(key, "temel_ilke", {"baslik": title, "metin": text}, "Değiştirilemez madde.",
+                  unchangeable=True) for key, title, text in PRINCIPLES),
+        Article("yonetmelik_esigi_tabani", "taban",
+                {"madde": "yonetmelik_esigi", "oran": "2/3", "karsilastirma": ">="},
+                "yonetmelik_esigi bu değerin altına indirilemez.", unchangeable=True),
+        Article("silme_esigi_tabani", "taban",
+                {"madde": "silme_esigi", "oran": "2/3", "karsilastirma": ">="},
+                "silme_esigi bu değerin altına indirilemez.", unchangeable=True),
         # İçerik kuralları: silme önerisinin dayanabileceği tek gerekçeler.
         Article("IK-1", CONTENT_RULE_KIND, {
             "baslik": "Spam ve reklam",
@@ -276,6 +322,22 @@ def _v_agirliklar(article: Article, value: Mapping) -> dict:
     return {k: _positive_number(value[k], k, integer=k.endswith("_dk")) for k in article.default}
 
 
+def _v_temel_ilke(article: Article, value: Mapping) -> dict:
+    _only_keys(value, {"baslik", "metin"})
+    if not all(isinstance(value.get(k), str) and value[k].strip() for k in ("baslik", "metin")):
+        raise RegulationError("İlkenin başlığı ve metni boş olmayan metin olmalı.")
+    return {"baslik": value["baslik"].strip(), "metin": value["metin"].strip()}
+
+
+def _v_taban(article: Article, value: Mapping) -> dict:
+    _only_keys(value, {"madde", "oran", "karsilastirma"})
+    target = DEFAULT_ARTICLES.get(value.get("madde", ""))
+    if target is None or target.kind != "oran":
+        raise RegulationError("Taban bir oran maddesine ait olmalı.")
+    return {"madde": value["madde"], **_v_oran(target, {
+        "oran": value.get("oran"), "karsilastirma": value.get("karsilastirma", ">=")})}
+
+
 def _v_icerik_kurali(article: Article, value: Mapping) -> dict:
     _only_keys(value, {"baslik", "metin", "anahtar_kelimeler"})
     title, text = value.get("baslik"), value.get("metin")
@@ -303,6 +365,8 @@ _VALIDATORS: dict[str, Callable[[Article, Mapping], dict]] = {
     "karar_saati": _v_karar_saati,
     "agirliklar": _v_agirliklar,
     CONTENT_RULE_KIND: _v_icerik_kurali,
+    "temel_ilke": _v_temel_ilke,
+    "taban": _v_taban,
 }
 
 
@@ -331,8 +395,23 @@ def validate_value(key: str, value: Any) -> dict:
 class Regulation:
     """Belirli bir andaki madde değerleri (ör. Karar Saati anlık görüntüsü)."""
 
-    def __init__(self, values: Mapping[str, dict]):
+    def __init__(self, values: Mapping[str, dict], unchangeable: Iterable[str] | None = None):
         self.values: dict[str, dict] = dict(values)
+        # Graf düğümlerindeki degistirilemez bayrağı; verilmezse tohum tanımlarından.
+        self.unchangeable: frozenset[str] = frozenset(
+            unchangeable if unchangeable is not None
+            else (k for k, a in DEFAULT_ARTICLES.items() if a.unchangeable)
+        )
+
+    def is_unchangeable(self, key: str) -> bool:
+        return key in self.unchangeable
+
+    def floor_for(self, key: str) -> tuple[str, Ratio] | None:
+        """Oran maddesinin değiştirilemez tabanı: (taban maddesi, taban oranı)."""
+        for floor_key, v in self.values.items():
+            if v.get("madde") == key and article_kind(floor_key) == "taban":
+                return floor_key, Ratio(Fraction(v["oran"]), v.get("karsilastirma", ">="))
+        return None
 
     @classmethod
     def defaults(cls) -> Regulation:

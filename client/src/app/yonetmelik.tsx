@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Button, H1, Kicker, Loading, Muted, Page, Rule, Section } from '@/components/paper';
+import { Button, H1, Kicker, LockIcon, Loading, Muted, Page, Rule, Section } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { describeArticleValue, fmtDate } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -30,9 +30,66 @@ function History({ a }: { a: any }) {
   ));
 }
 
+/** Yönetmeliğin tabanı: anayasa sayfası gibi, çift çerçeveli belge. */
+function Constitution({ items }: { items: any[] }) {
+  const principles = items.filter((a) => a.kind === 'temel_ilke');
+  const floors = items.filter((a) => a.kind === 'taban');
+  return (
+    <View style={st.charter} accessibilityRole="summary">
+      <View style={st.charterInner}>
+        <View style={st.charterHead}>
+          <LockIcon size={18} />
+          <Text style={st.charterKicker}>Yönetmeliğin tabanı</Text>
+          <Text accessibilityRole="header" style={st.charterTitle}>
+            Değiştirilemez Maddeler
+          </Text>
+          <Text style={st.charterPreamble}>
+            Aşağıdaki maddeler oylamayla değiştirilemez, kaldırılamaz; değiştirilmeleri önerilemez. Forumda
+            her şey oylamayla yürür; bu liste o kuralın bilinçli istisnasıdır. Tamamen oylanabilir bir düzende
+            azınlığın güvencesi yalnızca daha yüksek bir çıtadır; burada bir tabandır.
+          </Text>
+        </View>
+        <Rule double />
+        {principles.map((a) => (
+          <View key={a.key} style={st.charterArticle}>
+            <View style={st.charterNum}>
+              <Text style={st.charterNumText}>Madde {a.key}</Text>
+              <LockIcon size={12} />
+            </View>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={st.charterArticleTitle}>{a.value.baslik}</Text>
+              <Text style={st.charterArticleText}>{a.value.metin}</Text>
+            </View>
+          </View>
+        ))}
+        <Rule />
+        <Text style={st.charterSub}>Eşik tabanları</Text>
+        {floors.map((a) => (
+          <View key={a.key} style={st.charterArticle}>
+            <View style={st.charterNum}>
+              <Text style={st.charterNumText}>Taban</Text>
+              <LockIcon size={12} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={st.charterArticleTitle}>{describeArticleValue('taban', a.value)}</Text>
+              <Text style={st.charterArticleText}>
+                {a.value.madde} oylamayla yükseltilebilir, bu değerin altına indirilemez ({a.key}).
+              </Text>
+            </View>
+          </View>
+        ))}
+        <Text style={st.charterFoot}>
+          Bir maddeye dokunan ya da bir eşiği tabanının altına indiren öneri açılışta reddedilir (R8).
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 export default function Regulation() {
   const list = useApi<any[]>('/regulation');
-  const params = (list.data ?? []).filter((a) => a.kind !== 'icerik_kurali');
+  const constitution = (list.data ?? []).filter((a) => a.unchangeable);
+  const params = (list.data ?? []).filter((a) => a.kind !== 'icerik_kurali' && !a.unchangeable);
   const rules = (list.data ?? []).filter((a) => a.kind === 'icerik_kurali' && !a.removed);
   const removed = (list.data ?? []).filter((a) => a.kind === 'icerik_kurali' && a.removed);
   return (
@@ -40,11 +97,13 @@ export default function Regulation() {
       <Kicker>Yönetmelik = veri</Kicker>
       <H1>Yönetmelik</H1>
       <Muted>
-        Tüm eşikler ve süreler bu maddelerde durur; kod hiçbir eşiği sabit yazmaz. Her madde Genel
-        kapsamda, Karar Saati&apos;nde yonetmelik_esigi ile değişir — bu maddenin kendisi de.
+        Tüm eşikler ve süreler bu maddelerde durur; kod hiçbir eşiği sabit yazmaz. Değiştirilemez maddeler
+        dışında her madde Genel kapsamda, Karar Saati&apos;nde yonetmelik_esigi ile değişir — bu maddenin
+        kendisi de, ama tabanının altına inemez.
       </Muted>
       <Rule double />
       {!list.data ? <Loading /> : null}
+      {list.data ? <Constitution items={constitution} /> : null}
       {list.data ? (
         <Section title="İçerik kuralları" aside={<Kicker>silmenin tek dayanağı</Kicker>}>
           <Muted>
@@ -90,6 +149,14 @@ export default function Regulation() {
                 <Text style={st.key}>{a.key}</Text>
               </View>
               <Text style={st.value}>{describeArticleValue(a.kind, a.value)}</Text>
+              {a.floor ? (
+                <View style={st.floor}>
+                  <LockIcon size={11} />
+                  <Text style={st.floorText}>
+                    taban {a.floor.karsilastirma === '>' ? '>' : '≥'} {a.floor.oran} · değiştirilemez
+                  </Text>
+                </View>
+              ) : null}
               <Muted>{a.description}</Muted>
               <History a={a} />
               <ProposeChange articleKey={a.key} />
@@ -108,5 +175,39 @@ const st = StyleSheet.create({
   value: { fontFamily: fonts.serifBold, fontSize: 20, color: paper.ink },
   history: { fontFamily: fonts.mono, fontSize: 12, color: paper.seal },
   ruleText: { fontFamily: fonts.serif, fontSize: 17, lineHeight: 25, color: paper.ink },
+  floor: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  floorText: { fontFamily: fonts.mono, fontSize: 12, color: paper.seal },
+  charter: { borderWidth: 3, borderColor: paper.ink, padding: 4, marginVertical: 18, backgroundColor: paper.sheet },
+  charterInner: { borderWidth: 1, borderColor: paper.ink, paddingHorizontal: 18, paddingVertical: 16, gap: 10 },
+  charterHead: { alignItems: 'center', gap: 6 },
+  charterKicker: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 11,
+    letterSpacing: 2,
+    color: paper.seal,
+    textTransform: 'uppercase',
+  },
+  charterTitle: { fontFamily: fonts.serifDisplay, fontSize: 30, lineHeight: 36, color: paper.ink, textAlign: 'center' },
+  charterPreamble: {
+    fontFamily: fonts.serifItalic,
+    fontSize: 16,
+    lineHeight: 24,
+    color: paper.inkSoft,
+    textAlign: 'center',
+    maxWidth: 560,
+  },
+  charterArticle: { flexDirection: 'row', gap: 14, paddingVertical: 8, flexWrap: 'wrap' },
+  charterNum: { width: 92, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingTop: 6 },
+  charterNumText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 12,
+    letterSpacing: 1,
+    color: paper.seal,
+    textTransform: 'uppercase',
+  },
+  charterArticleTitle: { fontFamily: fonts.serifBold, fontSize: 19, lineHeight: 25, color: paper.ink },
+  charterArticleText: { fontFamily: fonts.serif, fontSize: 16, lineHeight: 23, color: paper.inkSoft },
+  charterSub: { fontFamily: fonts.monoMedium, fontSize: 12, letterSpacing: 1.5, color: paper.ink, textTransform: 'uppercase' },
+  charterFoot: { fontFamily: fonts.serifItalic, fontSize: 14, color: paper.muted, textAlign: 'center', marginTop: 6 },
   keywords: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 18, color: paper.muted },
 });

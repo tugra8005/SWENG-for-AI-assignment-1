@@ -295,6 +295,14 @@ def _prepare_regulation(ctx: Ctx, inp: ProposalInput) -> Prepared:
     if kind is None or key not in current:
         raise DomainError("Böyle bir yönetmelik maddesi yok ya da yürürlükte değil.")
     old_value = current[key]
+    if ctx.reg.is_unchangeable(key):
+        # Değer doğrulanmaz: öneri R8'de "Bu madde değiştirilemez" gerekçesiyle reddedilir.
+        return Prepared(
+            ProposalType.YONETMELIK, _title(inp.title or f"Yönetmelik: {key}"), body, None, scope,
+            [regulation.article_resource_id(key)], f"MADDE:{key}",
+            {"article_key": key, "action": action, "old_value": old_value,
+             "new_value": inp.new_value},
+        )
     if action == "kaldir":
         if kind != CONTENT_RULE_KIND:
             raise DomainError("Yalnızca içerik kuralları kaldırılabilir; parametrelerin değeri değişir.")
@@ -358,6 +366,9 @@ def draft_of(ctx: Ctx, p: Proposal | Prepared, proposer_id: str) -> ProposalDraf
         target_text=deletion_target_text(ctx, p.payload) if deletion else "",
         own_content=bool(p.payload.get("own")) if deletion else False,
         share_effect=p.payload.get("share_effect"),
+        article_key=p.payload.get("article_key") if str(p.type) == "YONETMELIK" else None,
+        article_action=p.payload.get("action") if str(p.type) == "YONETMELIK" else None,
+        new_value=p.payload.get("new_value") if str(p.type) == "YONETMELIK" else None,
     )
 
 

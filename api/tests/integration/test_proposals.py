@@ -26,7 +26,7 @@ def test_topic_proposal_opens_in_fast_lane_with_oracle_comment(ctx, ledger):
     p = proposals.open_proposal(ctx, u, konu_input())
     assert p.status == "SILENT" and p.lane == "FAST"
     assert p.deadline_at == ctx.now + timedelta(hours=24)
-    assert "Denetimler: R1–R7 geçti." in p.oracle_comment
+    assert "Denetimler: R1–R8 geçti." in p.oracle_comment
     assert ledger.of_type("ONERI_ACILDI")[0]["payload"]["baslik"] == "Film günleri"
     assert p.ledger_hash == ledger.of_type("ONERI_ACILDI")[0]["hash"]
 
@@ -597,3 +597,55 @@ def test_equal_cut_stays_in_fast_lane_and_applies_shares_on_acceptance(ctx, clie
     assert dict(ctx.graph.resource("butce").shares) == EQUAL_CUT["butce"]
     [rec] = ledger.of_type("PAY_DEGISTI")
     assert rec["payload"]["kaynak"] == "butce" and rec["payload"]["yeni"] == EQUAL_CUT["butce"]
+
+
+
+# --- yönetmeliğin tabanı: değiştirilemez maddeler (R8) ----------------------------------------------
+
+
+def test_lowering_regulation_threshold_to_half_is_rejected_at_opening(ctx, client):
+    a = make_user(ctx, "ayse")
+    r = client.post("/proposals", headers=headers_for(ctx, a), json={
+        "type": "YONETMELIK", "article_key": "yonetmelik_esigi",
+        "new_value": {"oran": "1/2", "karsilastirma": ">="},
+    })
+    assert r.status_code == 422
+    [v] = r.json()["violations"]
+    assert v["rule"] == "R8" and "yonetmelik_esigi değiştirilemez tabanın altına inemez" in v["message"]
+    # Tabanın üstüne çıkmak serbest.
+    p = proposals.open_proposal(ctx, a, ProposalInput(
+        type="YONETMELIK", article_key="yonetmelik_esigi", new_value={"oran": "3/4", "karsilastirma": ">="},
+    ))
+    assert p.status == "QUEUED"
+
+
+def test_removing_the_right_of_dissent_is_rejected_at_opening(ctx, client):
+    a = make_user(ctx, "ayse")
+    for body in (
+        {"type": "YONETMELIK", "article_key": "D3", "article_action": "kaldir"},
+        {"type": "YONETMELIK", "article_key": "D3",
+         "new_value": {"baslik": "Şerh yoktur.", "metin": "Kaybeden taraf şerh ekleyemez."}},
+        {"type": "YONETMELIK", "article_key": "silme_esigi_tabani",
+         "new_value": {"madde": "silme_esigi", "oran": "1/2", "karsilastirma": ">"}},
+    ):
+        r = client.post("/proposals", headers=headers_for(ctx, a), json=body)
+        assert r.status_code == 422, body
+        [v] = r.json()["violations"]
+        assert v["rule"] == "R8" and v["message"].startswith("Bu madde değiştirilemez"), v
+
+
+def test_regulation_listing_marks_unchangeable_articles_and_floors(ctx, client):
+    listing = {a["key"]: a for a in client.get("/regulation").json()}
+    assert listing["D1"]["unchangeable"] is True and listing["D1"]["kind"] == "temel_ilke"
+    assert listing["yonetmelik_esigi_tabani"]["unchangeable"] is True
+    assert listing["yonetmelik_esigi"]["unchangeable"] is False
+    assert listing["yonetmelik_esigi"]["floor"] == {
+        "key": "yonetmelik_esigi_tabani", "oran": "2/3", "karsilastirma": ">="}
+    assert ctx.graph.unchangeable_articles() >= {"D1", "D7", "silme_esigi_tabani"}
+
+
+def test_unchangeable_article_cannot_be_applied_even_directly(ctx):
+    from mesveret.services import regulation
+
+    with pytest.raises(DomainError):
+        regulation.apply_change(ctx, "D6", {"baslik": "Defter düzenlenebilir.", "metin": "—"}, None)

@@ -102,8 +102,9 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 | №16 | 8 · Hâtif |
 | №20 | 9 · Olgunlaşma |
 | №17, №18 | 10 · Eşzamanlı çoğunluk |
+| — | 11 · Yönetmeliğin tabanı (açılışta reddedilen iki öneri) |
 
-Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin.
+Senaryo 1, 6 ve 11 anında oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin.
 
 ### 1. İstanbul vakası: otomatik daralma ve red
 
@@ -122,6 +123,12 @@ Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar S
 3. En üstteki **"Çoğunluk haklı olabilir mi?"** başlığını açın. Beş yazarı var; ayse'nin açtığı ifşa oylamasında iki EVET bir HAYIR oy var ve geçmek için 3 EVET gerekiyor. Ara sayım gösterilmez.
 4. **[ evet ]** deyin. EVET sayısı seçmen listesinin yarısını aştığı an ifşa gerçekleşir. Yaklaşık 1,5 saniyelik geçişte siyah zemin kâğıda, amber yazı mürekkebe döner, mono yazı serife geçer ve Gölge kimliklerinin üzerine takma adlar yazılır.
 5. Başlık artık Meydan görünümünde, herkesin takma adıyla ve defter mührüyle durur. **Öneri taslağı №21 →** ile taslağı açın (senaryo 1'in isteğe bağlı 4. adımını yaptıysanız numara №22 olur); alanı ve seçmen kapsamını seçip **Taslağı öneri olarak gönder** deyin. Öneri normal akışa (sessiz onay) girer.
+
+### 11. Yönetmeliğin tabanı: değiştirilemez maddeler
+
+1. **Yönetmelik** sayfasının başında çift çerçeveli **Değiştirilemez Maddeler** bölümü durur: D1–D7 ilkeleri ve iki eşik tabanı (`yonetmelik_esigi ≥ 2/3`, `silme_esigi ≥ 2/3`), her biri kilit işaretiyle. `yonetmelik_esigi` ve `silme_esigi` parametrelerinin altında kilitli "taban ≥ 2/3" satırı görünür.
+2. **kerem** olarak giriş yapın. Yönetmelik sayfasında `yonetmelik_esigi` → **Değişiklik öner** → yeni oran `1/2` → **Öneriyi aç**. Öneri açılmaz: *"R8 — yonetmelik_esigi değiştirilemez tabanın altına inemez: en az 2/3 (≥) olmalı (taban: yonetmelik_esigi_tabani, değiştirilemez madde)."* Aynı formda `3/4` denerseniz öneri açılır; eşik yükseltilebilir.
+3. Şerh hakkını kaldırmayı deneyin: `/oneri/yeni?type=YONETMELIK&action=kaldir&article=D3` adresini açın. Form maddenin değiştirilemez olduğunu kilitle gösterir; **Öneriyi aç** deyin: *"R8 — Bu madde değiştirilemez: D3 (Kaybeden taraf Şerh ekleyebilir; Şerh silinemez.) …"* Öneri kuyruğa girmez; değişiklik teklif bile edilemez.
 
 ### Karar Saati: senaryo 2, 3, 4, 5, 7, 8, 9 ve 10
 
@@ -215,7 +222,7 @@ scripts/test.sh
 
 - `api` birim testleri: saf alan mantığı, bellek içi graf, defter karşılaştırması.
 - `ledger` testleri: zincir bütünlüğü, bozulmuş zincirin tespiti, üç düğümlü çoğaltma.
-- Entegrasyon testleri: `docker-compose.test.yml` ile geçici PostgreSQL ve Neo4j (tmpfs, 55432 ve 57687 portları) başlatılır. API servisleri, dokuz senaryonun tohum provası ve Neo4j graf deposunun sözleşme testleri çalışır.
+- Entegrasyon testleri: `docker-compose.test.yml` ile geçici PostgreSQL ve Neo4j (tmpfs, 55432 ve 57687 portları) başlatılır. API servisleri, on bir senaryonun tohum provası ve Neo4j graf deposunun sözleşme testleri çalışır.
 
 Docker yoksa yalnızca Docker gerektirmeyen testler çalışır:
 

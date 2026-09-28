@@ -44,6 +44,8 @@ def install_defaults(ctx: Ctx) -> None:
     for key, article in DEFAULT_ARTICLES.items():
         _article_resource(ctx, key)
         ctx.graph.set_article(key, dict(article.default))
+        if article.unchangeable:
+            ctx.graph.set_unchangeable(key)
     ctx.graph.upsert_resource(ResourceInfo(
         CONTENT_RULES_RESOURCE_ID, ResourceKind.YONETMELIK_MADDESI, "İçerik kuralları",
         GENERAL_SCOPE_ID,
@@ -64,6 +66,9 @@ def next_content_rule_code(ctx: Ctx) -> str:
 def apply_change(ctx: Ctx, key: str, value: dict[str, Any] | None, proposal_id: int | None,
                  action: str = "degistir") -> None:
     old = ctx.graph.articles().get(key)
+    if key in ctx.graph.unchangeable_articles():
+        # R8 öneriyi açılışta reddeder; bu ikinci savunma hattıdır.
+        raise DomainError(f"Bu madde değiştirilemez: {key}.")
     try:
         if action == "kaldir":
             if old is None or article_kind(key) != CONTENT_RULE_KIND:
@@ -89,8 +94,9 @@ def apply_change(ctx: Ctx, key: str, value: dict[str, Any] | None, proposal_id: 
     ctx.invalidate_regulation()
 
 
-def _entry(key: str, kind: str, value: Any, history: list[dict]) -> dict:
+def _entry(ctx: Ctx, key: str, kind: str, value: Any, history: list[dict]) -> dict:
     article = DEFAULT_ARTICLES.get(key)
+    floor = ctx.reg.floor_for(key)
     return {
         "key": key,
         "value": value,
@@ -99,6 +105,10 @@ def _entry(key: str, kind: str, value: Any, history: list[dict]) -> dict:
         "description": article.description if article else "Oylamayla eklenmiş içerik kuralı.",
         "history": history,
         "removed": value is None,
+        "unchangeable": ctx.reg.is_unchangeable(key),
+        "floor": None if floor is None else {
+            "key": floor[0], "oran": f"{floor[1].value.numerator}/{floor[1].value.denominator}",
+            "karsilastirma": floor[1].comparison},
     }
 
 
@@ -110,10 +120,11 @@ def listing(ctx: Ctx) -> list[dict]:
             "old_value": ch.old_value, "new_value": ch.new_value,
             "proposal_id": ch.proposal_id, "changed_at": ch.changed_at,
         })
-    params = [_entry(key, a.kind, values.get(key), history.get(key, []))
+    params = [_entry(ctx, key, a.kind, values.get(key), history.get(key, []))
               for key, a in DEFAULT_ARTICLES.items() if a.kind != CONTENT_RULE_KIND]
     # Yürürlükteki ve kaldırılmış içerik kuralları, numara sırasıyla.
     rule_keys = sorted({k for k in [*values, *history] if content_rule_number(k)},
                        key=lambda k: content_rule_number(k) or 0)
-    rules = [_entry(k, CONTENT_RULE_KIND, values.get(k), history.get(k, [])) for k in rule_keys]
+    rules = [_entry(ctx, k, CONTENT_RULE_KIND, values.get(k), history.get(k, []))
+             for k in rule_keys]
     return params + rules

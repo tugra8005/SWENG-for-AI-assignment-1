@@ -169,14 +169,18 @@ def test_regulation_change_needs_two_thirds(ctx):
 
 
 def test_threshold_article_protects_itself(ctx):
+    """Eşik maddesi kendi o anki değeriyle oylanır; tabanın altına indirilmesi önerilemez (R8)."""
     voters = [make_user(ctx, f"secmen{i}") for i in range(10)]
-    p = queued_regulation(ctx, voters[0], "yonetmelik_esigi", {"oran": "1/2", "karsilastirma": ">"})
+    with pytest.raises(DomainError):
+        queued_regulation(ctx, voters[0], "yonetmelik_esigi", {"oran": "1/2", "karsilastirma": ">"})
+    p = queued_regulation(ctx, voters[0], "yonetmelik_esigi", {"oran": "3/4", "karsilastirma": ">="})
     session = decision_hour.open_session(ctx)
     for i, v in enumerate(voters):
         decision_hour.cast_vote(ctx, v, p.id, i < 6)  # 6 + Hâtif = 7/11 < 2/3
     close(ctx, session)
     result = item_of(ctx, session, p).result
     assert result["threshold"]["key"] == "yonetmelik_esigi"
+    assert result["threshold"]["oran"] == "2/3"  # önerilen 3/4 değil, yürürlükteki değer
     assert result["passed"] is False
     ctx.invalidate_regulation()
     assert ctx.reg.raw("yonetmelik_esigi")["oran"] == "2/3"

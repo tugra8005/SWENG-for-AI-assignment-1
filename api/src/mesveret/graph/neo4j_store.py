@@ -326,6 +326,14 @@ class Neo4jGraph:
             k=key, v=json.dumps(value, ensure_ascii=False, sort_keys=True),
         )
 
+    def set_unchangeable(self, key: str) -> None:
+        self._run("MERGE (m:YonetmelikMaddesi {anahtar: $k}) SET m.degistirilemez = true", k=key)
+
+    def unchangeable_articles(self) -> frozenset[str]:
+        rows = self._run(
+            "MATCH (m:YonetmelikMaddesi) WHERE m.degistirilemez = true RETURN m.anahtar AS k")
+        return frozenset(r["k"] for r in rows)
+
     def delete_article(self, key: str) -> None:
         # Düğüm kalır (geçmiş ilişkileri için); değeri olmayan madde yürürlükte sayılmaz.
         self._run("MATCH (m:YonetmelikMaddesi {anahtar: $k}) REMOVE m.deger_json", k=key)

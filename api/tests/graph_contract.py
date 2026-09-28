@@ -125,6 +125,10 @@ class GraphContract:
         g.delete_article("IK-4")
         assert "IK-4" not in g.articles()
         g.delete_article("IK-4")  # olmayan maddeyi silmek hata değildir
+        g.set_article("D1", {"baslik": "Her yurttaşın bir temel oyu vardır."})
+        g.set_unchangeable("D1")
+        g.set_article("D1", {"baslik": "Her yurttaşın bir temel oyu vardır."})  # bayrak kalır
+        assert g.unchangeable_articles() == frozenset({"D1"})
 
     # --- öneri, karar, diskur ---
     def test_proposal_and_discourse_records(self, g):

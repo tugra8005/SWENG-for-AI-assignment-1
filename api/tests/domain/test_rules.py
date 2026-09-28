@@ -255,3 +255,36 @@ def test_narrowed_proposal_may_only_change_its_own_share():
     assert check_proposal(own, ctx()).ok
     other = replace(d, share_effect={"butce": {"sehir:ankara": 2000}})
     assert any("yalnızca kendi payını" in m for m in r2_messages(other))
+
+
+
+# --- R8: değiştirilemez maddeler ve tabanlar -------------------------------------------------------
+
+
+def regulation_change(key, value=None, action="degistir") -> ProposalDraft:
+    return ProposalDraft(
+        type=ProposalType.YONETMELIK, proposer_id="u1", scope_id="genel", area_id=None,
+        resource_ids=(), target_key=f"MADDE:{key}", title=f"Yönetmelik: {key}",
+        article_key=key, article_action=action, new_value=value,
+    )
+
+
+def r8_messages(d) -> list[str]:
+    return [v.message for v in check_proposal(d, ctx()).violations if v.rule == "R8"]
+
+
+def test_r8_unchangeable_article_cannot_be_changed_or_removed():
+    [msg] = r8_messages(regulation_change("D3", {"baslik": "Şerh yoktur.", "metin": "—"}))
+    assert msg.startswith("Bu madde değiştirilemez: D3")
+    assert r8_messages(regulation_change("D3", action="kaldir"))
+    assert r8_messages(regulation_change("yonetmelik_esigi_tabani", {"madde": "yonetmelik_esigi",
+                                                                   "oran": "1/2", "karsilastirma": ">="}))
+
+
+def test_r8_threshold_cannot_go_below_its_floor():
+    [msg] = r8_messages(regulation_change("yonetmelik_esigi", {"oran": "1/2", "karsilastirma": ">="}))
+    assert "yonetmelik_esigi değiştirilemez tabanın altına inemez" in msg
+    assert "en az 2/3" in msg
+    assert r8_messages(regulation_change("silme_esigi", {"oran": "3/5", "karsilastirma": ">"}))
+    assert not r8_messages(regulation_change("yonetmelik_esigi", {"oran": "3/4", "karsilastirma": ">="}))
+    assert not r8_messages(regulation_change("red_bekleme", {"gun": 1}))

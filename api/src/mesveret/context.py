@@ -32,7 +32,7 @@ class Ctx:
     @property
     def reg(self) -> Regulation:
         if self._reg is None:
-            self._reg = Regulation(self.graph.articles())
+            self._reg = Regulation(self.graph.articles(), self.graph.unchangeable_articles())
         return self._reg
 
     def invalidate_regulation(self) -> None:

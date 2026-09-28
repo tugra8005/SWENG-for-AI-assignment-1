@@ -214,3 +214,20 @@ def test_scenario_4_unjustified_deletion_is_rejected(seeded):
     assert err.value.violations[0]["rule"] == "R7"
     silme_60 = ctx.db.get(Proposal, seed.scenario_ids(ctx)["silme_60"])
     assert "IK-2 (Hakaret ve tehdit): belirtilen kısımda karşılığı var" in silme_60.oracle_comment
+
+
+def test_scenario_11_floor_of_the_regulation(seeded):
+    ctx = seeded
+    kerem = user(ctx, "kerem")
+    attempts = [
+        ProposalInput(type="YONETMELIK", article_key="yonetmelik_esigi",
+                      new_value={"oran": "1/2", "karsilastirma": ">="},
+                      body="Yönetmelik basit çoğunlukla değişsin."),
+        ProposalInput(type="YONETMELIK", article_key="D3", article_action="kaldir",
+                      body="Şerh hakkı kaldırılsın."),
+    ]
+    for inp in attempts:
+        with pytest.raises(DomainError) as err:
+            proposals.open_proposal(ctx, kerem, inp)
+        assert err.value.violations[0]["rule"] == "R8"
+    assert ctx.reg.raw("yonetmelik_esigi")["oran"] == "2/3"

@@ -30,6 +30,7 @@ class InMemoryGraph(InMemoryOntology):
         self._delegations: dict[tuple[str, str | None], tuple[str, datetime]] = {}
         self._interactions: dict[tuple[str, str], float] = {}
         self._articles: dict[str, dict[str, Any]] = {}
+        self._unchangeable: set[str] = set()
         self._proposals: dict[int, dict] = {}
         self._decisions: dict[int, str] = {}
         self._discourse: dict[int, dict[str, datetime]] = {}
@@ -111,6 +112,12 @@ class InMemoryGraph(InMemoryOntology):
 
     def delete_article(self, key: str) -> None:
         self._articles.pop(key, None)
+
+    def set_unchangeable(self, key: str) -> None:
+        self._unchangeable.add(key)
+
+    def unchangeable_articles(self) -> frozenset[str]:
+        return frozenset(self._unchangeable)
 
     # --- öneri, karar, diskur ---
     def record_proposal(

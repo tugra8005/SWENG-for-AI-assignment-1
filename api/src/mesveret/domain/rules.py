@@ -1,4 +1,4 @@
-"""Denetim kuralları R1, R2, R3, R5, R6, R7 (R4 havalede: ``domain.delegation``).
+"""Denetim kuralları R1, R2, R3, R5, R6, R7, R8 (R4 havalede: ``domain.delegation``).
 
 Her öneri açılırken çalışır; ihlaller Türkçe gerekçeyle döner. Hâtif oylama anında
 aynı kuralları yeniden çalıştırır.
@@ -9,9 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
+from fractions import Fraction
 
 from mesveret.domain.ontology import OntologyView, ResourceInfo, ResourceKind, ScopeInfo
-from mesveret.domain.regulation import Regulation
+from mesveret.domain.regulation import Ratio, Regulation
 from mesveret.domain.scopes import GENERAL_SCOPE_ID, ScopeSubtype
 from mesveret.domain.text import contains_words, genitive, tokens
 from mesveret.domain.types import ProposalType
@@ -40,6 +41,10 @@ class ProposalDraft:
     own_content: bool = False
     # Bölünebilir kaynağın yapılandırılmış etkisi: {kaynak: {kapsam: yeni_pay}}. None: bildirilmedi.
     share_effect: Mapping[str, Mapping[str, int]] | None = None
+    # YONETMELIK: hedef madde, işlem (degistir/ekle/kaldir) ve önerilen değer.
+    article_key: str | None = None
+    article_action: str | None = None
+    new_value: Mapping | None = None
 
 
 @dataclass(frozen=True)
@@ -272,6 +277,35 @@ def _check_r7(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
         ))
 
 
+def _check_r8(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
+    """Yönetmeliğin tabanı: değiştirilemez maddeye dokunulamaz, eşik tabanının altına inemez."""
+    if d.type is not ProposalType.YONETMELIK or not d.article_key:
+        return
+    key = d.article_key
+    if c.reg.is_unchangeable(key):
+        title = c.reg.values.get(key, {}).get("baslik")
+        report.violations.append(Violation(
+            "R8", f"Bu madde değiştirilemez: {key}{f' ({title})' if title else ''}. Değiştirilemez "
+                  "maddeler oylamayla değiştirilemez, kaldırılamaz; değiştirilmeleri önerilemez (D7).",
+        ))
+        return
+    floor = c.reg.floor_for(key)
+    if floor is None or d.article_action not in (None, "degistir") or not d.new_value:
+        return
+    floor_key, floor_ratio = floor
+    try:
+        proposed = Ratio(Fraction(str(d.new_value.get("oran"))),
+                         d.new_value.get("karsilastirma", ">="))
+    except (ValueError, ZeroDivisionError):
+        return  # biçim hatasını değer doğrulaması bildirir
+    if not proposed.at_least_as_strict_as(floor_ratio):
+        op = "≥" if floor_ratio.comparison == ">=" else ">"
+        report.violations.append(Violation(
+            "R8", f"{key} değiştirilemez tabanın altına inemez: en az {floor_ratio.value} ({op}) "
+                  f"olmalı (taban: {floor_key}, değiştirilemez madde).",
+        ))
+
+
 def _check_area(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
     needs_area = d.type in (ProposalType.KONU, ProposalType.ALT_KONU)
     if needs_area and (d.area_id is None or c.onto.area(d.area_id) is None):
@@ -286,4 +320,5 @@ def check_proposal(d: ProposalDraft, c: RuleContext) -> RuleReport:
     _check_r5(c, report)
     _check_r6(c, report)
     _check_r7(d, c, report)
+    _check_r8(d, c, report)
     return report

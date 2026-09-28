@@ -37,7 +37,7 @@ export default function NewProposal() {
           : params.action === 'ekle'
             ? 'İçerik kuralı ekleme önerisi'
             : params.action === 'kaldir'
-              ? 'İçerik kuralı kaldırma önerisi'
+              ? 'Madde kaldırma önerisi'
               : `${TYPE_LABELS[type] ?? type} önerisi`}
       </H1>
       <Muted>{LANE_NOTE[type]}</Muted>
