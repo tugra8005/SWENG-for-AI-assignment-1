@@ -1,6 +1,7 @@
 """Yalnızca Docker'sız yerel geliştirme sunucusunda açılan araçlar (CLI komutlarının karşılığı)."""
 
 from datetime import timedelta
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -23,6 +24,11 @@ class DecisionHourIn(BaseModel):
     scripted: bool = True
 
 
+class TamperIn(BaseModel):
+    key: str
+    value: Any
+
+
 @router.post("/advance-time")
 def advance(body: AdvanceIn, ctx: Ctx = Depends(get_ctx)) -> dict:
     delta = timedelta(days=body.days, hours=body.hours, minutes=body.minutes)
@@ -34,3 +40,8 @@ def run_decision_hour(body: DecisionHourIn, ctx: Ctx = Depends(get_ctx)) -> dict
     if body.close:
         return devtools.close_decision_hour(ctx)
     return devtools.open_decision_hour(ctx, scripted=body.scripted)
+
+
+@router.post("/tamper-regulation")
+def tamper_regulation(body: TamperIn, ctx: Ctx = Depends(get_ctx)) -> dict:
+    return devtools.tamper_regulation(ctx, body.key, body.value)

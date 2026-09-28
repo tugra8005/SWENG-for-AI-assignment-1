@@ -193,7 +193,8 @@ def test_ranges_from_the_task():
         "silme_esigi": [{"oran": "7/10", "karsilastirma": ">="}],
         "sessiz_onay_suresi": [{"saat": 12}, {"saat": 72}, {"gun": 3}],
         "itiraz_esigi": [{"min": 3, "oran": "1/50", "aktiflik_gun": 30},
-                         {"min": 3, "oran": "1/5", "aktiflik_gun": 30}],
+                         {"min": 3, "oran": "1/5", "aktiflik_gun": 30},
+                         {"min": 20, "oran": "1/20", "aktiflik_gun": 30}],
         "red_bekleme": [{"gun": 7}, {"gun": 90}],
         "olgunlasma_genel": [{"saat": 24}, {"gun": 14}],
         "ilgi_bekleme": [{"gun": 0}, {"gun": 30}],
@@ -210,7 +211,10 @@ def test_ranges_from_the_task():
         "silme_esigi": [{"oran": "3/5", "karsilastirma": ">"}],
         "sessiz_onay_suresi": [{"saat": 11}, {"gun": 4}],
         "itiraz_esigi": [{"min": 3, "oran": "1/100", "aktiflik_gun": 30},
-                         {"min": 3, "oran": "1/4", "aktiflik_gun": 30}],
+                         {"min": 3, "oran": "1/4", "aktiflik_gun": 30},
+                         {"min": 1, "oran": "1/20", "aktiflik_gun": 30},  # tek kişi yavaş şeride iter
+                         {"min": 2, "oran": "1/20", "aktiflik_gun": 30},
+                         {"min": 21, "oran": "1/20", "aktiflik_gun": 30}],
         "red_bekleme": [{"gun": 6}, {"gun": 91}],
         "olgunlasma_dar": [{"saat": 23}, {"gun": 15}],
         "ilgi_bekleme": [{"gun": 31}],
@@ -235,7 +239,7 @@ def test_range_descriptions_are_readable():
     assert text["sessiz_onay_suresi"] == "12 saat – 72 saat"
     assert text["olgunlasma_genel"] == "24 saat – 14 gün"
     assert text["ilgi_bekleme"] == "0 – 30 gün"
-    assert text["itiraz_esigi"] == "en az 1–20 itiraz · oran %2 – %20 · aktiflik 7–90 gün"
+    assert text["itiraz_esigi"] == "en az 3–20 itiraz · oran %2 – %20 · aktiflik 7–90 gün"
     assert text["orantisizlik_esigi"] == "5 – 30 yüzde puanı"
     assert text["D1"] is None
 

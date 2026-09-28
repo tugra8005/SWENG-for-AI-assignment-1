@@ -1,4 +1,5 @@
-"""Geliştirme araçları: sahte saati ilerletme ve Karar Saati'ni elle çalıştırma.
+"""Geliştirme araçları: sahte saati ilerletme, Karar Saati'ni elle çalıştırma ve yönetmeliği
+oylamasız değiştirme (operatörün sessiz değişikliğinin demosu).
 
 ``meşveret-dev`` CLI'ı bu fonksiyonları kullanır. Docker'sız yerel geliştirme sunucusu
 (``mesveret.devserver``) aynılarını ``/_dev`` uç noktalarından da sunar.
@@ -7,9 +8,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from mesveret import clock
 from mesveret.context import Ctx
+from mesveret.domain.regulation import RegulationError, range_violations, validate_value
 from mesveret.errors import Conflict, DomainError
 from mesveret.services import decision_hour, scheduler
 
@@ -47,3 +50,21 @@ def close_decision_hour(ctx: Ctx) -> dict:
     ctx.db.commit()
     done = scheduler.tick(ctx.at(session.closes_at), session.closes_at)
     return {"session": decision_hour.session_view(ctx, session.id), "events": done}
+
+
+def tamper_regulation(ctx: Ctx, key: str, value: Any) -> dict:
+    """Bir yönetmelik değerini oylamasız, doğrudan graf deposuna yazar: öneri, R8, değişiklik
+    geçmişi ve defter kaydı yoktur. Bir operatörün yapabileceğini taklit eder; ``/verify``in
+    yönetmelik bütünlüğü denetimi bunu FARKLI olarak göstermelidir. Biçim yine doğrulanır ki
+    çalışan uygulama okuyamayacağı bir değerle çökmesin; izinli aralık ise bilerek atlanır.
+    """
+    old = ctx.graph.articles().get(key)
+    if old is None:
+        raise DomainError(f"{key} yürürlükte bir yönetmelik maddesi değil.")
+    try:
+        new = validate_value(key, value)
+    except RegulationError as exc:
+        raise DomainError(str(exc)) from exc
+    ctx.graph.set_article(key, new)
+    ctx.invalidate_regulation()
+    return {"key": key, "old": old, "new": new, "outside": range_violations(key, new)}

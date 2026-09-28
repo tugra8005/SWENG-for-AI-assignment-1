@@ -71,6 +71,7 @@ Yalnızca `ENV=dev` iken çalışır. Tüm zamanlanmış işler sahte bir saate 
 | `meşveret-dev advance-time --hours 25` | Sahte saati ilerletir; aradaki işleri (sessiz onay bitişi, rakip metin süresi, haftalık Karar Saati) kendi vade anlarında sırayla işler. `--days`, `--minutes`, `--to 2026-10-04T20:00:00+03:00` da kullanılabilir |
 | `meşveret-dev run-karar-saati` | Hemen bir Karar Saati oturumu açar (anlık görüntü, havale kilidi, baskın tespiti, Hâtif'in oyu) ve tohumdaki oy planına göre tohum kullanıcılarının oylarını verir. `--no-scripted-votes` ile yalnızca oturumu açar |
 | `meşveret-dev run-karar-saati --close` | Saati pencere sonuna ilerletir, oyları açar, sayar ve sonuçları uygular |
+| `meşveret-dev tamper-regulation MADDE 'JSON'` | Yönetmelikteki bir değeri oylamasız, doğrudan veritabanında değiştirir: öneri, R8 denetimi, değişiklik geçmişi ve defter kaydı yoktur. Operatörün sessiz değişikliğini taklit eder (senaryo 12) |
 
 Komutlar API konteynerinde çalışır:
 
@@ -103,8 +104,9 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 | №20 | 9 · Olgunlaşma |
 | №17, №18 | 10 · Eşzamanlı çoğunluk |
 | — | 11 · Yönetmeliğin tabanı (açılışta reddedilen öneriler, izinli aralıklar, yönetmelik hash'i) |
+| — | 12 · Operatörün sessiz değişikliği |
 
-Senaryo 1, 6 ve 11 anında oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin.
+Senaryo 1, 6, 11 ve 12 anında oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin.
 
 ### 1. İstanbul vakası: otomatik daralma ve red
 
@@ -130,6 +132,30 @@ Senaryo 1, 6 ve 11 anında oynatılır. Senaryo 2, 3, 4, 5, 7, 8 ve 10 aynı Kar
 2. **kerem** olarak giriş yapın. Yönetmelik sayfasında `yonetmelik_esigi` → **Değişiklik öner** → yeni oran `1/2` → **Öneriyi aç**. Öneri açılmaz: *"R8 — yonetmelik_esigi değiştirilemez izinli aralığın dışında: ≥ 2/3 – ≥ 3/4. İzinli aralıklar oylamayla genişletilemez (D7)."* `4/5` de aynı gerekçeyle reddedilir (3/4'ün üstü fiilen kilitler); `3/4` denerseniz öneri açılır.
 3. Şerh hakkını kaldırmayı deneyin: `/oneri/yeni?type=YONETMELIK&action=kaldir&article=D3` adresini açın. Form maddenin değiştirilemez olduğunu kilitle gösterir; **Öneriyi aç** deyin: *"R8 — Bu madde değiştirilemez: D3 (Kaybeden taraf Şerh ekleyebilir; Şerh silinemez.) …"* Öneri kuyruğa girmez; değişiklik teklif bile edilemez.
 4. **Defter → Doğrula**: düğümlerin altındaki **Yönetmelik bütünlüğü** kutusu TUTARLI der. Çalışan kodun yönetmeliğinin hash'i, defterdeki son `YONETMELIK_DURUMU` kaydıyla (kurulumda yazılan başlangıç kaydı) aynıdır. Karar Saati kapandıktan sonra aynı kutu o oturumun sonunda yazılan kaydı gösterir. Oylamasız bir değişiklikte (veritabanına ya da grafa elle yazılan bir değer, kodda genişletilen bir aralık) kutu FARKLI der ve değişen maddeleri listeler; bunu `api/tests/integration/test_regulation_integrity.py` gösterir. Değişiklik engellenmez, yalnızca görünür olur.
+
+### 12. Operatörün sessiz değişikliği
+
+Değiştirilemezlik bir yazılım kuralıdır; sunucuyu işleten onu atlatabilir. Meşveret bunu engellemez, tespit edilebilir kılar (DESIGN.md §5.3).
+
+1. **Defter → Doğrula**: **Yönetmelik bütünlüğü** kutusu TUTARLI der.
+2. Operatör olarak sessiz onay süresini oylamasız, izinli aralığın (12 – 72 saat) dışına çekin:
+
+   ```bash
+   docker compose exec api meşveret-dev tamper-regulation sessiz_onay_suresi '{"saat": 2}'
+   ```
+
+   Komut eski ve yeni değeri yazar ve değerin izinli aralığın dışında olduğunu, R8'in atlandığını bildirir. Öneri açılmaz, deftere kayıt düşmez.
+3. **Yönetmelik** sayfasında `sessiz_onay_suresi` artık **2 saat** gösterir ve altında hâlâ "izinli: 12 saat – 72 saat" yazar. Oylamayla değişen maddelerin altında tarih ve öneri numarasıyla bir geçmiş satırı görünür; burada yoktur.
+4. **Defter → Doğrula**: **Yönetmelik bütünlüğü** kutusu bordo **FARKLI** der; çalışan kodun hash'i defterdeki son kaydın hash'inden farklıdır ve altta **farklı maddeler: sessiz_onay_suresi** yazar. Üç defter düğümü ise tutarlıdır: defterin kendisine dokunulmamıştır.
+5. Değeri geri alın; kutu yeniden TUTARLI der, çünkü yönetmelik defterdeki son kayıtla yine aynıdır:
+
+   ```bash
+   docker compose exec api meşveret-dev tamper-regulation sessiz_onay_suresi '{"saat": 24}'
+   ```
+
+**Sınır:** tespit yalnızca bir sonraki Karar Saati kapanışına kadar sürer. Oturum sonunda yazılan kayıt yönetmeliğin o anki hâlini, sessiz değişiklik dahil, olduğu gibi kaydeder; ondan sonra kutu yeniden TUTARLI der (DESIGN.md §15, 30. madde). Bu yüzden 5. adımı atlamayın: 2 saatlik sessiz onay, sonra oynatılan senaryoları da değiştirir.
+
+Docker'sız geliştirme modunda aynı işlem `POST /_dev/tamper-regulation` ile yapılır: gövde `{"key": "sessiz_onay_suresi", "value": {"saat": 2}}`.
 
 ### Karar Saati: senaryo 2, 3, 4, 5, 7, 8, 9 ve 10
 
@@ -223,7 +249,7 @@ scripts/test.sh
 
 - `api` birim testleri: saf alan mantığı, bellek içi graf, defter karşılaştırması.
 - `ledger` testleri: zincir bütünlüğü, bozulmuş zincirin tespiti, üç düğümlü çoğaltma.
-- Entegrasyon testleri: `docker-compose.test.yml` ile geçici PostgreSQL ve Neo4j (tmpfs, 55432 ve 57687 portları) başlatılır. API servisleri, on bir senaryonun tohum provası ve Neo4j graf deposunun sözleşme testleri çalışır.
+- Entegrasyon testleri: `docker-compose.test.yml` ile geçici PostgreSQL ve Neo4j (tmpfs, 55432 ve 57687 portları) başlatılır. API servisleri, senaryoların tohum provası ve Neo4j graf deposunun sözleşme testleri çalışır.
 
 Docker yoksa yalnızca Docker gerektirmeyen testler çalışır:
 
@@ -233,7 +259,7 @@ scripts/test.sh --unit
 
 ## Docker'sız geliştirme modu (isteğe bağlı)
 
-Neo4j yerine bellek içi graf kullanır; PostgreSQL erişilebilir olmalıdır. Açılışta tohumu baştan kurar. CLI ayrı süreçte bellek içi grafa erişemediği için zaman ve Karar Saati araçları bu modda `POST /_dev/advance-time` ve `POST /_dev/run-karar-saati` uç noktalarından sunulur. Asıl kurulum docker compose'dur.
+Neo4j yerine bellek içi graf kullanır; PostgreSQL erişilebilir olmalıdır. Açılışta tohumu baştan kurar. CLI ayrı süreçte bellek içi grafa erişemediği için zaman, Karar Saati ve sessiz değişiklik araçları bu modda `POST /_dev/advance-time`, `POST /_dev/run-karar-saati` ve `POST /_dev/tamper-regulation` uç noktalarından sunulur. Asıl kurulum docker compose'dur.
 
 ```bash
 DATABASE_URL=postgresql+psycopg://kullanici:sifre@127.0.0.1:5432/mesveret_dev scripts/dev_local.sh

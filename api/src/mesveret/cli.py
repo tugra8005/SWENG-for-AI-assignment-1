@@ -140,6 +140,36 @@ def run_karar_saati(
             typer.echo("Oyları arayüzden verin; kapatmak için: meşveret-dev run-karar-saati --close")
 
 
+@app.command("tamper-regulation")
+def tamper_regulation(
+    key: str = typer.Argument(..., metavar="MADDE", help="Madde anahtarı, ör. sessiz_onay_suresi"),
+    value: str = typer.Argument(..., metavar="DEĞER", help='JSON değer, ör. \'{"saat": 2}\''),
+) -> None:
+    """Yönetmelikteki bir değeri oylamasız, doğrudan veritabanında değiştirir (sessiz değişiklik demosu)."""
+    import json
+
+    from mesveret.errors import DomainError
+    from mesveret.services import devtools
+
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as exc:
+        typer.echo(f"Değer JSON olmalı (ör. '{{\"saat\": 2}}'): {exc.msg}.", err=True)
+        raise typer.Exit(code=1) from exc
+    with _ctx() as ctx:
+        try:
+            out = devtools.tamper_regulation(ctx, key, parsed)
+        except DomainError as exc:
+            typer.echo(exc.message, err=True)
+            raise typer.Exit(code=1) from exc
+        ctx.db.commit()
+    typer.echo(f"{out['key']}: {json.dumps(out['old'], ensure_ascii=False)} → "
+               f"{json.dumps(out['new'], ensure_ascii=False)} (öneri yok, oylama yok, defter kaydı yok)")
+    if out["outside"]:
+        typer.echo(f"  ! izinli aralığın dışında: {'; '.join(out['outside'])} (R8 atlandı)")
+    typer.echo("Defter → Doğrula: \"Yönetmelik bütünlüğü\" FARKLI göstermeli.")
+
+
 @app.command()
 def seed(
     reset: bool = typer.Option(False, "--reset", help="Tüm verileri silip baştan kur"),

@@ -161,7 +161,7 @@ def _articles() -> dict[str, Article]:
         Article("itiraz_esigi", "itiraz", {"min": 3, "oran": "1/20", "aktiflik_gun": 30},
                 "Hızlı şerit önerisini yavaş şeride aktaran itiraz sayısı: "
                 "max(min, kapsamdaki aktif üyelerin oranı). Aktif: son aktiflik_gun günde giriş.",
-                allowed={**_num(1, 20, "en az 1–20 itiraz", "min"),
+                allowed={**_num(3, 20, "en az 3–20 itiraz", "min"),
                          **_num(Fraction(1, 50), Fraction(1, 5), "oran %2 – %20", "oran"),
                          **_num(7, 90, "aktiflik 7–90 gün", "aktiflik_gun")}),
         Article("basit_cogunluk", "oran", {"oran": "1/2", "karsilastirma": ">"},
