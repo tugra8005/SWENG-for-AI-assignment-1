@@ -144,7 +144,7 @@ Değiştirilemezlik bir yazılım kuralıdır; sunucuyu işleten onu atlatabilir
    docker compose exec api meşveret-dev tamper-regulation sessiz_onay_suresi '{"saat": 2}'
    ```
 
-   Komut eski ve yeni değeri yazar ve değerin izinli aralığın dışında olduğunu, R8'in atlandığını bildirir. Öneri açılmaz, deftere kayıt düşmez.
+   Komut eski ve yeni değeri yazar, değerin izinli aralığın dışında olduğunu ve R8'in atlandığını bildirir, son satırda doğrulamanın sonucunu verir: **Yönetmelik bütünlüğü: FARKLI**. Öneri açılmaz, deftere kayıt düşmez.
 3. **Yönetmelik** sayfasında `sessiz_onay_suresi` artık **2 saat** gösterir ve altında hâlâ "izinli: 12 saat – 72 saat" yazar. Oylamayla değişen maddelerin altında tarih ve öneri numarasıyla bir geçmiş satırı görünür; burada yoktur.
 4. **Defter → Doğrula**: **Yönetmelik bütünlüğü** kutusu bordo **FARKLI** der; çalışan kodun hash'i defterdeki son kaydın hash'inden farklıdır ve altta **farklı maddeler: sessiz_onay_suresi** yazar. Üç defter düğümü ise tutarlıdır: defterin kendisine dokunulmamıştır.
 5. Değeri geri alın; kutu yeniden TUTARLI der, çünkü yönetmelik defterdeki son kayıtla yine aynıdır:

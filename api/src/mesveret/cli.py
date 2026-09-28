@@ -149,7 +149,7 @@ def tamper_regulation(
     import json
 
     from mesveret.errors import DomainError
-    from mesveret.services import devtools
+    from mesveret.services import devtools, regulation
 
     try:
         parsed = json.loads(value)
@@ -163,11 +163,13 @@ def tamper_regulation(
             typer.echo(exc.message, err=True)
             raise typer.Exit(code=1) from exc
         ctx.db.commit()
+        check = regulation.verify_state(ctx)
     typer.echo(f"{out['key']}: {json.dumps(out['old'], ensure_ascii=False)} → "
                f"{json.dumps(out['new'], ensure_ascii=False)} (öneri yok, oylama yok, defter kaydı yok)")
     if out["outside"]:
         typer.echo(f"  ! izinli aralığın dışında: {'; '.join(out['outside'])} (R8 atlandı)")
-    typer.echo("Defter → Doğrula: \"Yönetmelik bütünlüğü\" FARKLI göstermeli.")
+    label = {"tutarli": "TUTARLI", "farkli": "FARKLI", "kayit_yok": "KAYIT YOK"}[check["status"]]
+    typer.echo(f"Yönetmelik bütünlüğü: {label}. {check['message']}")
 
 
 @app.command()

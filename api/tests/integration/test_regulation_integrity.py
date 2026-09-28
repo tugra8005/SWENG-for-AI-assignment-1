@@ -126,8 +126,10 @@ def test_tamper_cli_command(ctx, client, monkeypatch):
     assert out.exit_code == 0, out.output
     assert 'sessiz_onay_suresi: {"saat": 24} → {"saat": 2}' in out.output
     assert "izinli aralığın dışında: 12 saat – 72 saat (R8 atlandı)" in out.output
+    assert "Yönetmelik bütünlüğü: FARKLI." in out.output
     assert _verify(client)["differences"] == ["sessiz_onay_suresi"]
     bad = runner.invoke(cli.app, ["tamper-regulation", "sessiz_onay_suresi", "saat=2"])
     assert bad.exit_code == 1 and "JSON" in bad.output
     back = runner.invoke(cli.app, ["tamper-regulation", "sessiz_onay_suresi", '{"saat": 24}'])
     assert back.exit_code == 0 and _verify(client)["status"] == "tutarli"
+    assert "Yönetmelik bütünlüğü: TUTARLI." in back.output

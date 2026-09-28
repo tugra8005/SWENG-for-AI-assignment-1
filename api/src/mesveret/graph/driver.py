@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Any
 
-from neo4j import Driver, GraphDatabase, Query
+from neo4j import Driver, GraphDatabase, NotificationDisabledClassification, Query
 
 from mesveret.config import get_settings
 
@@ -14,6 +14,9 @@ def get_driver() -> Driver:
         auth=(s.neo4j_user, s.neo4j_password),
         connection_timeout=5,
         max_transaction_retry_time=10,
+        # Boş grafta henüz oluşmamış ilişki tipi ya da özellik (ör. ilk HAVALE'den önce) için
+        # sunucunun "does not exist" uyarılarını kapatır; diğer bildirimler açık kalır.
+        notifications_disabled_classifications=[NotificationDisabledClassification.UNRECOGNIZED],
     )
 
 
