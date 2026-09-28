@@ -31,9 +31,8 @@ function History({ a }: { a: any }) {
 }
 
 /** Yönetmeliğin tabanı: anayasa sayfası gibi, çift çerçeveli belge. */
-function Constitution({ items }: { items: any[] }) {
+function Constitution({ items, ranged }: { items: any[]; ranged: any[] }) {
   const principles = items.filter((a) => a.kind === 'temel_ilke');
-  const floors = items.filter((a) => a.kind === 'taban');
   return (
     <View style={st.charter} accessibilityRole="summary">
       <View style={st.charterInner}>
@@ -63,23 +62,16 @@ function Constitution({ items }: { items: any[] }) {
           </View>
         ))}
         <Rule />
-        <Text style={st.charterSub}>Eşik tabanları</Text>
-        {floors.map((a) => (
-          <View key={a.key} style={st.charterArticle}>
-            <View style={st.charterNum}>
-              <Text style={st.charterNumText}>Taban</Text>
-              <LockIcon size={12} />
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={st.charterArticleTitle}>{describeArticleValue('taban', a.value)}</Text>
-              <Text style={st.charterArticleText}>
-                {a.value.madde} oylamayla yükseltilebilir, bu değerin altına indirilemez ({a.key}).
-              </Text>
-            </View>
-          </View>
-        ))}
+        <Text style={st.charterSub}>İzinli aralıklar</Text>
+        <Text style={st.charterArticleText}>
+          Her sayısal parametrenin değiştirilemez bir izinli aralığı vardır ({ranged.length} parametre). Değer
+          aralığın içinde oylamayla değişir; aralık D7 kapsamında değişmez. Aralıklar aşağıda her parametrenin
+          yanında kilitle gösterilir. Aralıklar tasarımcının seçimidir ve keyfîdir; gerekçeleri tasarım
+          belgesindedir.
+        </Text>
         <Text style={st.charterFoot}>
-          Bir maddeye dokunan ya da bir eşiği tabanının altına indiren öneri açılışta reddedilir (R8).
+          Bir maddeye dokunan ya da bir parametreyi izinli aralığının dışına çıkaran öneri açılışta reddedilir
+          (R8). Yönetmeliğin tam hâli her Karar Saati sonunda hash&apos;iyle deftere yazılır.
         </Text>
       </View>
     </View>
@@ -99,11 +91,11 @@ export default function Regulation() {
       <Muted>
         Tüm eşikler ve süreler bu maddelerde durur; kod hiçbir eşiği sabit yazmaz. Değiştirilemez maddeler
         dışında her madde Genel kapsamda, Karar Saati&apos;nde yonetmelik_esigi ile değişir — bu maddenin
-        kendisi de, ama tabanının altına inemez.
+        kendisi de. Her sayısal parametre değiştirilemez izinli aralığının içinde kalır.
       </Muted>
       <Rule double />
       {!list.data ? <Loading /> : null}
-      {list.data ? <Constitution items={constitution} /> : null}
+      {list.data ? <Constitution items={constitution} ranged={(list.data ?? []).filter((a) => a.range)} /> : null}
       {list.data ? (
         <Section title="İçerik kuralları" aside={<Kicker>silmenin tek dayanağı</Kicker>}>
           <Muted>
@@ -149,12 +141,10 @@ export default function Regulation() {
                 <Text style={st.key}>{a.key}</Text>
               </View>
               <Text style={st.value}>{describeArticleValue(a.kind, a.value)}</Text>
-              {a.floor ? (
-                <View style={st.floor}>
+              {a.range ? (
+                <View style={st.floor} aria-label={`izinli aralık ${a.range}, değiştirilemez`}>
                   <LockIcon size={11} />
-                  <Text style={st.floorText}>
-                    taban {a.floor.karsilastirma === '>' ? '>' : '≥'} {a.floor.oran} · değiştirilemez
-                  </Text>
+                  <Text style={st.floorText}>izinli: {a.range}</Text>
                 </View>
               ) : null}
               <Muted>{a.description}</Muted>

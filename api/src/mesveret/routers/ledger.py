@@ -3,16 +3,19 @@ from fastapi import APIRouter, Depends
 from mesveret.context import Ctx
 from mesveret.errors import DomainError, NotFound
 from mesveret.routers.deps import get_ctx
-from mesveret.services import ledger
+from mesveret.services import ledger, regulation
 
 router = APIRouter(prefix="/ledger", tags=["defter"])
 
 
 @router.get("/verify")
 def verify(ctx: Ctx = Depends(get_ctx)) -> dict:
-    """Üç düğümün zincir bütünlüğünü ve birbirleriyle tutarlılığını denetler."""
+    """Üç düğümün zincir bütünlüğünü ve birbirleriyle tutarlılığını denetler; çalışan kodun
+    uyguladığı yönetmeliği defterdeki son yönetmelik kaydıyla karşılaştırır."""
     ledger.flush(ctx)
-    return ledger.verify_nodes(ctx.ledger)
+    result = ledger.verify_nodes(ctx.ledger)
+    result["yonetmelik"] = regulation.verify_state(ctx)
+    return result
 
 
 @router.get("/records/{hash_prefix}")

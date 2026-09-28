@@ -135,3 +135,13 @@ def test_rechained_tamper_passes_local_verify_but_diverges_from_leader(cluster, 
     assert cluster.clients[F2].get("/verify").json()["ok"]
     assert cluster.tip(F2)["hash"] != cluster.tip(LEADER)["hash"]
     assert cluster.tip(F2)["seq"] == cluster.tip(LEADER)["seq"]
+
+
+def test_last_record_of_a_type_is_served_by_every_node(cluster):
+    c = cluster.clients[LEADER]
+    for i, type_ in enumerate(("YONETMELIK_DURUMU", "TEST", "YONETMELIK_DURUMU", "TEST"), start=1):
+        c.post("/append", json={"type": type_, "payload": {"i": i}, "ts": f"2026-09-29T10:00:{i:02d}Z"})
+    for url in (LEADER, F2, F3):
+        rec = cluster.clients[url].get("/records/last-of-type/YONETMELIK_DURUMU").json()
+        assert (rec["seq"], rec["payload"]) == (3, {"i": 3})
+    assert c.get("/records/last-of-type/YOK").status_code == 404

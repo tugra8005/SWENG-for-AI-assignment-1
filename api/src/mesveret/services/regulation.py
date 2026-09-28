@@ -1,11 +1,18 @@
-"""Yönetmelik maddeleri: kurulum, okuma ve oylamayla değişim.
+"""Yönetmelik maddeleri: kurulum, okuma, oylamayla değişim ve defterdeki izi.
 
 Parametre maddelerinin yalnızca değeri değişir. İçerik kuralları (IK-<n>) ayrıca yönetmelik
 önerisiyle eklenip kaldırılabilir; kaldırılan bir kuralın kodu bir daha kullanılmaz.
+
+Yönetmeliğin tam hâli (değerler, değiştirilemez bayrakları, izinli aralıklar) kurulumda ve her
+Karar Saati sonunda hash'iyle deftere yazılır (``YONETMELIK_DURUMU``). ``/ledger/verify`` çalışan
+kodun uyguladığı yönetmeliği defterdeki son kayıtla karşılaştırır: operatörün oylamasız
+değişikliği engellenmez ama tespit edilir.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any
 
 from sqlalchemy import select
@@ -19,10 +26,14 @@ from mesveret.domain.regulation import (
     RegulationError,
     article_kind,
     content_rule_number,
+    describe_range,
+    range_bounds,
+    range_violations,
     validate_value,
 )
 from mesveret.domain.scopes import GENERAL_SCOPE_ID
 from mesveret.errors import DomainError
+from mesveret.services import ledger
 
 ARTICLE_PREFIX = "madde:"
 # Kural ekleme önerisinin ETKILER etiketi: henüz var olmayan kuralın yerine kural kümesi.
@@ -51,6 +62,7 @@ def install_defaults(ctx: Ctx) -> None:
         GENERAL_SCOPE_ID,
     ))
     ctx.invalidate_regulation()
+    record_state(ctx, None)  # başlangıç kaydı
 
 
 def next_content_rule_code(ctx: Ctx) -> str:
@@ -85,6 +97,8 @@ def apply_change(ctx: Ctx, key: str, value: dict[str, Any] | None, proposal_id: 
             if old is None:
                 raise DomainError(f"{key} yürürlükte değil; değiştirilemez.")
             new_value = validate_value(key, value)
+            if outside := range_violations(key, new_value):
+                raise DomainError(f"{key} izinli aralığın dışında: {'; '.join(outside)}.")
             ctx.graph.set_article(key, new_value)
     except RegulationError as exc:
         raise DomainError(str(exc)) from exc
@@ -96,7 +110,6 @@ def apply_change(ctx: Ctx, key: str, value: dict[str, Any] | None, proposal_id: 
 
 def _entry(ctx: Ctx, key: str, kind: str, value: Any, history: list[dict]) -> dict:
     article = DEFAULT_ARTICLES.get(key)
-    floor = ctx.reg.floor_for(key)
     return {
         "key": key,
         "value": value,
@@ -106,9 +119,7 @@ def _entry(ctx: Ctx, key: str, kind: str, value: Any, history: list[dict]) -> di
         "history": history,
         "removed": value is None,
         "unchangeable": ctx.reg.is_unchangeable(key),
-        "floor": None if floor is None else {
-            "key": floor[0], "oran": f"{floor[1].value.numerator}/{floor[1].value.denominator}",
-            "karsilastirma": floor[1].comparison},
+        "range": describe_range(key),  # değiştirilemez izinli aralık
     }
 
 
@@ -128,3 +139,60 @@ def listing(ctx: Ctx) -> list[dict]:
     rules = [_entry(ctx, k, CONTENT_RULE_KIND, values.get(k), history.get(k, []))
              for k in rule_keys]
     return params + rules
+
+
+# --- defterdeki iz ----------------------------------------------------------------------------------
+
+STATE_RECORD = "YONETMELIK_DURUMU"
+
+
+def state(ctx: Ctx) -> dict[str, dict]:
+    """Çalışan kodun uyguladığı yönetmeliğin tam hâli: değer, değiştirilemezlik, izinli aralık
+    (metni ve uygulanan sınırları)."""
+    values = ctx.graph.articles()
+    unchangeable = ctx.graph.unchangeable_articles()
+    return {
+        key: {"deger": values.get(key), "degistirilemez": key in unchangeable,
+              "izinli_aralik": describe_range(key), "izinli_sinirlar": range_bounds(key)}
+        for key in sorted(set(values) | set(DEFAULT_ARTICLES))
+    }
+
+
+def state_hash(st: dict) -> str:
+    canonical = json.dumps(st, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def record_state(ctx: Ctx, session_id: int | None) -> None:
+    st = state(ctx)
+    ledger.enqueue(ctx, STATE_RECORD, {"oturum": session_id, "hash": state_hash(st), "durum": st})
+
+
+def verify_state(ctx: Ctx) -> dict:
+    """Çalışan kodun yönetmeliğini defterdeki son ``YONETMELIK_DURUMU`` kaydıyla karşılaştırır."""
+    current = state(ctx)
+    current_hash = state_hash(current)
+    rec = ledger.last_of_type(ctx.ledger, STATE_RECORD)
+    if rec is None:
+        return {"status": "kayit_yok", "current_hash": current_hash, "recorded_hash": None,
+                "differences": [], "message": "Defterde yönetmelik kaydı yok."}
+    payload = rec["payload"]
+    recorded = payload.get("durum", {})
+    differences = sorted(k for k in set(current) | set(recorded)
+                         if current.get(k) != recorded.get(k))
+    same = payload.get("hash") == current_hash
+    where = f"#{payload['oturum']} numaralı oturumun sonunda" if payload.get("oturum") else "kurulumda"
+    return {
+        "status": "tutarli" if same else "farkli",
+        "current_hash": current_hash,
+        "recorded_hash": payload.get("hash"),
+        "record_hash": rec.get("hash"),
+        "record_seq": rec.get("seq"),
+        "session": payload.get("oturum"),
+        "recorded_at": rec.get("ts"),
+        "record_consistent": state_hash(recorded) == payload.get("hash"),
+        "differences": differences,
+        "message": (f"Çalışan kodun yönetmeliği {where} deftere yazılan hâliyle aynı." if same else
+                    f"Çalışan kodun yönetmeliği {where} deftere yazılan hâlinden farklı: "
+                    f"{', '.join(differences)}. Bu değişiklik oylamasız yapılmış olabilir."),
+    }

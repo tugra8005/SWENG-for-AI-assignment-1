@@ -9,10 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
-from fractions import Fraction
 
 from mesveret.domain.ontology import OntologyView, ResourceInfo, ResourceKind, ScopeInfo
-from mesveret.domain.regulation import Ratio, Regulation
+from mesveret.domain.regulation import Regulation, range_violations
 from mesveret.domain.scopes import GENERAL_SCOPE_ID, ScopeSubtype
 from mesveret.domain.text import contains_words, genitive, tokens
 from mesveret.domain.types import ProposalType
@@ -278,7 +277,7 @@ def _check_r7(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
 
 
 def _check_r8(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
-    """Yönetmeliğin tabanı: değiştirilemez maddeye dokunulamaz, eşik tabanının altına inemez."""
+    """Yönetmeliğin tabanı: değiştirilemez maddeye dokunulamaz; parametre izinli aralığında kalır."""
     if d.type is not ProposalType.YONETMELIK or not d.article_key:
         return
     key = d.article_key
@@ -289,20 +288,13 @@ def _check_r8(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
                   "maddeler oylamayla değiştirilemez, kaldırılamaz; değiştirilmeleri önerilemez (D7).",
         ))
         return
-    floor = c.reg.floor_for(key)
-    if floor is None or d.article_action not in (None, "degistir") or not d.new_value:
+    if d.article_action not in (None, "degistir") or not d.new_value:
         return
-    floor_key, floor_ratio = floor
-    try:
-        proposed = Ratio(Fraction(str(d.new_value.get("oran"))),
-                         d.new_value.get("karsilastirma", ">="))
-    except (ValueError, ZeroDivisionError):
-        return  # biçim hatasını değer doğrulaması bildirir
-    if not proposed.at_least_as_strict_as(floor_ratio):
-        op = "≥" if floor_ratio.comparison == ">=" else ">"
+    outside = range_violations(key, d.new_value)
+    if outside:
         report.violations.append(Violation(
-            "R8", f"{key} değiştirilemez tabanın altına inemez: en az {floor_ratio.value} ({op}) "
-                  f"olmalı (taban: {floor_key}, değiştirilemez madde).",
+            "R8", f"{key} değiştirilemez izinli aralığın dışında: {'; '.join(outside)}. İzinli "
+                  "aralıklar oylamayla genişletilemez (D7).",
         ))
 
 

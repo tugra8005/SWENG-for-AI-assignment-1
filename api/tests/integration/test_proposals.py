@@ -611,7 +611,8 @@ def test_lowering_regulation_threshold_to_half_is_rejected_at_opening(ctx, clien
     })
     assert r.status_code == 422
     [v] = r.json()["violations"]
-    assert v["rule"] == "R8" and "yonetmelik_esigi değiştirilemez tabanın altına inemez" in v["message"]
+    assert v["rule"] == "R8"
+    assert v["message"].startswith("yonetmelik_esigi değiştirilemez izinli aralığın dışında: ≥ 2/3 – ≥ 3/4")
     # Tabanın üstüne çıkmak serbest.
     p = proposals.open_proposal(ctx, a, ProposalInput(
         type="YONETMELIK", article_key="yonetmelik_esigi", new_value={"oran": "3/4", "karsilastirma": ">="},
@@ -625,8 +626,8 @@ def test_removing_the_right_of_dissent_is_rejected_at_opening(ctx, client):
         {"type": "YONETMELIK", "article_key": "D3", "article_action": "kaldir"},
         {"type": "YONETMELIK", "article_key": "D3",
          "new_value": {"baslik": "Şerh yoktur.", "metin": "Kaybeden taraf şerh ekleyemez."}},
-        {"type": "YONETMELIK", "article_key": "silme_esigi_tabani",
-         "new_value": {"madde": "silme_esigi", "oran": "1/2", "karsilastirma": ">"}},
+        {"type": "YONETMELIK", "article_key": "D7",
+         "new_value": {"baslik": "Bu liste değişebilir.", "metin": "—"}},
     ):
         r = client.post("/proposals", headers=headers_for(ctx, a), json=body)
         assert r.status_code == 422, body
@@ -634,14 +635,26 @@ def test_removing_the_right_of_dissent_is_rejected_at_opening(ctx, client):
         assert v["rule"] == "R8" and v["message"].startswith("Bu madde değiştirilemez"), v
 
 
-def test_regulation_listing_marks_unchangeable_articles_and_floors(ctx, client):
+def test_regulation_listing_marks_unchangeable_articles_and_ranges(ctx, client):
     listing = {a["key"]: a for a in client.get("/regulation").json()}
     assert listing["D1"]["unchangeable"] is True and listing["D1"]["kind"] == "temel_ilke"
-    assert listing["yonetmelik_esigi_tabani"]["unchangeable"] is True
+    assert listing["D1"]["range"] is None
     assert listing["yonetmelik_esigi"]["unchangeable"] is False
-    assert listing["yonetmelik_esigi"]["floor"] == {
-        "key": "yonetmelik_esigi_tabani", "oran": "2/3", "karsilastirma": ">="}
-    assert ctx.graph.unchangeable_articles() >= {"D1", "D7", "silme_esigi_tabani"}
+    assert listing["yonetmelik_esigi"]["range"] == "≥ 2/3 – ≥ 3/4"
+    assert listing["mahzen_kapasite"]["range"] == "30 – 300 başlık"
+    assert ctx.graph.unchangeable_articles() == {f"D{i}" for i in range(1, 8)}
+
+
+def test_every_out_of_range_parameter_change_is_rejected_at_opening(ctx):
+    a = make_user(ctx, "ayse")
+    for key, value in (("basit_cogunluk", {"oran": "3/4", "karsilastirma": ">="}),
+                       ("sessiz_onay_suresi", {"saat": 6}),
+                       ("itiraz_esigi", {"min": 3, "oran": "1/100", "aktiflik_gun": 30}),
+                       ("musavir_esigi", {"deger": 100})):
+        with pytest.raises(DomainError) as err:
+            proposals.open_proposal(ctx, a, ProposalInput(type="YONETMELIK", article_key=key,
+                                                          new_value=value))
+        assert err.value.violations[0]["rule"] == "R8", key
 
 
 def test_unchangeable_article_cannot_be_applied_even_directly(ctx):

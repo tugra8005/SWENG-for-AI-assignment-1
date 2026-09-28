@@ -9,8 +9,9 @@ kuralı bir metin kuralıdır; başkasının içeriğini silme önerisi en az bi
 Parametrelerin kümesi sabittir, yalnızca değerleri değişir. İçerik kuralları ise yönetmelik
 önerisiyle eklenip kaldırılabilir; tohumdaki üç kural bilerek dardır.
 
-Yönetmeliğin bir tabanı vardır: değiştirilemez maddeler (D1–D7 temel ilkeleri ve eşik tabanları).
-Bunlar oylamayla değiştirilemez, kaldırılamaz; eşikler tabanlarının altına indirilemez (R8).
+Yönetmeliğin bir tabanı vardır: değiştirilemez maddeler (D1–D7 temel ilkeleri) ve her sayısal
+parametrenin değiştirilemez izinli aralığı. Maddeler oylamayla değiştirilemez, kaldırılamaz;
+parametreler aralıklarının dışına çıkarılamaz (R8).
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from __future__ import annotations
 import math
 import re
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 from fractions import Fraction
 from typing import Any
@@ -49,6 +50,39 @@ class Ratio:
         op = "fazlası" if self.comparison == ">" else "en az"
         pct = f"%{float(self.value) * 100:.4g}"
         return f"{self.value} ({pct}) — {op}" if self.comparison == ">" else f"{op} {self.value} ({pct})"
+
+
+@dataclass(frozen=True)
+class Interval:
+    """Değiştirilemez izinli aralık (uçlar dahil). Oranlarda uçlar ``Ratio``dur: değer alt uçtan
+    daha katı ya da ona eşit, üst uçtan daha gevşek ya da ona eşit olmalı."""
+
+    lo: Fraction | Ratio
+    hi: Fraction | Ratio
+    text: str  # "12 saat – 72 saat", "> 1/2 – ≥ 2/3"
+
+    def contains(self, x: Fraction | Ratio) -> bool:
+        if isinstance(self.lo, Ratio) and isinstance(self.hi, Ratio) and isinstance(x, Ratio):
+            return x.at_least_as_strict_as(self.lo) and self.hi.at_least_as_strict_as(x)
+        return self.lo <= x <= self.hi  # type: ignore[operator]
+
+
+def _hours(lo: float, hi: float, text: str | None = None) -> dict[str, Interval]:
+    return {"sure": Interval(Fraction(lo), Fraction(hi), text or f"{lo} saat – {hi} saat")}
+
+
+def _days(lo: int, hi: int, text: str | None = None) -> dict[str, Interval]:
+    return {"sure": Interval(Fraction(lo * 24), Fraction(hi * 24), text or f"{lo} – {hi} gün")}
+
+
+def _ratio(lo_cmp: str, lo: str, hi_cmp: str, hi: str) -> dict[str, Interval]:
+    op = {">": ">", ">=": "≥"}
+    return {"oran": Interval(Ratio(Fraction(lo), lo_cmp), Ratio(Fraction(hi), hi_cmp),
+                             f"{op[lo_cmp]} {lo} – {op[hi_cmp]} {hi}")}
+
+
+def _num(lo: float, hi: float, text: str, name: str = "deger") -> dict[str, Interval]:
+    return {name: Interval(Fraction(str(lo)), Fraction(str(hi)), text)}
 
 
 @dataclass(frozen=True)
@@ -86,6 +120,8 @@ class Article:
     min_ratio: Fraction = Fraction(0)
     max_ratio: Fraction = Fraction(1)
     unchangeable: bool = False  # YonetmelikMaddesi.degistirilemez
+    # Sayısal parametrenin değiştirilemez izinli aralığı: ölçülen nicelik → aralık (bkz. _measures).
+    allowed: Mapping[str, Interval] = field(default_factory=dict)
 
 
 WEEKDAYS = ["PAZARTESI", "SALI", "CARSAMBA", "PERSEMBE", "CUMA", "CUMARTESI", "PAZAR"]
@@ -111,84 +147,105 @@ PRINCIPLES = [
     ("D6", "Defter değiştirilemez.",
      "Deftere yazılan kayıt güncellenemez ve silinemez; zincir herkes tarafından doğrulanabilir."),
     ("D7", "Bu listenin kendisi.",
-     ("D1–D7 ve eşik tabanları değiştirilemez; listeye madde eklenemez, listeden madde "
-      "çıkarılamaz, bir madde değiştirilebilir yapılamaz.")),
+     ("D1–D7 ve sayısal parametrelerin izinli aralıkları değiştirilemez; listeye madde "
+      "eklenemez, listeden madde çıkarılamaz, bir madde değiştirilebilir yapılamaz, bir aralık "
+      "genişletilemez.")),
 ]
 
 
 def _articles() -> dict[str, Article]:
     items = [
+        # İzinli aralıklar (allowed) değiştirilemez; seçimleri ve gerekçeleri DESIGN.md §5.2'de.
         Article("sessiz_onay_suresi", "sure", {"saat": 24},
-                "Hızlı şeritteki önerinin itiraza açık kalma süresi."),
+                "Hızlı şeritteki önerinin itiraza açık kalma süresi.", allowed=_hours(12, 72)),
         Article("itiraz_esigi", "itiraz", {"min": 3, "oran": "1/20", "aktiflik_gun": 30},
                 "Hızlı şerit önerisini yavaş şeride aktaran itiraz sayısı: "
-                "max(min, kapsamdaki aktif üyelerin oranı). Aktif: son aktiflik_gun günde giriş."),
+                "max(min, kapsamdaki aktif üyelerin oranı). Aktif: son aktiflik_gun günde giriş.",
+                allowed={**_num(1, 20, "en az 1–20 itiraz", "min"),
+                         **_num(Fraction(1, 50), Fraction(1, 5), "oran %2 – %20", "oran"),
+                         **_num(7, 90, "aktiflik 7–90 gün", "aktiflik_gun")}),
         Article("basit_cogunluk", "oran", {"oran": "1/2", "karsilastirma": ">"},
-                "Kullanılan oylar içinde kabul için gereken pay.", Fraction(1, 2)),
-        # Alt sınırı değiştirilemez taban maddesidir (yonetmelik_esigi_tabani); doğrulayıcı
-        # yalnızca biçime bakar, taban R8'de denetlenir.
+                "Kullanılan oylar içinde kabul için gereken pay.", Fraction(1, 2),
+                allowed=_ratio(">", "1/2", ">=", "2/3")),
         Article("yonetmelik_esigi", "oran", {"oran": "2/3", "karsilastirma": ">="},
                 "Yönetmelik değişikliği için kullanılan oylar içinde gereken pay. "
-                "Bu maddenin kendisi de bu eşikle değişir; tabanı 2/3'tür."),
+                "Bu maddenin kendisi de bu eşikle değişir.",
+                allowed=_ratio(">=", "2/3", ">=", "3/4")),
         Article("silme_esigi", "oran", {"oran": "2/3", "karsilastirma": ">="},
                 "Başkasının içeriğini silmek için kullanılan oylar içinde gereken pay. Kendi "
-                "mesajının silinmesi basit çoğunlukla oylanır; tabanı 2/3'tür."),
+                "mesajının silinmesi basit çoğunlukla oylanır.",
+                allowed=_ratio(">=", "2/3", ">=", "3/4")),
         Article("orantisizlik_esigi", "yuzde_puani", {"deger": 10},
                 "Bölünebilir kaynakta bir alt kapsamın payındaki göreli azalma, tüm alt "
                 "kapsamların ortalama göreli değişiminden en az bu kadar yüzde puanı fazlaysa o "
-                "kapsam orantısız etkilenir ve öneri o kapsamda ayrıca oylanır."),
+                "kapsam orantısız etkilenir ve öneri o kapsamda ayrıca oylanır.",
+                allowed=_num(5, 30, "5 – 30 yüzde puanı")),
         Article("red_bekleme", "sure", {"gun": 30},
-                "Oylamayla reddedilen hedefe yeni öneri açılamayan süre."),
+                "Oylamayla reddedilen hedefe yeni öneri açılamayan süre.", allowed=_days(7, 90)),
         Article("musavir_esigi", "tamsayi", {"deger": 5},
-                "Bir alanda Müşavir etiketi için gereken doğrudan havale sayısı."),
+                "Bir alanda Müşavir etiketi için gereken doğrudan havale sayısı.",
+                allowed=_num(3, 50, "3 – 50 havale")),
         Article("ilgi_bekleme", "sure", {"gun": 14},
-                "İlgi kapsamına katıldıktan sonra oy hakkının doğması için geçen süre."),
+                "İlgi kapsamına katıldıktan sonra oy hakkının doğması için geçen süre.",
+                allowed=_days(0, 30)),
         Article("adres_bekleme", "sure", {"gun": 90},
-                "Adres değişikliğinden sonra yeni şehirde oy hakkının doğması için geçen süre."),
+                "Adres değişikliğinden sonra yeni şehirde oy hakkının doğması için geçen süre.",
+                allowed=_days(0, 180)),
         Article("karar_saati", "karar_saati",
                 {"gun": "PAZAR", "saat": "20:00", "tz": "Europe/Istanbul", "pencere_dakika": 60},
-                "Haftalık planlı oylama oturumu ve oy penceresinin uzunluğu."),
+                "Haftalık planlı oylama oturumu ve oy penceresinin uzunluğu.",
+                allowed=_num(30, 180, "pencere 30 – 180 dakika", "pencere_dakika")),
         Article("kapanis_rakip_suresi", "sure", {"saat": 48},
-                "Kapanış önerisine rakip karar metni eklenebilen süre."),
+                "Kapanış önerisine rakip karar metni eklenebilen süre.",
+                allowed=_hours(24, 7 * 24, "24 saat – 7 gün")),
         Article("yeniden_acma", "sure", {"gun": 90},
-                "Karara bağlanmış konunun yeniden açılabilmesi için geçmesi gereken süre."),
+                "Karara bağlanmış konunun yeniden açılabilmesi için geçmesi gereken süre.",
+                allowed=_days(30, 365)),
         Article("olgunlasma_dar", "sure", {"saat": 48},
                 "Tek bir nitelik kapsamına ya da yaprak alanın ilgi kapsamına sorulan öneri, "
-                "Karar Saati'nde oylanmadan önce en az bu kadar yayında kalır."),
+                "Karar Saati'nde oylanmadan önce en az bu kadar yayında kalır.",
+                allowed=_hours(24, 14 * 24, "24 saat – 14 gün")),
         Article("olgunlasma_genis", "sure", {"saat": 72},
-                "Daha geniş (yaprak olmayan alanın ilgi kapsamına sorulan) öneri için olgunlaşma."),
+                "Daha geniş (yaprak olmayan alanın ilgi kapsamına sorulan) öneri için olgunlaşma.",
+                allowed=_hours(24, 14 * 24, "24 saat – 14 gün")),
         Article("olgunlasma_genel", "sure", {"gun": 7},
-                "Genel kapsamlı ve yönetmelik önerileri için olgunlaşma."),
+                "Genel kapsamlı ve yönetmelik önerileri için olgunlaşma.",
+                allowed=_hours(24, 14 * 24, "24 saat – 14 gün")),
         Article("mahzen_kapasite", "tamsayi", {"deger": 100},
-                "Mahzen'de yaşayan en fazla başlık sayısı; aşılınca en alttaki kalıcı silinir."),
+                "Mahzen'de yaşayan en fazla başlık sayısı; aşılınca en alttaki kalıcı silinir.",
+                allowed=_num(30, 300, "30 – 300 başlık")),
         Article("mahzen_ust_sinir", "tamsayi", {"deger": 300},
-                "Bu yanıt sayısına ulaşan Mahzen başlığı artık yükselemez."),
+                "Bu yanıt sayısına ulaşan Mahzen başlığı artık yükselemez.",
+                allowed=_num(50, 1000, "50 – 1000 yanıt")),
         Article("mahzen_ifsa_esigi", "oran", {"oran": "1/2", "karsilastirma": ">"},
                 "İfşa oylamasının geçmesi için EVET sayısının seçmen listesine oranı.",
-                Fraction(0)),
+                Fraction(0), allowed=_ratio(">", "1/2", ">=", "3/4")),
         Article("baskin_yeni_uye_suresi", "sure", {"gun": 7},
-                "Anlık görüntüden en fazla bu kadar önce katılan seçmen baskın adayıdır."),
+                "Anlık görüntüden en fazla bu kadar önce katılan seçmen baskın adayıdır.",
+                allowed=_days(1, 30)),
         Article("baskin_katilim_araligi", "sure", {"saat": 24},
-                "Baskın kümesindeki katılım anlarının yayılabileceği en uzun aralık."),
+                "Baskın kümesindeki katılım anlarının yayılabileceği en uzun aralık.",
+                allowed=_hours(1, 7 * 24, "1 saat – 7 gün")),
         Article("baskin_min_kume", "tamsayi", {"deger": 4},
-                "Baskın olarak işaretlenecek en küçük küme boyutu."),
+                "Baskın olarak işaretlenecek en küçük küme boyutu.",
+                allowed=_num(3, 20, "3 – 20 hesap")),
         Article("baskin_yogunluk_esigi", "oran", {"oran": "1/2", "karsilastirma": ">="},
-                "Baskın kümesinde gereken kenar yoğunluğu (kenar / olası kenar)."),
+                "Baskın kümesinde gereken kenar yoğunluğu (kenar / olası kenar).",
+                allowed=_ratio(">=", "1/3", ">=", "1")),
         Article("baskin_min_agirlik", "sayi", {"deger": 1},
-                "Kümelemede kenar sayılması için gereken en düşük etkileşim ağırlığı."),
+                "Kümelemede kenar sayılması için gereken en düşük etkileşim ağırlığı.",
+                allowed=_num(Fraction(1, 2), 10, "0,5 – 10")),
         Article("etkilesim_agirliklari", "agirliklar",
                 {"yanit": 1, "havale": 2, "yakin_kayit": 1, "yakin_kayit_dk": 60,
                  "ortak_baslik": 0.5, "ortak_baslik_dk": 30},
-                "İlişki grafındaki sinyallerin ağırlıkları ve zaman pencereleri."),
+                "İlişki grafındaki sinyallerin ağırlıkları ve zaman pencereleri.",
+                allowed={**{k: Interval(Fraction(1, 10), Fraction(10), "ağırlıklar 0,1 – 10")
+                            for k in ("yanit", "havale", "yakin_kayit", "ortak_baslik")},
+                         **{k: Interval(Fraction(5), Fraction(240), "pencereler 5 – 240 dakika")
+                            for k in ("yakin_kayit_dk", "ortak_baslik_dk")}}),
         # Değiştirilemez maddeler: yönetmeliğin tabanı (bkz. DESIGN.md §5.1).
         *(Article(key, "temel_ilke", {"baslik": title, "metin": text}, "Değiştirilemez madde.",
                   unchangeable=True) for key, title, text in PRINCIPLES),
-        Article("yonetmelik_esigi_tabani", "taban",
-                {"madde": "yonetmelik_esigi", "oran": "2/3", "karsilastirma": ">="},
-                "yonetmelik_esigi bu değerin altına indirilemez.", unchangeable=True),
-        Article("silme_esigi_tabani", "taban",
-                {"madde": "silme_esigi", "oran": "2/3", "karsilastirma": ">="},
-                "silme_esigi bu değerin altına indirilemez.", unchangeable=True),
         # İçerik kuralları: silme önerisinin dayanabileceği tek gerekçeler.
         Article("IK-1", CONTENT_RULE_KIND, {
             "baslik": "Spam ve reklam",
@@ -251,7 +308,9 @@ def _v_sure(article: Article, value: Mapping) -> dict:
     if len(value) != 1:
         raise RegulationError("Süre tek bir birimle verilmeli: dakika, saat ya da gun.")
     (unit, amount), = value.items()
-    return {unit: _positive_number(amount, "Süre", integer=True)}
+    if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
+        raise RegulationError("Süre negatif olmayan bir tam sayı olmalı.")
+    return {unit: amount}
 
 
 def _v_oran(article: Article, value: Mapping) -> dict:
@@ -329,15 +388,6 @@ def _v_temel_ilke(article: Article, value: Mapping) -> dict:
     return {"baslik": value["baslik"].strip(), "metin": value["metin"].strip()}
 
 
-def _v_taban(article: Article, value: Mapping) -> dict:
-    _only_keys(value, {"madde", "oran", "karsilastirma"})
-    target = DEFAULT_ARTICLES.get(value.get("madde", ""))
-    if target is None or target.kind != "oran":
-        raise RegulationError("Taban bir oran maddesine ait olmalı.")
-    return {"madde": value["madde"], **_v_oran(target, {
-        "oran": value.get("oran"), "karsilastirma": value.get("karsilastirma", ">=")})}
-
-
 def _v_icerik_kurali(article: Article, value: Mapping) -> dict:
     _only_keys(value, {"baslik", "metin", "anahtar_kelimeler"})
     title, text = value.get("baslik"), value.get("metin")
@@ -366,7 +416,6 @@ _VALIDATORS: dict[str, Callable[[Article, Mapping], dict]] = {
     "agirliklar": _v_agirliklar,
     CONTENT_RULE_KIND: _v_icerik_kurali,
     "temel_ilke": _v_temel_ilke,
-    "taban": _v_taban,
 }
 
 
@@ -406,12 +455,7 @@ class Regulation:
     def is_unchangeable(self, key: str) -> bool:
         return key in self.unchangeable
 
-    def floor_for(self, key: str) -> tuple[str, Ratio] | None:
-        """Oran maddesinin değiştirilemez tabanı: (taban maddesi, taban oranı)."""
-        for floor_key, v in self.values.items():
-            if v.get("madde") == key and article_kind(floor_key) == "taban":
-                return floor_key, Ratio(Fraction(v["oran"]), v.get("karsilastirma", ">="))
-        return None
+
 
     @classmethod
     def defaults(cls) -> Regulation:
@@ -472,3 +516,58 @@ class Regulation:
             v = self.values[key]
             out[key] = ContentRule(key, v["baslik"], v["metin"], tuple(v["anahtar_kelimeler"]))
         return out
+
+
+# --- izinli aralıklar -------------------------------------------------------------------------------
+
+
+def _measures(kind: str, value: Mapping) -> dict[str, Fraction | Ratio]:
+    """Maddenin aralıkla karşılaştırılan nicelikleri (süreler saat cinsinden)."""
+    if kind == "sure":
+        (unit, amount), = value.items()
+        return {"sure": Fraction(amount) * {"dakika": Fraction(1, 60), "saat": 1, "gun": 24}[unit]}
+    if kind == "oran":
+        return {"oran": Ratio(Fraction(value["oran"]), value.get("karsilastirma", ">="))}
+    if kind in ("tamsayi", "sayi", "yuzde_puani"):
+        return {"deger": Fraction(str(value["deger"]))}
+    if kind == "itiraz":
+        return {"min": Fraction(value["min"]), "oran": Fraction(value["oran"]),
+                "aktiflik_gun": Fraction(value["aktiflik_gun"])}
+    if kind == "karar_saati":
+        return {"pencere_dakika": Fraction(value["pencere_dakika"])}
+    if kind == "agirliklar":
+        return {k: Fraction(str(v)) for k, v in value.items()}
+    return {}
+
+
+def range_violations(key: str, value: Mapping) -> list[str]:
+    """Değerin dışına çıktığı izinli aralıkların metinleri; aralık içindeyse boş liste."""
+    article = DEFAULT_ARTICLES.get(key)
+    if article is None or not article.allowed:
+        return []
+    try:
+        measured = _measures(article.kind, value)
+    except (KeyError, ValueError, ZeroDivisionError, TypeError):
+        return []  # biçim hatasını değer doğrulaması bildirir
+    out = [iv.text for name, iv in article.allowed.items()
+           if name in measured and not iv.contains(measured[name])]
+    return list(dict.fromkeys(out))
+
+
+def describe_range(key: str) -> str | None:
+    article = DEFAULT_ARTICLES.get(key)
+    if article is None or not article.allowed:
+        return None
+    return " · ".join(dict.fromkeys(iv.text for iv in article.allowed.values()))
+
+
+def _bound(x: Fraction | Ratio) -> str:
+    return f"{x.comparison} {x.value}" if isinstance(x, Ratio) else str(x)
+
+
+def range_bounds(key: str) -> dict[str, list[str]] | None:
+    """Aralıkların uygulanan sınırları; metin değişmeden sınır değişirse yönetmelik hash'i de değişir."""
+    article = DEFAULT_ARTICLES.get(key)
+    if article is None or not article.allowed:
+        return None
+    return {name: [_bound(iv.lo), _bound(iv.hi)] for name, iv in sorted(article.allowed.items())}

@@ -15,6 +15,7 @@ import {
   Rule,
   Section,
 } from '@/components/paper';
+import { shortHash } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -36,6 +37,28 @@ function LedgerRecord({ rec }: { rec: any }) {
       <Text style={[st.field, { color: paper.seal }]}>hash          {rec.hash}</Text>
       <Rule faint />
       <Text style={st.payload}>{JSON.stringify(rec.payload, null, 2)}</Text>
+    </View>
+  );
+}
+
+/** Çalışan kodun yönetmeliği ile defterdeki son YONETMELIK_DURUMU kaydının karşılaştırması. */
+function RegulationIntegrity({ r }: { r: any }) {
+  const tone = r.status === 'tutarli' ? paper.ok : paper.seal;
+  const label = { tutarli: 'TUTARLI', farkli: 'FARKLI', kayit_yok: 'KAYIT YOK' }[r.status as string] ?? r.status;
+  return (
+    <View style={[st.node, { borderColor: tone }]}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <Text style={st.nodeUrl}>Yönetmelik bütünlüğü</Text>
+        <Text style={[st.nodeStatus, { color: tone }]}>{label}</Text>
+      </View>
+      <Muted style={{ fontSize: 14 }}>{r.message}</Muted>
+      <Text style={st.field}>
+        çalışan kod ⌗ {shortHash(r.current_hash)} · defter ⌗ {shortHash(r.recorded_hash)}
+        {r.record_seq ? ` (kayıt #${r.record_seq})` : ''}
+      </Text>
+      {r.differences?.length ? (
+        <Text style={[st.field, { color: paper.seal }]}>farklı maddeler: {r.differences.join(', ')}</Text>
+      ) : null}
     </View>
   );
 }
@@ -69,7 +92,8 @@ export default function Ledger() {
 
       <Section title="Defteri doğrula">
         <Body style={{ marginBottom: 10 }}>
-          Üç düğümün zincirleri baştan yeniden hesaplanır ve birbiriyle karşılaştırılır.
+          Üç düğümün zincirleri baştan yeniden hesaplanır ve birbiriyle karşılaştırılır. Çalışan kodun
+          uyguladığı yönetmelik, defterdeki son yönetmelik kaydının hash&apos;iyle karşılaştırılır.
         </Body>
         <Button label="Doğrula" onPress={runVerify} />
         {verify ? (
@@ -77,6 +101,7 @@ export default function Ledger() {
             <Text style={[st.verdict, { color: verify.ok ? paper.ok : paper.seal }]}>
               {verify.ok ? '✓ Üç düğüm tutarlı' : '✗ Tutarsızlık bulundu'}
             </Text>
+            {verify.yonetmelik ? <RegulationIntegrity r={verify.yonetmelik} /> : null}
             {verify.nodes.map((n: any) => {
               const s = STATUS[n.status] ?? { label: n.status, tone: paper.ink };
               return (

@@ -92,6 +92,14 @@ class Store:
             ).fetchone()
         return _row_to_record(row) if row else None
 
+    def last_of_type(self, type_: str) -> Record | None:
+        with self.lock:
+            row = self._conn.execute(
+                f"SELECT {_COLUMNS} FROM records WHERE type = ? ORDER BY seq DESC LIMIT 1",
+                (type_,),
+            ).fetchone()
+        return _row_to_record(row) if row else None
+
     def wipe(self) -> None:
         """Yalnızca geliştirme sıfırlaması: dosyayı siler ve boş depo açar (DELETE kullanılmaz)."""
         with self.lock:

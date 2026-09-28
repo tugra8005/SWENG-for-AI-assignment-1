@@ -211,6 +211,13 @@ def create_app(cfg: NodeConfig, client_factory: ClientFactory | None = None) -> 
             raise HTTPException(404, "Bu hash ile başlayan kayıt yok.")
         return rec.to_dict()
 
+    @app.get("/records/last-of-type/{type_}")
+    def last_of_type(type_: str) -> dict:
+        rec = store.last_of_type(type_)
+        if rec is None:
+            raise HTTPException(404, "Bu türde kayıt yok.")
+        return rec.to_dict()
+
     @app.get("/records/{seq}")
     def record(seq: int) -> dict:
         rec = store.get(seq)

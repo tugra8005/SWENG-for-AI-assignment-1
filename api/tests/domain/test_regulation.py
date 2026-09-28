@@ -8,6 +8,8 @@ from mesveret.domain.regulation import (
     Ratio,
     Regulation,
     RegulationError,
+    describe_range,
+    range_violations,
     validate_value,
 )
 
@@ -161,30 +163,87 @@ def test_disproportion_threshold_in_percentage_points():
 # --- değiştirilemez maddeler ve tabanlar ---------------------------------------------------------
 
 
-def test_unchangeable_articles_are_the_seven_principles_and_the_two_floors():
+def test_unchangeable_articles_are_the_seven_principles():
     principles = [k for k, a in DEFAULT_ARTICLES.items() if a.kind == "temel_ilke"]
     assert principles == [f"D{i}" for i in range(1, 8)]
     assert REG.raw("D3")["baslik"] == "Kaybeden taraf Şerh ekleyebilir; Şerh silinemez."
     assert REG.raw("D7")["baslik"] == "Bu listenin kendisi."
-    assert REG.unchangeable == frozenset(
-        [*principles, "yonetmelik_esigi_tabani", "silme_esigi_tabani"])
-    assert not REG.is_unchangeable("yonetmelik_esigi")  # değer değişir, tabanı değişmez
-    assert REG.floor_for("yonetmelik_esigi") == ("yonetmelik_esigi_tabani", Ratio(Fraction(2, 3), ">="))
-    assert REG.floor_for("silme_esigi")[0] == "silme_esigi_tabani"
-    assert REG.floor_for("basit_cogunluk") is None
+    assert "izinli aralık" in REG.raw("D7")["metin"]
+    assert REG.unchangeable == frozenset(principles)
+    assert not REG.is_unchangeable("yonetmelik_esigi")  # değer değişir, aralığı değişmez
 
 
-def test_floor_allows_only_equal_or_stricter_thresholds():
-    floor = Ratio(Fraction(2, 3), ">=")
-    ok = [("2/3", ">="), ("2/3", ">"), ("3/4", ">="), ("1", ">=")]
-    bad = [("1/2", ">="), ("3/5", ">"), ("13/20", ">")]
-    for oran, cmp in ok:
-        assert Ratio(Fraction(oran), cmp).at_least_as_strict_as(floor), oran
-    for oran, cmp in bad:
-        assert not Ratio(Fraction(oran), cmp).at_least_as_strict_as(floor), oran
-    assert not Ratio(Fraction(2, 3), ">=").at_least_as_strict_as(Ratio(Fraction(2, 3), ">"))
+NUMERIC_KINDS = {"sure", "oran", "tamsayi", "sayi", "yuzde_puani", "itiraz", "karar_saati",
+                 "agirliklar"}
 
 
-def test_principle_and_floor_values_validate():
+def test_every_numeric_parameter_has_a_range_and_defaults_lie_inside():
+    for key, a in DEFAULT_ARTICLES.items():
+        if a.kind in NUMERIC_KINDS:
+            assert a.allowed, key
+            assert range_violations(key, a.default) == [], key
+        else:
+            assert not a.allowed, key
+
+
+def test_ranges_from_the_task():
+    ok = {
+        "basit_cogunluk": [{"oran": "1/2", "karsilastirma": ">"}, {"oran": "2/3", "karsilastirma": ">="}],
+        "yonetmelik_esigi": [{"oran": "2/3", "karsilastirma": ">="}, {"oran": "3/4", "karsilastirma": ">="}],
+        "silme_esigi": [{"oran": "7/10", "karsilastirma": ">="}],
+        "sessiz_onay_suresi": [{"saat": 12}, {"saat": 72}, {"gun": 3}],
+        "itiraz_esigi": [{"min": 3, "oran": "1/50", "aktiflik_gun": 30},
+                         {"min": 3, "oran": "1/5", "aktiflik_gun": 30}],
+        "red_bekleme": [{"gun": 7}, {"gun": 90}],
+        "olgunlasma_genel": [{"saat": 24}, {"gun": 14}],
+        "ilgi_bekleme": [{"gun": 0}, {"gun": 30}],
+        "adres_bekleme": [{"gun": 0}, {"gun": 180}],
+        "orantisizlik_esigi": [{"deger": 5}, {"deger": 30}],
+        "musavir_esigi": [{"deger": 3}, {"deger": 50}],
+        "kapanis_rakip_suresi": [{"saat": 24}, {"gun": 7}],
+        "yeniden_acma": [{"gun": 30}, {"gun": 365}],
+    }
+    bad = {
+        "basit_cogunluk": [{"oran": "1/2", "karsilastirma": ">="}, {"oran": "3/4", "karsilastirma": ">="}],
+        "yonetmelik_esigi": [{"oran": "1/2", "karsilastirma": ">="}, {"oran": "4/5", "karsilastirma": ">="},
+                             {"oran": "3/4", "karsilastirma": ">"}],
+        "silme_esigi": [{"oran": "3/5", "karsilastirma": ">"}],
+        "sessiz_onay_suresi": [{"saat": 11}, {"gun": 4}],
+        "itiraz_esigi": [{"min": 3, "oran": "1/100", "aktiflik_gun": 30},
+                         {"min": 3, "oran": "1/4", "aktiflik_gun": 30}],
+        "red_bekleme": [{"gun": 6}, {"gun": 91}],
+        "olgunlasma_dar": [{"saat": 23}, {"gun": 15}],
+        "ilgi_bekleme": [{"gun": 31}],
+        "adres_bekleme": [{"gun": 181}],
+        "orantisizlik_esigi": [{"deger": 4}, {"deger": 31}],
+        "musavir_esigi": [{"deger": 2}, {"deger": 51}],
+        "kapanis_rakip_suresi": [{"saat": 23}, {"gun": 8}],
+        "yeniden_acma": [{"gun": 29}, {"gun": 366}],
+    }
+    for key, values in ok.items():
+        for v in values:
+            assert range_violations(key, validate_value(key, v)) == [], (key, v)
+    for key, values in bad.items():
+        for v in values:
+            assert range_violations(key, validate_value(key, v)), (key, v)
+
+
+def test_range_descriptions_are_readable():
+    text = {k: describe_range(k) for k in DEFAULT_ARTICLES}
+    assert text["basit_cogunluk"] == "> 1/2 – ≥ 2/3"
+    assert text["yonetmelik_esigi"] == "≥ 2/3 – ≥ 3/4"
+    assert text["sessiz_onay_suresi"] == "12 saat – 72 saat"
+    assert text["olgunlasma_genel"] == "24 saat – 14 gün"
+    assert text["ilgi_bekleme"] == "0 – 30 gün"
+    assert text["itiraz_esigi"] == "en az 1–20 itiraz · oran %2 – %20 · aktiflik 7–90 gün"
+    assert text["orantisizlik_esigi"] == "5 – 30 yüzde puanı"
+    assert text["D1"] is None
+
+
+def test_zero_duration_is_valid_shape_but_ranges_decide():
+    assert validate_value("ilgi_bekleme", {"gun": 0}) == {"gun": 0}
+    assert range_violations("sessiz_onay_suresi", {"saat": 0})
+
+
+def test_principle_values_validate():
     assert validate_value("D1", REG.raw("D1")) == REG.raw("D1")
-    assert validate_value("yonetmelik_esigi_tabani", REG.raw("yonetmelik_esigi_tabani"))["oran"] == "2/3"

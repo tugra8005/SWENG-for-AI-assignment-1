@@ -193,7 +193,7 @@ Belgede verilen ilk 13 madde aynen alınmıştır. `mahzen_ifsa_esigi`, baskın 
 **Değişiklik kuralları:**
 
 - Değiştirilemez maddeler (§5.1) dışında her madde yalnızca YONETMELIK önerisiyle, GENEL kapsamda, yavaş şeritte, `yonetmelik_esigi` ile değişir (R3). İçerik kuralı eklemek ve kaldırmak da buna dahildir; kural ekleme önerisinin ETKILER etiketi kural kümesidir (`madde:icerik_kurallari`).
-- `yonetmelik_esigi` maddesinin kendisi de aynı eşikle değişir; muafiyet yoktur (kendini koruma). Oylama o anki değerle yapılır. Değer yükseltilebilir, ama değiştirilemez tabanı olan 2/3'ün altına indirilemez (R8).
+- `yonetmelik_esigi` maddesinin kendisi de aynı eşikle değişir; muafiyet yoktur (kendini koruma). Oylama o anki değerle yapılır. Değer yalnızca değiştirilemez izinli aralığı olan ≥ 2/3 – ≥ 3/4 içinde değişir (R8, §5.2).
 - Karar Saati penceresi açılırken tüm madde değerlerinin anlık görüntüsü alınır. O oturumda kabul edilen bir değişiklik bir sonraki oturumdan itibaren geçerlidir. Böylece aynı oturumdaki başka bir oylamanın eşiği sayım sırasında değişmez.
 
 ### 5.1 Değiştirilemez maddeler (yönetmeliğin tabanı)
@@ -208,16 +208,14 @@ Her şey 2/3 ile değiştirilebilseydi azınlık güvenceleri kalıcı olmazdı.
 | **D4** | İçerik yalnızca oylamayla silinebilir. |
 | **D5** | Eşzamanlı çoğunluk ilkesi (§7.7). |
 | **D6** | Defter değiştirilemez. |
-| **D7** | Bu listenin kendisi: listeye madde eklenemez, listeden madde çıkarılamaz, bir madde değiştirilebilir yapılamaz. |
-| `yonetmelik_esigi_tabani` | `yonetmelik_esigi ≥ 2/3`: eşik yükseltilebilir, bu değerin altına indirilemez. |
-| `silme_esigi_tabani` | `silme_esigi ≥ 2/3`: aynı biçimde. |
+| **D7** | Bu listenin kendisi: listeye madde eklenemez, listeden madde çıkarılamaz, bir madde değiştirilebilir yapılamaz, sayısal parametrelerin izinli aralıkları (§5.2) genişletilemez. |
 
-- **R8** (§6): değiştirilemez bir maddeyi etkileyen (değiştirme ya da kaldırma) ya da bir parametreyi tabanının altına indiren YONETMELIK önerisi açılışta reddedilir: "Bu madde değiştirilemez". Öneri kuyruğa hiç girmez; D7'deki "değiştirilmesi önerilemez" ilkesi budur. Yönetmelik servisi değiştirilemez bir maddeye yazmayı ayrıca reddeder (ikinci savunma hattı).
-- **Taban karşılaştırması:** yeni eşik tabandan daha katıysa ya da ona eşitse geçer. `2/3 (>)` ve `3/4` geçer; `3/5` ve `1/2` geçmez.
+- **R8** (§6): değiştirilemez bir maddeyi etkileyen (değiştirme ya da kaldırma) ya da bir parametreyi izinli aralığının dışına çıkaran YONETMELIK önerisi açılışta reddedilir: "Bu madde değiştirilemez" / "… değiştirilemez izinli aralığın dışında". Öneri kuyruğa hiç girmez; D7'deki "değiştirilmesi önerilemez" ilkesi budur. Yönetmelik servisi değiştirilemez bir maddeye ya da aralık dışı bir değere yazmayı ayrıca reddeder (ikinci savunma hattı).
+- **Önceki eşik tabanları** (`yonetmelik_esigi ≥ 2/3`, `silme_esigi ≥ 2/3`) ayrı maddeler olarak kalkmıştır; artık bu iki parametrenin izinli aralığının alt ucudur (§5.2).
 - **İlkeleri kod uygular.** D1–D6 metinleri bilgilendiricidir: oy ağırlığı, R5, Şerh kuralları, silme akışı, eşzamanlı çoğunluk ve defter kodun kendisidir. Bu maddeler, o davranışları yöneten yönetmelik yolunun oylamayla kapatılamayacağını kayda geçirir.
-- **Arayüz:** yönetmelik sayfasının başında, çift çerçeveli ve kilit işaretli bir "Değiştirilemez Maddeler" bölümü vardır (anayasa sayfası düzeni). Tabanı olan parametrelerin altında kilitli "taban ≥ 2/3" satırı görünür.
+- **Arayüz:** yönetmelik sayfasının başında, çift çerçeveli ve kilit işaretli bir "Değiştirilemez Maddeler" bölümü vardır (anayasa sayfası düzeni). Her sayısal parametrenin değerinin altında kilitli "izinli: …" satırı görünür.
 
-**"Her şey oylamayla" şartıyla bilinçli çelişki.** Gereksinim 11 forumda her şeyin oylamayla yürümesini ister. Değiştirilemez maddeler bu şartı bilerek çiğner. Tamamen oylanabilir bir sistemde azınlık güvencesi yalnızca daha yüksek bir çıtadır, taban değildir. 2/3'lük bir güvence, 2/3'lük bir çoğunluğa karşı hiçbir şey korumaz. Eşiği yükseltmek bunu değiştirmez; yalnızca gereken çoğunluğu büyütür (bkz. §15, 10. madde). Bir güvencenin güvence olabilmesi için en az bir şeyin oylamanın dışında kalması gerekir. Meşveret o şeyi olabildiğince dar tutar: yedi ilke ve iki eşik tabanı. Geri kalan her şey, tabanların kendisi hariç eşikler de dahil, oylamayla değişir.
+**"Her şey oylamayla" şartıyla bilinçli çelişki.** Gereksinim 11 forumda her şeyin oylamayla yürümesini ister. Değiştirilemez maddeler bu şartı bilerek çiğner. Tamamen oylanabilir bir sistemde azınlık güvencesi yalnızca daha yüksek bir çıtadır, taban değildir. 2/3'lük bir güvence, 2/3'lük bir çoğunluğa karşı hiçbir şey korumaz. Eşiği yükseltmek bunu değiştirmez; yalnızca gereken çoğunluğu büyütür (bkz. §15, 10. madde). Bir güvencenin güvence olabilmesi için en az bir şeyin oylamanın dışında kalması gerekir. Meşveret o şeyi olabildiğince dar tutar: yedi ilke ve her sayısal parametrenin izinli aralığı. Geri kalan her şey, eşiklerin aralık içindeki değerleri de dahil, oylamayla değişir.
 
 **Anayasal benzerler.**
 
@@ -225,6 +223,43 @@ Her şey 2/3 ile değiştirilebilseydi azınlık güvenceleri kalıcı olmazdı.
 - **Almanya Federal Cumhuriyeti Temel Yasası, madde 79(3) ("sonsuzluk maddesi"):** Federasyonun eyaletlere bölünmesine, eyaletlerin yasamaya ilke olarak katılımına ya da 1. madde (insan onuru) ile 20. madde (demokratik ve sosyal federal devlet, hukuk devleti) ilkelerine dokunan anayasa değişikliği kabul edilemez. Meşveret'teki D5 (eşzamanlı çoğunluk), eyaletlerin yasamaya katılım güvencesinin küçük ölçekli bir karşılığıdır: bütün, parçanın ayrı sesini oylamayla kaldıramaz.
 
 İki benzerin de bedeli aynıdır: bugünün kurucuları yarının çoğunluklarını bağlar. Bu bedel §15'te açık olarak yazılıdır.
+
+### 5.2 İzinli aralıklar
+
+Açık 29'daki sorun şuydu: taban ilkeleri korur ama onları çevreleyen parametreleri korumaz. `ilgi_bekleme` yıllara çıkarılırsa D2, `orantisizlik_esigi` 100'e çıkarılırsa D5 fiilen boşalır. Bu yüzden her sayısal parametrenin değiştirilemez bir izinli aralığı (en küçük, en büyük; uçlar dahil) vardır. Aralık, parametre tanımının bir parçasıdır (`Article.allowed`) ve D7 kapsamında değiştirilemez. Değer aralığın içinde oylamayla değişir; aralık dışına çıkan öneri R8'le açılışta reddedilir. Oranlarda karşılaştırma katılık üzerinden yapılır: "> 1/2" ile "≥ 2/3" arasındaki bir eşik, "> 1/2"den gevşek ve "≥ 2/3"ten katı olamaz.
+
+**Bu aralıklar benim, yani tasarımcının seçimidir ve keyfîdir.** Hiçbiri bir ölçüme, deneye ya da kaynağa dayanmaz; gerekçeler sezgiseldir. Sessiz onay için 12 saat yerine 10 saat, itiraz oranı için %20 yerine %25 de aynı ölçüde savunulabilirdi. Aralıkların amacı doğru değeri bulmak değil, en kötü değerleri dışarıda bırakmaktır: bir ilkeyi fiilen boşaltan ya da sistemi kilitleyen uçları. Bir aralığın yanlış seçildiği anlaşılırsa oylamayla düzeltilemez (bkz. §15, 31. madde).
+
+| Parametre | Varsayılan | İzinli aralık | Gerekçe |
+|---|---|---|---|
+| `basit_cogunluk` | > 1/2 | > 1/2 – ≥ 2/3 | 1/2'nin altı azınlık yönetimi olur; 2/3'ün üstü sıradan kararları nitelikli çoğunluğa çevirir |
+| `yonetmelik_esigi`, `silme_esigi` | ≥ 2/3 | ≥ 2/3 – ≥ 3/4 | 2/3 önceki tabandır; 3/4'ün üstü fiilen kilitler (açık 10) |
+| `sessiz_onay_suresi` | 24 saat | 12 saat – 72 saat | 12 saatten kısası bir gecelik yoklukla kaçırılır; 72 saatten uzunu hızlı şeridi yavaşlatır |
+| `itiraz_esigi` | en az 3, %5, 30 gün | oran %2 – %20; en az 1–20 itiraz; aktiflik 7–90 gün | %2'nin altında tek kişi her şeyi durdurur, %20'nin üstünde itiraz fiilen imkânsızlaşır. Asgari sayı ve aktiflik penceresi için aralığı uygulama sırasında ben seçtim: bir haftadan kısa pencere tatildeki üyeleri düşürür, üç aydan uzun pencere ayrılmış üyelerle eşiği şişirir |
+| `red_bekleme` | 30 gün | 7 – 90 gün | Bir haftadan kısası yıpratmayı engellemez; üç aydan uzunu reddedilen fikri fiilen yasaklar |
+| `olgunlasma_dar/genis/genel` | 48 saat / 72 saat / 7 gün | 24 saat – 14 gün | Bir günden kısası son dakika sıkıştırmayı geri getirir; iki haftadan uzunu kararları durdurur |
+| `ilgi_bekleme` | 14 gün | 0 – 30 gün | Bekleme bir koruma önlemidir, hak değildir; kaldırılabilir. 30 günden uzunu D2'yi yeni gelenler için boşaltır |
+| `adres_bekleme` | 90 gün | 0 – 180 gün | Aynı mantık; şehir değiştirmek ilgi alanı değiştirmekten ağır olduğu için üst sınır daha yüksek |
+| `orantisizlik_esigi` | 10 yüzde puanı | 5 – 30 yüzde puanı | 5'in altında her yuvarlama farkı bir veto doğurur; 30'un üstü D5'i boşaltır |
+| `musavir_esigi` | 5 | 3 – 50 havale | 3'ün altında etiket anlamsızlaşır; 50'nin üstünde küçük bir toplulukta kimse Müşavir olamaz |
+| `kapanis_rakip_suresi` | 48 saat | 24 saat – 7 gün | Rakip metin yazmaya en az bir gün; bir haftadan uzunu kapanışı sürüncemede bırakır |
+| `yeniden_acma` | 90 gün | 30 – 365 gün | Bir aydan kısası kararı anlamsızlaştırır; bir yıldan uzunu kararı fiilen kalıcı yapar |
+| `karar_saati` (pencere) | 60 dakika | 30 – 180 dakika | Uygulamada ben seçtim: yarım saatten kısası oy vermeyi zorlaştırır; üç saatten uzunu "saat" olmaktan çıkar. Gün ve saat sayısal değildir, aralıkları yoktur |
+| `mahzen_kapasite` | 100 başlık | 30 – 300 başlık | Uygulamada ben seçtim. 30'dan azı başlıkları tartışma olgunlaşmadan siler ve başlık yağdırmayı (§15, 2. madde) ucuzlatır; geçicilik silme aracına döner. 300'den fazlası çürümeyi fiilen kaldırır |
+| `mahzen_ust_sinir` | 300 yanıt | 50 – 1000 yanıt | Uygulamada ben seçtim. 50'den azı canlı bir tartışmayı erken dondurur; 1000'den fazlası tek bir başlığın Mahzen'in tepesinde süresiz kalmasına izin verir |
+| `mahzen_ifsa_esigi` | > 1/2 | > 1/2 – ≥ 3/4 | Uygulamada ben seçtim. Yarının altında bir azınlık herkesi ifşa eder; 3/4'ün üstünde ifşa fiilen imkânsızlaşır |
+| `baskin_*`, `etkilesim_agirliklari` | §9 | yeni üye 1–30 gün; katılım aralığı 1 saat – 7 gün; en küçük küme 3–20; yoğunluk ≥ 1/3 – ≥ 1; en düşük ağırlık 0,5–10; ağırlıklar 0,1–10; pencereler 5–240 dakika | Uygulamada ben seçtim. Tespitin tamamen kapatılmasını (ör. en küçük küme 1000) ya da herkesin işaretlenmesini (ör. en küçük küme 1) engeller |
+
+Görevde anılan `havale_suresi` Meşveret'te yoktur: havale geri alınana kadar geçerlidir. Bu yüzden aralığı da yoktur.
+
+### 5.3 Yönetmeliğin defterdeki izi
+
+Değiştirilemezlik bir yazılım kuralıdır (§15, 30. madde): sunucuyu işleten, kodu ya da veriyi değiştirerek R8'i ve aralıkları atlatabilir. Bu engellenemez, ama tespit edilebilir kılınabilir.
+
+- **Kayıt.** Yönetmeliğin tam hâli kurulumda (başlangıç kaydı) ve her Karar Saati oturumunun sonunda, o oturumda kabul edilen değişiklikler uygulandıktan sonra `YONETMELIK_DURUMU` kaydı olarak deftere yazılır. Tam hâl, madde başına değer, `degistirilemez` bayrağı ve izinli aralıktır; aralık hem metniyle hem uygulanan sınırlarıyla girer, böylece metnine dokunmadan genişletilen bir sınır da hash'i değiştirir. Kayıt tam hâli ve kanonik JSON'unun SHA-256 hash'ini taşır.
+- **Doğrulama.** `/ledger/verify`, çalışan kodun uyguladığı yönetmeliğin hash'ini yeniden hesaplar ve defterdeki son `YONETMELIK_DURUMU` kaydıyla karşılaştırır. Değerler graftan, bayraklar graf düğümlerinden, aralıklar çalışan koddan okunur. Durumlar "tutarlı", "farklı" ve "kayıt yok"tur. "Farklı" durumunda hangi maddelerin değiştiği listelenir. Defter ekranında bu sonuç "Yönetmelik bütünlüğü" kutusunda görünür.
+- **Neyi yakalar.** Oturumlar arasında oylamasız yapılan her yönetmelik değişikliğini: grafa ya da veritabanına doğrudan yazılan bir değer, kaldırılan bir `degistirilemez` bayrağı, kodda genişletilen bir aralık. Meşru değişiklikler yalnızca oturum sonunda uygulandığı ve hemen ardından kaydedildiği için, iki oturum arasındaki her fark oylamasızdır.
+- **Neyi yakalamaz.** §15, 30. maddede.
 
 ## 6. Denetim kuralları
 
@@ -239,7 +274,7 @@ Her öneri açılırken kurallar çalışır. İhlal varsa öneri kaydedilmez ve
 | **R5** | Oy hakkı = kapsam üyeliği + ilgili bekleme süresinin dolmuş olması. Öneri sahibi de seçmen kapsamında oy hakkına sahip olmalı | Bir gruba, o grubun parçası olmayan biri öneri getiremez; yeni katılanlar hemen karar veremez |
 | **R6** | Aynı hedefe oylamayla reddedilmiş öneri `red_bekleme` süresince yeniden açılamaz | Aynı öneriyi üst üste açarak yıpratmayı önler |
 | **R7** | Başkasının içeriğini silme önerisi en az bir içerik kuralına (IK-1…) dayanmalı ve kuralı ihlal eden kısmı hedef metinden aynen alıntılamalı. Alıntı hedefin güncel metninde bütün kelimelerle, art arda geçmeli (büyük/küçük harf ve noktalama farkı yok sayılır). Yazarın kendi mesajı için gerekçe gerekmez; konu silme hiçbir zaman "kendi" sayılmaz | Silme istisnadır; gerekçesiz silme, çoğunluğun beğenmediği görüşü gizlemesinin yoludur (§7.4) |
-| **R8** | Değiştirilemez bir maddeyi (D1–D7, eşik tabanları) etkileyen ya da bir eşiği değiştirilemez tabanının altına indiren YONETMELIK önerisi açılışta reddedilir ("Bu madde değiştirilemez") | Tamamen oylanabilir bir sistemde azınlık güvencesi yalnızca daha yüksek bir çıtadır; taban için bir şeyin oylamanın dışında kalması gerekir (§5.1) |
+| **R8** | Değiştirilemez bir maddeyi (D1–D7) etkileyen ya da bir sayısal parametreyi değiştirilemez izinli aralığının (§5.2) dışına çıkaran YONETMELIK önerisi açılışta reddedilir ("Bu madde değiştirilemez") | Tamamen oylanabilir bir sistemde azınlık güvencesi yalnızca daha yüksek bir çıtadır; taban için bir şeyin oylamanın dışında kalması gerekir (§5.1) |
 
 **red_bekleme hedef anahtarı:** KONU → (alan, normalize başlık); ALT_KONU → (üst konu, normalize başlık); DUZENLEME ve SILME → içerik; YONETMELIK → madde; KAPANIS → konu. Yalnızca oylamayla reddedilen öneriler sayılır; açılışta denetimden dönenler kayda girmez.
 
@@ -533,7 +568,9 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Hâtif'in HAYIR ölçütü | R1–R8 + H1–H4 (kullanıcı kararı; R7 ve H4 silmenin sıkılaştırılmasıyla, R8 yönetmeliğin tabanıyla eklendi) |
 | Taban kuralının numarası | R8. İstekte R7 olarak geçiyordu, ama R7 silme gerekçesi kuralıdır; mevcut referanslar bozulmasın diye yeni kural R8 oldu |
 | Değiştirilemez maddenin değiştirilme önerisi | Kuyruğa girmez, açılışta reddedilir ("teklif edilemez"); kaldırma ve değer değiştirme aynı biçimde |
-| Eşik tabanı | Veri olarak ayrı, değiştirilemez bir maddedir (`yonetmelik_esigi_tabani`, `silme_esigi_tabani`); eşik tabandan katı ya da ona eşitse geçer |
+| İzinli aralıklar | Parametre tanımının parçasıdır (`Article.allowed`), graf değeri değildir; çalışan kodla gelir ve yönetmelik hash'ine girer. Önceki iki taban maddesi aralıkların alt ucuna dönüştü. Oranlarda karşılaştırma katılıkla yapılır |
+| Süre sıfır olabilir mi | Biçim olarak evet (`ilgi_bekleme` 0 gün); alt sınırı aralık belirler |
+| Yönetmelik hash'inin zamanı | Kurulumda ve her oturum kapanışında; meşru değişiklikler yalnızca oturum kapanışında uygulanır |
 | Mahzen ifşa oylamasının süresi ve eşiği | Süresiz; seçmen listesinin yarısı aşılınca anında geçer; oy değiştirilebilir (kullanıcı kararı) |
 | Zincirde oy hakkı olmayan ara halka | Geçirgen; ağırlığa yalnızca oy hakkı olanlar katkı verir |
 | Miras ile döngü | Alt ağaçtaki tüm alanlar kontrol edilir |
@@ -577,7 +614,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 7. **Hâtif'e verilen oylar fiilen operatörünün eline geçer.** Hâtif'in davranışı kural tabanlıdır ve kuralları sistemi işleten yazar. Hâtif'e havale eden, oyunu kural yazarına emanet etmiş olur. Hâtif sembolik olsa da havale alabildiği için bu etki gerçektir.
 8. **Baskın tespitinin yanlış pozitifleri.** Aynı gün birlikte katılan ve birbirine yanıt veren gerçek bir arkadaş grubu, bir sınıf ya da bir dernek baskın gibi görünür ve oylamadan dışlanabilir. Tespit yalnızca yapıya bakar, niyete bakamaz. Dışlanan hesaplara gerekçe gösterilir, içerikleri silinmez ve eşikler oylamayla değiştirilebilir. Buna karşılık, sabırlı bir baskın (hesapları haftalara yayıp birbirine yanıt vermeyen) tespit edilemez.
 9. **Kapsam problemi prensipte çözümsüzdür.** Bir karardan kimin etkilendiğine kimin karar verdiği sorusu sonsuz geriye gider. Meşveret bunu çözmez; ispat yükünü tersine çevirerek hafifletir. Karar veren kapsam, kaynağa sahipliğini ontolojide göstermek zorundadır. Gösteremeyen kapsam karar veremez ya da kendi payına daraltılır. Ontolojinin kendisi (kimin neye sahip olduğu) ise tohumla kurulur ve bu ödevde oylamayla değiştirilemez.
-10. **Eşik kilitleme.** `yonetmelik_esigi` o anki değeriyle değiştirilir. 2/3'lük bir çoğunluk eşiği %90'a çıkarırsa, onu geri indirmek artık %90 ister. Kendini koruma kuralı kendini kilitlemeye de izin verir. Değiştirilemez taban (§5.1) yalnızca aşağı yönü korur; yukarı yöndeki kilitlenme hâlâ mümkündür.
+10. **Eşik kilitleme.** `yonetmelik_esigi` o anki değeriyle değiştirilir. 2/3'lük bir çoğunluk eşiği %90'a çıkarırsa, onu geri indirmek artık %90 ister. Kendini koruma kuralı kendini kilitlemeye de izin verir. İzinli aralık (§5.2) bu kilidi sınırlar: eşik en fazla 3/4'e çıkabilir, yani geri indirmek hiçbir zaman 3/4'ten fazlasını istemez.
 11. **Sessizlik rıza sayılır.** Hızlı şeritte itiraz eşiğine ulaşmayan öneri kabul edilir; çoğunluğun açık onayı aranmaz. Bu, kalabalık sorununa karşı bilinçli bir ödünleşimdir. 24 saat içinde bakmayan azınlık bir değişikliği kaçırabilir.
 12. **Defter lideri tek hata noktasıdır.** Lider düşerse yeni kayıt yazılamaz (API outbox'ta biriktirir). Kötü niyetli bir lider takipçilere farklı zincirler gönderebilir. `/verify` tutarsızlığı yakalar ama hangi zincirin doğru olduğunu seçecek dış bir çapa yoktur.
 13. **Onay oylamasında eşik yoktur.** En çok onayı alan metin, seçmenlerin küçük bir kısmının onayıyla da Karar olabilir.
@@ -596,10 +633,14 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 26. **Veto haklı bir yeniden dağıtımı da durdurur.** Nüfusu azalan bir şehrin payını küçültmek adil olabilir; o şehrin seçmenleri yine de hayır diyebilir ve geçersiz kılma yoktur (bilinçli tercih, §7.7). Yeter sayı olmadığı için alt oylamada hiç oy verilmezse öneri reddedilir: ilgisizlik de vetodur.
 27. **Yalnızca tanımlı paylar korunur.** Koruma, ontolojide payları tanımlı bölünebilir kaynaklarla sınırlıdır. Bir kapsamı dolaylı etkileyen öneri (ör. yalnızca bir şehirde etkinliği yasaklayan) bu kurala girmez.
 28. **Etkiyi öneri sahibi bildirir.** Metinle yapılandırılmış etki arasındaki tutarlılığı sistem denetlemez. "İstanbul payı Ankara'ya" yazıp boş etki bildiren öneri R2'yi geçer ve tek oylamayla oylanır. Kabul edildiğinde uygulanan şey metin değil bildirilen etkidir, yani paylar değişmez; ama seçmen metne bakarak oy vermiş olabilir. Hâtif bu uyuşmazlığı yakalamaz.
-29. **Parametreler ilkeleri içten boşaltabilir.** Taban ilkeleri korur, onları çevreleyen parametreleri korumaz. `ilgi_bekleme` ya da `adres_bekleme` yıllara çıkarılırsa D2 ("her yurttaş öneri açabilir") yeni gelenler için fiilen boşalır. `orantisizlik_esigi` 100 yüzde puanına çıkarılırsa D5 neredeyse hiç devreye girmez. Bu parametrelerin tavanı yoktur; yalnızca iki eşiğin tabanı vardır.
-30. **Değiştirilemezlik bir yazılım kuralıdır.** R8'i uygulayan kod ve onu işleten kişi dışarıdan bağlanmamıştır. Sunucuyu işleten, kodu değiştirerek tabanı kaldırabilir. Defter bu değişikliği kaydetmez, çünkü değişiklik bir öneri değildir. Anayasalardaki karşılığı mahkemeler ve anayasa kültürüdür; Meşveret'te yoktur.
-31. **Ölü el.** Bugünkü kurucular yarının topluluğunu bağlar. D1–D7 metinlerindeki bir hata ya da eksik oylamayla düzeltilemez. Tek çıkış forumu baştan kurmaktır (yeni tohum, yeni defter). Temel Yasa'nın sonsuzluk maddesinin bedeli de budur.
-32. **Taban yalnızca iki eşiği korur.** `basit_cogunluk` ve diğer oranların tabanı yoktur. `basit_cogunluk` 2/3'le "3/4 fazlası" yapılabilir. Bu, hızlı şeritte itiraz alan her öneriyi fiilen durdurur ama hiçbir değiştirilemez maddeye dokunmaz.
+29. **Parametreler ilkeleri içten zayıflatabilir; aralıklar bunu yalnızca sınırlar.** Her sayısal parametrenin değiştirilemez bir izinli aralığı vardır (§5.2); `ilgi_bekleme` en fazla 30 gün, `orantisizlik_esigi` en fazla 30 yüzde puanı olabilir. İlkeler artık tamamen boşaltılamaz, ama aralık içinde zayıflatılabilir: `adres_bekleme` 180 gün, `orantisizlik_esigi` 30 puan olduğunda D2 ve D5 hâlâ yürürlüktedir ama eskisinden zayıftır. Aralıkların kendisi tasarımcının keyfî seçimidir; hiçbir ölçüme dayanmaz ve yanlış seçildiyse oylamayla düzeltilemez.
+30. **Değiştirilemezlik bir yazılım kuralıdır; hafifletme yalnızca tespittir.** R8'i uygulayan kod ve onu işleten kişi dışarıdan bağlanmamıştır. Sunucuyu işleten, kodu ya da veriyi değiştirerek R8'i ve aralıkları atlatabilir. Hafifletme (§5.3): yönetmeliğin tam hâli her Karar Saati sonunda hash'iyle deftere yazılır ve `/verify` çalışan kodun yönetmeliğini defterdeki son kayıtla karşılaştırır. Operatörün sessiz değişikliği engellenmez ama bir sonraki doğrulamada görünür olur. Kalan açıklar:
+    - Hash verinin (değerler, bayraklar, aralıklar) hash'idir, davranışın değil. R8'in denetim kodunu değiştiren ya da yönetmeliği okuyan kodun bir değeri yok saymasını sağlayan operatör, aynı hash'i üreten ama farklı davranan bir sistem çalıştırabilir.
+    - Lider düğümü yöneten operatör deftere yeni bir `YONETMELIK_DURUMU` kaydı ekleyebilir. Kayıt defterde görünür ve bir oturum kapanışının hemen ardından gelmediği için dikkatli bir okuyucu fark eder, ama sistem bunu kendiliğinden işaretlemez.
+    - Tespit ancak biri doğrulamayı çalıştırırsa olur; sürekli bir gözetim yoktur.
+    Anayasalardaki karşılığı mahkemeler ve anayasa kültürüdür; Meşveret'te yoktur.
+31. **Ölü el.** Bugünkü kurucular yarının topluluğunu bağlar. D1–D7 metinlerindeki ya da izinli aralıklardaki (§5.2) bir hata ya da eksik oylamayla düzeltilemez. Tek çıkış forumu baştan kurmaktır (yeni tohum, yeni defter). Temel Yasa'nın sonsuzluk maddesinin bedeli de budur.
+32. **Aralıklar parametreleri tek tek sınırlar, birleşimlerini değil.** Artık her sayısal parametrenin aralığı var; `basit_cogunluk` en fazla 2/3 olabilir. Ama aralık içindeki değerlerin birleşimi hâlâ zarar verebilir: `basit_cogunluk` 2/3 ve `itiraz_esigi` %2 birlikte, küçük bir azınlığın her hızlı şerit önerisini 2/3 gerektiren bir oylamaya çekmesine izin verir. Sayısal olmayan parametrelerin (`karar_saati` günü ve saati) ve içerik kurallarının aralığı yoktur.
 
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
 
@@ -611,11 +652,11 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | 4 | Ad soyad, adres, doğum tarihi, şifre, takma ad; profilde takma ad; giriş ekranı | Kayıt formu (yapılandırılmış il/ilçe, argon2), JWT girişi, profil sayfası (özel alanlar yalnızca sahibine) |
 | 5 | Konular oylamaya sunulur; kabul edilirse tartışma konusu olur | Öneri akışı → kabul edilen KONU → Konu + kalıcı tartışma alanı |
 | 6 | Alt konular önerilebilir (açanla sınırlı değil), oylamaya girer | ALT_KONU önerisi (herkes açabilir), R1, hızlı şerit |
-| 7 | Yönetmelik; herkesin bir rolü | YonetmelikMaddesi düğümleri (veri olarak), YONETMELIK önerisi (2/3, kendini koruma), değiştirilemez maddeler ve eşik tabanları (§5.1, R8); roller: Yurttaş, Müşavir, Hâtif (Mahzen'de Gölge) |
+| 7 | Yönetmelik; herkesin bir rolü | YonetmelikMaddesi düğümleri (veri olarak), YONETMELIK önerisi (2/3, kendini koruma), değiştirilemez maddeler ve izinli aralıklar (§5.1–5.2, R8), defterdeki yönetmelik hash'i (§5.3); roller: Yurttaş, Müşavir, Hâtif (Mahzen'de Gölge) |
 | 8 | Ontoloji: konu ve alt konu açılışında kural denetimi | Neo4j ontolojisi (alan ağacı, kapsam, kaynak sahipliği), R1–R7, Hâtif'in etiket denetimi |
 | 9 | Her konuda tartışma alanı; tartışmalar silinmez | Kalıcı tartışma alanı; sürüm geçmişi; silme istisnadır: yalnızca üç dar içerik kuralına dayanarak ve 2/3 ile (§7.4); silinen içerik bile defterde kalır |
 | 10 | Tartışmanın bir kısmı silinmek istenirse oylama | Mesaj bazında SILME önerisi, R7 gerekçesi (kural + alıntı), `silme_esigi`; kuralı anan sansür şeridi |
-| 11 | Forumda her şey oylamayla | Tüm yapısal değişiklikler (konu, alt konu, düzenleme, silme, yönetmelik, kapanış) öneri akışından geçer; kendi mesajını silmek de. Tartışmaya yazmak oylamasızdır. **Bilinçli istisna:** değiştirilemez maddeler (D1–D7, eşik tabanları) oylamanın dışındadır (§5.1) |
+| 11 | Forumda her şey oylamayla | Tüm yapısal değişiklikler (konu, alt konu, düzenleme, silme, yönetmelik, kapanış) öneri akışından geçer; kendi mesajını silmek de. Tartışmaya yazmak oylamasızdır. **Bilinçli istisna:** değiştirilemez maddeler (D1–D7) ve parametrelerin izinli aralıkları oylamanın dışındadır (§5.1–5.2) |
 | 12 | Konu kabulüne yalnızca ilgili kullanıcılar katılır | Seçmen kapsamı (NITELIK / ILGI), R2 (sahiplik), R5 (üyelik + bekleme) |
 | 13 | Herkes eşit; bazıları "daha eşit" | Herkesin kendi oyu 1; havale alan kişinin ağırlığı artar; Müşavir etiketi görünürlüktür, rütbe değildir |
 | 14 | Oy hakkı havale edilebilir | Genel ve alan bazlı HAVALE, miras, zincir, döngü yasağı (R4), pencere kilidi |
@@ -659,7 +700,9 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | İçerik kuralı ekleme ve kaldırma: kod verme, kodun yeniden kullanılmaması, R6, kaldırılan kurala dayanan silme | `test_regulation.py`, `test_proposals.py::test_content_rule_can_be_added_by_regulation_vote`, `::test_content_rule_can_be_removed_and_its_code_is_never_reused`, `test_decision_hour.py::test_pending_deletion_citing_a_removed_rule_gets_oracle_no`, `graph_contract.py` |
 | Silme: içerik kuralları, R7 gerekçesi, 2/3 eşiği, kendi mesajı istisnası, H4, şeritteki kural | `test_regulation.py`, `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_decision_hour.py::test_deletion_needs_two_thirds_but_own_message_needs_simple_majority`, `test_seed.py::test_scenario_4_unjustified_deletion_is_rejected` |
 | Pay etkisi ve orantısızlık; R2'nin ters yönü; eşzamanlı çoğunluk (ayrı oylama, üyeler arası havale, sonuç satırı, payların işlenmesi) | `api/tests/domain/test_shares.py`, `test_rules.py`, `test_proposals.py`, `test_decision_hour.py::test_proposal_needs_majority_in_every_disproportionate_scope`, `::test_disproportionately_affected_scope_votes_separately_with_member_only_delegation`, `test_seed.py` (senaryo 10) |
-| Değiştirilemez maddeler ve eşik tabanları (R8, taban karşılaştırması, graf bayrağı, ikinci savunma hattı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
+| Değiştirilemez maddeler ve izinli aralıklar (R8, aralık karşılaştırması, graf bayrağı, ikinci savunma hattı) | `test_regulation.py::test_ranges_from_the_task`, `::test_every_numeric_parameter_has_a_range_and_defaults_lie_inside` ve aşağıdakiler |
+| Yönetmeliğin defterdeki izi (başlangıç kaydı, oturum sonu kaydı, sessiz değişikliğin ve metni aynı kalan sınır genişletmesinin tespiti) | `tests/integration/test_regulation_integrity.py`, `ledger/tests/test_replication.py::test_last_record_of_a_type_is_served_by_every_node` |
+| Değiştirilemez maddeler (ayrıntı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
 ## 19. Sözlük (Türkçe terim ↔ kod)
@@ -688,7 +731,8 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Eşzamanlı çoğunluk, alt kapsam oylaması | `concurrent`, `SessionItem.vote_scope_id` |
 | İçerik kuralı (IK-1…) | `ContentRule` (madde türü `icerik_kurali`) |
 | Değiştirilemez madde, temel ilke (D1–D7) | `Article.unchangeable`, düğüm alanı `degistirilemez`, madde türü `temel_ilke` |
-| Eşik tabanı | madde türü `taban`, `Regulation.floor_for` |
+| İzinli aralık | `Article.allowed`, `Interval`, `range_violations` |
+| Yönetmelik durumu kaydı | `YONETMELIK_DURUMU`, `regulation.state` / `verify_state` |
 | Silme gerekçesi, alıntı | R7, `content_rules` / `excerpt` |
 | Olgunlaşma (dar / geniş / genel) | `maturation` (`MaturityClass`) |
 | Talep / etki başlığı | `title` / `effective_title` |

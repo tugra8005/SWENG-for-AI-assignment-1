@@ -277,14 +277,15 @@ def test_r8_unchangeable_article_cannot_be_changed_or_removed():
     [msg] = r8_messages(regulation_change("D3", {"baslik": "Şerh yoktur.", "metin": "—"}))
     assert msg.startswith("Bu madde değiştirilemez: D3")
     assert r8_messages(regulation_change("D3", action="kaldir"))
-    assert r8_messages(regulation_change("yonetmelik_esigi_tabani", {"madde": "yonetmelik_esigi",
-                                                                   "oran": "1/2", "karsilastirma": ">="}))
 
 
-def test_r8_threshold_cannot_go_below_its_floor():
+def test_r8_parameter_must_stay_inside_its_unchangeable_range():
     [msg] = r8_messages(regulation_change("yonetmelik_esigi", {"oran": "1/2", "karsilastirma": ">="}))
-    assert "yonetmelik_esigi değiştirilemez tabanın altına inemez" in msg
-    assert "en az 2/3" in msg
+    assert msg.startswith("yonetmelik_esigi değiştirilemez izinli aralığın dışında")
+    assert "≥ 2/3 – ≥ 3/4" in msg
+    assert r8_messages(regulation_change("yonetmelik_esigi", {"oran": "4/5", "karsilastirma": ">="}))
     assert r8_messages(regulation_change("silme_esigi", {"oran": "3/5", "karsilastirma": ">"}))
+    assert r8_messages(regulation_change("sessiz_onay_suresi", {"saat": 6}))
+    assert r8_messages(regulation_change("ilgi_bekleme", {"gun": 365}))
     assert not r8_messages(regulation_change("yonetmelik_esigi", {"oran": "3/4", "karsilastirma": ">="}))
-    assert not r8_messages(regulation_change("red_bekleme", {"gun": 1}))
+    assert not r8_messages(regulation_change("red_bekleme", {"gun": 45}))

@@ -104,6 +104,9 @@ class FakeLedgerClient:
     def get(self, url: str, path: str) -> Any:
         if path == "/verify":
             return {"ok": True, "length": len(self.records), "reason": None}
+        if path.startswith("/records/last-of-type/"):
+            type_ = path.rsplit("/", 1)[1]
+            return next((r for r in reversed(self.records) if r["type"] == type_), None)
         if path.startswith("/records/by-hash/"):
             prefix = path.rsplit("/", 1)[1]
             return next((r for r in self.records if r["hash"].startswith(prefix)), None)
@@ -258,6 +261,16 @@ def verify_nodes(client: LedgerClient) -> dict:
                 if rec:
                     reports[url].hash_at[n] = rec["hash"]
     return compare_nodes(urls, reports)
+
+
+def last_of_type(client: LedgerClient, type_: str) -> dict | None:
+    """Belirli türdeki en son kayıt (liderden; ulaşılamazsa sıradaki düğümden)."""
+    for url in client.node_urls():
+        try:
+            return client.get(url, f"/records/last-of-type/{type_}")
+        except Exception as exc:  # noqa: BLE001
+            log.info("son %s kaydı okunamadı (%s): %s", type_, url, exc)
+    return None
 
 
 def record_by_hash(client: LedgerClient, prefix: str) -> dict | None:
