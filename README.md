@@ -92,22 +92,22 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 
 | Öneri | Senaryo |
 |---|---|
-| №15 | 1 · İstanbul vakası |
+| №17 | 1 · İstanbul vakası |
 | №9 | 2 · Havale zinciri (Gece metro seferleri) |
-| №11, №12 | 3 · Yönetmelik değişikliği |
-| №10 | 4 · Silme |
+| №13, №14 | 3 · Yönetmelik değişikliği |
+| №10, №11, №12 | 4 · Silme |
 | №8 | 5 · Kapanış |
 | Mahzen No.91 | 6 · Mahzen |
-| №13 | 7 · Baskın |
-| №14 | 8 · Hâtif |
-| №16 | 9 · Olgunlaşma |
+| №15 | 7 · Baskın |
+| №16 | 8 · Hâtif |
+| №18 | 9 · Olgunlaşma |
 
 Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7 ve 8 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin.
 
 ### 1. İstanbul vakası: otomatik daralma ve red
 
 1. **ayse** olarak giriş yapın (İstanbul'da oturuyor).
-2. Ana sayfada **№15 "Etkinlik bütçesinin tamamı İstanbul'a"** önerisini açın. Bu öneriyi İstanbul kapsamındaki emre açtı; etkilenen kaynak Genel kapsama ait ve şehir bazında bölünebilir. Başlık iki satırdır: üstte küçük ve üstü çizili *"Talep: Etkinlik bütçesinin tamamı İstanbul'a"*, altta büyük **"Etki: Etkinlik bütçesinin İstanbul payı"**. Ana sayfadaki kart da aynı düzendedir.
+2. Ana sayfada **№17 "Etkinlik bütçesinin tamamı İstanbul'a"** önerisini açın. Bu öneriyi İstanbul kapsamındaki emre açtı; etkilenen kaynak Genel kapsama ait ve şehir bazında bölünebilir. Başlık iki satırdır: üstte küçük ve üstü çizili *"Talep: Etkinlik bütçesinin tamamı İstanbul'a"*, altta büyük **"Etki: Etkinlik bütçesinin İstanbul payı"**. Ana sayfadaki kart da aynı düzendedir.
    - Başlığın altındaki bordo çerçeveli kutu R2'nin sonucunu gösterir: **"Bu karar yalnızca İstanbul payını etkiler (4.000 puan)."** Altında oran (**4.000 / 20.000 puan (%20)**) ve bir çubuk durur: bütçenin tamamı gri, İstanbul payı bordo.
    - **Etkilenen kaynaklar** listesinde *"Etkinlik bütçesi — yalnızca İstanbul payı (4.000 / 20.000)"* yazar.
    - Sayfanın altındaki Hâtif görüşü: *"Talep kaynağın tamamını hedefliyordu; seçmen kapsamı yalnızca İstanbul payına karar verebilir, daraltma uygulandı."*
@@ -120,14 +120,17 @@ Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7 ve 8 aynı Karar Saati
 2. Liste kapasiteye yakındır (91/100). Alt sıralardaki başlıklar soluklaşır, karakterleri bozulur; ömür çubukları kısalır. Sağ üstteki **crt** anahtarı tarama çizgilerini kapatır.
 3. En üstteki **"Çoğunluk haklı olabilir mi?"** başlığını açın. Beş yazarı var; ayse'nin açtığı ifşa oylamasında iki EVET bir HAYIR oy var ve geçmek için 3 EVET gerekiyor. Ara sayım gösterilmez.
 4. **[ evet ]** deyin. EVET sayısı seçmen listesinin yarısını aştığı an ifşa gerçekleşir. Yaklaşık 1,5 saniyelik geçişte siyah zemin kâğıda, amber yazı mürekkebe döner, mono yazı serife geçer ve Gölge kimliklerinin üzerine takma adlar yazılır.
-5. Başlık artık Meydan görünümünde, herkesin takma adıyla ve defter mührüyle durur. **Öneri taslağı №17 →** ile taslağı açın (senaryo 1'in isteğe bağlı 4. adımını yaptıysanız numara №18 olur); alanı ve seçmen kapsamını seçip **Taslağı öneri olarak gönder** deyin. Öneri normal akışa (sessiz onay) girer.
+5. Başlık artık Meydan görünümünde, herkesin takma adıyla ve defter mührüyle durur. **Öneri taslağı №19 →** ile taslağı açın (senaryo 1'in isteğe bağlı 4. adımını yaptıysanız numara №20 olur); alanı ve seçmen kapsamını seçip **Taslağı öneri olarak gönder** deyin. Öneri normal akışa (sessiz onay) girer.
 
 ### Karar Saati: senaryo 2, 3, 4, 5, 7, 8 ve 9
 
 **Oturum açılmadan önce:**
 
-- **Senaryo 8:** **№14 "Belgesel film gösterimleri"** önerisini açın. Öneren onu *Edebiyat* alanına etiketledi. Sayfanın altındaki **Bilirkişi görüşü · Hâtif** bölümü alanın *Belgesel* olması gerektiğini söyler ve "Oylamada verilecek oy: HAYIR" der.
-- **Senaryo 9:** **№16 "Yönetmelik: musavir_esigi"** önerisini açın. kerem onu tohum anından 10 dakika önce açtı (müşavir eşiği 5 → 3). Genel kapsamlı ve yönetmelik önerileri Karar Saati'nden önce en az 7 gün yayında kalır. Sayfada ve ana sayfadaki kartta **"Olgunlaşıyor — 11 Ekim Pazar 20:00 oturumunda oylanacak"** yazar. Süre 6 Ekim'de dolar; o haftanın Pazar oturumu (4 Ekim) daha önce olduğu için öneri 11 Ekim'e kayar. Karar Saati sayfasının **Kuyruk** bölümü de aynı satırı gösterir.
+- **Senaryo 4, gerekçesiz silme:** **emre** olarak **Bisiklet yolları** konusunda hale'nin *"Eleştiri olur, hakaret olmaz."* mesajında **Silme öner**'e basın. Kural seçmeden gerekçeye "Bu mesajı beğenmedim." yazıp **Öneriyi aç** deyin. Öneri açılmaz: *"R7 — Silme önerisi en az bir içerik kuralına dayanmalı (IK-1 Spam ve reklam; IK-2 Hakaret ve tehdit; IK-3 …)"* ve alıntı uyarısı. Kurallar **Yönetmelik → İçerik kuralları** bölümündedir.
+- **Senaryo 4, gerekçeli silmeler:** **№10**'da hale, kaba_kul'un hakaret içeren mesajını IK-2'ye dayanarak silmeyi öneriyor; alıntı «Bu konuyu açanların hepsi cahil». **Silme gerekçesi** bölümünde kural, alıntı ve eşik (`silme_esigi ≥ 2/3`) görünür; Hâtif yorumu: *"İçerik kuralı IK-2 (Hakaret ve tehdit): belirtilen kısımda karşılığı var ('cahil')."* **№11** kaba_kul'un reklam mesajı için IK-1'e dayanır. **№12**'de ceren, yanlışlıkla telefon numarasını paylaştığı kendi mesajını silmek istiyor: gerekçe yok, eşik `basit_cogunluk`.
+
+- **Senaryo 8:** **№16 "Belgesel film gösterimleri"** önerisini açın. Öneren onu *Edebiyat* alanına etiketledi. Sayfanın altındaki **Bilirkişi görüşü · Hâtif** bölümü alanın *Belgesel* olması gerektiğini söyler ve "Oylamada verilecek oy: HAYIR" der.
+- **Senaryo 9:** **№18 "Yönetmelik: musavir_esigi"** önerisini açın. kerem onu tohum anından 10 dakika önce açtı (müşavir eşiği 5 → 3). Genel kapsamlı ve yönetmelik önerileri Karar Saati'nden önce en az 7 gün yayında kalır. Sayfada ve ana sayfadaki kartta **"Olgunlaşıyor — 11 Ekim Pazar 20:00 oturumunda oylanacak"** yazar. Süre 6 Ekim'de dolar; o haftanın Pazar oturumu (4 Ekim) daha önce olduğu için öneri 11 Ekim'e kayar. Karar Saati sayfasının **Kuyruk** bölümü de aynı satırı gösterir.
 - **Senaryo 2, döngü denemesi:** zincir şöyle kuruludur: aylin → baris (genel havale), baris → ceren (*Ulaşım* alanında). **ceren** olarak giriş yapın → **Havale** → takma ad `aylin`, alan *Ulaşım* → **Havale et**. Havale reddedilir: *"R4: Bu havale döngü oluşturur — Ulaşım alanında zincir size geri dönüyor (ceren → aylin → baris → ceren)."*
 
 **Oturumu açın:**
@@ -136,7 +139,7 @@ Senaryo 1 ve 6 anında oynatılır. Senaryo 2, 3, 4, 5, 7 ve 8 aynı Karar Saati
 docker compose exec api meşveret-dev run-karar-saati
 ```
 
-Komut oturumu açar ve tohumdaki oy planını uygular. Beş baskın hesabının oyları reddedilir; çıktıda "baskın şüphesiyle işaretlendiniz" satırları görünür. №16 oturuma alınmaz; çıktının sonunda `~ #16 Yönetmelik: musavir_esigi — olgunlaşıyor (genel, 168 saat); 2026-10-11 20:00:00 (Pazar) İstanbul oturumunda oylanacak` satırı görünür ve oy pusulasında yer almaz.
+Komut oturumu açar ve tohumdaki oy planını uygular. Beş baskın hesabının oyları reddedilir; çıktıda "baskın şüphesiyle işaretlendiniz" satırları görünür. №18 oturuma alınmaz; çıktının sonunda `~ #18 Yönetmelik: musavir_esigi — olgunlaşıyor (genel, 168 saat); 2026-10-11 20:00:00 (Pazar) İstanbul oturumunda oylanacak` satırı görünür ve oy pusulasında yer almaz.
 
 - **Senaryo 2, kilit:** **aylin** olarak **Havale** sayfasında genel havaleyi **Geri al**'a basın: *"Karar Saati penceresi açık: havale grafı bu oturum için kilitli."* **Karar Saati** sayfasında aylin'in pusulasında "Oyunuz havale zinciriyle ceren adlı yurttaşa gidiyor" yazar.
 - **Senaryo 2, ağırlık:** **ceren** olarak **Karar Saati** → oy pusulası. №9 "Gece metro seferleri" için **Oy ağırlığınız: 3** yazar. **Evet** deyin; oy mühürlenir ve ekranda commit görünür. Diğer önerilere oy vermeyin; yüzdeler oy planına göre ayarlandı.
@@ -152,16 +155,20 @@ docker compose exec api meşveret-dev run-karar-saati --close
 | Öneri | Sonuç |
 |---|---|
 | №9 Gece metro seferleri | 8 EVET, 5 HAYIR → **KABUL**. ceren'in oyu olmasaydı 5–5 eşitlikti ve basit çoğunluk sağlanmazdı; ceren'in fişinde "×3 · havale: aylin, baris" yazar |
-| №11 red_bekleme 30 → 45 gün | 18/30 = %60 → **RET** (yönetmelik eşiği ≥ 2/3) |
-| №12 sessiz_onay_suresi 24 → 36 saat | 20/30 = 2/3 → **KABUL**. Yönetmelik sayfasında maddenin geçmişi görünür |
-| №10 Silme | **KABUL** (senaryo 4) |
+| №13 red_bekleme 30 → 45 gün | 18/30 = %60 → **RET** (yönetmelik eşiği ≥ 2/3) |
+| №14 sessiz_onay_suresi 24 → 36 saat | 20/30 = 2/3 → **KABUL**. Yönetmelik sayfasında maddenin geçmişi görünür |
+| №10 Silme: hakaret (IK-2) | 18/30 = %60 → **RET**: başkasının içeriğini silmek 2/3 ister; mesaj görünür kalır (senaryo 4) |
+| №11 Silme: reklam (IK-1) | 20/30 = 2/3 → **KABUL** (senaryo 4) |
+| №12 Silme: ceren'in kendi mesajı | 7/12 = %58 → **KABUL**: kendi mesajı basit çoğunlukla; 2/3 gerekseydi geçemezdi (senaryo 4) |
 | №8 Kapanış | 22:00 metni en çok onayı alır → **KARAR** (senaryo 5) |
-| №13 Tek şehir bütçesi | 5 hesap baskın şüphesiyle dışlandı; 2 EVET, 4 HAYIR → **RET** (senaryo 7) |
-| №14 Belgesel film gösterimleri | Hâtif ×3 HAYIR (iki yurttaş Kültür alanında Hâtif'e havale etti); 4 EVET, 6 HAYIR → **RET** (senaryo 8) |
+| №15 Tek şehir bütçesi | 5 hesap baskın şüphesiyle dışlandı; 2 EVET, 4 HAYIR → **RET** (senaryo 7) |
+| №16 Belgesel film gösterimleri | Hâtif ×3 HAYIR (iki yurttaş Kültür alanında Hâtif'e havale etti); 4 EVET, 6 HAYIR → **RET** (senaryo 8) |
 
-### 4. Silme
+### 4. Silme: gerekçe, 2/3 ve kendi mesajı
 
-1. Ana sayfa → **Bisiklet yolları** konusu. kaba_kul'un hakaret içeren mesajının yerinde tam genişlikte siyah bir şerit durur: **"#10 NUMARALI OYLAMAYLA SİLİNDİ"**.
+Silme istisnadır ("tartışmalar silinmez"). Başkasının içeriğini silmek için en az bir içerik kuralına dayanmak, kuralı ihlal eden kısmı metinden alıntılamak ve kullanılan oyların 2/3'ünü almak gerekir. Kendi mesajı için gerekçe gerekmez, basit çoğunluk yeter. Oturum öncesi adımlar ve sonuçlar yukarıdaki Karar Saati bölümündedir.
+
+1. Oturum kapandıktan sonra ana sayfa → **Bisiklet yolları** konusu. Hakaret içeren mesaj görünür kaldı (%60 yetmedi). Reklamın yerinde tam genişlikte siyah bir şerit durur: **"#11 · IK-1 gereğince silindi"**; ceren'in mesajının yerinde **"#12 · yazarının isteğiyle silindi"**.
 2. Şeritteki **defterde: ⌗ …** bağlantısına tıklayın. **Defter** sayfası o kaydı açar; mesajın tam metni defterde durur. Silme gizlemedir, kayıttan kaldırmaz.
 3. **Defter → Doğrula**: üç düğüm "tutarlı" görünür. Bozma aracını çalıştırıp (yukarıda) yeniden doğrulayın: ledger-2 "BÜTÜNLÜK BOZUK" ve bozulan kaydın numarası.
 
@@ -173,7 +180,7 @@ docker compose exec api meşveret-dev run-karar-saati --close
 
 ### 7. Baskın
 
-№13 sonucunun altında "Baskın şüphesiyle işaretlenip dışlanan 5 hesap" bölümü bu hesapları listeler: mavi_kus, sari_kedi, yesil_at, mor_balik, turuncu_ari. Hesaplar seed anından yaklaşık 5 saat önce, 32 dakika içinde açıldı ve Parklar konusunda birbirlerine yanıt verdi. İçerikleri silinmedi; yalnızca bu oylamadan dışlandılar. Dışlanmasalardı öneri 7 EVET'e 4 HAYIR'la geçerdi.
+№15 sonucunun altında "Baskın şüphesiyle işaretlenip dışlanan 5 hesap" bölümü bu hesapları listeler: mavi_kus, sari_kedi, yesil_at, mor_balik, turuncu_ari. Hesaplar seed anından yaklaşık 5 saat önce, 32 dakika içinde açıldı ve Parklar konusunda birbirlerine yanıt verdi. İçerikleri silinmedi; yalnızca bu oylamadan dışlandılar. Dışlanmasalardı öneri 7 EVET'e 4 HAYIR'la geçerdi.
 
 ### Zamanı ilerletmek
 
@@ -181,13 +188,13 @@ docker compose exec api meşveret-dev run-karar-saati --close
 docker compose exec api meşveret-dev advance-time --hours 25
 ```
 
-Senaryo 9'un devamı: oturumu kapattıktan sonra saati 11 Ekim oturumuna ilerletin. 4 Ekim oturumu №16'yı almaz (olgunlaşmamış), 11 Ekim oturumu alır.
+Senaryo 9'un devamı: oturumu kapattıktan sonra saati 11 Ekim oturumuna ilerletin. 4 Ekim oturumu №18'i almaz (olgunlaşmamış), 11 Ekim oturumu alır.
 
 ```bash
 docker compose exec api meşveret-dev advance-time --to 2026-10-11T20:30:00+03:00
 ```
 
-№15 gibi sessiz onaydaki öneriler, itiraz eşiğine ulaşmadıysa süre dolunca kabul edilir ve konuya dönüşür. İtiraz etmek için öneri sayfasındaki **İtiraz et** düğmesi kullanılır; eşik max(3, aktif üyelerin %5'i) kadar itirazdır.
+№17 gibi sessiz onaydaki öneriler, itiraz eşiğine ulaşmadıysa süre dolunca kabul edilir ve konuya dönüşür. İtiraz etmek için öneri sayfasındaki **İtiraz et** düğmesi kullanılır; eşik max(3, aktif üyelerin %5'i) kadar itirazdır.
 
 ## Testler
 

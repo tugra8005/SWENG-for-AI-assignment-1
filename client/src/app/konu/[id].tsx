@@ -7,6 +7,7 @@ import {
   Body,
   Button,
   CensorStrip,
+  type DeletionBasis,
   ErrorNotice,
   Field,
   Kicker,
@@ -35,6 +36,7 @@ type Msg = {
   reply_to?: number | null;
   ledger_hash?: string | null;
   deleted_by_proposal_id?: number;
+  deletion_basis?: DeletionBasis | null;
 };
 
 function propose(params: Record<string, string | number>) {
@@ -47,7 +49,7 @@ function Message({ m, topic, onChanged }: { m: Msg; topic: any; onChanged: () =>
   const [draft, setDraft] = useState(m.text ?? '');
   const [error, setError] = useState<unknown>(null);
   if (m.deleted_by_proposal_id) {
-    return <CensorStrip proposalId={m.deleted_by_proposal_id} hash={m.ledger_hash} />;
+    return <CensorStrip proposalId={m.deleted_by_proposal_id} hash={m.ledger_hash} basis={m.deletion_basis} />;
   }
   const mine = me?.nickname === m.author;
   const open = topic.status === 'OPEN';
@@ -183,7 +185,7 @@ export default function TopicPage() {
     return (
       <Page>
         <Kicker>Konu №{t.id}</Kicker>
-        <CensorStrip proposalId={t.deleted_by_proposal_id} />
+        <CensorStrip proposalId={t.deleted_by_proposal_id} basis={t.deletion_basis} />
       </Page>
     );
   }
@@ -284,7 +286,7 @@ export default function TopicPage() {
         <Section title="Alt konular">
           {t.subtopics.map((s: any) =>
             s.deleted_by_proposal_id ? (
-              <CensorStrip key={s.id} proposalId={s.deleted_by_proposal_id} />
+              <CensorStrip key={s.id} proposalId={s.deleted_by_proposal_id} basis={s.deletion_basis} />
             ) : (
               <PressLink key={s.id} href={`/konu/${s.id}`} style={st.related}>
                 <Text style={st.relTitle}>└ {s.effective_title ?? s.title}</Text>

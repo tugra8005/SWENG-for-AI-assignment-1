@@ -26,7 +26,7 @@ def test_topic_proposal_opens_in_fast_lane_with_oracle_comment(ctx, ledger):
     p = proposals.open_proposal(ctx, u, konu_input())
     assert p.status == "SILENT" and p.lane == "FAST"
     assert p.deadline_at == ctx.now + timedelta(hours=24)
-    assert "Denetimler: R1–R6 geçti." in p.oracle_comment
+    assert "Denetimler: R1–R7 geçti." in p.oracle_comment
     assert ledger.of_type("ONERI_ACILDI")[0]["payload"]["baslik"] == "Film günleri"
     assert p.ledger_hash == ledger.of_type("ONERI_ACILDI")[0]["hash"]
 
@@ -258,29 +258,79 @@ def test_cellar_links_are_rejected_in_square(ctx):
 # --- silme ----------------------------------------------------------------------------------------
 
 
+SPAM = "Kaçırmayın! Katlanır bisiklette büyük indirim, sipariş için profilime tıklayın."
+
+
 def test_deletion_goes_to_slow_lane_and_hides_content(ctx, client, ledger):
     a, b = make_user(ctx, "ayse"), make_user(ctx, "bora")
     topic = open_topic(ctx, a)
-    msg = post(ctx, a, topic, "Silinecek mesaj.")
-    p = proposals.open_proposal(ctx, b, ProposalInput(type="SILME", target_message_id=msg.id))
+    msg = post(ctx, a, topic, SPAM)
+    p = proposals.open_proposal(ctx, b, ProposalInput(
+        type="SILME", target_message_id=msg.id, content_rules=["IK-1"],
+        excerpt="sipariş için profilime tıklayın",
+    ))
     assert p.status == "QUEUED" and p.lane == "SLOW"
+    assert p.payload["rules"] == ["IK-1"] and p.payload["own"] is False
+    assert proposals.threshold_key(p) == "silme_esigi"
+    assert "İçerik kuralı IK-1 (Spam ve reklam): belirtilen kısımda karşılığı var" in p.oracle_comment
+    view = client.get(f"/proposals/{p.id}").json()
+    assert view["content_rules"] == [{"code": "IK-1", "title": "Spam ve reklam"}]
+    assert view["excerpt"] == "sipariş için profilime tıklayın"
+    assert view["threshold"] == {"key": "silme_esigi", "oran": "2/3", "karsilastirma": ">="}
     proposals.accept(ctx, p)
-    ctx.db.commit()
+    ctx.commit()
     view = client.get(f"/topics/{topic.id}").json()
     deleted = next(m for m in view["messages"] if m["id"] == msg.id)
-    assert set(deleted) == {"id", "deleted_by_proposal_id", "ledger_hash"}
+    assert set(deleted) == {"id", "deleted_by_proposal_id", "ledger_hash", "deletion_basis"}
     assert deleted["deleted_by_proposal_id"] == p.id
+    assert deleted["deletion_basis"] == {"rules": ["IK-1"], "own": False}
     assert client.get(f"/messages/{msg.id}/history").status_code == 410
     texts = [r["payload"].get("metin") for r in ledger.records]
-    assert "Silinecek mesaj." in texts  # defterde duruyor
+    assert SPAM in texts  # defterde duruyor
+    assert ledger.of_type("ICERIK_SILINDI")[0]["payload"]["kurallar"] == ["IK-1"]
 
 
-def test_own_message_deletion_also_requires_vote(ctx):
+def test_deletion_without_justification_is_rejected_by_r7(ctx, client):
+    a, b = make_user(ctx, "ayse"), make_user(ctx, "bora")
+    topic = open_topic(ctx, a)
+    msg = post(ctx, a, topic, "Bu görüşe katılmıyorum.")
+    r = client.post("/proposals", headers=headers_for(ctx, b), json={
+        "type": "SILME", "target_message_id": msg.id,
+    })
+    assert r.status_code == 422, r.text
+    violations = r.json()["violations"]
+    assert {v["rule"] for v in violations} == {"R7"}
+    assert "en az bir içerik kuralına dayanmalı" in violations[0]["message"]
+    assert "hangi kısmının" in violations[1]["message"]
+    r = client.post("/proposals", headers=headers_for(ctx, b), json={
+        "type": "SILME", "target_message_id": msg.id, "content_rules": ["IK-2"],
+        "excerpt": "hepsi cahil",
+    })
+    assert r.status_code == 422
+    assert "metinde geçmiyor" in r.json()["violations"][0]["message"]
+
+
+def test_own_message_deletion_needs_no_justification_and_simple_majority(ctx, client):
     a = make_user(ctx, "ayse")
     topic = open_topic(ctx, a)
     msg = post(ctx, a, topic, "Pişmanım.")
     p = proposals.open_proposal(ctx, a, ProposalInput(type="SILME", target_message_id=msg.id))
     assert p.status == "QUEUED"
+    assert p.payload["own"] is True and p.payload["rules"] == []
+    assert proposals.threshold_key(p) == "basit_cogunluk"
+    assert "kendi mesajının silinmesini istiyor" in p.oracle_comment
+    proposals.accept(ctx, p)
+    ctx.db.commit()
+    [deleted] = [m for m in client.get(f"/topics/{topic.id}").json()["messages"] if m["id"] == msg.id]
+    assert deleted["deletion_basis"] == {"rules": [], "own": True}
+
+
+def test_topic_deletion_is_never_treated_as_own(ctx):
+    a = make_user(ctx, "ayse")
+    topic = open_topic(ctx, a)
+    with pytest.raises(DomainError) as err:
+        proposals.open_proposal(ctx, a, ProposalInput(type="SILME", target_topic_id=topic.id))
+    assert err.value.violations[0]["rule"] == "R7"
 
 
 # --- yönetmelik -----------------------------------------------------------------------------------

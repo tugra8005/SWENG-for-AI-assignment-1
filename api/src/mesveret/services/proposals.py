@@ -33,7 +33,7 @@ from mesveret.domain.maturation import (
     maturity_duration,
 )
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
-from mesveret.domain.oracle import label_check, oracle_comment
+from mesveret.domain.oracle import ContentCheck, content_check, label_check, oracle_comment
 from mesveret.domain.regulation import DEFAULT_ARTICLES, RegulationError, validate_value
 from mesveret.domain.rules import (
     ProposalDraft,
@@ -69,6 +69,9 @@ class ProposalInput:
     article_key: str | None = None
     new_value: dict[str, Any] | None = None
     reopens_topic_id: int | None = None
+    # SILME: dayanılan içerik kuralları (IK-1…) ve kuralı ihlal eden kısım (metinden alıntı).
+    content_rules: list[str] = field(default_factory=list)
+    excerpt: str = ""
 
 
 @dataclass
@@ -201,6 +204,7 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
     if t is ProposalType.SILME:
         if (inp.target_message_id is None) == (inp.target_topic_id is None):
             raise DomainError("Silinecek mesajı ya da konuyu (yalnızca birini) belirtin.")
+        own = False
         if inp.target_message_id is not None:
             msg = topics.get_message(ctx, inp.target_message_id)
             if msg.deleted_by_proposal_id is not None:
@@ -209,15 +213,20 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
             target = {"message_id": msg.id}
             key = f"ICERIK:mesaj:{msg.id}"
             default_title = f"Silme: {topic.title} konusundaki #{msg.id} numaralı mesaj"
+            # Yazarın rızası: kendi mesajı için gerekçe gerekmez, basit çoğunluk yeter. Konu
+            # silme hiçbir zaman "kendi" sayılmaz; başkalarının mesajlarını da götürür.
+            own = msg.author_id == user.id
         else:
             topic = _live_topic(ctx, inp.target_topic_id, must_be_open=False)
             target = {}
             key = f"ICERIK:konu:{topic.id}"
             default_title = f"Silme: {topic.title}"
+        rules = list(dict.fromkeys(code.strip() for code in inp.content_rules if code.strip()))
         return Prepared(
             t, _title(inp.title or default_title), _body(inp.body, required=False),
             topic.area_id, inp.scope_id or topic.owner_scope_id, [topic.resource_id], key,
-            {"topic_id": topic.id, **target},
+            {"topic_id": topic.id, **target, "rules": rules, "excerpt": inp.excerpt.strip(),
+             "own": own},
         )
 
     if t is ProposalType.YONETMELIK:
@@ -270,15 +279,51 @@ def last_rejection(ctx: Ctx, target_key: str, exclude_id: int | None = None):
     return ctx.db.execute(q).scalar()
 
 
-def draft_of(p: Proposal | Prepared, proposer_id: str) -> ProposalDraft:
+def deletion_target_text(ctx: Ctx, payload: dict) -> str:
+    """Silinmesi önerilen içeriğin güncel metni (mesaj ya da konu başlığı + açılış metni)."""
+    if payload.get("message_id") is not None:
+        msg = ctx.db.get(Message, payload["message_id"])
+        return topics.current_version(ctx, msg).text if msg else ""
+    topic = ctx.db.get(Topic, payload.get("topic_id"))
+    if topic is None:
+        return ""
+    opening = ctx.db.execute(select(Message).where(
+        Message.topic_id == topic.id, Message.is_opening.is_(True)
+    )).scalar_one_or_none()
+    return f"{topic.title}\n{topics.current_version(ctx, opening).text if opening else ''}"
+
+
+def draft_of(ctx: Ctx, p: Proposal | Prepared, proposer_id: str) -> ProposalDraft:
     parent = p.parent_resource_id if isinstance(p, Prepared) else (
         f"konu:{p.payload['parent_topic_id']}" if p.payload.get("parent_topic_id") else None
     )
+    deletion = str(p.type) == "SILME"
     return ProposalDraft(
         type=ProposalType(p.type), proposer_id=proposer_id, scope_id=p.scope_id,
         area_id=p.area_id, resource_ids=tuple(p.resource_ids), parent_topic_id=parent,
         target_key=p.target_key, title=p.title, body=p.body,
+        content_rules=tuple(p.payload.get("rules", ())) if deletion else (),
+        excerpt=p.payload.get("excerpt", "") if deletion else "",
+        target_text=deletion_target_text(ctx, p.payload) if deletion else "",
+        own_content=bool(p.payload.get("own")) if deletion else False,
     )
+
+
+def deletion_check(ctx: Ctx, p: Proposal) -> ContentCheck | None:
+    """Hâtif'in H4 denetimi: silme önerisinin dayandığı kuralların alıntıdaki karşılığı."""
+    if p.type != "SILME":
+        return None
+    return content_check(p.payload.get("rules", ()), p.payload.get("excerpt", ""),
+                         ctx.reg.content_rules(), own=bool(p.payload.get("own")))
+
+
+def threshold_key(p: Proposal) -> str:
+    """Karar Saati'nde uygulanacak eşik maddesi."""
+    if p.type == "YONETMELIK":
+        return "yonetmelik_esigi"
+    if p.type == "SILME" and not p.payload.get("own"):
+        return "silme_esigi"
+    return "basit_cogunluk"
 
 
 def run_rules(
@@ -327,7 +372,7 @@ def _finish_opening(ctx: Ctx, p: Proposal, report: RuleReport) -> None:
         for n in report.narrowings
     ]
     findings = label_check(oracle_text(p), p.area_id, p.scope_id, p.resource_ids, ctx.graph)
-    p.oracle_comment = oracle_comment(report, findings, ctx.graph)
+    p.oracle_comment = oracle_comment(report, findings, ctx.graph, deletion_check(ctx, p))
     p.oracle_findings = [{"kind": f.kind, "suggestion": f.suggestion, "message": f.message}
                          for f in findings]
     _start_lane(ctx, p)
@@ -353,7 +398,7 @@ def _finish_opening(ctx: Ctx, p: Proposal, report: RuleReport) -> None:
 
 def open_proposal(ctx: Ctx, user: User, inp: ProposalInput) -> Proposal:
     prep = _prepare(ctx, user, inp)
-    report = run_rules(ctx, draft_of(prep, user.id))
+    report = run_rules(ctx, draft_of(ctx, prep, user.id))
     if not report.ok:
         _raise_violations(report)
     p = Proposal(
@@ -390,7 +435,7 @@ def submit_draft(ctx: Ctx, user: User, proposal_id: int, inp: ProposalInput) -> 
         type="KONU", title=inp.title or p.title, body=inp.body or p.body, area_id=inp.area_id,
         scope_id=inp.scope_id, resource_ids=inp.resource_ids,
     ))
-    report = run_rules(ctx, draft_of(prep, user.id), exclude_id=p.id)
+    report = run_rules(ctx, draft_of(ctx, prep, user.id), exclude_id=p.id)
     if not report.ok:
         _raise_violations(report)
     p.title, p.body, p.area_id, p.scope_id = prep.title, prep.body, prep.area_id, prep.scope_id
@@ -527,6 +572,7 @@ def _apply(ctx: Ctx, p: Proposal, winner_text_id: int | None) -> None:
         target.deleted_by_proposal_id = p.id
         ledger.enqueue(ctx, "ICERIK_SILINDI", {
             "oneri": p.id, "konu": p.payload["topic_id"], "mesaj": p.payload.get("message_id"),
+            "kurallar": p.payload.get("rules", []), "kendi": bool(p.payload.get("own")),
             "not": "İçerik sitede gizlendi; defterdeki kayıtları silinmez.",
         })
     elif t is ProposalType.YONETMELIK:
@@ -655,6 +701,17 @@ def proposal_view(ctx: Ctx, p: Proposal, viewer: User | None) -> dict:
         body["diff"] = [list(c) for c in word_diff(base, p.payload["new_text"])]
     if p.type == "SILME" and p.status not in ("ACCEPTED",):
         body["target_preview"] = _target_preview(ctx, p)
+    if p.type == "SILME":
+        rules = ctx.reg.content_rules()
+        body["content_rules"] = [{"code": c, "title": rules[c].title if c in rules else c}
+                                 for c in p.payload.get("rules", [])]
+        body["excerpt"] = p.payload.get("excerpt", "")
+        body["own"] = bool(p.payload.get("own"))
+    if p.type != "KAPANIS":
+        key = threshold_key(p)
+        raw = ctx.reg.raw(key)
+        body["threshold"] = {"key": key, "oran": raw["oran"],
+                             "karsilastirma": raw.get("karsilastirma", ">=")}
     if p.type == "KAPANIS":
         texts = closure_texts(ctx, p)
         tn = nickname_map(ctx, [ct.author_id for ct in texts])

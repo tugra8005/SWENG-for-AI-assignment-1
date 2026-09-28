@@ -3,6 +3,10 @@
 Tüm eşikler ve süreler ``YonetmelikMaddesi`` düğümlerinde durur; bu modül yalnızca
 varsayılanları, değer şemalarını ve tipli okuyucuları tanımlar. İş kodu eşik ya da
 süre sabiti içermez, her zaman bir ``Regulation`` örneğinden okur.
+
+İki tür madde vardır: parametreler (süre, oran, sayı) ve içerik kuralları (``IK-*``). İçerik
+kuralı bir metin kuralıdır; başkasının içeriğini silme önerisi en az birine dayanmak zorundadır.
+Kurallar dar tutulur: "konu dışı" gibi geniş bir kural sansür aracına dönüşür.
 """
 
 from __future__ import annotations
@@ -46,6 +50,17 @@ class DecisionHourSpec:
 
 
 @dataclass(frozen=True)
+class ContentRule:
+    code: str  # "IK-2"
+    title: str
+    text: str
+    keywords: tuple[str, ...]  # Hâtif'in anahtar kelime denetimi için
+
+
+CONTENT_RULE_KIND = "icerik_kurali"
+
+
+@dataclass(frozen=True)
 class Article:
     key: str
     kind: str
@@ -70,6 +85,9 @@ def _articles() -> dict[str, Article]:
         Article("yonetmelik_esigi", "oran", {"oran": "2/3", "karsilastirma": ">="},
                 "Yönetmelik değişikliği için kullanılan oylar içinde gereken pay. "
                 "Bu maddenin kendisi de bu eşikle değişir.", Fraction(1, 2)),
+        Article("silme_esigi", "oran", {"oran": "2/3", "karsilastirma": ">="},
+                "Başkasının içeriğini silmek için kullanılan oylar içinde gereken pay. Kendi "
+                "mesajının silinmesi basit çoğunlukla oylanır.", Fraction(1, 2)),
         Article("red_bekleme", "sure", {"gun": 30},
                 "Oylamayla reddedilen hedefe yeni öneri açılamayan süre."),
         Article("musavir_esigi", "tamsayi", {"deger": 5},
@@ -113,6 +131,28 @@ def _articles() -> dict[str, Article]:
                 {"yanit": 1, "havale": 2, "yakin_kayit": 1, "yakin_kayit_dk": 60,
                  "ortak_baslik": 0.5, "ortak_baslik_dk": 30},
                 "İlişki grafındaki sinyallerin ağırlıkları ve zaman pencereleri."),
+        # İçerik kuralları: silme önerisinin dayanabileceği tek gerekçeler.
+        Article("IK-1", CONTENT_RULE_KIND, {
+            "baslik": "Spam ve reklam",
+            "metin": "Tartışmayla ilgisi olmayan ticari tanıtım, reklam ya da aynı iletinin "
+                     "tekrar tekrar gönderilmesi.",
+            "anahtar_kelimeler": ["reklam", "indirim", "kampanya", "tıkla", "satın al", "sipariş",
+                                  "kupon", "promosyon", "fırsat", "bedava"],
+        }, "İçerik kuralı: spam ve reklam."),
+        Article("IK-2", CONTENT_RULE_KIND, {
+            "baslik": "Hakaret ve tehdit",
+            "metin": "Bir kişiyi ya da grubu aşağılayan sözler, küfür veya zarar verme tehdidi. "
+                     "Sert eleştiri hakaret değildir.",
+            "anahtar_kelimeler": ["cahil", "aptal", "salak", "ahmak", "gerizekalı", "şerefsiz",
+                                  "baş belası", "döverim", "gebertirim", "öldürürüm", "ezerim"],
+        }, "İçerik kuralı: hakaret ve tehdit."),
+        Article("IK-3", CONTENT_RULE_KIND, {
+            "baslik": "Başkasının kişisel bilgilerini ifşa etme",
+            "metin": "Başka birinin telefonunu, adresini, kimlik numarasını ya da benzeri "
+                     "kişisel bilgisini rızası olmadan paylaşmak.",
+            "anahtar_kelimeler": ["telefon", "numarası", "adresi", "ev adresi", "kimlik no",
+                                  "tc kimlik", "iban", "plaka", "oturuyor"],
+        }, "İçerik kuralı: başkasının kişisel bilgilerini ifşa etme."),
     ]
     return {a.key: a for a in items}
 
@@ -216,6 +256,23 @@ def _v_agirliklar(article: Article, value: Mapping) -> dict:
     return {k: _positive_number(value[k], k, integer=k.endswith("_dk")) for k in article.default}
 
 
+def _v_icerik_kurali(article: Article, value: Mapping) -> dict:
+    _only_keys(value, {"baslik", "metin", "anahtar_kelimeler"})
+    title, text = value.get("baslik"), value.get("metin")
+    if not isinstance(title, str) or not title.strip() or len(title) > 80:
+        raise RegulationError("Kuralın başlığı 1–80 karakterlik bir metin olmalı.")
+    if not isinstance(text, str) or not text.strip() or len(text) > 1000:
+        raise RegulationError("Kuralın metni 1–1000 karakterlik bir metin olmalı.")
+    words = value.get("anahtar_kelimeler")
+    if not isinstance(words, list) or not words or len(words) > 40 or not all(
+        isinstance(w, str) and w.strip() for w in words
+    ):
+        raise RegulationError("Anahtar kelimeler 1–40 öğelik, boş olmayan metinlerden oluşan bir "
+                              "liste olmalı.")
+    return {"baslik": title.strip(), "metin": text.strip(),
+            "anahtar_kelimeler": [w.strip() for w in words]}
+
+
 _VALIDATORS: dict[str, Callable[[Article, Mapping], dict]] = {
     "sure": _v_sure,
     "oran": _v_oran,
@@ -224,6 +281,7 @@ _VALIDATORS: dict[str, Callable[[Article, Mapping], dict]] = {
     "itiraz": _v_itiraz,
     "karar_saati": _v_karar_saati,
     "agirliklar": _v_agirliklar,
+    CONTENT_RULE_KIND: _v_icerik_kurali,
 }
 
 
@@ -295,3 +353,13 @@ class Regulation:
 
     def interaction_weights(self) -> dict[str, float]:
         return dict(self.raw("etkilesim_agirliklari"))
+
+    def content_rules(self) -> dict[str, ContentRule]:
+        """Yürürlükteki içerik kuralları, koda göre (IK-1, IK-2, …)."""
+        out = {}
+        for key, article in DEFAULT_ARTICLES.items():
+            if article.kind != CONTENT_RULE_KIND or key not in self.values:
+                continue
+            v = self.values[key]
+            out[key] = ContentRule(key, v["baslik"], v["metin"], tuple(v["anahtar_kelimeler"]))
+        return out

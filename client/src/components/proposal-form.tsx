@@ -13,6 +13,7 @@ import {
   Muted,
   Rule,
 } from '@/components/paper';
+import { useAuth } from '@/lib/auth';
 import { describeArticleValue } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
@@ -162,7 +163,8 @@ export function ProposalForm({
   const areas = useApi<any[]>('/areas');
   const scopes = useApi<any[]>('/scopes');
   const resources = useApi<any[]>('/resources');
-  const regulation = useApi<any[]>(type === 'YONETMELIK' ? '/regulation' : null);
+  const regulation = useApi<any[]>(type === 'YONETMELIK' || type === 'SILME' ? '/regulation' : null);
+  const { me } = useAuth();
   const topicId = ctx.topic ?? ctx.parent ?? ctx.reopen;
   const topic = useApi<any>(topicId ? `/topics/${topicId}` : null);
   const history = useApi<any>(ctx.message ? `/messages/${ctx.message}/history` : null);
@@ -175,9 +177,15 @@ export function ProposalForm({
   const [newText, setNewText] = useState<string | null>(null);
   const [articleKey, setArticleKey] = useState<string | null>(ctx.article ?? null);
   const [newValue, setNewValue] = useState<any>(null);
+  const [rules, setRules] = useState<string[]>([]);
+  const [excerpt, setExcerpt] = useState('');
   const [error, setError] = useState<unknown>(null);
 
   const currentText = history.data?.versions?.at(-1)?.text ?? '';
+  // Kendi mesajının silinmesi: yazarın rızası; gerekçe gerekmez, basit çoğunluk yeter.
+  const ownMessage = type === 'SILME' && !!ctx.message && !!me && history.data?.author === me.nickname;
+  const contentRules = (regulation.data ?? []).filter((a) => a.kind === 'icerik_kurali');
+  const deletionRatio = regulation.data?.find((a) => a.key === 'silme_esigi')?.value?.oran ?? '2/3';
   const article = regulation.data?.find((a) => a.key === articleKey);
   const needsLabels = (type === 'KONU' && !ctx.reopen) || type === 'ALT_KONU';
   const areaOptions = useMemo(() => {
@@ -204,6 +212,7 @@ export function ProposalForm({
     if (type === 'SILME') {
       if (ctx.message) payload.target_message_id = Number(ctx.message);
       else payload.target_topic_id = Number(ctx.topic);
+      Object.assign(payload, { content_rules: rules, excerpt });
     }
     if (type === 'KAPANIS') payload.target_topic_id = Number(ctx.topic);
     if (type === 'YONETMELIK') Object.assign(payload, { article_key: articleKey, new_value: newValue ?? article?.value });
@@ -234,6 +243,40 @@ export function ProposalForm({
           <Kicker>Hedef mesaj #{ctx.message}</Kicker>
           <Body style={{ fontFamily: fonts.serifItalic }}>{currentText || '…'}</Body>
         </InfoNotice>
+      ) : null}
+
+      {type === 'SILME' ? (
+        <View>
+          {ownMessage ? (
+            <InfoNotice>
+              Bu sizin mesajınız: gerekçe gerekmez, öneri basit çoğunlukla oylanır. İçerik defterde
+              kalır; yalnızca sitede gizlenir.
+            </InfoNotice>
+          ) : (
+            <Muted style={{ marginBottom: 10 }}>
+              Silme istisnadır; tartışmalar silinmez. Başkasının içeriğini silmek için en az bir içerik
+              kuralı seçin ve kuralı ihlal eden kısmı metinden aynen alıntılayın. Öneri, kullanılan
+              oylar içinde en az {deletionRatio} EVET ile geçer (silme_esigi).
+            </Muted>
+          )}
+          <Chips
+            label={ownMessage ? 'Dayanılan içerik kuralı (isteğe bağlı)' : 'Dayanılan içerik kuralı'}
+            options={contentRules.map((a) => ({
+              value: a.key,
+              label: `${a.key} ${a.value.baslik}`,
+              note: a.value.metin,
+            }))}
+            selected={rules}
+            onToggle={(v) => setRules((r) => (r.includes(v) ? r.filter((x) => x !== v) : [...r, v]))}
+          />
+          <Field
+            label={ownMessage ? 'İhlal eden kısım (isteğe bağlı)' : 'Kuralı ihlal eden kısım (metinden aynen alıntı)'}
+            value={excerpt}
+            onChangeText={setExcerpt}
+            multiline
+            hint="Hâtif, seçtiğiniz kuralın anahtar kelimelerini bu alıntıda arar."
+          />
+        </View>
       ) : null}
 
       {type !== 'SILME' && type !== 'DUZENLEME' && type !== 'YONETMELIK' && !ctx.reopen ? (
@@ -329,7 +372,7 @@ export function ProposalForm({
       <ErrorNotice error={error} />
       <Button label={draftId ? 'Taslağı öneri olarak gönder' : 'Öneriyi aç'} onPress={submit} />
       <Muted style={{ marginTop: 10, fontSize: 13 }}>
-        Öneri açılırken R1–R6 denetimleri çalışır; ihlal varsa gerekçesiyle reddedilir.
+        Öneri açılırken R1–R7 denetimleri çalışır; ihlal varsa gerekçesiyle reddedilir.
       </Muted>
     </View>
   );

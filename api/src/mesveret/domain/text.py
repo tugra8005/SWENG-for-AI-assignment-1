@@ -31,6 +31,12 @@ def phrase_in(stems: Sequence[str], words: Sequence[str]) -> bool:
     return False
 
 
+def contains_words(words: Sequence[str], part: Sequence[str]) -> bool:
+    """``part`` kelimeleri ``words`` içinde bütün kelimeler olarak ve art arda geçiyor mu."""
+    n = len(part)
+    return n > 0 and any(list(words[i:i + n]) == list(part) for i in range(len(words) - n + 1))
+
+
 def count_stem_hits(stems: Sequence[str], words: Sequence[str]) -> int:
     return sum(1 for w in words if any(w.startswith(s) for s in stems))
 

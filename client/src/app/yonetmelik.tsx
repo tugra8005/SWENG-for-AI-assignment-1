@@ -1,15 +1,37 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Button, H1, Kicker, Loading, Muted, Page, Rule } from '@/components/paper';
+import { Button, H1, Kicker, Loading, Muted, Page, Rule, Section } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { describeArticleValue, fmtDate } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
-export default function Regulation() {
+function ProposeChange({ articleKey }: { articleKey: string }) {
   const { me } = useAuth();
+  if (!me) return null;
+  return (
+    <Button
+      label="Değişiklik öner"
+      variant="quiet"
+      onPress={() => router.push({ pathname: '/oneri/yeni', params: { type: 'YONETMELIK', article: articleKey } })}
+    />
+  );
+}
+
+function History({ a }: { a: any }) {
+  return a.history.map((h: any, j: number) => (
+    <Text key={j} style={st.history}>
+      {fmtDate(h.changed_at)} · №{h.proposal_id} ile {describeArticleValue(a.kind, h.old_value)} →{' '}
+      {describeArticleValue(a.kind, h.new_value)}
+    </Text>
+  ));
+}
+
+export default function Regulation() {
   const list = useApi<any[]>('/regulation');
+  const params = (list.data ?? []).filter((a) => a.kind !== 'icerik_kurali');
+  const rules = (list.data ?? []).filter((a) => a.kind === 'icerik_kurali');
   return (
     <Page>
       <Kicker>Yönetmelik = veri</Kicker>
@@ -20,29 +42,43 @@ export default function Regulation() {
       </Muted>
       <Rule double />
       {!list.data ? <Loading /> : null}
-      {list.data?.map((a, i) => (
-        <View key={a.key} style={st.article}>
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'baseline' }}>
-            <Text style={st.num}>Madde {i + 1}</Text>
-            <Text style={st.key}>{a.key}</Text>
-          </View>
-          <Text style={st.value}>{describeArticleValue(a.kind, a.value)}</Text>
-          <Muted>{a.description}</Muted>
-          {a.history.map((h: any, j: number) => (
-            <Text key={j} style={st.history}>
-              {fmtDate(h.changed_at)} · №{h.proposal_id} ile {describeArticleValue(a.kind, h.old_value)} →{' '}
-              {describeArticleValue(a.kind, h.new_value)}
-            </Text>
+      {list.data ? (
+        <Section title="İçerik kuralları" aside={<Kicker>silmenin tek dayanağı</Kicker>}>
+          <Muted>
+            Başkasının içeriğini silme önerisi bu kurallardan en az birine dayanmak ve ihlal eden kısmı
+            metinden alıntılamak zorundadır; kullanılan oylar içinde en az 2/3 EVET ile geçer (silme_esigi). Kurallar bilerek dar
+            tutulur: &quot;konu dışı&quot; gibi geniş bir kural sansür aracına dönüşür.
+          </Muted>
+          {rules.map((a) => (
+            <View key={a.key} style={st.article}>
+              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'baseline' }}>
+                <Text style={st.key}>{a.key}</Text>
+                <Text style={st.value}>{a.value.baslik}</Text>
+              </View>
+              <Text style={st.ruleText}>{a.value.metin}</Text>
+              <Text style={st.keywords}>Hâtif&apos;in anahtar kelimeleri: {a.value.anahtar_kelimeler.join(', ')}</Text>
+              <History a={a} />
+              <ProposeChange articleKey={a.key} />
+            </View>
           ))}
-          {me ? (
-            <Button
-              label="Değişiklik öner"
-              variant="quiet"
-              onPress={() => router.push({ pathname: '/oneri/yeni', params: { type: 'YONETMELIK', article: a.key } })}
-            />
-          ) : null}
-        </View>
-      ))}
+        </Section>
+      ) : null}
+      {list.data ? (
+        <Section title="Parametreler">
+          {params.map((a, i) => (
+            <View key={a.key} style={st.article}>
+              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'baseline' }}>
+                <Text style={st.num}>Madde {i + 1}</Text>
+                <Text style={st.key}>{a.key}</Text>
+              </View>
+              <Text style={st.value}>{describeArticleValue(a.kind, a.value)}</Text>
+              <Muted>{a.description}</Muted>
+              <History a={a} />
+              <ProposeChange articleKey={a.key} />
+            </View>
+          ))}
+        </Section>
+      ) : null}
     </Page>
   );
 }
@@ -53,4 +89,6 @@ const st = StyleSheet.create({
   key: { fontFamily: fonts.monoBold, fontSize: 15, color: paper.ink },
   value: { fontFamily: fonts.serifBold, fontSize: 20, color: paper.ink },
   history: { fontFamily: fonts.mono, fontSize: 12, color: paper.seal },
+  ruleText: { fontFamily: fonts.serif, fontSize: 17, lineHeight: 25, color: paper.ink },
+  keywords: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 18, color: paper.muted },
 });

@@ -225,13 +225,29 @@ export function Seal({ hash, label }: { hash?: string | null; label?: string }) 
 }
 
 /** Oylamayla silinmiş içeriğin yerine konan şerit. */
-export function CensorStrip({ proposalId, hash }: { proposalId: number; hash?: string | null }) {
+export type DeletionBasis = { rules: string[]; own: boolean };
+
+/** "#214 · IK-2 gereğince silindi" — silmenin dayandığı içerik kuralı ya da yazarın isteği. */
+export function deletionLabel(proposalId: number, basis?: DeletionBasis | null): string {
+  if (basis?.own) return `#${proposalId} · yazarının isteğiyle silindi`;
+  if (basis?.rules.length) return `#${proposalId} · ${basis.rules.join(', ')} gereğince silindi`;
+  return `#${proposalId} numaralı oylamayla silindi`;
+}
+
+export function CensorStrip({
+  proposalId,
+  hash,
+  basis,
+}: {
+  proposalId: number;
+  hash?: string | null;
+  basis?: DeletionBasis | null;
+}) {
+  const label = deletionLabel(proposalId, basis);
   return (
-    <View style={s.strip} accessibilityLabel={`${proposalId} numaralı oylamayla silindi`}>
+    <View style={s.strip} aria-label={label}>
       <Link href={`/oneri/${proposalId}`}>
-        <Text style={s.stripText}>
-          ████ #{proposalId} NUMARALI OYLAMAYLA SİLİNDİ ████
-        </Text>
+        <Text style={s.stripText}>████ {label} ████</Text>
       </Link>
       {hash ? (
         <Pressable onPress={() => router.push({ pathname: '/defter', params: { h: hash } })}>

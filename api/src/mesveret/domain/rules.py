@@ -1,4 +1,4 @@
-"""Denetim kuralları R1, R2, R3, R5, R6 (R4 havalede: ``domain.delegation``).
+"""Denetim kuralları R1, R2, R3, R5, R6, R7 (R4 havalede: ``domain.delegation``).
 
 Her öneri açılırken çalışır; ihlaller Türkçe gerekçeyle döner. Hâtif oylama anında
 aynı kuralları yeniden çalıştırır.
@@ -12,7 +12,7 @@ from datetime import datetime
 from mesveret.domain.ontology import OntologyView, ResourceInfo, ResourceKind, ScopeInfo
 from mesveret.domain.regulation import Regulation
 from mesveret.domain.scopes import GENERAL_SCOPE_ID, ScopeSubtype
-from mesveret.domain.text import genitive
+from mesveret.domain.text import contains_words, genitive, tokens
 from mesveret.domain.types import ProposalType
 
 ISTANBUL_TZ = "Europe/Istanbul"
@@ -31,6 +31,12 @@ class ProposalDraft:
     target_key: str | None = None
     title: str = ""
     body: str = ""
+    # SILME: dayanılan içerik kuralları, kuralı ihlal eden kısım (metinden alıntı), hedefin
+    # güncel metni ve hedefin öneri sahibine ait bir mesaj olup olmadığı.
+    content_rules: tuple[str, ...] = ()
+    excerpt: str = ""
+    target_text: str = ""
+    own_content: bool = False
 
 
 @dataclass(frozen=True)
@@ -197,6 +203,33 @@ def _check_r6(c: RuleContext, report: RuleReport) -> None:
         ))
 
 
+def _check_r7(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
+    """Silme gerekçesi: başkasının içeriğini silmek bir içerik kuralına ve alıntıya dayanır."""
+    if d.type is not ProposalType.SILME:
+        return
+    known = c.reg.content_rules()
+    unknown = [code for code in d.content_rules if code not in known]
+    if unknown:
+        report.violations.append(Violation("R7", f"Böyle bir içerik kuralı yok: {', '.join(unknown)}."))
+    if d.own_content and not d.content_rules and not d.excerpt.strip():
+        return  # yazarın kendi mesajı: gerekçe gerekmez
+    if not d.content_rules:
+        options = "; ".join(f"{r.code} {r.title}" for r in known.values())
+        report.violations.append(Violation(
+            "R7", f"Silme önerisi en az bir içerik kuralına dayanmalı ({options}). Kendi "
+                  "mesajınızın silinmesi için gerekçe gerekmez.",
+        ))
+    part = tokens(d.excerpt)
+    if not part:
+        report.violations.append(Violation(
+            "R7", "Metnin hangi kısmının kuralı ihlal ettiğini, metinden alıntılayarak belirtin.",
+        ))
+    elif not contains_words(tokens(d.target_text), part):
+        report.violations.append(Violation(
+            "R7", "Belirtilen kısım silinmesi önerilen metinde geçmiyor; metinden aynen alıntılayın.",
+        ))
+
+
 def _check_area(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
     needs_area = d.type in (ProposalType.KONU, ProposalType.ALT_KONU)
     if needs_area and (d.area_id is None or c.onto.area(d.area_id) is None):
@@ -210,4 +243,5 @@ def check_proposal(d: ProposalDraft, c: RuleContext) -> RuleReport:
     _check_r2_r3(d, c, report)
     _check_r5(c, report)
     _check_r6(c, report)
+    _check_r7(d, c, report)
     return report

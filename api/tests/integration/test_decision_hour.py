@@ -6,7 +6,7 @@ from sqlalchemy import select
 from mesveret.db.models import DecisionSession, Message, SessionItem
 from mesveret.domain.commit import verify_commit
 from mesveret.errors import Conflict, DomainError, Forbidden
-from mesveret.services import decision_hour, delegation, ontology, proposals
+from mesveret.services import decision_hour, delegation, ontology, proposals, topics
 from mesveret.services.proposals import ProposalInput
 from tests.integration.helpers import advance, headers_for, mature, open_topic, post, reload
 from tests.integration.world import make_user
@@ -186,15 +186,72 @@ def test_threshold_article_protects_itself(ctx):
 def test_deletion_by_vote_hides_message(ctx, client):
     a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
     topic = open_topic(ctx, a, title="Bisiklet yolları", area="ulasim")
-    msg = post(ctx, a, topic, "Hakaret içeren mesaj.")
+    msg = post(ctx, a, topic, "Bunu yazanlar cahil.")
     p = mature(ctx, proposals.open_proposal(ctx, b, ProposalInput(
-        type="SILME", target_message_id=msg.id,
+        type="SILME", target_message_id=msg.id, content_rules=["IK-2"], excerpt="yazanlar cahil",
     )))
     session = decision_hour.open_session(ctx)
     decision_hour.cast_vote(ctx, b, p.id, True)
     close(ctx, session)
     ctx.db.expire_all()
     assert ctx.db.get(Message, msg.id).deleted_by_proposal_id == p.id
+
+
+def _silme(ctx, user, msg, excerpt=None, rules=("IK-2",)):
+    return mature(ctx, proposals.open_proposal(ctx, user, ProposalInput(
+        type="SILME", target_message_id=msg.id, content_rules=list(rules) if excerpt else [],
+        excerpt=excerpt or "",
+    )))
+
+
+def test_deletion_needs_two_thirds_but_own_message_needs_simple_majority(ctx):
+    a, b, c, d, e, f = (make_user(ctx, n) for n in ("aylin", "baris", "ceren", "deniz", "emre",
+                                                    "ferhat"))
+    topic = open_topic(ctx, a, title="Bisiklet yolları", area="ulasim")
+    m60 = post(ctx, a, topic, "Bu konuyu açanların hepsi cahil.")
+    m67 = post(ctx, a, topic, "Karşı çıkanlar aptal.")
+    own = post(ctx, a, topic, "Telefonum 0532 000 00 00, arayın.")
+    p60, p67 = _silme(ctx, b, m60, "hepsi cahil"), _silme(ctx, b, m67, "çıkanlar aptal")
+    p_own = _silme(ctx, a, own)
+    session = decision_hour.open_session(ctx)
+    for voter, choice in ((b, True), (c, True), (d, False), (e, False)):  # + Hâtif EVET
+        decision_hour.cast_vote(ctx, voter, p60.id, choice)
+    for voter, choice in ((b, True), (c, True), (f, True), (d, False), (e, False)):
+        decision_hour.cast_vote(ctx, voter, p67.id, choice)
+    for voter, choice in ((a, True), (b, True), (c, False), (d, False)):
+        decision_hour.cast_vote(ctx, voter, p_own.id, choice)
+    later = close(ctx, session)
+    r60, r67, r_own = (item_of(later, session, p).result for p in (p60, p67, p_own))
+    assert (r60["yes"], r60["cast"], r60["threshold"]["key"], r60["passed"]) == (3, 5, "silme_esigi", False)
+    assert (r67["yes"], r67["cast"], r67["passed"]) == (4, 6, True)
+    assert (r_own["yes"], r_own["cast"], r_own["threshold"]["key"], r_own["passed"]) == (
+        3, 5, "basit_cogunluk", True)
+    later.db.expire_all()
+    assert later.db.get(Message, m60.id).deleted_by_proposal_id is None
+    assert later.db.get(Message, m67.id).deleted_by_proposal_id == p67.id
+    assert later.db.get(Message, own.id).deleted_by_proposal_id == p_own.id
+
+
+def test_oracle_votes_no_when_cited_rule_has_no_keyword_match(ctx):
+    a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
+    topic = open_topic(ctx, a, title="Bisiklet yolları", area="ulasim")
+    msg = post(ctx, a, topic, "Bu görüşe katılmıyorum, bence yanlış.")
+    p = _silme(ctx, b, msg, "bence yanlış")
+    assert "Oylamada verilecek oy: HAYIR" in p.oracle_comment
+    session = decision_hour.open_session(ctx)
+    note = item_of(ctx, session, p).oracle_note
+    assert note["choice"] == "HAYIR" and "karşılığı yok" in note["reason"]
+
+
+def test_oracle_rechecks_the_excerpt_when_the_window_opens(ctx):
+    a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
+    topic = open_topic(ctx, a, title="Bisiklet yolları", area="ulasim")
+    msg = post(ctx, a, topic, "Bunu yazanlar cahil.")
+    p = _silme(ctx, b, msg, "yazanlar cahil")
+    topics.edit_own_message(ctx, a, msg.id, "Özür dilerim, sert yazdım.")  # yazar düzeltti
+    session = decision_hour.open_session(ctx)
+    note = item_of(ctx, session, p).oracle_note
+    assert note["choice"] == "HAYIR" and "R7" in note["reason"]
 
 
 # --- kapanış, onay oylaması, şerh ------------------------------------------------------------------

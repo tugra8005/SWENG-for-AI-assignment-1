@@ -172,7 +172,7 @@ def message_history(ctx: Ctx, message_id: int) -> dict:
         select(MessageVersion).where(MessageVersion.message_id == msg.id)
         .order_by(MessageVersion.version_no)
     ).scalars().all()
-    names = nickname_map(ctx, [v.editor_id for v in versions])
+    names = nickname_map(ctx, [v.editor_id for v in versions] + [msg.author_id])
     out, prev = [], None
     for v in versions:
         out.append({
@@ -182,7 +182,8 @@ def message_history(ctx: Ctx, message_id: int) -> dict:
             "diff": [list(c) for c in word_diff(prev, v.text)] if prev is not None else None,
         })
         prev = v.text
-    return {"message_id": msg.id, "topic_id": msg.topic_id, "versions": out}
+    return {"message_id": msg.id, "topic_id": msg.topic_id, "author": names.get(msg.author_id),
+            "versions": out}
 
 
 def _message_view(ctx: Ctx, msg: Message, names: dict[str, str]) -> dict:
@@ -190,6 +191,7 @@ def _message_view(ctx: Ctx, msg: Message, names: dict[str, str]) -> dict:
     if msg.deleted_by_proposal_id is not None:
         # İçerik gizlenir; mühür (defter hash'i) kalır: silme gizlemedir, kayıttan kaldırmaz.
         return {"id": msg.id, "deleted_by_proposal_id": msg.deleted_by_proposal_id,
+                "deletion_basis": deletion_basis(ctx, msg.deleted_by_proposal_id),
                 "ledger_hash": v.ledger_hash}
     return {
         "id": msg.id,
@@ -203,9 +205,17 @@ def _message_view(ctx: Ctx, msg: Message, names: dict[str, str]) -> dict:
     }
 
 
+def deletion_basis(ctx: Ctx, proposal_id: int) -> dict:
+    """Sansür şeridi için: silme hangi içerik kuralına dayandı, ya da yazarın isteği miydi."""
+    p = ctx.db.get(Proposal, proposal_id)
+    payload = p.payload if p else {}
+    return {"rules": list(payload.get("rules", [])), "own": bool(payload.get("own"))}
+
+
 def topic_summary(ctx: Ctx, topic: Topic) -> dict:
     if topic.deleted_by_proposal_id is not None:
         return {"id": topic.id, "deleted_by_proposal_id": topic.deleted_by_proposal_id,
+                "deletion_basis": deletion_basis(ctx, topic.deleted_by_proposal_id),
                 "area_id": topic.area_id}
     count = ctx.db.execute(
         select(func.count()).select_from(Message).where(

@@ -26,6 +26,8 @@ class ProposalIn(BaseModel):
     article_key: str | None = None
     new_value: dict[str, Any] | None = None
     reopens_topic_id: int | None = None
+    content_rules: list[str] = Field(default_factory=list)
+    excerpt: str = ""
 
 
 class RivalIn(BaseModel):

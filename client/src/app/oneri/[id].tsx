@@ -192,6 +192,31 @@ export default function ProposalPage() {
             </Section>
           ) : null}
 
+          {p.type === 'SILME' ? (
+            <Section title="Silme gerekçesi" aside={<Kicker>{p.own ? 'yazarın isteği' : 'içerik kuralı'}</Kicker>}>
+              {p.own ? (
+                <Body>Yazar kendi mesajının silinmesini istiyor; gerekçe gerekmez.</Body>
+              ) : null}
+              {p.content_rules?.map((r: any) => (
+                <Body key={r.code}>
+                  <Text style={{ fontFamily: fonts.monoBold, color: paper.seal }}>{r.code}</Text> {r.title}
+                </Body>
+              ))}
+              {p.excerpt ? (
+                <View style={st.quote}>
+                  <Kicker>Kuralı ihlal ettiği belirtilen kısım</Kicker>
+                  <Body style={{ fontFamily: fonts.serifItalic }}>«{p.excerpt}»</Body>
+                </View>
+              ) : null}
+              {p.threshold ? (
+                <Muted>
+                  Eşik: {p.threshold.key} {p.threshold.karsilastirma === '>' ? '>' : '≥'} {p.threshold.oran}{' '}
+                  (kullanılan oylar içinde{p.own ? '; yazarın kendi mesajı basit çoğunlukla oylanır' : ''}).
+                </Muted>
+              ) : null}
+            </Section>
+          ) : null}
+
           {p.type === 'YONETMELIK' ? (
             <Section title={`Madde: ${p.payload.article_key}`}>
               <Body>

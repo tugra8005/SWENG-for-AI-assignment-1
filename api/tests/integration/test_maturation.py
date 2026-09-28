@@ -109,7 +109,9 @@ def test_topic_page_lists_related_proposal_maturity(ctx, client):
     a, b = make_user(ctx, "ayse"), make_user(ctx, "bora")
     topic = open_topic(ctx, a)
     msg = post(ctx, a, topic, "Silinecek mesaj.")
-    p = proposals.open_proposal(ctx, b, ProposalInput(type="SILME", target_message_id=msg.id))
+    p = proposals.open_proposal(ctx, b, ProposalInput(
+        type="SILME", target_message_id=msg.id, content_rules=["IK-2"], excerpt="Silinecek",
+    ))
     related = client.get(f"/topics/{topic.id}").json()["proposals"]
     assert [r["id"] for r in related] == [p.id]
     assert related[0]["maturity"]["klass"] == "genel"

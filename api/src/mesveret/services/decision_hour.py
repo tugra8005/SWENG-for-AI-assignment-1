@@ -97,13 +97,26 @@ def _snapshot(ctx: Ctx, session: DecisionSession, p: Proposal, delegations) -> S
 
 
 def _oracle_decision(ctx: Ctx, p: Proposal) -> tuple[bool, str]:
-    report = proposals.run_rules(ctx, proposals.draft_of(p, p.proposer_id), exclude_id=p.id)
+    report = proposals.run_rules(ctx, proposals.draft_of(ctx, p, p.proposer_id), exclude_id=p.id)
     findings = label_check(proposals.oracle_text(p), p.area_id, p.scope_id, p.resource_ids,
                            ctx.graph)
+    content = proposals.deletion_check(ctx, p)
     parts = [f"{v.rule}: {v.message}" for v in report.violations]
     parts += [f"{f.kind}: {f.message}" for f in findings]
-    vote = oracle_vote(report, findings)
-    reason = "R1–R6 geçti; etiketler uyumlu." if vote else " ".join(parts)
+    if content is not None:
+        parts += [f"H4: {m.code} ({m.title}) kuralının belirtilen kısımda karşılığı yok."
+                  for m in content.matches if not m.ok]
+    vote = oracle_vote(report, findings, content)
+    if not vote:
+        return vote, " ".join(parts)
+    reason = "R1–R7 geçti; etiketler uyumlu."
+    if content is not None and content.own:
+        reason += " Yazar kendi mesajının silinmesini istiyor."
+    elif content is not None:
+        reason += " " + " ".join(
+            f"{m.code} kuralının karşılığı var ({', '.join(repr(h) for h in m.hits)})."
+            for m in content.matches
+        )
     return vote, reason
 
 
@@ -304,7 +317,7 @@ def _close_item(ctx: Ctx, session: DecisionSession, item: SessionItem, reg: Regu
     else:
         votes = {b.voter_id: b.choice == YES for b in ballots}
         t = tally_binary(votes, item.resolved, eligible)
-        key = "yonetmelik_esigi" if p.type == "YONETMELIK" else "basit_cogunluk"
+        key = proposals.threshold_key(p)
         ratio = reg.ratio(key)
         passed = ratio.passes(t.yes, t.cast)
         result = {

@@ -166,3 +166,54 @@ def test_unknown_references_are_rejected_with_a_message():
     report = check_proposal(konu(scope_id="yok", area_id="yok", resource_ids=("yok",)), ctx())
     assert not report.ok
     assert all(v.message for v in report.violations)
+
+
+# --- R7: silme gerekçesi --------------------------------------------------------------------------
+
+TROLL = "Bu konuyu açanların hepsi cahil; bisikletliler trafiğin baş belası."
+
+
+def silme(**kw) -> ProposalDraft:
+    base = {
+        "type": ProposalType.SILME, "proposer_id": "u1", "scope_id": "genel", "area_id": "sinema",
+        "resource_ids": (), "target_key": "ICERIK:mesaj:7", "title": "Silme: #7",
+        "content_rules": ("IK-2",), "excerpt": "hepsi cahil", "target_text": TROLL,
+    }
+    base.update(kw)
+    return ProposalDraft(**base)
+
+
+def r7_messages(d) -> list[str]:
+    return [v.message for v in check_proposal(d, ctx()).violations if v.rule == "R7"]
+
+
+def test_r7_deletion_with_rule_and_verbatim_excerpt_passes():
+    assert check_proposal(silme(), ctx()).ok
+
+
+def test_r7_deletion_without_content_rule_is_rejected():
+    [msg] = r7_messages(silme(content_rules=()))
+    assert msg.startswith("Silme önerisi en az bir içerik kuralına dayanmalı")
+    assert "IK-2 Hakaret ve tehdit" in msg
+
+
+def test_r7_unknown_rule_is_rejected():
+    assert any("IK-9" in m for m in r7_messages(silme(content_rules=("IK-9",))))
+
+
+def test_r7_excerpt_is_required_and_must_appear_in_the_target():
+    [missing] = r7_messages(silme(excerpt="  "))
+    assert "hangi kısmının" in missing
+    [absent] = r7_messages(silme(excerpt="hepsi aptal"))
+    assert "silinmesi önerilen metinde geçmiyor" in absent
+    # Büyük/küçük harf ve noktalama farkı alıntıyı geçersiz kılmaz; kelimeler bütün olmalı.
+    assert check_proposal(silme(excerpt="HEPSİ CAHİL;"), ctx()).ok
+    assert r7_messages(silme(excerpt="psi cah"))
+
+
+def test_r7_own_message_needs_no_justification():
+    assert check_proposal(silme(own_content=True, content_rules=(), excerpt=""), ctx()).ok
+
+
+def test_r7_applies_only_to_deletion():
+    assert check_proposal(konu(content_rules=(), excerpt=""), ctx()).ok

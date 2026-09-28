@@ -92,10 +92,16 @@ def test_decision_hour_runs_all_voting_scenarios(seeded):
     assert (r60["yes"], r60["cast"], r60["passed"]) == (18, 30, False)
     assert (r67["yes"], r67["cast"], r67["passed"]) == (20, 30, True)
 
-    # 4. Silme: mesaj gizlenir.
-    assert result(later, session, ids["silme"])["passed"] is True
-    troll = later.db.execute(select(Message).where(Message.author_id == user(later, "kaba_kul").id)).scalar_one()
-    assert troll.deleted_by_proposal_id == ids["silme"]
+    # 4. Silme: gerekçeli silme 2/3 ister (%60 geçemez, %67 geçer); kendi mesajı basit çoğunluk.
+    s60, s67, own = (result(later, session, ids[k]) for k in ("silme_60", "silme_67", "silme_kendi"))
+    assert (s60["yes"], s60["cast"], s60["threshold"]["key"], s60["passed"]) == (18, 30, "silme_esigi", False)
+    assert (s67["yes"], s67["cast"], s67["passed"]) == (20, 30, True)
+    assert (own["yes"], own["cast"], own["threshold"]["key"], own["passed"]) == (7, 12, "basit_cogunluk", True)
+    msgs = {p.id: later.db.get(Message, p.payload["message_id"])
+            for p in (later.db.get(Proposal, ids[k]) for k in ("silme_60", "silme_67", "silme_kendi"))}
+    assert msgs[ids["silme_60"]].deleted_by_proposal_id is None  # hakaret görünür kaldı
+    assert msgs[ids["silme_67"]].deleted_by_proposal_id == ids["silme_67"]
+    assert msgs[ids["silme_kendi"]].deleted_by_proposal_id == ids["silme_kendi"]
 
     # 5. Kapanış: 22:00 metni kazanır; ilker (kaybeden) şerh ekleyebilir.
     rk = result(later, session, ids["kapanis"])
@@ -163,8 +169,8 @@ def test_scenario_9_late_general_proposal_waits_for_maturity(seeded):
 
     session = decision_hour.open_session(ctx)
     included = {i.proposal_id for i in decision_hour.items_of(ctx, session)}
-    voting = {ids[k] for k in ("metro", "yonetmelik_60", "yonetmelik_67", "silme", "kapanis",
-                               "baskin", "hatif")}
+    voting = {ids[k] for k in ("metro", "yonetmelik_60", "yonetmelik_67", "silme_60", "silme_67",
+                               "silme_kendi", "kapanis", "baskin", "hatif")}
     assert voting <= included  # tohumdaki senaryo önerileri olgunlaşmış
     assert ids["olgunlasma"] not in included
     later = ctx.at(session.closes_at)
@@ -178,3 +184,17 @@ def test_scenario_9_late_general_proposal_waits_for_maturity(seeded):
     late = later.db.get(Proposal, ids["olgunlasma"])
     s = decision_hour.get_session(later, late.session_id)
     assert s.scheduled_for == datetime(2026, 10, 11, 17, 0, tzinfo=UTC)
+
+
+def test_scenario_4_unjustified_deletion_is_rejected(seeded):
+    ctx = seeded
+    hale_msg = ctx.db.execute(select(Message).where(
+        Message.author_id == user(ctx, "hale").id, Message.is_opening.is_(False)
+    )).scalar_one()
+    with pytest.raises(DomainError) as err:
+        proposals.open_proposal(ctx, user(ctx, "emre"), ProposalInput(
+            type="SILME", target_message_id=hale_msg.id, body="Bu mesajı beğenmedim.",
+        ))
+    assert err.value.violations[0]["rule"] == "R7"
+    silme_60 = ctx.db.get(Proposal, seed.scenario_ids(ctx)["silme_60"])
+    assert "IK-2 (Hakaret ve tehdit): belirtilen kısımda karşılığı var" in silme_60.oracle_comment

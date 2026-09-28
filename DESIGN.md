@@ -51,7 +51,7 @@ flowchart LR
 
 ### 2.1 Katmanlar (api)
 
-- `domain/` — saf fonksiyonlar: havale çözümleme, döngü kontrolü, ağırlık ve sayım, R1–R6, Hâtif etiket denetimi, baskın tespiti, başlık kimliği, diff. Veritabanı bilmez; testlerin büyük kısmı burada.
+- `domain/` — saf fonksiyonlar: havale çözümleme, döngü kontrolü, ağırlık ve sayım, R1–R7, Hâtif etiket denetimi, baskın tespiti, başlık kimliği, diff. Veritabanı bilmez; testlerin büyük kısmı burada.
 - `graph/` — Neo4j erişimi. `OntologyView` protokolünün Neo4j uygulaması (Cypher).
 - `db/` — SQLAlchemy 2 modelleri.
 - `services/` — iş akışları; domain fonksiyonlarını veri katmanlarıyla birleştirir.
@@ -150,6 +150,7 @@ Tüm eşikler ve süreler `YonetmelikMaddesi` düğümlerinde durur. Kod bunlar�
 | `itiraz_esigi` | `{min: 3, oran: 1/20, aktiflik_gun: 30}` | max(3, kapsamdaki aktif üyelerin %5'i); aktif = son 30 günde giriş |
 | `basit_cogunluk` | `{oran: 1/2, karsilastirma: ">"}` | Kullanılan oyların yarısından fazlası |
 | `yonetmelik_esigi` | `{oran: 2/3, karsilastirma: ">="}` | Kullanılan oyların en az 2/3'ü |
+| `silme_esigi` | `{oran: 2/3, karsilastirma: ">="}` | Başkasının içeriğini silmek için kullanılan oyların en az 2/3'ü (§7.4) |
 | `red_bekleme` | 30 gün | Reddedilen hedefe yeniden öneri yasağı |
 | `musavir_esigi` | 5 | Alan bazında doğrudan alınan havale sayısı |
 | `ilgi_bekleme` | 14 gün | ILGI kapsamında oy hakkı beklemesi |
@@ -170,7 +171,17 @@ Tüm eşikler ve süreler `YonetmelikMaddesi` düğümlerinde durur. Kod bunlar�
 | `olgunlasma_genis` | 72 saat | Geniş etkili öneri için aynı süre |
 | `olgunlasma_genel` | 7 gün | Genel kapsamlı ve yönetmelik önerileri için aynı süre |
 
-Belgede verilen ilk 13 madde aynen alınmıştır. `mahzen_ifsa_esigi`, baskın ve etkileşim maddeleri belgenin "eşikler yönetmelik maddesi olarak durur" gereği eklenmiştir. `olgunlasma_*` maddeleri sonradan istenen olgunlaşma kuralından gelir.
+**İçerik kuralları.** Yönetmelikte parametrelerin yanında ikinci bir madde türü vardır: içerik kuralı (`icerik_kurali`). Bir içerik kuralı sayı değil metindir: başlık, kuralın metni ve Hâtif'in denetimde kullandığı anahtar kelimeler. Başkasının içeriğini silme önerisi en az birine dayanmak zorundadır (R7, §7.4).
+
+| Kural | Başlık | Kapsadığı |
+|---|---|---|
+| `IK-1` | Spam ve reklam | Tartışmayla ilgisi olmayan ticari tanıtım, reklam, aynı iletinin tekrarı |
+| `IK-2` | Hakaret ve tehdit | Kişiyi ya da grubu aşağılayan söz, küfür, zarar verme tehdidi. Sert eleştiri hakaret değildir |
+| `IK-3` | Başkasının kişisel bilgilerini ifşa etme | Başkasının telefonu, adresi, kimlik numarası gibi bilgilerini rızası olmadan paylaşmak |
+
+"Konu dışı" gibi geniş bir kural bilerek yoktur: neyin konu dışı olduğunu çoğunluk belirler ve böyle bir kural, çoğunluğun beğenmediği her görüşü silmenin gerekçesi olur. İçerik kuralları diğer maddeler gibi YONETMELIK önerisiyle ve `yonetmelik_esigi` ile değişir (metin ve anahtar kelimeler); yeni kural ekleme ya da kural kaldırma yolu yoktur (bkz. §15).
+
+Belgede verilen ilk 13 madde aynen alınmıştır. `mahzen_ifsa_esigi`, baskın ve etkileşim maddeleri belgenin "eşikler yönetmelik maddesi olarak durur" gereği eklenmiştir. `olgunlasma_*` maddeleri sonradan istenen olgunlaşma kuralından, `silme_esigi` ve içerik kuralları silmenin sıkılaştırılmasından gelir.
 
 **Değişiklik kuralları:**
 
@@ -190,6 +201,7 @@ Her öneri açılırken kurallar çalışır. İhlal varsa öneri kaydedilmez ve
 | **R4** | Havale döngüsü yasak (alan başına; mirası da kapsar, §8.2) | Döngüde oy hiçbir yere varmaz |
 | **R5** | Oy hakkı = kapsam üyeliği + ilgili bekleme süresinin dolmuş olması. Öneri sahibi de seçmen kapsamında oy hakkına sahip olmalı | Bir gruba, o grubun parçası olmayan biri öneri getiremez; yeni katılanlar hemen karar veremez |
 | **R6** | Aynı hedefe oylamayla reddedilmiş öneri `red_bekleme` süresince yeniden açılamaz | Aynı öneriyi üst üste açarak yıpratmayı önler |
+| **R7** | Başkasının içeriğini silme önerisi en az bir içerik kuralına (IK-1…) dayanmalı ve kuralı ihlal eden kısmı hedef metinden aynen alıntılamalı. Alıntı hedefin güncel metninde bütün kelimelerle, art arda geçmeli (büyük/küçük harf ve noktalama farkı yok sayılır). Yazarın kendi mesajı için gerekçe gerekmez; konu silme hiçbir zaman "kendi" sayılmaz | Silme istisnadır; gerekçesiz silme, çoğunluğun beğenmediği görüşü gizlemesinin yoludur (§7.4) |
 
 **red_bekleme hedef anahtarı:** KONU → (alan, normalize başlık); ALT_KONU → (üst konu, normalize başlık); DUZENLEME ve SILME → içerik; YONETMELIK → madde; KAPANIS → konu. Yalnızca oylamayla reddedilen öneriler sayılır; açılışta denetimden dönenler kayda girmez.
 
@@ -206,8 +218,9 @@ Hâtif her yeni öneriye bir "etiket önerisi" yorumu bırakır. Denetim kural t
 - **H1 — Alan:** başlık ve metindeki kelimeler alanların `anahtar_kelimeler` listeleriyle eşlenir. En çok eşleşen alan (en az 2 eşleşme) seçilen alan değilse ve seçilen alan onun atası da değilse, uyuşmazlık sayılır.
 - **H2 — Etiketlenmemiş kaynak:** metin bir kaynağın adını ya da eş adını geçiriyor ama öneri o kaynağı ETKILER olarak etiketlememişse uyuşmazlık sayılır. Bu denetim, R2'den kaçmak için kaynak etiketini atlama manipülasyonunu yakalamaya yöneliktir.
 - **H3 — Şehir:** metin tek bir şehrin adını geçiriyor, seçmen kapsamı ise başka bir şehrin kapsamıysa uyuşmazlık sayılır.
+- **H4 — İçerik kuralı (yalnızca SILME):** dayanılan her içerik kuralının anahtar kelimelerinden en az biri, ihlal edildiği söylenen alıntıda geçmeli. Karşılığı olmayan kural varsa HAYIR. Hâtif hangi kelimeyi bulduğunu ya da bulamadığını yorumuna yazar: "İçerik kuralı IK-2 (Hakaret ve tehdit): belirtilen kısımda karşılığı var ('cahil')." Kendi mesajının silinmesinde bu denetim yapılmaz.
 
-**Hâtif'in oyu:** oylama anında R1–R6 yeniden çalışır ve H1–H3 değerlendirilir. Hepsi geçerse EVET, biri bile geçmezse HAYIR. R1–R6'yı ihlal eden öneriler açılışta zaten reddedildiği için, H1–H3 olmasa Hâtif pratikte her öneriye EVET derdi.
+**Hâtif'in oyu:** oylama anında R1–R7 yeniden çalışır ve H1–H4 değerlendirilir. Hepsi geçerse EVET, biri bile geçmezse HAYIR. R1–R7'yi ihlal eden öneriler açılışta zaten reddedildiği için, H1–H4 olmasa Hâtif pratikte her öneriye EVET derdi. R7 oylama anında hedefin güncel metniyle yeniden çalışır: yazar ihlal eden kısmı oylamadan önce düzeltirse alıntı artık metinde geçmez ve Hâtif HAYIR der.
 
 ## 7. Öneri yaşam döngüsü
 
@@ -247,7 +260,7 @@ stateDiagram-v2
   - Oy anında deftere yalnızca `commit = sha256(kanonik_json(oturum, öneri, seçmen, seçim) ‖ tuz)` yazılır. Tuzu ve seçimi sunucu PostgreSQL'de tutar.
   - Pencere kapanınca tüm seçimler ve tuzlar deftere açılır; herkes her commit'i yeniden hesaplayabilir.
   - Meydan'da oy bir kez verilir ve pencere boyunca değiştirilemez.
-- **Eşikler:** YONETMELIK için `yonetmelik_esigi`; SILME ve itiraz almış hızlı şerit önerileri için `basit_cogunluk`. Oranlar yalnızca kullanılan (çekimser olmayan) ağırlıklar üzerinden hesaplanır. Yeter sayı (kuorum) yoktur; hiç oy kullanılmamışsa öneri reddedilir.
+- **Eşikler:** YONETMELIK için `yonetmelik_esigi`; başkasının içeriğini silen SILME için `silme_esigi`; kendi mesajını silen SILME ve itiraz almış hızlı şerit önerileri için `basit_cogunluk`. Oranlar yalnızca kullanılan (çekimser olmayan) ağırlıklar üzerinden hesaplanır. Yeter sayı (kuorum) yoktur; hiç oy kullanılmamışsa öneri reddedilir.
 - **Sonuç açıklama ekranı:** açılan oylar tek tek düşer (takma ad, ağırlık, seçim); yanında çubuk ve eşik çizgisi ilerler.
 
 **Olgunlaşma.** Bir öneri Karar Saati'nde ancak yeterince uzun süre yayında kaldıktan sonra oylanır. Süre önerinin etkisiyle ölçeklenir; etki, seçmen kapsamının genişliğiyle ölçülür:
@@ -276,9 +289,20 @@ stateDiagram-v2
 
 ### 7.4 Silme
 
-- Başarılı SILME oylamasından sonra içerik sitede gizlenir. Yerine tam genişlikte bir sansür şeridi konur: "#N numaralı oylamayla silindi" (N = öneri numarası).
-- İçerik defterde kalır ve defter ekranından hash ile görüntülenebilir.
-- Kendi mesajını silmek de oylamaya tabidir.
+Hocanın ana şartı "tartışmalar silinmez"dir. Silme bu yüzden günlük bir araç değil istisnadır:
+
+- **Gerekçe (R7):** başkasının içeriğini silme önerisi en az bir içerik kuralına (IK-1 spam ve reklam, IK-2 hakaret ve tehdit, IK-3 başkasının kişisel bilgilerini ifşa etme) dayanır ve kuralı ihlal eden kısmı metinden aynen alıntılar. Gerekçesiz öneri açılışta reddedilir.
+- **Eşik:** `silme_esigi`, kullanılan oyların en az 2/3'ü.
+- **İstisna:** kendi mesajının silinmesi için gerekçe gerekmez ve basit çoğunluk yeter. Konu silme bu istisnadan yararlanmaz; konu başkalarının mesajlarını da götürür.
+- **Hâtif:** dayanılan kuralın anahtar kelimelerini alıntıda arar (H4, §6.1); bulamazsa HAYIR oyu verir ve nedenini yorumuna yazar.
+- **Sonuç:** içerik sitede gizlenir; yerine tam genişlikte bir sansür şeridi konur. Şerit dayanılan kuralı anar: "#11 · IK-1 gereğince silindi"; kendi mesajında "#12 · yazarının isteğiyle silindi". İçerik defterde kalır ve defter ekranından hash ile görüntülenebilir.
+
+*Neden 2/3 ve gerekçe.* Basit çoğunlukla ve gerekçesiz silme, çoğunluğun rahatsız olduğu her görüşü oylamayla gizlemesine izin verir; bu, oylamayla işleyen bir sansürdür (çoğunluk sansürü). Önlem iki katmanlıdır:
+
+1. **Gerekçe, neyin silinebileceğini daraltır.** Silme ancak yönetmelikte yazılı, dar bir ihlale dayanabilir, ve ihlal metinde gösterilmelidir. "Yanlış", "konu dışı", "beğenmedim" silme gerekçesi değildir. Alıntı zorunluluğu tartışmayı görüşten ihlale çeker: seçmenler "bu görüş doğru mu?" diye değil, "bu cümle hakaret mi?" diye oy verir.
+2. **2/3, kimin silebileceğini daraltır.** Konu açmak ve bir fikri kabul etmek geri alınabilir kararlardır (yeniden açma, yeni öneri). Silme ise bir sesi tartışmadan çıkarır ve çoğunlukla azınlığın sesidir. Nitelikli çoğunluk, silmeyi yalnızca geniş bir uzlaşının olduğu durumlarla sınırlar. Seçmenlerin üçte birinden fazlası bir içeriğin kalmasını istiyorsa, o içerik tartışmanın meşru bir parçası sayılır. Yönetmelik değişikliğiyle aynı eşik bilinçlidir: ikisi de oyun kuralına dokunur.
+
+Kendi mesajında yazarın rızası vardır. Silinen ses, silinmesini isteyen sestir; çoğunluk sansürü riski yoktur. Bu yüzden basit çoğunluk yeter. Oylama yine de gerekir, çünkü başkalarının verdiği yanıtlar o mesaja dayanır (bkz. §15).
 
 ### 7.5 Düzenleme
 
@@ -444,7 +468,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Nokta | Karar |
 |---|---|
 | R2'de üst küme ya da ilgisiz kapsam | Red (kullanıcı kararı) |
-| Hâtif'in HAYIR ölçütü | R1–R6 + H1–H3 (kullanıcı kararı) |
+| Hâtif'in HAYIR ölçütü | R1–R7 + H1–H4 (kullanıcı kararı; R7 ve H4 silmenin sıkılaştırılmasıyla eklendi) |
 | Mahzen ifşa oylamasının süresi ve eşiği | Süresiz; seçmen listesinin yarısı aşılınca anında geçer; oy değiştirilebilir (kullanıcı kararı) |
 | Zincirde oy hakkı olmayan ara halka | Geçirgen; ağırlığa yalnızca oy hakkı olanlar katkı verir |
 | Miras ile döngü | Alt ağaçtaki tüm alanlar kontrol edilir |
@@ -464,6 +488,11 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Olgunlaşmada "dar" ve "geniş" | Seçmen kapsamına göre: NITELIK kapsamı ve yaprak alanın ILGI kapsamı dar; yaprak olmayan alanın ILGI kapsamı geniş; GENEL ve YONETMELIK genel. Yaprak olmayan alan, alt alanlarıyla birlikte bir konu ağacını kapsar; o alanın ilgi kapsamındaki bir karar bu ağacın tamamını ilgilendirebilir |
 | Olgunlaşmanın başladığı an | Yavaş şeritte doğan türlerde açılış; itirazla düşenlerde düşüş anı |
 | Daralma oranındaki toplam | Kaynağın şehir paylarının toplamı; ayrı bir toplam alanı tutulmaz |
+| H4'te "metinde karşılık" | Alıntılanan kısımda aranır; alıntının hedef metinde aynen geçtiği R7'de denetlenir. Birden fazla kural seçilirse her biri için karşılık aranır; biri bile yoksa HAYIR (şeritte anılacak her kural gösterilmiş olmalı) |
+| Alıntının eşleşmesi | Büyük/küçük harf, noktalama ve kesme işareti farkı yok sayılır; kelimeler bütün ve art arda olmalı |
+| Kendi içeriği istisnası | Yalnızca mesajlar için (açılış mesajı dahil). Konu silme hiçbir zaman "kendi" sayılmaz. Kendi mesajında kural ve alıntı isteğe bağlıdır; verilirse doğrulanır |
+| R7'nin oylama anında yeniden çalışması | Hedefin güncel metniyle; yazar ihlal eden kısmı düzeltirse Hâtif HAYIR der |
+| Yeni içerik kuralı eklemek | Yol yok; mevcut kuralların metni ve anahtar kelimeleri YONETMELIK ile değişir |
 | Etki başlığının üretimi | Kaynak adının tamlayan hâli + kapsam adı + "payı". Tamlayan eki ünlü uyumuyla ve kaynaştırma ünsüzüyle eklenir; ünsüz yumuşaması yapılmaz ("kitap" → "kitapın"), kaynak adları buna göre seçilir |
 
 ## 15. Bilinçli açıklar
@@ -487,27 +516,31 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 17. **Pencere boyunca kimin oy verdiği bellidir.** Oyun içeriği mühürlüdür ama commit kaydı seçmenin takma adıyla deftere hemen yazılır. Pencere kapanmadan kimin oy verdiği, kimin henüz vermediği görülebilir; bu bilgi son dakika baskısına yol açabilir.
 18. **Mahzen'de oy değiştirmek bir yarışa dönüşebilir.** İfşa, eşiğin aşıldığı an gerçekleşir ve geri alınamaz. Fikrini değiştirmek isteyen bir seçmenin HAYIR'a dönmesi, eşiği aşan son EVET'ten sonra gelirse etkisizdir.
 19. **Olgunlaşma acil kararları geciktirir.** Genel kapsamlı bir öneri en az 7 gün bekler; olgunlaşma Pazar oturumundan hemen sonra dolarsa bu neredeyse iki haftaya çıkar. Acil durumlar için hızlandırılmış bir yol yoktur. Süreler yönetmelik maddesidir ve oylamayla kısaltılabilir, ama kısaltma önerisi de 7 gün olgunlaşır. Ayrıca itiraz bir erteleme aracına dönüşebilir: hızlı şeritteki bir öneriye eşik kadar itiraz eden azınlık, onu en az 48 saat, genel kapsamda en az 7 gün geciktirir.
+20. **Hâtif'in içerik denetimi kelimeye bakar, anlama bakmaz.** Anahtar kelime kullanmadan yapılan hakaret (ima, alay, küçümseme) Hâtif'ten HAYIR alır. Bir hakaret kelimesini eleştirmek için anan mesaj ("'cahil' demek yanlış") EVET alabilir. Hâtif tek bir oydur ve gerekçesini açıkça yazar; karar seçmenlerindir.
+21. **2/3 gerçek bir hakareti de koruyabilir.** Seçmenlerin üçte birinden fazlası bir içeriğin kalmasını isterse, gerçekten kural ihlali olsa bile içerik görünür kalır (senaryo 4'te %60 ile silinemeyen hakaret). Reddedilen silme `red_bekleme` süresince yeniden açılamaz. Bu bilinçli bir ödünleşimdir: yayında kalan bir hakaretin zararı, çoğunluğun azınlık görüşlerini silebilmesinin zararından küçük sayılmıştır.
+22. **İçerik kuralları oylamayla genişletilebilir.** Yeni kural eklenemez, ama mevcut bir kuralın metni ve anahtar kelimeleri `yonetmelik_esigi` (2/3) ile değişebilir. 2/3'lük bir çoğunluk IK-1'in metnini "konu dışı iletiler" kapsayacak biçimde genişletebilir. Dar kural koruması yalnızca eşik kadar güçlüdür.
+23. **Kendi mesajını silmek bağlamı bozar.** Yazar kendi mesajını basit çoğunlukla gizleyebilir; ona verilen yanıtlar bağlamsız kalır, ve yazar sonradan kendisini bağlayan bir sözünü de gizleyebilir. İçerik defterde kalır; sansür şeridi silmenin yazarın isteğiyle olduğunu gösterir.
 
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
 
 | # | Gereksinim | Karşılayan mekanizma |
 |---|---|---|
 | 1 | Herkes konu açabilir (öneri olarak) | KONU önerisi; seçmen kapsamında oy hakkı olan her Yurttaş açabilir (R5) |
-| 2 | Silme ve düzenleme teklif edilebilir | SILME (yavaş şerit) ve DUZENLEME (hızlı şerit) önerileri; diff görünümü |
+| 2 | Silme ve düzenleme teklif edilebilir | SILME (yavaş şerit; içerik kuralı + alıntı, 2/3) ve DUZENLEME (hızlı şerit) önerileri; diff görünümü |
 | 3 | Konu kabulü için çoğunluk | Sessiz onay (itiraz eşiği aşılmazsa kabul); itirazda Karar Saati'nde `basit_cogunluk` |
 | 4 | Ad soyad, adres, doğum tarihi, şifre, takma ad; profilde takma ad; giriş ekranı | Kayıt formu (yapılandırılmış il/ilçe, argon2), JWT girişi, profil sayfası (özel alanlar yalnızca sahibine) |
 | 5 | Konular oylamaya sunulur; kabul edilirse tartışma konusu olur | Öneri akışı → kabul edilen KONU → Konu + kalıcı tartışma alanı |
 | 6 | Alt konular önerilebilir (açanla sınırlı değil), oylamaya girer | ALT_KONU önerisi (herkes açabilir), R1, hızlı şerit |
 | 7 | Yönetmelik; herkesin bir rolü | YonetmelikMaddesi düğümleri (veri olarak), YONETMELIK önerisi (2/3, kendini koruma); roller: Yurttaş, Müşavir, Hâtif (Mahzen'de Gölge) |
-| 8 | Ontoloji: konu ve alt konu açılışında kural denetimi | Neo4j ontolojisi (alan ağacı, kapsam, kaynak sahipliği), R1–R6, Hâtif'in etiket denetimi |
-| 9 | Her konuda tartışma alanı; tartışmalar silinmez | Kalıcı tartışma alanı; sürüm geçmişi; silinen içerik bile defterde kalır |
-| 10 | Tartışmanın bir kısmı silinmek istenirse oylama | Mesaj bazında SILME önerisi; sansür şeridi |
+| 8 | Ontoloji: konu ve alt konu açılışında kural denetimi | Neo4j ontolojisi (alan ağacı, kapsam, kaynak sahipliği), R1–R7, Hâtif'in etiket denetimi |
+| 9 | Her konuda tartışma alanı; tartışmalar silinmez | Kalıcı tartışma alanı; sürüm geçmişi; silme istisnadır: yalnızca üç dar içerik kuralına dayanarak ve 2/3 ile (§7.4); silinen içerik bile defterde kalır |
+| 10 | Tartışmanın bir kısmı silinmek istenirse oylama | Mesaj bazında SILME önerisi, R7 gerekçesi (kural + alıntı), `silme_esigi`; kuralı anan sansür şeridi |
 | 11 | Forumda her şey oylamayla | Tüm yapısal değişiklikler (konu, alt konu, düzenleme, silme, yönetmelik, kapanış) öneri akışından geçer; kendi mesajını silmek de. Tartışmaya yazmak oylamasızdır |
 | 12 | Konu kabulüne yalnızca ilgili kullanıcılar katılır | Seçmen kapsamı (NITELIK / ILGI), R2 (sahiplik), R5 (üyelik + bekleme) |
 | 13 | Herkes eşit; bazıları "daha eşit" | Herkesin kendi oyu 1; havale alan kişinin ağırlığı artar; Müşavir etiketi görünürlüktür, rütbe değildir |
 | 14 | Oy hakkı havale edilebilir | Genel ve alan bazlı HAVALE, miras, zincir, döngü yasağı (R4), pencere kilidi |
 | 15 | Bilirkişiler; API ile bağlı yapay zekâ olabilir | Hâtif: kural tabanlı sembolik bilirkişi (gerçek API bilinçli olarak kapsam dışı) |
-| 16 | Çoğunluğun azınlığı ezmesi engellenmeli (uzmanlar ve bölme) | Bölme: kapsam + R2 otomatik daralma. Uzmanlar: alan bazlı havale ve Müşavirler. Ayrıca nitelikli çoğunluk ve Şerh |
+| 16 | Çoğunluğun azınlığı ezmesi engellenmeli (uzmanlar ve bölme) | Bölme: kapsam + R2 otomatik daralma. Uzmanlar: alan bazlı havale ve Müşavirler. Ayrıca nitelikli çoğunluk (yönetmelik ve silme 2/3), gerekçeli silme (R7) ve Şerh |
 | 17 | Kalabalık (ölçek) sorunu | Havale (sıvı demokrasi), sessiz onay hızlı şeridi, Karar Saati'nde toplu oylama, seçmeni kapsamla daraltma |
 | 18 | Sonunda uzlaşma; farklı görüşler oylanabilir | KAPANIS: rakip karar metinleri + onay oylaması + Şerh; süre sonra yeniden açma |
 | 19 | Akran öğrenmesi temelli tartışma | Kalıcı tartışma alanı, açık sürüm geçmişi, Müşavir görünürlüğü, Mahzen diskuru; olgunlaşma süresi oylamadan önce tartışmaya en az 48 saat–7 gün ayırır |
@@ -532,7 +565,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Havale çözümleme ve miras | `api/tests/domain/test_delegation.py` |
 | Döngü kontrolü (miras üzerinden oluşanlar dahil) | `test_delegation.py`, `tests/integration/test_decision_hour.py::test_cycle_is_rejected_via_api` |
 | Oy ağırlığı hesabı, çekimser zincirler | `api/tests/domain/test_tally.py`, `test_decision_hour.py` |
-| R1–R6, otomatik daralma, üst küme reddi | `api/tests/domain/test_rules.py`, `tests/integration/test_proposals.py` |
+| R1–R7, otomatik daralma, üst küme reddi | `api/tests/domain/test_rules.py`, `tests/integration/test_proposals.py` |
 | 2/3 ve kendini koruma | `test_tally.py`, `test_decision_hour.py::test_regulation_change_needs_two_thirds`, `::test_threshold_article_protects_itself` |
 | Anlık görüntü ve kilit kuralları | `test_decision_hour.py::test_electorate_is_snapshotted_when_window_opens`, `::test_delegations_are_locked_while_window_is_open` |
 | Sessiz onay eşiği, red bekleme | `test_proposals.py` |
@@ -543,6 +576,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Neo4j graf deposu (bellek içiyle aynı sözleşme) | `api/tests/graph_contract.py` (`test_graph_memory.py`, `tests/integration/test_graph_neo4j.py`) |
 | Olgunlaşma: sınıflar, sürenin başladığı an, sonraki oturuma kayma | `api/tests/domain/test_maturation.py`, `tests/integration/test_maturation.py`, `test_seed.py::test_scenario_9_late_general_proposal_waits_for_maturity` |
 | Daralmanın sunumu: pay/toplam, etki başlığı, Hâtif satırı | `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_seed.py::test_scenario_1_istanbul` |
+| Silme: içerik kuralları, R7 gerekçesi, 2/3 eşiği, kendi mesajı istisnası, H4, şeritteki kural | `test_regulation.py`, `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_decision_hour.py::test_deletion_needs_two_thirds_but_own_message_needs_simple_majority`, `test_seed.py::test_scenario_4_unjustified_deletion_is_rejected` |
 | Dokuz demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
 ## 19. Sözlük (Türkçe terim ↔ kod)
@@ -566,5 +600,7 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Defter | `ledger` |
 | Diskur | `Discourse` (Neo4j etiketi `Diskur`) |
 | Baskın | `raid` |
+| İçerik kuralı (IK-1…) | `ContentRule` (madde türü `icerik_kurali`) |
+| Silme gerekçesi, alıntı | R7, `content_rules` / `excerpt` |
 | Olgunlaşma (dar / geniş / genel) | `maturation` (`MaturityClass`) |
 | Talep / etki başlığı | `title` / `effective_title` |

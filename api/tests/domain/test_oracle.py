@@ -125,3 +125,52 @@ def test_comment_explains_narrowing():
     text = oracle_comment(report, [], ONTO)
     assert ("Talep kaynağın tamamını hedefliyordu; seçmen kapsamı yalnızca İstanbul payına "
             "karar verebilir, daraltma uygulandı.") in text
+
+
+# --- H4: silme önerisinde seçilen içerik kuralının metindeki karşılığı --------------------------------
+
+
+def test_content_rule_with_keyword_in_excerpt_matches():
+    from mesveret.domain.oracle import ContentCheck, content_check
+    from mesveret.domain.regulation import Regulation
+
+    rules = Regulation.defaults().content_rules()
+    c = content_check(("IK-2",), "hepsi cahil; bisikletliler trafiğin baş belası", rules)
+    assert isinstance(c, ContentCheck) and c.ok
+    [m] = c.matches
+    assert m.code == "IK-2" and set(m.hits) >= {"cahil", "baş belası"}
+    assert oracle_vote(RuleReport(), [], c) is True
+    text = oracle_comment(RuleReport(), [], ONTO, c)
+    assert "IK-2 (Hakaret ve tehdit): belirtilen kısımda karşılığı var" in text
+    assert "Oylamada verilecek oy: EVET" in text
+
+
+def test_content_rule_without_keyword_makes_oracle_vote_no():
+    from mesveret.domain.oracle import content_check
+    from mesveret.domain.regulation import Regulation
+
+    rules = Regulation.defaults().content_rules()
+    c = content_check(("IK-2",), "Bu görüşe katılmıyorum", rules)
+    assert not c.ok
+    assert oracle_vote(RuleReport(), [], c) is False
+    text = oracle_comment(RuleReport(), [], ONTO, c)
+    assert "IK-2 (Hakaret ve tehdit): belirtilen kısımda anahtar kelime düzeyinde karşılığı yok" in text
+    assert "Oylamada verilecek oy: HAYIR" in text
+
+
+def test_every_cited_rule_must_have_a_match():
+    from mesveret.domain.oracle import content_check
+    from mesveret.domain.regulation import Regulation
+
+    rules = Regulation.defaults().content_rules()
+    c = content_check(("IK-1", "IK-2"), "hepsi cahil", rules)
+    assert [m.ok for m in c.matches] == [False, True]
+    assert not c.ok
+
+
+def test_own_message_deletion_comment():
+    from mesveret.domain.oracle import ContentCheck
+
+    c = ContentCheck(own=True, matches=())
+    assert oracle_vote(RuleReport(), [], c) is True
+    assert "kendi mesajının" in oracle_comment(RuleReport(), [], ONTO, c)

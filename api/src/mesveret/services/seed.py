@@ -9,7 +9,8 @@ Senaryolar (README'de adım adım):
 1. İstanbul vakası — R2 daraltma; bölünemeyen kaynakla red.
 2. Havale zinciri — aylin → baris (genel), baris → ceren (Ulaşım); ceren'in ağırlığı 3.
 3. Yönetmelik değişikliği — %60 geçemez, 2/3 geçer.
-4. Silme — mesaj oylamayla silinir, sansür şeridi, defterde durur.
+4. Silme — gerekçesiz silme reddedilir; gerekçeli silme %60 ile geçemez, %67 ile geçer (sansür
+   şeridi kuralı anar, içerik defterde durur); kendi mesajını silme basit çoğunlukla geçer.
 5. Kapanış — üç rakip metin, onay oylaması, kaybeden Şerh ekler.
 6. Mahzen — ifşa oylaması, geçiş animasyonu, öneri taslağı.
 7. Baskın — art arda açılmış bağlantılı hesaplar işaretlenip dışlanır.
@@ -276,7 +277,7 @@ def _background(w: World) -> None:
 
 
 def _scenario_deletion(w: World) -> None:
-    """4. Silme."""
+    """4. Silme: iki gerekçeli silme (IK-2 %60 → ret, IK-1 %67 → kabul) ve kendi mesajını silme."""
     _topic(w, "bisiklet", "hale", "Bisiklet yolları",
            "Ana caddelere korunaklı bisiklet yolu yapılsın.", "bisiklet", "genel", _t(days=16))
     _msg(w, "m_bis1", "ceren", "bisiklet", "Önce okul çevrelerinden başlayalım.", _t(days=14))
@@ -284,11 +285,26 @@ def _scenario_deletion(w: World) -> None:
          "Bu konuyu açanların hepsi cahil; bisikletliler trafiğin baş belası.", _t(days=13))
     _msg(w, "m_bis2", "hale", "bisiklet", "Eleştiri olur, hakaret olmaz.",
          _t(days=13, hours=-1))
-    w.at(_t(days=8, hours=2), lambda c: w.ids.__setitem__("silme", proposals.open_proposal(
-        c, w.users["hale"], ProposalInput(
-            type="SILME", target_message_id=w.ids["troll"],
-            body="Mesaj tartışmaya katkı sunmuyor, katılımcılara hakaret ediyor.",
-        )).id))
+    _msg(w, "spam", "kaba_kul", "bisiklet",
+         "Kaçırmayın! Katlanır bisiklette büyük indirim kampanyası, sipariş için profilime tıklayın.",
+         _t(days=12))
+    _msg(w, "m_kendi", "ceren", "bisiklet",
+         "Gönüllü olmak isteyenler beni arasın: telefonum 0532 000 00 00.", _t(days=11))
+
+    def delete(key: str, who: str, target: str, when: datetime, body: str, rules=(), excerpt=""):
+        w.at(when, lambda c: w.ids.__setitem__(key, proposals.open_proposal(
+            c, w.users[who], ProposalInput(
+                type="SILME", target_message_id=w.ids[target], body=body,
+                content_rules=list(rules), excerpt=excerpt,
+            )).id))
+
+    delete("silme_60", "hale", "troll", _t(days=8, hours=2),
+           "Katılımcılara hakaret ediyor.", ["IK-2"], "Bu konuyu açanların hepsi cahil")
+    delete("silme_67", "hale", "spam", _t(days=8, hours=1),
+           "Tartışmayla ilgisi olmayan reklam.", ["IK-1"],
+           "büyük indirim kampanyası, sipariş için profilime tıklayın")
+    delete("silme_kendi", "ceren", "m_kendi", _t(days=8, minutes=30),
+           "Telefon numaramı yanlışlıkla paylaştım; mesajımın kaldırılmasını istiyorum.")
 
 
 def _scenario_closure(w: World) -> None:
@@ -438,8 +454,13 @@ def _vote_plan(ctx: Ctx, w: World) -> None:
         plan.append(("yonetmelik_60", n, "EVET" if i < 17 else "HAYIR"))
         plan.append(("yonetmelik_67", n, "EVET" if i < 19 else "HAYIR"))
 
-    # 4. Silme: açık çoğunluk.
-    plan += [("silme", n, "EVET" if i < 9 else "HAYIR") for i, n in enumerate(names[:12])]
+    # 4. Silme: gerekçeli silme 2/3 ister. 29 yurttaş + Hâtif (kural karşılığı var → EVET) = 30.
+    #    Hakaret: 17 + 1 = 18/30 = %60 → geçemez; reklam: 19 + 1 = 20/30 → geçer.
+    #    Kendi mesajı basit çoğunluk: 6 + 1 = 7/12 (%58) → geçer (2/3 olsaydı geçemezdi).
+    for i, n in enumerate(names[:29]):
+        plan.append(("silme_60", n, "EVET" if i < 17 else "HAYIR"))
+        plan.append(("silme_67", n, "EVET" if i < 19 else "HAYIR"))
+    plan += [("silme_kendi", n, "EVET" if i < 6 else "HAYIR") for i, n in enumerate(names[:11])]
 
     # 5. Kapanış (onay oylaması): 22:00 metni kazanır; ilker kendi metnini onaylar.
     texts = proposals.closure_texts(ctx, ctx.db.get(Proposal, w.ids["kapanis"]))
@@ -534,7 +555,8 @@ def _build(ctx: Ctx) -> Iterator[str]:
            f"Tüm tohum hesaplarının şifresi: {DEMO_PASSWORD}")
     yield "Senaryo önerileri: " + ", ".join(
         f"{k}=#{w.ids[k]}" for k in ("istanbul", "metro", "yonetmelik_60", "yonetmelik_67",
-                                     "silme", "kapanis", "baskin", "hatif", "olgunlasma"))
+                                     "silme_60", "silme_67", "silme_kendi", "kapanis", "baskin",
+                                     "hatif", "olgunlasma"))
     yield f"Mahzen demo başlığı: #{w.ids['mahzen']}"
     yield "Sonraki adım: README'deki senaryolar (meşveret-dev run-karar-saati)."
 
@@ -556,7 +578,8 @@ def scenario_ids(ctx: Ctx) -> dict[str, int]:
         pid = ctx.db.execute(select(Proposal.id).where(Proposal.title == title)).scalar()
         if pid is not None:
             out[key] = pid
-    silme = ctx.db.execute(select(Proposal.id).where(Proposal.type == "SILME")).scalar()
-    if silme is not None:
-        out["silme"] = silme
+    silmeler = ctx.db.execute(
+        select(Proposal.id).where(Proposal.type == "SILME").order_by(Proposal.id).limit(3)
+    ).scalars().all()
+    out |= dict(zip(("silme_60", "silme_67", "silme_kendi"), silmeler, strict=False))
     return out

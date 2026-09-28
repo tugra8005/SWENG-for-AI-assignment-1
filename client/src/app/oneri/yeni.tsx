@@ -10,7 +10,7 @@ const LANE_NOTE: Record<string, string> = {
   KONU: 'Hızlı şerit: 24 saat sessiz onay; itiraz eşiği aşılırsa Karar Saati.',
   ALT_KONU: 'Hızlı şerit: 24 saat sessiz onay; itiraz eşiği aşılırsa Karar Saati.',
   DUZENLEME: 'Hızlı şerit: 24 saat sessiz onay; itiraz eşiği aşılırsa Karar Saati.',
-  SILME: 'Yavaş şerit: bir sonraki Karar Saati\'nde basit çoğunlukla oylanır.',
+  SILME: 'Yavaş şerit: Karar Saati\'nde silme_esigi (2/3) ile oylanır; kendi mesajınız basit çoğunlukla.',
   YONETMELIK: 'Yavaş şerit: Genel kapsamda, Karar Saati\'nde yonetmelik_esigi (2/3) ile oylanır.',
   KAPANIS: '48 saat rakip metin süresi, ardından Karar Saati\'nde onay oylaması.',
 };

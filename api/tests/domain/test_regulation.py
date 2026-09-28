@@ -101,3 +101,35 @@ def test_maturation_articles():
 def test_every_default_validates():
     for key, article in DEFAULT_ARTICLES.items():
         assert validate_value(key, article.default) == article.default
+
+
+# --- silme: içerik kuralları ve silme eşiği -------------------------------------------------------
+
+REG = Regulation.defaults()
+
+
+def test_deletion_threshold_is_two_thirds_inclusive():
+    r = REG.ratio("silme_esigi")
+    assert r.passes(20, 30) is True  # tam 2/3
+    assert r.passes(18, 30) is False  # %60
+
+
+def test_content_rules_are_the_three_narrow_seed_rules():
+    rules = REG.content_rules()
+    assert list(rules) == ["IK-1", "IK-2", "IK-3"]
+    assert [r.title for r in rules.values()] == [
+        "Spam ve reklam", "Hakaret ve tehdit", "Başkasının kişisel bilgilerini ifşa etme",
+    ]
+    assert all(r.text and r.keywords for r in rules.values())
+    # "konu dışı" gibi geniş bir kural yok: sansür aracına dönüşür.
+    assert not any("konu dışı" in r.title.lower() for r in rules.values())
+
+
+def test_content_rule_is_a_text_article_that_validates():
+    value = {"baslik": "Hakaret ve tehdit", "metin": "Kişiyi aşağılayan söz.",
+             "anahtar_kelimeler": ["aptal", " cahil "]}
+    assert validate_value("IK-2", value)["anahtar_kelimeler"] == ["aptal", "cahil"]
+    for bad in ({**value, "anahtar_kelimeler": []}, {**value, "metin": " "},
+                {**value, "anahtar_kelimeler": "aptal"}):
+        with pytest.raises(RegulationError):
+            validate_value("IK-2", bad)

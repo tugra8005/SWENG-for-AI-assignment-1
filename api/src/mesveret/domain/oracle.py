@@ -1,11 +1,13 @@
 """Hâtif: kural tabanlı sembolik bilirkişi.
 
 Gerçek bir yapay zekâ çağrısı yoktur. Hâtif her yeni öneriye bir etiket önerisi yorumu
-bırakır ve Karar Saati'nde deterministik oy verir: R1–R6 ve H1–H3 geçerse EVET.
+bırakır ve Karar Saati'nde deterministik oy verir: R1–R7 ve H1–H4 geçerse EVET.
 
 - H1 alan: metindeki kelimeler alanların anahtar kelimeleriyle eşlenir.
 - H2 kaynak: metinde adı geçen ama ETKILER olarak etiketlenmemiş kaynak.
 - H3 şehir: metin tek bir şehri anıyor, seçmen kapsamı başka bir şehrin kapsamı.
+- H4 içerik kuralı (yalnızca SILME): dayanılan her kuralın anahtar kelimelerinden en az biri
+  ihlal edildiği söylenen kısımda geçmeli. Kendi mesajının silinmesinde denetim yoktur.
 """
 
 from __future__ import annotations
@@ -14,6 +16,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from mesveret.domain.ontology import OntologyView
+from mesveret.domain.regulation import ContentRule
 from mesveret.domain.rules import RuleReport
 from mesveret.domain.scopes import ScopeSubtype
 from mesveret.domain.text import count_stem_hits, normalize, phrase_in, tokens
@@ -96,14 +99,68 @@ def label_check(
     return [*_h1(words, area_id, onto), *_h2(words, resource_ids, onto), *_h3(words, scope_id, onto)]
 
 
-def oracle_vote(report: RuleReport, findings: Sequence[Finding]) -> bool:
-    return report.ok and not findings
+@dataclass(frozen=True)
+class RuleMatch:
+    code: str
+    title: str
+    hits: tuple[str, ...]  # alıntıda geçen anahtar kelimeler
+
+    @property
+    def ok(self) -> bool:
+        return bool(self.hits)
 
 
-def oracle_comment(report: RuleReport, findings: Sequence[Finding], onto: OntologyView) -> str:
+@dataclass(frozen=True)
+class ContentCheck:
+    """H4: silme önerisinin dayandığı içerik kurallarının alıntıdaki karşılığı."""
+
+    own: bool
+    matches: tuple[RuleMatch, ...]
+
+    @property
+    def ok(self) -> bool:
+        return all(m.ok for m in self.matches)
+
+
+def content_check(cited: Sequence[str], excerpt: str, rules: dict[str, ContentRule],
+                  *, own: bool = False) -> ContentCheck:
+    words = tokens(excerpt)
+    matches = []
+    for code in cited:
+        rule = rules.get(code)
+        if rule is None:
+            continue  # bilinmeyen kural R7'de reddedilir
+        hits = tuple(k for k in rule.keywords if phrase_in(normalize(k).split(), words))
+        matches.append(RuleMatch(code, rule.title, hits))
+    return ContentCheck(own=own, matches=tuple(matches))
+
+
+def oracle_vote(report: RuleReport, findings: Sequence[Finding],
+                content: ContentCheck | None = None) -> bool:
+    return report.ok and not findings and (content is None or content.ok)
+
+
+def _content_lines(content: ContentCheck) -> list[str]:
+    lines = []
+    if content.own:
+        lines.append("Yazar kendi mesajının silinmesini istiyor: gerekçe gerekmez, basit "
+                     "çoğunluk yeter.")
+    for m in content.matches:
+        if m.ok:
+            found = ", ".join(f"'{h}'" for h in m.hits)
+            lines.append(f"İçerik kuralı {m.code} ({m.title}): belirtilen kısımda karşılığı var "
+                         f"({found}).")
+        else:
+            lines.append(f"İçerik kuralı {m.code} ({m.title}): belirtilen kısımda anahtar kelime "
+                         "düzeyinde karşılığı yok.")
+    return lines
+
+
+def oracle_comment(report: RuleReport, findings: Sequence[Finding], onto: OntologyView,
+                   content: ContentCheck | None = None) -> str:
     lines: list[str] = []
     if report.ok:
-        lines.append("Denetimler: R1–R6 geçti.")
+        lines.append("Denetimler: R1–R7 geçti.")
     else:
         lines.append("Denetimler: " + "; ".join(f"{v.rule} — {v.message}" for v in report.violations))
     for n in report.narrowings:
@@ -112,9 +169,14 @@ def oracle_comment(report: RuleReport, findings: Sequence[Finding], onto: Ontolo
             "Talep kaynağın tamamını hedefliyordu; seçmen kapsamı yalnızca "
             f"{scope.name if scope else n.scope_id} payına karar verebilir, daraltma uygulandı."
         )
+    if content is not None:
+        lines += _content_lines(content)
     if not findings:
         lines.append("Etiketler uyumlu görünüyor.")
-        lines.append("Oylamada verilecek oy: EVET (etiketler değişmezse).")
+        if content is not None and not content.ok:
+            lines.append("Oylamada verilecek oy: HAYIR (dayanılan kuralın metinde karşılığı yok).")
+        else:
+            lines.append("Oylamada verilecek oy: EVET (etiketler değişmezse).")
         return "\n".join(lines)
     lines.append("Etiket önerisi:")
     for f in findings:

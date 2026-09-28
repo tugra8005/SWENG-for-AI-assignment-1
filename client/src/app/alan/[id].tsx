@@ -75,7 +75,7 @@ export default function AreaPage() {
       <Section title="Konular (alt alanlar dahil)">
         {(topics.data ?? []).map((t) =>
           t.deleted_by_proposal_id ? (
-            <CensorStrip key={t.id} proposalId={t.deleted_by_proposal_id} />
+            <CensorStrip key={t.id} proposalId={t.deleted_by_proposal_id} basis={t.deletion_basis} />
           ) : (
             <PressLink key={t.id} href={`/konu/${t.id}`} style={st.row}>
               <ProposalTitle title={t.title} effective={t.effective_title} style={st.name} />
