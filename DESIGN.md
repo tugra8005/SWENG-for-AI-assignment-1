@@ -636,11 +636,13 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
 - **Renkler:** tam siyah (#000) zemin, fosfor amberi (#FFB000, 11,5:1). Çürümüş metnin alt sınırı #B88000 (6,1:1). Sönük amber (#8F6400, 4,0:1) yalnızca çerçeve, çubuk ve büyük yazıda kullanılır.
 - **Yazı:** her yerde IBM Plex Mono, başlıklarda VT323.
 - **Kimlik:** isim yok; yalnızca başlık kimlikleri ve "Gölge" etiketi.
-- **Çürüme:** başlık kapasitede alt sıralara indikçe yazı soluklaşır ve bazı karakterler deterministik olarak bozulur; metin okunur kalır (`client/src/lib/decay.ts`).
-  - Ömrün ilk %70'inde yalnızca soluklaşma olur. Bozulma son %30'da başlar ve orada doğrusal artar.
-  - Bozulan karakter oranı başlıkta en fazla %15, gövdede en fazla %25. Bu sert bir üst sınırdır: karakterler rastgele eşikle değil sayıyla seçilir, kısa başlıkta da aşılmaz. Boşluklar bozulmaz.
-  - Bozulmaların çoğu benzer görünen karakterdir: s → ş, o → ö, i → ı, l → ł. Tek tük ¤ ¦ görünür. Blok karakterler (░▒▓) yalnızca ömrün son %5'inde görünür.
-  - İlk sürümde bozulma ömrün yarısından sonra başlıyordu ve blok karakterler ağırlıktaydı. Silinmeye yakın başlıklarda kelimeler okunmaz hâle geliyordu.
+- **Çürüme:** başlık kapasitede alt sıralara indikçe yazı soluklaşır ve bazı karakterler CRT arızası gibi blok gliflere döner (░▒▓▚▞▙▟, tek tük ¤ ¦). Metin okunur kalır (`client/src/lib/decay.ts`).
+  - Ömrün ilk %55'inde yalnızca soluklaşma olur. Bozulma son %45'te başlar ve orada doğrusal artar.
+  - Bozulan karakter oranı silinme anında en fazla %10'dur. Sınır serttir: karakterler rastgele eşikle değil sayıyla seçilir, kısa başlıkta da aşılmaz. Boşluklar bozulmaz. Gürültüsü en düşük karakterler önce bozulur, çürüme arttıkça bozulanlar yalnızca çoğalır.
+  - Geçmiş:
+    - İlk sürümde oran %16'ydı ve eşikle seçiliyordu; silinmeye yakın başlıklarda kelimeler okunmaz hâle geliyordu.
+    - İkinci sürüm blokları benzer görünen karakterlerle (s → ş) değiştirdi. Okunurdu ama arıza hissini kaybetti.
+    - Şimdiki sürüm ilk sürümün görünüşünü daha düşük oranla geri getirir (2026-09-29).
   - Kurallar `client/scripts/check-decay.mjs` ile denetlenir (`scripts/test.sh` çalıştırır).
   - Kontrast 4,5:1'in altına inmez. Bozulan metnin erişilebilir etiketi özgün metni taşır. Yanında bir ömür çubuğu vardır.
 - **CRT:** hafif tarama çizgileri; tek katman, kapatılabilir, tercih saklanır. Her üç satırdan biri %14 kararır. Oranlar o satırda da AA kalır: çürümüş amber 4,7:1, sönük amber 3,2:1, tam amber 8,4:1. İlk sürümde karartma %39'du; çürümüş amber 2,5:1'e, sönük amber 1,8:1'e iniyordu (tasarım denetimi, 2026-09-28).
@@ -838,7 +840,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Zamanlayıcı kilidi ve işlerin idempotentliği (her iş ikinci kez çalışınca yazmaz; aynı aralığa ikinci tick boş; iki süreç aynı anda tick ederken her iş bir kez; komut kilidi tutarken arka plan adımı atlar; advance-time aradaki işleri kendisi işler) | `tests/integration/test_scheduler_lock.py` |
 | Demo modu (adımın baştan kurulması ve donmuş saat, `next`'in yalnızca geçişi uygulaması, 10a'daki bozulmanın 10b'de geri alınması, aynı adımın iki kurulumunda aynı defter, geliştirme uç noktalarının yalnızca `ENV=dev`'de olması) | `tests/integration/test_demo.py`; iki uçtan uca çalıştırmanın karşılaştırması `scripts/demo-kaydi.mjs` (DEMO.md **Ölçüm**) |
 | Toplu defter eklemesi (zincir tek tek eklemeyle aynı, azalan zaman damgası hiçbir kaydı eklemez, geride kalan takipçi toplu çoğaltmada yetişir) | `ledger/tests/test_replication.py` |
-| Mahzen çürümesi (başlıkta en fazla %15, gövdede %25; ilk %70'te bozulma yok; blok yalnızca son %5'te; çoğunluk benzer karakter; deterministik) | `client/scripts/check-decay.mjs` |
+| Mahzen çürümesi (en fazla %10; ilk %55'te bozulma yok; yalnızca blok glifler; çürüme arttıkça bozulanlar yalnızca çoğalır; deterministik) | `client/scripts/check-decay.mjs` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
 ## 19. Sözlük (Türkçe terim ↔ kod)

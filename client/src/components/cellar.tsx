@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { corrupt, type DecayKind } from '@/lib/decay';
+import { corrupt } from '@/lib/decay';
 import { useAnimatedValue, useReducedMotion } from '@/lib/motion';
 import { cellar, fonts, layout, paper } from '@/theme/tokens';
 
@@ -102,13 +102,12 @@ export function decayColor(decay: number): string {
 }
 
 /** Çürüyen metin: ``decay`` 0 (taze) → 1 (silinmek üzere). Kurallar ``lib/decay.ts``'te. */
-export function DecayText({ text, decay, seed = 1, kind = 'body', style, numberOfLines }: {
-  text: string; decay: number; seed?: number; kind?: DecayKind; style?: TextStyle | TextStyle[];
-  numberOfLines?: number;
+export function DecayText({ text, decay, seed = 1, style, numberOfLines }: {
+  text: string; decay: number; seed?: number; style?: TextStyle | TextStyle[]; numberOfLines?: number;
 }) {
   return (
     <Text accessibilityLabel={text} numberOfLines={numberOfLines} style={[s.term, { color: decayColor(decay) }, style]}>
-      {corrupt(text, decay, seed, kind)}
+      {corrupt(text, decay, seed)}
     </Text>
   );
 }

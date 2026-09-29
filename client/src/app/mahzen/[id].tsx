@@ -156,7 +156,7 @@ export default function Thread() {
       <Pressable onPress={() => router.push('/mahzen')} accessibilityRole="link">
         <TermDim style={{ fontSize: 12 }}>&lt; mahzen</TermDim>
       </Pressable>
-      <DecayText text={t.title} decay={decay} seed={t.id} kind="title" style={st.title} />
+      <DecayText text={t.title} decay={decay} seed={t.id} style={st.title} />
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <TermDim style={{ fontSize: 12 }}>No.{t.id} · {t.reply_count} yanıt · sıra {t.rank != null ? t.rank + 1 : '—'}</TermDim>
         {t.lifetime != null ? <LifeBar lifetime={t.lifetime} /> : null}

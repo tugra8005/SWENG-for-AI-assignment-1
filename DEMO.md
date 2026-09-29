@@ -155,21 +155,21 @@ DESIGN.md §15'teki bilinçli açıklardan en olası beşi:
 ## Ölçüm
 
 <!-- ölçüm: scripts/demo-kaydi.mjs --md ile güncellenir -->
-İki çalıştırma (A: 2026-09-29 17:30 UTC, B: 2026-09-29 17:33 UTC), 1440 × 900 Chromium, Docker yığını. *Süre* adımın ekranda kaldığı toplam süredir: `demo next` komutu, sayfaların menüden açılması, tıklamalar, canlandırmalar ve konuşma notunun okunma süresine (dakikada 132 kelime) tamamlayan bekleme. *İşlem* bunlardan yalnızca komut, sayfa ve tıklama kısmıdır; canlıda konuşma bununla üst üste biner.
+İki çalıştırma (A: 2026-09-29 17:48 UTC, B: 2026-09-29 17:50 UTC), 1440 × 900 Chromium, Docker yığını. *Süre* adımın ekranda kaldığı toplam süredir: `demo next` komutu, sayfaların menüden açılması, tıklamalar, canlandırmalar ve konuşma notunun okunma süresine (dakikada 132 kelime) tamamlayan bekleme. *İşlem* bunlardan yalnızca komut, sayfa ve tıklama kısmıdır; canlıda konuşma bununla üst üste biner.
 
 | Adım | A (sn) | B (sn) | İşlem A / B (sn) | Konuşma (sn) | Ekrandaki sayılar | A = B |
 |---|---|---|---|---|---|---|
 | 1 · Kayıt ve profil | 10,9 | 10,9 | 5,3 / 5,3 | 10,9 | 31 | ✓ |
-| 2 · Öneri ve sessiz onay | 12,7 | 12,6 | 3,0 / 2,9 | 10,9 | 18 | ✓ |
-| 3 · İstanbul vakası: R2 daraltma | 11,9 | 12,0 | 4,3 / 4,4 | 10,0 | 32 | ✓ |
-| 4 · Eşzamanlı çoğunluk | 10,0 | 10,0 | 5,5 / 5,5 | 8,2 | 34 | ✓ |
+| 2 · Öneri ve sessiz onay | 12,7 | 12,5 | 3,0 / 2,8 | 10,9 | 18 | ✓ |
+| 3 · İstanbul vakası: R2 daraltma | 12,0 | 12,0 | 4,4 / 4,5 | 10,0 | 32 | ✓ |
+| 4 · Eşzamanlı çoğunluk | 10,0 | 9,8 | 5,5 / 5,4 | 8,2 | 34 | ✓ |
 | 5 · Havale ve Karar Saati | 15,6 | 15,6 | 12,0 / 12,0 | 12,3 | 297 | ✓ |
-| 6 · Kapanış ve Şerh | 12,1 | 12,3 | 7,3 / 7,6 | 10,5 | 57 | ✓ |
-| 7 · Silme | 12,3 | 12,3 | 5,6 / 5,7 | 10,5 | 44 | ✓ |
+| 6 · Kapanış ve Şerh | 12,2 | 12,3 | 7,5 / 7,5 | 10,5 | 57 | ✓ |
+| 7 · Silme | 12,3 | 12,3 | 5,6 / 5,6 | 10,5 | 44 | ✓ |
 | 8 · Değiştirilemez maddeler | 10,9 | 10,8 | 4,8 / 4,7 | 9,1 | 33 | ✓ |
-| 9 · Mahzen | 13,0 | 13,0 | 8,6 / 8,6 | 10,9 | 573 | ✓ |
-| 10a · Operatörün sessiz değişikliği | 9,9 | 10,0 | 3,4 / 3,5 | 8,2 | 16 | ✓ |
-| 10b · Karar Saati açılışında geri alınır | 11,6 | 11,6 | 5,7 / 5,8 | 9,5 | 22 | ✓ |
-| **Toplam** | **130,9** | **131,0** | | | | ✓ |
+| 9 · Mahzen | 12,9 | 12,9 | 8,5 / 8,6 | 10,9 | 573 | ✓ |
+| 10a · Operatörün sessiz değişikliği | 10,0 | 10,0 | 3,4 / 3,5 | 8,2 | 16 | ✓ |
+| 10b · Karar Saati açılışında geri alınır | 11,6 | 11,6 | 5,8 / 5,8 | 9,5 | 22 | ✓ |
+| **Toplam** | **131,0** | **130,7** | | | | ✓ |
 
 Defter: A 626 kayıt, B 626 kayıt; hash zinciri birebir aynı.
