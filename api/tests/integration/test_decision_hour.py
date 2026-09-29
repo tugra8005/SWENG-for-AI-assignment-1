@@ -8,7 +8,15 @@ from mesveret.domain.commit import verify_commit
 from mesveret.errors import Conflict, DomainError, Forbidden
 from mesveret.services import decision_hour, delegation, ontology, proposals, topics
 from mesveret.services.proposals import ProposalInput
-from tests.integration.helpers import advance, headers_for, mature, open_topic, post, reload
+from tests.integration.helpers import (
+    advance,
+    delegate,
+    headers_for,
+    mature,
+    open_topic,
+    post,
+    reload,
+)
 from tests.integration.world import make_user
 
 
@@ -48,8 +56,8 @@ def close(ctx, session):
 
 def test_chain_a_b_c_gives_c_weight_three(ctx):
     a, b, c = (make_user(ctx, n) for n in ("aylin", "baris", "ceren"))
-    delegation.set_delegation(ctx, a, "baris", None)
-    delegation.set_delegation(ctx, b, "ceren", "ulasim")
+    delegate(ctx, a, "baris", None)
+    delegate(ctx, b, "ceren", "ulasim")
     ctx.commit()
     p = queued_konu(ctx, a)
     session = decision_hour.open_session(ctx)
@@ -67,7 +75,7 @@ def test_chain_a_b_c_gives_c_weight_three(ctx):
 
 def test_cycle_is_rejected_via_api(client, ctx):
     a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
-    delegation.set_delegation(ctx, a, "baris", "sinema")
+    delegate(ctx, a, "baris", "sinema")
     ctx.commit()
     r = client.post("/delegations", headers=headers_for(ctx, b),
                     json={"target": "aylin", "area_id": "kultur"})
@@ -77,21 +85,21 @@ def test_cycle_is_rejected_via_api(client, ctx):
 
 def test_delegations_are_locked_while_window_is_open(ctx, client):
     a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.commit()
     session = decision_hour.open_session(ctx)
     r = client.delete("/delegations", params={"area_id": ""}, headers=headers_for(ctx, a))
     assert r.status_code == 409
     assert "kilitli" in r.json()["detail"]
     with pytest.raises(Conflict):
-        delegation.set_delegation(ctx, b, "aylin", "sinema")
+        delegation.request_delegation(ctx, b, "aylin", "sinema")
     later = close(ctx, session)
     delegation.revoke_delegation(later, a, None)
 
 
 def test_abstaining_chain_end_does_not_count(ctx):
     a, _b, c = (make_user(ctx, n) for n in ("aylin", "baris", "ceren"))
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.commit()
     p = queued_konu(ctx, c)
     session = decision_hour.open_session(ctx)
@@ -394,7 +402,7 @@ def test_oracle_votes_deterministically(ctx):
     mislabeled = queued_konu(ctx, a, title="Belgesel gösterimleri",
                              body="Her ay bir belgesel ve bir belgesel söyleşisi.", area="ulasim")
     follower = make_user(ctx, "takipci")
-    delegation.set_delegation(ctx, follower, "Hâtif", None)
+    delegate(ctx, follower, "Hâtif", None)
     ctx.commit()
     session = decision_hour.open_session(ctx)
     close(ctx, session)
@@ -502,8 +510,8 @@ def _budget_world(ctx):
     a, b = make_user(ctx, "aylin", city="Ankara"), make_user(ctx, "baris", city="Ankara")
     c, d = make_user(ctx, "ceren", city="İzmir"), make_user(ctx, "deniz", city="İzmir")
     i1, i2, i3 = (make_user(ctx, n, city="İstanbul") for n in ("ilker", "irem", "ipek"))
-    delegation.set_delegation(ctx, i2, "ilker", None)  # İstanbul içinde kalan havale
-    delegation.set_delegation(ctx, i3, "aylin", None)  # İstanbul dışına giden havale
+    delegate(ctx, i2, "ilker", None)  # İstanbul içinde kalan havale
+    delegate(ctx, i3, "aylin", None)  # İstanbul dışına giden havale
     ctx.commit()
     p = mature(ctx, proposals.open_proposal(ctx, a, ProposalInput(
         type="KONU", title="İstanbul payının yarısı Ankara'ya",

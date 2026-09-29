@@ -56,6 +56,8 @@ def public_profile(ctx: Ctx, user: User, viewer: User | None = None) -> dict:
         "delegations_received": received,
         "member_since": user.created_at,
         "is_self": viewer is not None and viewer.id == user.id,
+        # "Havale kabul etmiyorum" herkese açık: havale düğmesi baştan pasif gösterilir.
+        "refuses_delegations": user.refuses_delegations,
     }
 
 
@@ -79,6 +81,8 @@ def private_profile(ctx: Ctx, user: User) -> dict:
         "expiring_given": mine["expiring_given"],
         "expiring_received": mine["expiring_received"],
         "warning_days": mine["warning_days"],
+        "pending_received": mine["pending_received"],
+        "locked": mine["locked"],
     })
     return body
 

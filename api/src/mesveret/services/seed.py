@@ -326,18 +326,41 @@ def _people(w: World) -> None:
         w.pool.append(nick)
 
 
+def _delegate(c: Ctx, giver: User, target: str, area_id: str | None) -> None:
+    """Tohumdaki havaleler kabul edilmiş başlar: istek ve kabul aynı anda (Hâtif kendiliğinden)."""
+    row = delegation.request_delegation(c, giver, target, area_id)
+    if row.status == "PENDING":
+        delegation.accept_request(c, c.db.get(User, row.target_id), row.id)
+
+
 def _delegations(w: World) -> None:
     def run(c: Ctx) -> None:
         u = w.users
-        delegation.set_delegation(c, u["aylin"], "baris", None)
-        delegation.set_delegation(c, u["baris"], "ceren", "ulasim")
+        _delegate(c, u["aylin"], "baris", None)
+        _delegate(c, u["baris"], "ceren", "ulasim")
         for nick in ("gizem", "hakan"):
-            delegation.set_delegation(c, u[nick], oracle.ORACLE_NICKNAME, "kultur")
+            _delegate(c, u[nick], oracle.ORACLE_NICKNAME, "kultur")
         for nick in ("deniz", "elif", "ferhat", "irem", "kaan"):
-            delegation.set_delegation(c, u[nick], "selin", "felsefe")
+            _delegate(c, u[nick], "selin", "felsefe")
         c.commit()
 
     w.at(_t(days=30), run)
+
+    # Havale kabulü demosu: aylin'in Ulaşım havalesini mert reddetti (aylin'in Havale sayfasında
+    # "reddedildi"); elif'in aylin'e verdiği Kent havalesi bekliyor (aylin girişte Kabul et /
+    # Reddet görür). İkisi de grafa girmez, oylamaları etkilemez.
+    def rejected(c: Ctx) -> None:
+        row = delegation.request_delegation(c, w.users["aylin"], "mert", "ulasim")
+        w.ids["havale_red"] = row.id
+
+    w.at(_t(days=3), rejected)
+    w.at(_t(days=2), lambda c: delegation.reject_request(c, w.users["mert"], w.ids["havale_red"]))
+
+    def pending(c: Ctx) -> None:
+        w.ids["havale_bekliyor"] = delegation.request_delegation(c, w.users["elif"], "aylin",
+                                                                 "kent").id
+
+    w.at(_t(days=1), pending)
 
 
 def _background(w: World) -> None:

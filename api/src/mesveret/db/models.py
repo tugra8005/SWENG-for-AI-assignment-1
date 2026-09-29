@@ -68,6 +68,8 @@ class User(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(TS)
     address_changed_at: Mapped[datetime | None] = mapped_column(TS)
     cellar_warned_at: Mapped[datetime | None] = mapped_column(TS)
+    # "Havale kabul etmiyorum": açıksa bu kişiye yeni havale verilemez.
+    refuses_delegations: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class VerificationCode(Base):
@@ -212,6 +214,28 @@ class Dissent(Base):
     text: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(TS)
     ledger_hash: Mapped[str | None] = mapped_column(String(64))
+
+
+class DelegationRequest(Base):
+    """Havale isteği. Alan kişi kabul edene kadar BEKLIYOR'dur ve grafa girmez: ağırlığa, zincire
+    ve Karar Saati anlık görüntüsüne yalnızca kabul edilmiş havaleler (graf kenarları) katılır.
+
+    Durumlar: PENDING (bekliyor), ACCEPTED (kabul edildi, graf kenarı var), REJECTED (alan reddetti),
+    EXPIRED (``havale_kabul_suresi`` içinde kabul edilmedi), RETURNED (alan kişi iade etti),
+    CANCELLED (veren bekleyen isteği geri aldı ya da yenisiyle değiştirdi), ENDED (veren geri aldı
+    ya da süresi doldu).
+    """
+
+    __tablename__ = "delegation_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    giver_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    target_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    area_id: Mapped[str | None] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(12), index=True)
+    created_at: Mapped[datetime] = mapped_column(TS)
+    decide_by: Mapped[datetime] = mapped_column(TS)  # kabul için son an
+    decided_at: Mapped[datetime | None] = mapped_column(TS)
 
 
 class RegulationChange(Base):

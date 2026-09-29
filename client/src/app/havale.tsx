@@ -18,7 +18,7 @@ import {
   Section,
 } from '@/components/paper';
 import { AreaGroups } from '@/components/area-groups';
-import { DelegationExpiryStrip, daysLeftLabel, renewDelegation } from '@/components/delegation-expiry';
+import { DelegationNotices, daysLeftLabel, renewDelegation } from '@/components/delegation-expiry';
 import { useAuth } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -32,6 +32,7 @@ export default function Delegations() {
   const [target, setTarget] = useState(params.target ?? '');
   const [area, setArea] = useState<string>('');
   const [error, setError] = useState<unknown>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   if (!me) {
     return (
@@ -43,16 +44,26 @@ export default function Delegations() {
   }
   const d = mine.data;
 
-  const give = async () => {
+  const run = async (fn: () => Promise<any>) => {
     setError(null);
+    setNotice(null);
     try {
-      await api('/delegations', { method: 'POST', body: { target, area_id: area || null } });
-      setTarget('');
+      const r = await fn();
+      if (r?.message) setNotice(r.message);
       mine.reload();
     } catch (e) {
       setError(e);
     }
   };
+  const give = () =>
+    run(async () => {
+      const r = await api('/delegations', { method: 'POST', body: { target, area_id: area || null } });
+      setTarget('');
+      return r;
+    });
+  const cancel = (id: number) => run(() => api(`/delegations/requests/${id}`, { method: 'DELETE' }));
+  const giveBack = (from: string, areaId: string | null) =>
+    run(() => api('/delegations/return', { method: 'POST', body: { giver: from, area_id: areaId } }));
   const renew = async (areaId: string | null) => {
     setError(null);
     try {
@@ -79,12 +90,21 @@ export default function Delegations() {
       <Muted>
         Oyunuzu genel olarak ya da bir alan için güvendiğiniz birine devredebilirsiniz. Alan havalesi o
         alanda genel havaleyi ezer; alt alanlar üst alanın havalesini miras alır. Zincir son kişiye kadar
-        akar. Havale ettiğiniz alanda kendiniz oy kullanamazsınız. Her havale verildiği ya da
+        akar. Havale ettiğiniz alanda kendiniz oy kullanamazsınız. Her havale kabul edildiği ya da
         yenilendiği andan {d?.havale_suresi_gun ?? 180} gün sonra kendiliğinden sona erer ve oy size döner
         (havale_suresi); süreyi dilediğiniz an baştan başlatabilirsiniz.
       </Muted>
+      <Muted style={{ marginTop: 6 }}>
+        Havale, alan kişi kabul edince yürürlüğe girer: temsilcinin oyu açıktır, bu yüzden kimse onayı
+        olmadan temsilci yapılamaz. Kabul edilene kadar oyunuz sizde kalır; {d?.kabul_suresi_gun ?? 7} gün
+        içinde kabul edilmezse havale düşer (havale_kabul_suresi). Alan kişi kabul ettiği havaleyi
+        istediği zaman iade edebilir.
+      </Muted>
       <Rule double />
-      {d ? <DelegationExpiryStrip data={d} onRenewed={mine.reload} /> : null}
+      {d ? <DelegationNotices data={d} onChanged={mine.reload} /> : null}
+      {d?.refuses ? (
+        <InfoNotice>Havale kabul etmiyorsunuz; size yeni havale verilemez. Profilinizden değiştirebilirsiniz.</InfoNotice>
+      ) : null}
       {d?.locked ? (
         <InfoNotice>
           <Text style={{ fontFamily: fonts.serifBold, color: paper.seal }}>
@@ -112,7 +132,31 @@ export default function Delegations() {
             </View>
           </View>
         ))}
-        {d && d.given.length === 0 ? <Muted>Havale vermediniz; oyunuzu kendiniz kullanıyorsunuz.</Muted> : null}
+        {d?.pending_given.map((r: any) => (
+          <View key={`p-${r.id}`} style={st.row}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Kicker>{r.area_name} · bekliyor</Kicker>
+              <Text style={st.chain}>{r.target}</Text>
+              <Muted style={{ fontSize: 13 }}>
+                kabul edilene kadar oyunuz sizde · son kabul {fmtDate(r.decide_by)}
+              </Muted>
+            </View>
+            <Button label="Geri al" variant="quiet" onPress={() => cancel(r.id)} />
+          </View>
+        ))}
+        {d?.outcomes.map((o: any) => (
+          <View key={`o-${o.id}`} style={st.row}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Kicker>{o.area_name}</Kicker>
+              <Text style={[st.expiry, { color: paper.seal }]}>
+                {o.target} · {o.label} · {fmtDate(o.at)}
+              </Text>
+            </View>
+          </View>
+        ))}
+        {d && d.given.length === 0 && d.pending_given.length === 0 ? (
+          <Muted>Yürürlükte havaleniz yok; oyunuzu kendiniz kullanıyorsunuz.</Muted>
+        ) : null}
       </Section>
 
       <Section title="Size gelen havaleler">
@@ -122,9 +166,12 @@ export default function Delegations() {
           </Body>
         ))}
         {d?.received_list.map((r: any) => (
-          <Text key={`${r.from}-${r.area_id ?? 'genel'}`} style={[st.expiry, r.expiring && { color: paper.seal }]}>
-            {r.from} · {r.area_name} · bitiş {fmtDate(r.expires_at)} · {daysLeftLabel(r.days_left)}
-          </Text>
+          <View key={`${r.from}-${r.area_id ?? 'genel'}`} style={[st.row, { paddingVertical: 6 }]}>
+            <Text style={[st.expiry, { flex: 1 }, r.expiring && { color: paper.seal }]}>
+              {r.from} · {r.area_name} · bitiş {fmtDate(r.expires_at)} · {daysLeftLabel(r.days_left)}
+            </Text>
+            <Button label="İade et" variant="quiet" onPress={() => giveBack(r.from, r.area_id)} disabled={d?.locked} />
+          </View>
         ))}
         {d && d.received.length === 0 ? <Muted>Size doğrudan havale veren yok.</Muted> : null}
       </Section>
@@ -140,6 +187,7 @@ export default function Delegations() {
           />
         </View>
         <ErrorNotice error={error} />
+        {notice ? <InfoNotice>{notice}</InfoNotice> : null}
         <Button label="Havale et" onPress={give} disabled={!target.trim() || d?.locked} />
         <Muted style={{ marginTop: 8, fontSize: 13 }}>
           Döngü oluşturacak havale reddedilir (R4); mirasla alt alanlarda oluşan döngüler de denetlenir.

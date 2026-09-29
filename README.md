@@ -106,9 +106,10 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 | №18, №19 | 14 · Pay çakışması |
 | — | 11 · Yönetmeliğin tabanı (açılışta reddedilen öneriler, izinli aralıklar, yönetmelik hash'i) |
 | — | 12 · Operatörün sessiz değişikliği (Karar Saati oturumunun açılışından önce ve oturum açıkken) |
+| — | 15 · Havale kabulü (bekleyen, reddedilen, iade, "havale kabul etmiyorum") |
 | — | 13 · Havale süresi (zamanı 181 gün ilerletir; en son oynatın) |
 
-Senaryo 1, 6 ve 11 anında oynatılır; senaryo 12'nin A parçası Karar Saati oturumu açılmadan önce, B parçası oturum açıkken oynatılır. Senaryo 2, 3, 4, 5, 7, 8, 10 ve 14 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin. Senaryo 13 saati 181 gün ilerlettiği için en son oynatılır.
+Senaryo 1, 6, 11 ve 15 anında oynatılır (15'te kabul Karar Saati sonuçlarını değiştirebilir, aşağıya bakın); senaryo 12'nin A parçası Karar Saati oturumu açılmadan önce, B parçası oturum açıkken oynatılır. Senaryo 2, 3, 4, 5, 7, 8, 10 ve 14 aynı Karar Saati oturumunda oynatılır; senaryo 9 aynı oturumun açılışında görünür. Önce 1 ve 6'yı, ardından "Karar Saati" bölümünü izleyin. Senaryo 13 saati 181 gün ilerlettiği için en son oynatılır.
 
 ### 1. İstanbul vakası: otomatik daralma ve red
 
@@ -127,6 +128,17 @@ Senaryo 1, 6 ve 11 anında oynatılır; senaryo 12'nin A parçası Karar Saati o
 3. En üstteki **"Çoğunluk haklı olabilir mi?"** başlığını açın. Beş yazarı var; ayse'nin açtığı ifşa oylamasında iki EVET bir HAYIR oy var ve geçmek için 3 EVET gerekiyor. Ara sayım gösterilmez.
 4. **[ evet ]** deyin. EVET sayısı seçmen listesinin yarısını aştığı an ifşa gerçekleşir. Yaklaşık 1,5 saniyelik geçişte siyah zemin kâğıda, amber yazı mürekkebe döner, mono yazı serife geçer ve Gölge kimliklerinin üzerine takma adlar yazılır.
 5. Başlık artık Meydan görünümünde, herkesin takma adıyla ve defter mührüyle durur. **Öneri taslağı №22 →** ile taslağı açın (senaryo 1'in isteğe bağlı 4. adımını yaptıysanız numara №23 olur); alanı ve seçmen kapsamını seçip **Taslağı öneri olarak gönder** deyin. Öneri normal akışa (sessiz onay) girer.
+
+### 15. Havale kabulü
+
+Havale alan kişi kabul edene kadar yürürlüğe girmez ve oy verende kalır (DESIGN.md §8.7). Temsilcinin oyu açık olduğu için kimse onayı olmadan temsilci yapılamaz; pencereden hemen önce verilen bir havale birinin gizli oyunu açığa çıkaramaz. Tohumdaki havaleler kabul edilmiş olarak başlar; bir havale bekliyor, biri reddedildi.
+
+1. **aylin** olarak giriş yapın. Ana sayfanın başında bordo çerçeveli şerit durur: **"Size verilen havale · kabulünüzü bekliyor"**, altında *"elif size Kent için havale verdi. Kabul ederseniz oyu size akar ve bu alandaki oyunuz açık olur. Son kabul: 5 Ekim 2026; kabul edilmezse düşer."* ve **Kabul et** / **Reddet**. Aynı şerit profilde ve Havale sayfasında da görünür.
+2. Aynı sayfada **Havale** → *Verdiğiniz havaleler*: *Genel* aylin → baris yürürlükte; altında **Ulaşım · mert · reddedildi · 27 Eylül 2026**. aylin'in Ulaşım havalesini mert reddetti; havale grafa hiç girmedi, aylin'in Ulaşım'daki oyu genel havalesiyle baris'e gider.
+3. **Reddet**'e basın: şerit kaybolur, deftere `HAVALE_RED` (`neden: reddedildi`) yazılır; **elif** olarak Havale sayfasında **Kent · aylin · reddedildi** görünür. **Kabul et** derseniz havale grafa girer ve 180 günlük süresi o anda başlar; deftere `HAVALE_KABUL` yazılır. Kabul, elif'in Kent ve alt alanlarındaki oyunu aylin'in zincirine ekler: tohumdaki oy planı elif için bu alanlarda oy veremez ve sonuç tablosundaki sayılar değişebilir. Tablodaki sonuçları görmek istiyorsanız kabulü Karar Saati kapandıktan sonra deneyin ya da Reddet'i seçin.
+4. **ceren** olarak **Havale** → *Size gelen havaleler*: baris'in Ulaşım havalesinin yanında **İade et** vardır. İade ederseniz oy baris'e döner, deftere `HAVALE_IADE` yazılır ve baris'in Havale sayfasında **iade edildi** görünür (bu da senaryo 2'nin sonucunu değiştirir; en son deneyin).
+5. **mert** olarak **Profil** → *Yalnızca size görünür* bölümünde **Havale kabul etmiyorum**'u açın. Başka biri olarak mert'in profilinde **Bu yurttaşa havale et** düğmesi pasiftir: *"Bu yurttaş havale kabul etmiyor."* Havale sayfasından takma adla denenirse: *"mert havale kabul etmiyor."*
+6. Kabul edilmeyen havale `havale_kabul_suresi` (7 gün, izinli 1 – 30 gün) sonunda düşer. `meşveret-dev advance-time --days 7` sonrasında zamanlayıcı dolumu vade anında işler: `havale kabul süresi doldu: elif → aylin (kent)` satırı komut çıktısında ya da, API'nin arka plan zamanlayıcısı önce davrandıysa, `docker compose logs api` içinde görünür. Deftere `HAVALE_RED` (`neden: kabul_suresi_doldu`) yazılır; elif'in Havale sayfasında **Kent · aylin · kabul süresi doldu**. Karar Saati penceresi açıkken kabul ve iade kilitlidir; ret grafa dokunmadığı için yapılabilir.
 
 ### 11. Yönetmeliğin tabanı: değiştirilemez maddeler ve izinli aralıklar
 
@@ -266,7 +278,7 @@ Aynı bölünebilir kaynağın paylarına dokunan öneriler kapanışta numara s
 
 ### 13. Havale süresi
 
-Her havale verildiği ya da yenilendiği andan `havale_suresi` (180 gün) sonra kendiliğinden sona erer ve oy sahibine döner. Unutulmuş havalelerden birikmiş güç böylece düzenli olarak sıfırlanır; bilinçli olarak yenilenen güven korunur (DESIGN.md §8.5). Tohumdaki havaleler tohum anından 30 gün önce verildi: kalan süre 150 gün.
+Her havale kabul edildiği ya da yenilendiği andan `havale_suresi` (180 gün) sonra kendiliğinden sona erer ve oy sahibine döner. Unutulmuş havalelerden birikmiş güç böylece düzenli olarak sıfırlanır; bilinçli olarak yenilenen güven korunur (DESIGN.md §8.5). Tohumdaki havaleler tohum anından 30 gün önce verildi: kalan süre 150 gün.
 
 1. **Yönetmelik** sayfasında `havale_suresi` **180 gün** gösterir, altında kilitli **izinli: 30 – 365 gün**; `havale_uyari_suresi` **14 gün**, **izinli: 3 – 30 gün**.
 2. **aylin** olarak **Havale** sayfası: *Genel* aylin → baris, altında **bitiş 26 Şubat 2027 · 150 gün kaldı** ve **Yenile** / **Geri al**. **ceren** olarak: *Size gelen havaleler* Ulaşım: 1, **baris · Ulaşım · bitiş 26 Şubat 2027 · 150 gün kaldı**. Zincir aylin → baris → ceren'dir: Ulaşım önerilerinde ceren'in ağırlığı 3'tür.
@@ -285,7 +297,7 @@ Her havale verildiği ya da yenilendiği andan `havale_suresi` (180 gün) sonra 
    ```
 
    Çıktıda her dolum bir satırdır: `havale süresi doldu: aylin → baris`, `havale süresi doldu: baris → ceren (ulasim)` ve diğerleri. Her dolum deftere `HAVALE_SURESI_DOLDU` olarak yazılır.
-7. **aylin** ve **baris** olarak Havale sayfası: *"Havale vermediniz; oyunuzu kendiniz kullanıyorsunuz."* İkisi de oylarını geri aldı. **ceren**: *"Size doğrudan havale veren yok."* Ulaşım önerilerinde ağırlığı 3'ten 1'e düştü.
+7. **aylin** ve **baris** olarak Havale sayfası: *"Yürürlükte havaleniz yok; oyunuzu kendiniz kullanıyorsunuz."* İkisi de oylarını geri aldı. **ceren**: *"Size doğrudan havale veren yok."* Ulaşım önerilerinde ağırlığı 3'ten 1'e düştü.
 8. **selin**'in profilinde Müşavir damgası kalkmıştır: felsefedeki beş havaleden süresi dolanlar düştü. 5. adımı yaptıysanız deniz'in yenilediği havale kalır (*Aldığı havaleler: Felsefe: 1*); eşik 5 olduğu için etiket yine yoktur.
 
 Pencere açıkken süresi dolan havale o oturum için geçerli kalır: oturum seçmen listesini ve ağırlıkları açılışta alır. Bunu `api/tests/integration/test_delegation_expiry.py` gösterir.

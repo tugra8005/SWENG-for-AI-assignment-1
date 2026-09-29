@@ -1,13 +1,16 @@
 /**
- * Havale süresi: süresi yakında dolacak havaleler için uyarı şeridi. Bildirim sistemi yoktur; şerit
- * girişten sonra ana sayfada, profilde ve Havale sayfasında görünür. Verilen havale tek tıklamayla
- * yenilenir (süre baştan başlar); alınan havaleyi yalnızca veren yenileyebilir.
+ * Havale uyarı şeritleri. Bildirim sistemi yoktur; şeritler girişten sonra ana sayfada, profilde ve
+ * Havale sayfasında görünür.
+ * - Bekleyen havale: size verilen havale kabulünüzü bekler (Kabul et / Reddet). Kabul edilene kadar
+ *   ağırlığa sayılmaz, oy verende kalır.
+ * - Süre: süresi yakında dolacak havaleler. Verilen havale tek tıklamayla yenilenir (süre baştan
+ *   başlar, yeniden kabul gerekmez); alınan havaleyi yalnızca veren yenileyebilir.
  */
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '@/api/client';
-import { Button, ErrorNotice, Kicker } from '@/components/paper';
+import { Button, ErrorNotice, Kicker, Nick } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -22,13 +25,67 @@ export function daysLeftLabel(n: number | null | undefined): string {
 export const renewDelegation = (areaId: string | null) =>
   api('/delegations/renew', { method: 'POST', body: { area_id: areaId } });
 
-/** ``data`` verilmezse ``/delegations`` kendisi okunur (ana sayfa). */
-export function DelegationExpiryStrip({ data, onRenewed }: { data?: any; onRenewed?: () => void }) {
+export const acceptDelegation = (id: number) => api(`/delegations/requests/${id}/accept`, { method: 'POST' });
+export const rejectDelegation = (id: number) => api(`/delegations/requests/${id}/reject`, { method: 'POST' });
+
+/** İki şerit tek veriden. ``data`` verilmezse ``/delegations`` kendisi okunur (ana sayfa). */
+export function DelegationNotices({ data, onChanged }: { data?: any; onChanged?: () => void }) {
   const { me } = useAuth();
   const own = useApi<any>(me && !data ? '/delegations' : null);
   const d = data ?? own.data;
-  const [error, setError] = useState<unknown>(null);
   if (!me || !d) return null;
+  const changed = () => {
+    if (!data) own.reload();
+    onChanged?.();
+  };
+  return (
+    <>
+      <PendingDelegationStrip data={d} onChanged={changed} />
+      <DelegationExpiryStrip data={d} onRenewed={changed} />
+    </>
+  );
+}
+
+/** Size verilen ve kabulünüzü bekleyen havaleler. */
+export function PendingDelegationStrip({ data: d, onChanged }: { data: any; onChanged: () => void }) {
+  const [error, setError] = useState<unknown>(null);
+  const pending: any[] = d.pending_received ?? [];
+  if (!pending.length) return null;
+  const act = async (fn: () => Promise<unknown>) => {
+    setError(null);
+    try {
+      await fn();
+      onChanged();
+    } catch (e) {
+      setError(e);
+    }
+  };
+  return (
+    <View style={st.strip} accessibilityRole="alert">
+      <Kicker style={{ color: paper.seal }}>Size verilen havale · kabulünüzü bekliyor</Kicker>
+      {pending.map((r) => (
+        <View key={r.id} style={st.row}>
+          <Text style={[st.text, { flex: 1, minWidth: 220 }]}>
+            <Text style={st.strong}><Nick>{r.from}</Nick></Text> size <Text style={st.strong}>{r.area_name}</Text>{' '}
+            için havale verdi. Kabul ederseniz oyu size akar ve bu alandaki oyunuz açık olur. Son kabul:{' '}
+            {fmtDate(r.decide_by)}; kabul edilmezse düşer.
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Button small label="Kabul et" onPress={() => act(() => acceptDelegation(r.id))} disabled={d.locked} />
+            <Button small variant="secondary" label="Reddet" onPress={() => act(() => rejectDelegation(r.id))} />
+          </View>
+        </View>
+      ))}
+      {d.locked ? (
+        <Text style={st.text}>Karar Saati penceresi açık: kabul pencere kapanınca yapılabilir.</Text>
+      ) : null}
+      <ErrorNotice error={error} />
+    </View>
+  );
+}
+
+export function DelegationExpiryStrip({ data: d, onRenewed }: { data: any; onRenewed?: () => void }) {
+  const [error, setError] = useState<unknown>(null);
   const given: any[] = d.expiring_given ?? [];
   const received: any[] = d.expiring_received ?? [];
   if (!given.length && !received.length) return null;
@@ -37,7 +94,6 @@ export function DelegationExpiryStrip({ data, onRenewed }: { data?: any; onRenew
     setError(null);
     try {
       await renewDelegation(areaId);
-      if (!data) own.reload();
       onRenewed?.();
     } catch (e) {
       setError(e);

@@ -7,12 +7,19 @@ from sqlalchemy import select
 from mesveret import clock
 from mesveret.context import Ctx
 from mesveret.db.models import Proposal, Topic, User
-from mesveret.services import auth, proposals, scheduler, topics
+from mesveret.services import auth, delegation, proposals, scheduler, topics
 from mesveret.services.proposals import ProposalInput
 
 
 def headers_for(ctx: Ctx, user: User) -> dict:
     return {"Authorization": f"Bearer {auth.create_token(ctx.settings, user.id)}"}
+
+
+def delegate(ctx: Ctx, giver: User, target: str, area_id: str | None) -> None:
+    """Kabul edilmiş havale kurar: istek ve alan kişinin kabulü aynı anda (Hâtif kendiliğinden)."""
+    row = delegation.request_delegation(ctx, giver, target, area_id)
+    if row.status == "PENDING":
+        delegation.accept_request(ctx, ctx.db.get(User, row.target_id), row.id)
 
 
 def advance(ctx: Ctx, delta: timedelta) -> Ctx:

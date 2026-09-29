@@ -176,6 +176,7 @@ ARTICLE_META: dict[str, tuple[str, str]] = {
     "karar_saati": ("Karar Saati", "Süreler"),
     "havale_suresi": ("Havale süresi", "Havale"),
     "havale_uyari_suresi": ("Havale uyarı süresi", "Havale"),
+    "havale_kabul_suresi": ("Havale kabul süresi", "Havale"),
     "musavir_esigi": ("Müşavir eşiği", "Havale"),
     "mahzen_kapasite": ("Mahzen kapasitesi", "Mahzen"),
     "mahzen_ust_sinir": ("Mahzen yükselme sınırı", "Mahzen"),
@@ -238,6 +239,10 @@ def _articles() -> dict[str, Article]:
                 "Süresi bu kadar içinde dolacak havaleler için girişte, profilde ve Havale "
                 "sayfasında uyarı şeridi gösterilir (bildirim sistemi yok).",
                 allowed=_days(3, 30)),
+        Article("havale_kabul_suresi", "sure", {"gun": 7},
+                "Verilen havale alan kişi kabul edene kadar bekler ve ağırlığa sayılmaz; bu süre "
+                "içinde kabul edilmezse düşer. Havale süresi kabul anında başlar.",
+                allowed=_days(1, 30)),
         Article("ilgi_bekleme", "sure", {"gun": 14},
                 "İlgi kapsamına katıldıktan sonra oy hakkının doğması için geçen süre.",
                 allowed=_days(0, 30)),

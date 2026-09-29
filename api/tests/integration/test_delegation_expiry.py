@@ -7,7 +7,7 @@ import pytest
 from mesveret.domain.counselor import counselor_areas
 from mesveret.errors import Conflict, NotFound
 from mesveret.services import decision_hour, delegation
-from tests.integration.helpers import advance, headers_for
+from tests.integration.helpers import advance, delegate, headers_for
 from tests.integration.test_decision_hour import close, queued_konu
 from tests.integration.world import make_user
 
@@ -20,11 +20,11 @@ def edge(ctx, user, area=None):
 
 def test_delegation_expires_after_havale_suresi_and_the_vote_returns(ctx, ledger):
     a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.commit()
     e = edge(ctx, a)
     assert (e.since, e.expires_at) == (ctx.now, ctx.now + 180 * DAY)
-    assert ledger.of_type("HAVALE_VERILDI")[-1]["payload"]["bitis"] == e.expires_at.isoformat()
+    assert ledger.of_type("HAVALE_KABUL")[-1]["payload"]["bitis"] == e.expires_at.isoformat()
 
     later = advance(ctx, 179 * DAY)
     assert edge(later, a) is not None
@@ -43,11 +43,11 @@ def test_delegation_expires_after_havale_suresi_and_the_vote_returns(ctx, ledger
 def test_changing_havale_suresi_affects_only_new_and_renewed_delegations(ctx):
     a, c = make_user(ctx, "aylin"), make_user(ctx, "ceren")
     make_user(ctx, "baris")
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.graph.set_article("havale_suresi", {"gun": 30})  # oylamayla değişmiş gibi
     ctx.invalidate_regulation()
     before = edge(ctx, a).expires_at
-    delegation.set_delegation(ctx, c, "baris", None)
+    delegate(ctx, c, "baris", None)
     assert edge(ctx, a).expires_at == before == ctx.now + 180 * DAY  # mevcut havale değişmez
     assert edge(ctx, c).expires_at == ctx.now + 30 * DAY  # yeni havale yeni süreyle
     later = ctx.at(ctx.now + 5 * DAY)
@@ -58,7 +58,7 @@ def test_changing_havale_suresi_affects_only_new_and_renewed_delegations(ctx):
 def test_renewal_restarts_the_period_is_logged_and_locked_in_the_window(ctx, ledger):
     a = make_user(ctx, "aylin")
     make_user(ctx, "baris")
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.commit()
     first = edge(ctx, a)
     later = advance(ctx, 100 * DAY)
@@ -81,10 +81,10 @@ def test_renewal_restarts_the_period_is_logged_and_locked_in_the_window(ctx, led
 
 def test_expired_middle_link_breaks_the_chain_at_that_point(ctx):
     a, b, c = (make_user(ctx, n) for n in ("aylin", "baris", "ceren"))
-    delegation.set_delegation(ctx, b, "ceren", "ulasim")  # gün 0: b → c (Ulaşım)
+    delegate(ctx, b, "ceren", "ulasim")  # gün 0: b → c (Ulaşım)
     ctx.commit()
     later = advance(ctx, 10 * DAY)
-    delegation.set_delegation(later, a, "baris", None)  # gün 10: a → b (genel)
+    delegate(later, a, "baris", None)  # gün 10: a → b (genel)
     later.commit()
     later = advance(later, 171 * DAY)  # gün 181: b → c doldu, a → b gün 190'a kadar geçerli
     assert edge(later, b, "ulasim") is None and edge(later, a) is not None
@@ -98,7 +98,7 @@ def test_expired_middle_link_breaks_the_chain_at_that_point(ctx):
 
 def test_delegation_valid_at_window_opening_counts_even_if_it_expires_during_the_window(ctx, ledger):
     a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.graph.renew_delegation(a.id, None, ctx.now + timedelta(minutes=30))  # pencere içinde biter
     ctx.commit()
     p = queued_konu(ctx, a)
@@ -124,7 +124,7 @@ def test_snapshot_skips_a_delegation_whose_end_passed_before_the_scheduler_ran(c
 
 def test_warning_for_delegations_ending_within_14_days(ctx, client):
     a, b = make_user(ctx, "aylin"), make_user(ctx, "baris")
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.commit()
     mid = advance(ctx, 100 * DAY)
     assert delegation.my_delegations(mid, a)["expiring_given"] == []
@@ -149,7 +149,7 @@ def test_counselor_label_fades_as_delegations_expire_but_renewed_trust_stays(ctx
     musavir = make_user(ctx, "musavir")
     givers = [make_user(ctx, f"yurttas{i}") for i in range(5)]
     for u in givers:
-        delegation.set_delegation(ctx, u, "musavir", "sinema")
+        delegate(ctx, u, "musavir", "sinema")
     ctx.commit()
     assert "Müşavir" in client.get("/users/musavir").json()["roles"]
     later = advance(ctx, 100 * DAY)
@@ -165,7 +165,7 @@ def test_counselor_label_fades_as_delegations_expire_but_renewed_trust_stays(ctx
 def test_warning_window_is_the_havale_uyari_suresi_article(ctx):
     a = make_user(ctx, "aylin")
     make_user(ctx, "baris")
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.commit()
     later = ctx.at(ctx.now + 150 * DAY)  # 30 gün kaldı
     assert delegation.my_delegations(later, a)["expiring_given"] == []  # varsayılan 14 gün

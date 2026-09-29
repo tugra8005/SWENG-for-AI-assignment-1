@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 
 from mesveret.context import Ctx
-from mesveret.db.models import Message, Proposal, SessionItem, User
+from mesveret.db.models import DelegationRequest, Message, Proposal, SessionItem, User
 from mesveret.errors import Conflict, DomainError, Forbidden
 from mesveret.services import cellar, decision_hour, delegation, proposals, scheduler, seed
 from mesveret.services.proposals import ProposalInput
@@ -61,8 +61,22 @@ def test_scenario_1_istanbul(seeded):
 def test_scenario_2_cycle_is_rejected_before_the_session(seeded):
     ctx = seeded
     with pytest.raises(DomainError) as err:
-        delegation.set_delegation(ctx, user(ctx, "ceren"), "aylin", "ulasim")
+        delegation.request_delegation(ctx, user(ctx, "ceren"), "aylin", "ulasim")
     assert "döngü" in err.value.message
+
+
+def test_seed_delegations_start_accepted_with_one_pending_and_one_rejected(seeded):
+    ctx = seeded
+    statuses = {r.status for r in ctx.db.execute(select(DelegationRequest)).scalars()}
+    assert statuses == {"ACCEPTED", "PENDING", "REJECTED"}
+    accepted = ctx.db.execute(select(DelegationRequest).where(
+        DelegationRequest.status == "ACCEPTED")).scalars().all()
+    assert len(accepted) == len(ctx.graph.delegation_edges(active_at=ctx.now)) == 9
+    aylin = delegation.my_delegations(ctx, user(ctx, "aylin"))
+    assert [(r["from"], r["area_name"]) for r in aylin["pending_received"]] == [("elif", "Kent")]
+    assert [(o["target"], o["area_name"], o["label"]) for o in aylin["outcomes"]] == [
+        ("mert", "Ulaşım", "reddedildi")]
+    assert [g["target"] for g in aylin["given"]] == ["baris"]  # reddedilen havale grafa girmedi
 
 
 def test_decision_hour_runs_all_voting_scenarios(seeded):

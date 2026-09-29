@@ -439,7 +439,7 @@ Pay etkisi bir fark değil, **hedef paylar** olarak bildirilir ("İstanbul 4.000
 ### 7.9 Oy gizliliği: temsilcinin oyu açık, seçmenin oyu gizli
 
 - **Kural.** Bir oylamada ağırlığı 1'den büyük olan seçmenin oyu **açıktır**: sonuç sayfasında takma adı, oyu, ağırlığı ve havale edenler görünür. Ağırlık 1'den büyükse zinciri kendisinde biten en az bir havale taşıyordur. Belirleyici Müşavir etiketi değil, o oylamadaki ağırlıktır. Hâtif'in oyu her zaman açıktır. Ağırlığı 1 olan seçmenin oyu **gizlidir**: sonuç sayfasında yalnızca toplamlara katılır, kartı gösterilmez.
-- **Ne zaman belirlenir.** Karar Saati açılışındaki anlık görüntüde, her oylama için ayrı (`SessionItem.open_voters`). Pencere boyunca havale kilitli olduğu için değişmez. Aynı kural silme, yönetmelik, kapanış (onay oylaması) ve eşzamanlı çoğunluk alt oylamaları için geçerlidir. Alt oylamada havale kapsam içinde çözüldüğü için aynı kişi Genel oylamasında açık, İstanbul oylamasında gizli olabilir. Mahzen ifşa oylaması zaten gizlidir; ifşa gerçekleşse bile deftere yalnızca sayılar yazılır, kimin nasıl oy verdiği açılmaz.
+- **Ne zaman belirlenir.** Karar Saati açılışındaki anlık görüntüde, her oylama için ayrı (`SessionItem.open_voters`). Pencere boyunca havale kilitli olduğu için değişmez. Anlık görüntü yalnızca kabul edilmiş havaleleri sayar (§8.7); kimse onayı olmadan açık oy veren biri yapılamaz. Aynı kural silme, yönetmelik, kapanış (onay oylaması) ve eşzamanlı çoğunluk alt oylamaları için geçerlidir. Alt oylamada havale kapsam içinde çözüldüğü için aynı kişi Genel oylamasında açık, İstanbul oylamasında gizli olabilir. Mahzen ifşa oylaması zaten gizlidir; ifşa gerçekleşse bile deftere yalnızca sayılar yazılır, kimin nasıl oy verdiği açılmaz.
 - **Defter.** Gizli oy deftere kimlikle değil oturuma özel takma kimlikle yazılır: `HMAC(sunucu_anahtarı, "oy:" ‖ oturum ‖ ":" ‖ user_id)` değerinin ilk 8 hex karakteri. Commit belgesi, `OY_MUHUR` ve `OY_ACILDI` kayıtları bu takma kimliği taşır; açık oylarınki takma adı. Aynı kişinin farklı oturumlardaki takma kimlikleri eşleştirilemez. "oy:" ön eki bir alan ayracıdır. Anahtar Mahzen Gölge kimlikleriyle ortaktır; ayraç olmasaydı #5 numaralı oturumdaki takma kimlik #5 numaralı Mahzen başlığındaki Gölge kimliğiyle aynı çıkabilir ve ikisini bağlardı. Çift oy engeli sunucu tarafında kalır (`Ballot` satırı kişiyle).
 - **Arayüz.**
   - Pusulada her oylamanın altında durum yazar: "Oyunuz gizli" ya da "Oyunuz açık olacak: 2 yurttaşın oyunu taşıyorsunuz."
@@ -454,7 +454,7 @@ Pay etkisi bir fark değil, **hedef paylar** olarak bildirilir ("İstanbul 4.000
 
 ### 8.1 Çözümleme
 
-- Kullanıcının alan başına en fazla bir çıkan havalesi ve en fazla bir genel havalesi vardır. Yeni havale aynı alandaki eskisinin yerine geçer.
+- Kullanıcının alan başına en fazla bir çıkan havalesi ve en fazla bir genel havalesi vardır. Yeni havale, alan kişi kabul edince aynı alandaki eskisinin yerine geçer (§8.7).
 - Kullanıcının A alanındaki etkin temsilcisi şöyle bulunur: A'dan köke doğru ilk alan havalesi; yoksa genel havale; o da yoksa kimse.
 - YONETMELIK önerilerinin alanı yoktur; yalnızca genel havale uygulanır.
 - Zincir, etkin temsilciler boyunca son kişiye kadar izlenir.
@@ -478,12 +478,12 @@ Bir alanda doğrudan `musavir_esigi` sayıda yürürlükteki havale alan kişi o
 
 ### 8.5 Havale süresi
 
-Her havale verildiği anda bir bitiş anı alır: `verildiği an + havale_suresi` (180 gün, izinli aralık 30 – 365 gün; §5.2). Bitişte havale kendiliğinden sona erer ve oy sahibine döner.
+Her havale kabul edildiği anda bir bitiş anı alır: `kabul anı + havale_suresi` (180 gün, izinli aralık 30 – 365 gün; §5.2). Bekleyen havale bu süreye dahil değildir. Bitişte havale kendiliğinden sona erer ve oy sahibine döner.
 
 **Neden üst sınır değil, süre dolumu.** Süper-delege birikimine (§15, 6. madde) iki cevap vardır. Birincisi, bir kişinin alabileceği havaleye üst sınır koymaktır. Bu, güvenilen birine gönüllü olarak verilen güveni cezalandırır: sınırı dolan kişiye havale vermek isteyen, istemediği ikinci bir kişiye yönelir. Asıl sorunu da çözmez, çünkü birikmiş gücün kaynağı büyük ölçüde güven değil unutkanlıktır: yıllar önce verilip bir daha düşünülmemiş havaleler. Meşveret ikinci cevabı seçer, süre dolumunu. Birikmiş güç düzenli olarak sıfırlanır; gönüllü olarak yenilenen güven korunur. Yenilemek tek tıklamadır ve bilinçli bir karardır; hiçbir şey yapmamak oyu sahibine geri verir.
 
 - **Madde değişikliği geriye işlemez.** `havale_suresi` değişirse yalnızca yeni verilen ve yenilenen havaleler etkilenir; mevcut havalelerin bitiş anı verildikleri andaki değerle sabittir. Bitiş anı grafta HAVALE ilişkisinin `bitis` özelliğidir.
-- **Yenileme.** Havale sayfasında, profilde ve uyarı şeridinde tek tıklamayla yapılır. Süreyi baştan başlatır: yeni bitiş, şimdi artı yürürlükteki `havale_suresi`. Hedef ve veriliş anı değişmez. Pencere açıkken, havale verme ve geri alma gibi, kilitlidir. Deftere `HAVALE_YENILENDI` yazılır.
+- **Yenileme.** Havale sayfasında, profilde ve uyarı şeridinde tek tıklamayla yapılır. Süreyi baştan başlatır: yeni bitiş, şimdi artı yürürlükteki `havale_suresi`. Hedef ve veriliş anı değişmez; yeniden kabul gerekmez. Pencere açıkken, havale verme ve geri alma gibi, kilitlidir. Deftere `HAVALE_YENILENDI` yazılır.
 - **Süre dolumu.** Zamanlayıcı bitiş anında havaleyi graftan siler ve deftere `HAVALE_SURESI_DOLDU` yazar (veren, alan, alan_id, veriliş, bitiş). Okumalar ayrıca o ana göre süzülür: bitişi geçmiş ama zamanlayıcının henüz silmediği bir havale yürürlükte sayılmaz.
 - **Karar Saati anlık görüntüsü esastır.** Pencere açıldığında yürürlükte olan havale o oturum için geçerlidir, pencere sırasında süresi dolsa bile. Dolum işlenir ve deftere yazılır, ama oturumun seçmen listesi ve ağırlıkları açılışta alındığı için oylamayı etkilemez.
 - **Zincir.** Ortadaki bir havalenin süresi dolarsa zincir o noktada kopar; alttaki havaleler üstteki kişide biter. A → B → C'de B → C dolarsa A'nın oyu B'ye gider, B kendi oyunu ve A'nınkini kullanır.
@@ -494,11 +494,27 @@ Her havale verildiği anda bir bitiş anı alır: `verildiği an + havale_suresi
 
 Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçek bir yapay zekâ API'si kullanmaz.
 
-- Kendi oyu 1'dir ve havale alabilir.
+- Kendi oyu 1'dir ve havale alabilir. Giriş yapamadığı için ona verilen havale kural gereği hemen kabul edilir (§8.7); oyu her zaman açık olduğundan bu gizlilik açısından bir şey değiştirmez.
 - GENEL ve tüm ILGI kapsamlarının üyesidir; NITELIK kapsamlarının üyesi değildir (adresi ve yaşı yoktur).
 - Giriş yapamaz. Oyunu pencere açılırken kendiliğinden verir (§6.1).
 - Kapanış onay oylamasında EVET tüm metinleri onaylamak, HAYIR hiçbirini onaylamamak demektir. Tüm metinlere eşit puan eklediği için sıralamayı değiştirmez.
 - Oy gerekçesi oturum sonucunda yayımlanır; pencere açıkken gösterilmez.
+
+### 8.7 Havale kabulü
+
+Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi kabul edene kadar hiçbir oya katılmaz.
+
+- **Bekleyen havale grafa girmez.** İstek PostgreSQL'de ayrı bir satırdır (`DelegationRequest`). Graf yalnızca kabul edilmiş havaleleri, yani HAVALE ilişkilerini taşır. Ağırlık, zincir çözümlemesi, oy hakkı ve Karar Saati anlık görüntüsü yalnızca grafı okuduğu için bekleyen havale bunlara yapısı gereği katılamaz; ayrı bir süzgece güvenilmez. Oy verende kalır: veren o alanda oy kullanabilir. Verenin aynı alanda kabul edilmiş eski bir havalesi varsa yenisi kabul edilene kadar o yürürlükte kalır.
+- **Kabul ve ret.** Alan kişi bekleyen havaleleri girişte açılan ana sayfada, profilde ve Havale sayfasında bir uyarı şeridinde görür: **Kabul et** / **Reddet**. Şerit kabul edince oyunun açık olacağını söyler. Kabul anında havale grafa girer ve süresi (§8.5) başlar. Reddedilen havale düşer; bildirim sistemi yoktur, veren kendi Havale sayfasında "reddedildi" görür. Veren bekleyen havalesini geri alabilir; aynı alanda yeni bir havale verirse bekleyen eskisi düşer.
+- **Kabul süresi.** `havale_kabul_suresi` (7 gün, izinli aralık 1 – 30 gün) içinde kabul edilmeyen havale düşer. Zamanlayıcı vade anında işler ve deftere yazar; veren "kabul süresi doldu" görür.
+- **İade.** Alan kişi kabul ettiği bir havaleyi istediği zaman iade edebilir; oy verene döner, veren "iade edildi" görür.
+- **Havale kabul etmiyorum.** Profildeki seçenek açıksa kişiye yeni havale verilemez ve başkasının profilinde havale düğmesi pasif görünür. Bekleyen ve kabul edilmiş havaleler kendiliğinden düşmez; kişi onları reddeder ya da iade eder.
+- **Zincir.** Kabul yalnızca doğrudan havale için istenir. C, B'nin havalesini kabul ettiyse B'ye sonradan akan havaleler de C'ye ulaşır; C'nin ayrıca onayı gerekmez. C'nin kabul ettiği şey B'nin oyunu taşımaktır ve B'nin taşıdıklarını da kapsar. Oyu zaten açıktır, ağırlığının artması gizliliğini değiştirmez. Zincirle akan havaleden kurtulmak isteyen C, B'nin havalesini iade eder.
+- **Döngü kontrolü (R4)** hem havale verilirken hem kabul anında yapılır: istek beklerken graf değişmiş olabilir. Kabul döngü oluşturacaksa reddedilir ve kabul edene gerekçesi söylenir.
+- **Pencere kilidi.** Karar Saati penceresi açıkken havale verme, kabul, iade, yenileme ve geri alma kilitlidir. Ret ve bekleyen havalenin geri alınması grafa dokunmadığı için pencere açıkken de yapılabilir; oturumun anlık görüntüsü zaten alınmıştır.
+- **Defter.** `HAVALE_BEKLIYOR` (veren, alan, alan_id, son kabul anı), `HAVALE_KABUL` (bitiş), `HAVALE_RED` (neden: `reddedildi` ya da `kabul_suresi_doldu`), `HAVALE_IADE`. Bekleyen havalenin veren tarafından geri alınması `HAVALE_GERI_ALINDI` (`bekleyen: true`) olarak yazılır. İlişki grafındaki havale sinyali (§9) kabul anında eklenir.
+
+**Kapattığı saldırı.** Kabul gelmeden önce gizli bir oyu açığa çıkarmak kolaydı. Saldırgan, hedefin oyunu görmek istediği oylamadan önce, Karar Saati açılmadan hemen önce hedefe havale verirdi. Anlık görüntüde hedefin ağırlığı 2 olurdu ve oyu açığa, takma adıyla sonuç sayfasına ve deftere düşerdi. Hedefin bundan haberi olmayabilirdi; pencere açıldıktan sonra da havale kilitli olduğu için bir şey yapamazdı. Artık oyun açık olması için hedefin en az bir havaleyi kendisinin kabul etmesi gerekir. Bekleyen havale anlık görüntüye girmez. Hâtif'e verilen havale istisnadır ama Hâtif'in oyu zaten açıktır.
 
 ## 9. İlişki grafı ve baskın tespiti
 
@@ -639,7 +655,12 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Yönetmelik hash'inin zamanı | Kurulumda ve her oturum kapanışında; meşru değişiklikler yalnızca oturum kapanışında uygulanır |
 | Oylamasız farkın tespiti ve geri alınması | Açılışta anlık görüntülerden önce ve kapanışta oylar sayılmadan önce. Madde başına bir tespit ve bir geri alma kaydı; kayıt aşamayı taşır. Karşılaştırmanın referansı outbox'taki son durum satırıdır, deftere ulaştıysa defterdeki kopyası |
 | Kod düzeyindeki fark | İzinli aralık ve kodla eklenen madde tespit edilip yazılır, geri alınamaz |
-| Havale bitişinin yeri | HAVALE ilişkisinin `bitis` özelliği; verildiği ya da yenilendiği andaki `havale_suresi` ile hesaplanır, madde değişince yeniden hesaplanmaz |
+| Havale bitişinin yeri | HAVALE ilişkisinin `bitis` özelliği; kabul edildiği ya da yenilendiği andaki `havale_suresi` ile hesaplanır, madde değişince yeniden hesaplanmaz |
+| Bekleyen havalenin yeri | PostgreSQL'de `DelegationRequest` satırı; grafa yalnızca kabul edilen havale girer, böylece ağırlık ve anlık görüntü bekleyeni yapısı gereği görmez |
+| Hâtif'e verilen havale | Kural gereği hemen kabul edilir (Hâtif giriş yapamaz; oyu zaten açıktır) |
+| Aynı alanda yeni havale | Bekleyen eski istek düşer; kabul edilmiş eski havale, yenisi kabul edilene kadar yürürlükte kalır |
+| Pencere açıkken ret | Serbest; grafa dokunmaz. Kabul, iade, verme, yenileme, geri alma kilitli |
+| Kabul süresi dolan havalenin defter kaydı | `HAVALE_RED`, `neden: kabul_suresi_doldu`; ayrı bir kayıt türü açılmadı |
 | Yenilemede veriliş anı | Değişmez; yalnızca bitiş baştan başlar. Pencere açıkken kilitli |
 | Pencere içinde dolan havale | Zamanlayıcı dolumu vade anında işler ve deftere yazar; oturum açılış anlık görüntüsünü kullandığı için oylama etkilenmez |
 | Süre uyarısı | `havale_uyari_suresi` maddesi (14 gün, 3 – 30 gün): "kod hiçbir eşiği sabit yazmaz" ilkesi gereği, yalnızca görüntüyü etkilese de bir sabit değil maddedir |
@@ -724,7 +745,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 33. **Sunucu takma kimlik ile kişiyi eşleştirir.** Gizli oyun takma kimliği sunucu anahtarıyla üretilir; anahtarı bilen sunucu hangi takma kimliğin kime ait olduğunu hesaplayabilir ve `Ballot` satırı kişiyle saklanır (çift oy engeli için). Gizlilik diğer yurttaşlara karşıdır, sunucuya karşı değildir; commit-reveal'daki sunucu güveni açığının (4. madde) aynısı.
 34. **"Oyumu doğrula" bir makbuzdur.** Kişi takma kimliğini ve defterdeki kaydı gösterebilir; böylece oyunu bir başkasına kanıtlayabilir. Bu, baskı ve oy satın alma riskini açar: sandıktaki gizliliğin amacı seçmenin oyunu kanıtlayamamasıdır. Doğrulanabilirlik bilerek tercih edilmiştir.
 35. **Küçük seçmen kümelerinde ve oybirliğinde gizlilik fiilen bozulur.** 9 kişilik İstanbul oylamasında herkes EVET dediyse herkesin oyu bellidir. Toplamlar ve açık oylar birlikte, küçük kümelerde kalan birkaç gizli oyu tahmin ettirebilir. Eşzamanlı çoğunlukta aynı kişi Genel'de açık, alt kapsamda gizli olabilir; açık oyu gizli olanı tahmin ettirebilir.
-36. **Havale almak gizliliği kaybetmek demektir.** Temsilci, oylamadaki ağırlığı 1'den büyükse gizli oy veremez. Gizli kalmak isteyen biri, havale verenlerden havaleyi geri almalarını istemekten başka bir şey yapamaz: Meşveret'te havale alanın havaleyi geri çevirme olanağı yoktur.
+36. **Havale almak gizliliği kaybetmek demektir (kapatıldı, 2026-09-29).** Temsilci, oylamadaki ağırlığı 1'den büyükse gizli oy veremez. İlk sürümde havale alanın havaleyi geri çevirme olanağı yoktu. Bu, bir saldırıya da kapı açıyordu: Karar Saati açılmadan hemen önce birine havale vermek, onun gizli oyunu açığa çıkarmaya yetiyordu. Havale artık alan kişinin kabulüyle yürürlüğe girer; kişi reddedebilir, kabul ettiğini iade edebilir, "havale kabul etmiyorum" diyebilir (§8.7). Kalan tek bağ zincirdir: kabul ettiği havaleye sonradan akan havaleler ayrıca onay istemez. Bu, oyu zaten açık olan birinin yalnızca ağırlığını değiştirir.
 
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
 
@@ -743,10 +764,10 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | 11 | Forumda her şey oylamayla | Tüm yapısal değişiklikler (konu, alt konu, düzenleme, silme, yönetmelik, kapanış) öneri akışından geçer; kendi mesajını silmek de. Tartışmaya yazmak oylamasızdır. **Bilinçli istisna:** değiştirilemez maddeler (D1–D7) ve parametrelerin izinli aralıkları oylamanın dışındadır (§5.1–5.2) |
 | 12 | Konu kabulüne yalnızca ilgili kullanıcılar katılır | Seçmen kapsamı (NITELIK / ILGI), R2 (sahiplik), R5 (üyelik + bekleme) |
 | 13 | Herkes eşit; bazıları "daha eşit" | Herkesin kendi oyu 1; havale alan kişinin ağırlığı artar; Müşavir etiketi görünürlüktür, rütbe değildir |
-| 14 | Oy hakkı havale edilebilir | Genel ve alan bazlı HAVALE, miras, zincir, döngü yasağı (R4), pencere kilidi, havale süresi ve yenileme (§8.5) |
+| 14 | Oy hakkı havale edilebilir | Genel ve alan bazlı HAVALE, miras, zincir, döngü yasağı (R4), pencere kilidi, havale süresi ve yenileme (§8.5), alan kişinin kabulü, ret ve iade (§8.7) |
 | 15 | Bilirkişiler; API ile bağlı yapay zekâ olabilir | Hâtif: kural tabanlı sembolik bilirkişi (gerçek API bilinçli olarak kapsam dışı) |
 | 16 | Çoğunluğun azınlığı ezmesi engellenmeli (uzmanlar ve bölme) | Bölme, iki yönde: (1) kapsam + R2 otomatik daralma (parça bütün adına karar veremez); (2) eşzamanlı çoğunluk (§7.7): bütün bir parçanın payını orantısız azaltırsa parça ayrıca oylar ve öneri ancak iki oylamada da çoğunlukla geçer (Calhoun, ABD iki meclisli yapı, AB çifte çoğunluk). Uzmanlar: alan bazlı havale ve Müşavirler. Ayrıca nitelikli çoğunluk (yönetmelik ve silme 2/3), gerekçeli silme (R7) ve Şerh |
-| 16a | (ek) Çoğunluk azınlığın karşı oyunu görüp cezalandıramamalı | Oy gizliliği (§7.9): ağırlığı 1 olan seçmenin oyu gizli, sonuçta yalnızca toplamlar; defterde oturuma özel takma kimlik. Temsilcinin (ağırlığı >1) ve Hâtif'in oyu açık. Baskın şüphelileri isimle teşhir edilmez |
+| 16a | (ek) Çoğunluk azınlığın karşı oyunu görüp cezalandıramamalı | Oy gizliliği (§7.9): ağırlığı 1 olan seçmenin oyu gizli, sonuçta yalnızca toplamlar; defterde oturuma özel takma kimlik. Temsilcinin (ağırlığı >1) ve Hâtif'in oyu açık; temsilcilik yalnızca kabul edilen havaleyle doğar (§8.7), pencereden önce verilen kabulsüz havale gizli oyu açığa çıkaramaz. Baskın şüphelileri isimle teşhir edilmez |
 | 17 | Kalabalık (ölçek) sorunu | Havale (sıvı demokrasi), sessiz onay hızlı şeridi, Karar Saati'nde toplu oylama, seçmeni kapsamla daraltma |
 | 18 | Sonunda uzlaşma; farklı görüşler oylanabilir | KAPANIS: rakip karar metinleri + onay oylaması + Şerh; süre sonra yeniden açma |
 | 19 | Akran öğrenmesi temelli tartışma | Kalıcı tartışma alanı, açık sürüm geçmişi, Müşavir görünürlüğü, Mahzen diskuru; olgunlaşma süresi oylamadan önce tartışmaya en az 48 saat–7 gün ayırır |
@@ -793,6 +814,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Yönetmeliğin defterdeki izi (başlangıç kaydı, oturum sonu kaydı, sessiz değişikliğin ve metni aynı kalan sınır genişletmesinin tespiti, açılışta tespit ve anlık görüntülerin son oylanmış değerlerle alınması, değiştirilmiş eşiğin sayılmaması, kapanışta tespit ve geri alma, bayrak ve içerik kuralı geri alma, kod düzeyindeki fark, bekleyen kaydın referans olması, kalıcı geçmiş, `tamper-regulation` aracı ve `/_dev` karşılığı) | `tests/integration/test_regulation_integrity.py`, `ledger/tests/test_replication.py::test_last_record_of_a_type_is_served_by_every_node` |
 | Tasarım denetimi sonrası: madde adları ve grupları, okunur öneri başlığı, Türkçe yüzde biçimi, aktif silme işareti, benzersiz Mahzen başlıkları | `test_regulation.py::test_every_parameter_has_a_readable_title_and_a_group`, `test_text.py`, `test_proposals.py::test_regulation_proposal_validates_value_and_goes_to_slow_lane`, `::test_deletion_goes_to_slow_lane_and_hides_content`, `test_seed.py::test_cellar_has_decaying_threads` |
 | Değiştirilemez maddeler (ayrıntı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
+| Havale kabulü (bekleyen havale ağırlığa sayılmaz ve oy verende kalır; pencereden hemen önce verilen kabulsüz havale gizli oyu açığa çıkarmaz; ret, kabul süresi, iade ve pencere kilidi; "havale kabul etmiyorum"; zincirin ek onay istememesi; eskisinin yenisi kabul edilene kadar kalması; yenilemenin yeniden kabul istememesi; kabul anında R4; Hâtif) | `tests/integration/test_delegation_acceptance.py`, `test_seed.py::test_seed_delegations_start_accepted_with_one_pending_and_one_rejected` |
 | Mahzen çürümesi (başlıkta en fazla %15, gövdede %25; ilk %70'te bozulma yok; blok yalnızca son %5'te; çoğunluk benzer karakter; deterministik) | `client/scripts/check-decay.mjs` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
@@ -809,6 +831,7 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Konu / Öneri / Karar / Şerh | `Topic` / `Proposal` / `Decision` / `Dissent` |
 | Havale | `Delegation` |
 | Havale süresi, bitiş, uyarı | `havale_suresi`, `havale_uyari_suresi`, `DelegationEdge.expires_at` (graf: `bitis`), `HAVALE_YENILENDI`, `HAVALE_SURESI_DOLDU` |
+| Havale kabulü: bekliyor, kabul, ret, iade, kabul süresi | `DelegationRequest` (`PENDING`, `ACCEPTED`, `REJECTED`, `EXPIRED`, `RETURNED`), `havale_kabul_suresi`, `User.refuses_delegations`, `HAVALE_BEKLIYOR`, `HAVALE_KABUL`, `HAVALE_RED`, `HAVALE_IADE` |
 | İtiraz / sessiz onay | `Objection` / `silent_approval` |
 | Hızlı / yavaş şerit | `fast_lane` / `slow_lane` |
 | Karar Saati | `DecisionHour` |

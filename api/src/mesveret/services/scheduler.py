@@ -9,7 +9,8 @@ Olay kaynakları:
 - rakip metin süresi biten kapanış önerileri,
 - penceresi kapanan Karar Saati oturumu,
 - haftalık Karar Saati açılışı (``karar_saati`` maddesine göre),
-- süresi dolan havaleler (``havale_suresi``).
+- süresi dolan havaleler (``havale_suresi``),
+- kabul süresi dolan bekleyen havaleler (``havale_kabul_suresi``).
 """
 
 from __future__ import annotations
@@ -61,13 +62,20 @@ def _proposal_events(ctx: Ctx, until: datetime) -> list[Event]:
 def _delegation_events(ctx: Ctx, until: datetime) -> list[Event]:
     from mesveret.services import delegation
 
+    events: list[Event] = []
     edge = delegation.next_expiry(ctx, until)
-    if edge is None or edge.expires_at is None:
-        return []
-    giver, target = delegation.nicknames(ctx, [edge.user_id, edge.target_id])
-    area = f" ({edge.area_id})" if edge.area_id else ""
-    return [(edge.expires_at, f"havale süresi doldu: {giver} → {target}{area}",
-             lambda c, u=edge.user_id, a=edge.area_id: delegation.expire(c, u, a))]
+    if edge is not None and edge.expires_at is not None:
+        giver, target = delegation.nicknames(ctx, [edge.user_id, edge.target_id])
+        area = f" ({edge.area_id})" if edge.area_id else ""
+        events.append((edge.expires_at, f"havale süresi doldu: {giver} → {target}{area}",
+                       lambda c, u=edge.user_id, a=edge.area_id: delegation.expire(c, u, a)))
+    req = delegation.next_request_expiry(ctx, until)
+    if req is not None:
+        giver, target = delegation.nicknames(ctx, [req.giver_id, req.target_id])
+        area = f" ({req.area_id})" if req.area_id else ""
+        events.append((req.decide_by, f"havale kabul süresi doldu: {giver} → {target}{area}",
+                       lambda c, rid=req.id: delegation.expire_request(c, rid)))
+    return events
 
 
 def _decision_hour_events(ctx: Ctx, until: datetime, last: datetime | None) -> list[Event]:

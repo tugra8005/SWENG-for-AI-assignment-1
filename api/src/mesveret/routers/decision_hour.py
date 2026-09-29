@@ -76,11 +76,63 @@ def my_delegations(ctx: Ctx = Depends(get_ctx), user: User = Depends(current_use
 
 
 @router.post("/delegations", status_code=status.HTTP_201_CREATED)
-def set_delegation(body: DelegationIn, ctx: Ctx = Depends(get_ctx),
-                   user: User = Depends(current_user)) -> dict:
-    delegation.set_delegation(ctx, user, body.target, body.area_id or None)
+def request_delegation(body: DelegationIn, ctx: Ctx = Depends(get_ctx),
+                       user: User = Depends(current_user)) -> dict:
+    row = delegation.request_delegation(ctx, user, body.target, body.area_id or None)
     ctx.commit()
-    return {"message": "Havale kaydedildi."}
+    if row.status == "ACCEPTED":  # Hâtif
+        return {"id": row.id, "status": row.status, "message": "Havale kabul edildi."}
+    return {"id": row.id, "status": row.status,
+            "message": "Havale verildi; alan kişi kabul edene kadar oyunuz sizde kalır."}
+
+
+@router.post("/delegations/requests/{request_id}/accept")
+def accept_delegation(request_id: int, ctx: Ctx = Depends(get_ctx),
+                      user: User = Depends(current_user)) -> dict:
+    expires_at = delegation.accept_request(ctx, user, request_id)
+    ctx.commit()
+    return {"message": "Havale kabul edildi.", "expires_at": expires_at}
+
+
+@router.post("/delegations/requests/{request_id}/reject")
+def reject_delegation(request_id: int, ctx: Ctx = Depends(get_ctx),
+                      user: User = Depends(current_user)) -> dict:
+    delegation.reject_request(ctx, user, request_id)
+    ctx.commit()
+    return {"message": "Havale reddedildi."}
+
+
+@router.delete("/delegations/requests/{request_id}")
+def cancel_delegation_request(request_id: int, ctx: Ctx = Depends(get_ctx),
+                              user: User = Depends(current_user)) -> dict:
+    delegation.cancel_request(ctx, user, request_id)
+    ctx.commit()
+    return {"message": "Bekleyen havale geri alındı."}
+
+
+class ReturnIn(BaseModel):
+    giver: str
+    area_id: str | None = None
+
+
+@router.post("/delegations/return")
+def return_delegation(body: ReturnIn, ctx: Ctx = Depends(get_ctx),
+                      user: User = Depends(current_user)) -> dict:
+    delegation.return_delegation(ctx, user, body.giver, body.area_id or None)
+    ctx.commit()
+    return {"message": "Havale iade edildi; oy sahibine döndü."}
+
+
+class PreferenceIn(BaseModel):
+    refuses: bool
+
+
+@router.put("/delegations/preference")
+def delegation_preference(body: PreferenceIn, ctx: Ctx = Depends(get_ctx),
+                          user: User = Depends(current_user)) -> dict:
+    delegation.set_refusal(ctx, user, body.refuses)
+    ctx.commit()
+    return {"refuses": body.refuses}
 
 
 class RenewIn(BaseModel):

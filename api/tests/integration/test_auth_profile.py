@@ -5,7 +5,8 @@ from sqlalchemy import select
 from mesveret import clock
 from mesveret.db.models import User, VerificationCode
 from mesveret.domain.counselor import counselor_areas
-from mesveret.services import delegation, ontology
+from mesveret.services import ontology
+from tests.integration.helpers import delegate
 from tests.integration.world import make_user
 
 REG = {
@@ -175,7 +176,7 @@ def test_counselor_label_appears_after_threshold(ctx, client):
     musavir = make_user(ctx, "musavir")
     for i in range(5):
         u = make_user(ctx, f"yurttas{i}")
-        delegation.set_delegation(ctx, u, "musavir", "sinema")
+        delegate(ctx, u, "musavir", "sinema")
     ctx.db.commit()
     assert counselor_areas(ctx.graph.incoming_delegations(musavir.id), ctx.reg) == ["sinema"]
     body = client.get("/users/musavir").json()

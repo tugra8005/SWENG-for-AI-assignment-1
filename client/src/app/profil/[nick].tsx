@@ -5,7 +5,7 @@ import { StyleSheet, Text, type TextStyle, View, useWindowDimensions } from 'rea
 import { api } from '@/api/client';
 import { AreaGroups } from '@/components/area-groups';
 import { CityPicker } from '@/components/city-picker';
-import { DelegationExpiryStrip, daysLeftLabel } from '@/components/delegation-expiry';
+import { DelegationNotices, daysLeftLabel } from '@/components/delegation-expiry';
 import { MyVotes } from '@/components/my-votes';
 import {
   Button,
@@ -84,6 +84,16 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
   const [error, setError] = useState<unknown>(null);
   const memberOf = new Set(p.memberships.map((m: any) => m.scope_id));
 
+  const toggleRefusal = async () => {
+    setError(null);
+    try {
+      await api('/delegations/preference', { method: 'PUT', body: { refuses: !p.refuses_delegations } });
+      onChanged();
+    } catch (e) {
+      setError(e);
+    }
+  };
+
   const toggleInterest = async (areaId: string) => {
     setError(null);
     try {
@@ -121,6 +131,19 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
       ) : (
         <Muted style={{ fontSize: 14 }}>Size doğrudan havale veren yok.</Muted>
       )}
+      <View style={{ marginTop: 10, gap: 4 }}>
+        <Button
+          small
+          variant={p.refuses_delegations ? 'primary' : 'secondary'}
+          checked={p.refuses_delegations}
+          label="Havale kabul etmiyorum"
+          onPress={toggleRefusal}
+        />
+        <Muted style={{ fontSize: 13 }}>
+          Açıkken size yeni havale verilemez. Bekleyen ve kabul ettiğiniz havaleler kendiliğinden düşmez;
+          onları Havale sayfasında reddedebilir ya da iade edebilirsiniz.
+        </Muted>
+      </View>
       <Rule faint />
       <Line label="Ad soyad">{p.full_name}</Line>
       <Line label="E-posta">{p.email}</Line>
@@ -217,7 +240,7 @@ export default function Profile() {
 
   return (
     <Page>
-      {isSelf ? <DelegationExpiryStrip data={p} onRenewed={own.reload} /> : null}
+      {isSelf ? <DelegationNotices data={p} onChanged={own.reload} /> : null}
       <View style={st.doc}>
         <View style={st.docInner}>
           <Text style={st.docHead}>MEŞVERET</Text>
@@ -247,8 +270,14 @@ export default function Profile() {
               <Button
                 label="Bu yurttaşa havale et"
                 variant="secondary"
+                disabled={p.refuses_delegations}
                 onPress={() => router.push({ pathname: '/havale', params: { target: p.nickname } })}
               />
+              {p.refuses_delegations ? (
+                <Muted style={{ fontSize: 13, marginTop: 4 }}>Bu yurttaş havale kabul etmiyor.</Muted>
+              ) : (
+                <Muted style={{ fontSize: 13, marginTop: 4 }}>Havale, bu yurttaş kabul edince yürürlüğe girer.</Muted>
+              )}
             </View>
           ) : null}
           <Muted style={{ marginTop: 16, fontSize: 12 }}>

@@ -4,10 +4,10 @@ from datetime import timedelta
 
 from mesveret.domain.commit import verify_commit
 from mesveret.domain.shade import shade_id, vote_pseudonym
-from mesveret.services import decision_hour, delegation, proposals
+from mesveret.services import decision_hour, proposals
 from mesveret.services.oracle import ORACLE_ID
 from mesveret.services.proposals import ProposalInput
-from tests.integration.helpers import advance, headers_for, mature
+from tests.integration.helpers import advance, delegate, headers_for, mature
 from tests.integration.test_decision_hour import close, item_of, queued_konu
 from tests.integration.world import make_user
 
@@ -15,7 +15,7 @@ from tests.integration.world import make_user
 def _chain_world(ctx):
     """a → b (genel havale): b'nin ağırlığı 2, açık; c'nin ağırlığı 1, gizli."""
     a, b, c = (make_user(ctx, n) for n in ("aylin", "baris", "ceren"))
-    delegation.set_delegation(ctx, a, "baris", None)
+    delegate(ctx, a, "baris", None)
     ctx.commit()
     return (a, b, c), queued_konu(ctx, c)
 
@@ -51,7 +51,7 @@ def test_open_or_secret_is_fixed_at_the_snapshot(ctx):
 def test_concurrent_sub_vote_decides_openness_separately(ctx):
     ist1, ist2 = make_user(ctx, "ilker", city="İstanbul"), make_user(ctx, "irem", city="İstanbul")
     ank = make_user(ctx, "aylin", city="Ankara")
-    delegation.set_delegation(ctx, ank, "ilker", None)  # İstanbul dışından gelen havale
+    delegate(ctx, ank, "ilker", None)  # İstanbul dışından gelen havale
     ctx.commit()
     p = mature(ctx, proposals.open_proposal(
         ctx, ank, ProposalInput(
@@ -72,7 +72,7 @@ def test_approval_vote_follows_the_same_rule(ctx):
 
     ctx, (a, b, _c), _topic, p, texts = _closure_with_three_texts(ctx)
     d = make_user(ctx, "deniz")
-    delegation.set_delegation(ctx, d, "baris", None)
+    delegate(ctx, d, "baris", None)
     ctx.commit()
     session = decision_hour.open_session(ctx)
     decision_hour.cast_vote(ctx, a, p.id, [texts[0]])
