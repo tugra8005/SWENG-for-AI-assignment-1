@@ -81,7 +81,7 @@ export default function SessionResults() {
               </Kicker>
               <Muted style={{ fontSize: 13 }}>Havale yalnızca {sub.vote_scope.name} seçmenleri arasında çözülür.</Muted>
               {sub.result ? (
-                <RevealTally result={sub.result} />
+                <RevealTally result={sub.result} autoplay={izle === String(main.proposal.id)} />
               ) : (
                 <Muted>{sub.sealed_votes} mühürlü oy · açılış pencere kapanınca</Muted>
               )}

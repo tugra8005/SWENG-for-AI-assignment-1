@@ -4,6 +4,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import {
   Animated,
@@ -19,6 +20,7 @@ import {
   type TextInputProps,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAnimatedValue, useReducedMotion } from '@/lib/motion';
 import { cellar, fonts, layout, paper } from '@/theme/tokens';
@@ -157,10 +159,20 @@ export function AmberButton({ label, onPress, disabled, subtle, selected }: {
         focused && s.focusRing,
         (pressed || hovered) && { backgroundColor: cellar.amberGlow },
         selected && { backgroundColor: cellar.amber },
-        (disabled || busy) && { opacity: 0.45 },
+        // Devre dışı: sönük çerçeve ve soluk yazı (Meydan'daki gri düğmenin Mahzen karşılığı; yazı AA).
+        disabled && !busy && { borderColor: cellar.amberDim },
       ]}
     >
-      <Text style={[s.term, { fontSize: 13 }, selected && { color: cellar.bg }]}>[ {busy ? '…' : label} ]</Text>
+      <Text
+        style={[
+          s.term,
+          { fontSize: 13 },
+          selected && { color: cellar.bg },
+          disabled && !busy && { color: cellar.amberDecayed },
+        ]}
+      >
+        [ {busy ? '…' : label} ]
+      </Text>
     </Pressable>
   );
 }
@@ -211,13 +223,19 @@ export function CellarPage({ children }: { children: ReactNode }) {
   const reduced = useReducedMotion();
   const fade = useAnimatedValue(reduced ? 0 : 1);
   const { on, toggle } = useCrt();
+  const insets = useSafeAreaInsets();
   useEffect(() => {
     if (reduced) return;
     Animated.timing(fade, { toValue: 0, duration: 900, useNativeDriver: false }).start();
   }, [fade, reduced]);
   return (
-    <View style={s.page}>
-      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+    <View style={[s.page, { paddingTop: insets.top }]}>
+      {/* Siyah zeminde durum çubuğu simgeleri açık renk olsun. */}
+      <StatusBar style="light" />
+      <ScrollView
+        contentContainerStyle={[s.scroll, { paddingBottom: 48 + insets.bottom }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={s.column}>
           <View style={s.topbar}>
             <Pressable onPress={() => router.push('/')} accessibilityRole="link">

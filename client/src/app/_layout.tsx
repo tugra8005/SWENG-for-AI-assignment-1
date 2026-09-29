@@ -24,9 +24,6 @@ import { paper } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
 
-// Uygulama yolsuz açıldığında (Android'de Expo Go) ilk ekran Meydan olsun, Mahzen değil.
-export const unstable_settings = { anchor: 'index' };
-
 export default function RootLayout() {
   const [loaded] = useFonts({
     Newsreader_400Regular,
@@ -68,6 +65,7 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: paper.bg },
           }}
         >
+          {/* Yolsuz açılışta (Android'de Expo Go) ilk ekran Meydan olsun: ilk tanımlanan ekran. */}
           <Stack.Screen name="index" />
           <Stack.Screen name="mahzen" options={{ contentStyle: { backgroundColor: '#000' } }} />
         </Stack>

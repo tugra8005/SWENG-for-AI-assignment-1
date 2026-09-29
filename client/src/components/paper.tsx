@@ -664,9 +664,10 @@ export function Countdown({
 export function Section({ title, aside, children }: { title: string; aside?: ReactNode; children: ReactNode }) {
   return (
     <View style={{ marginTop: 22 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-        <H2>{title}</H2>
-        {aside}
+      {/* Not sığmazsa alt satıra iner; Android'de satırdan taşmaz. */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', columnGap: 8 }}>
+        <H2 style={{ flexShrink: 1 }}>{title}</H2>
+        {aside ? <View style={{ flexShrink: 1, marginLeft: 'auto' }}>{aside}</View> : null}
       </View>
       <Rule style={{ marginTop: 4 }} />
       {children}
