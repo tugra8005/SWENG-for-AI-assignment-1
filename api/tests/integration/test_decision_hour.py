@@ -129,13 +129,15 @@ def test_votes_are_sealed_during_window_and_revealed_after(ctx, ledger):
     session = decision_hour.open_session(ctx)
     decision_hour.cast_vote(ctx, a, p.id, False)
     ctx.commit()
-    [commit_rec] = [r for r in ledger.of_type("OY_MUHUR") if r["payload"]["secmen"] == "aylin"]
-    assert "secim" not in commit_rec["payload"]
+    alias = decision_hour.pseudonym(ctx, a.id, session.id)  # ağırlık 1: gizli oy
+    [commit_rec] = [r for r in ledger.of_type("OY_MUHUR") if r["payload"]["secmen"] == alias]
+    assert "secim" not in commit_rec["payload"] and commit_rec["payload"]["acik"] is False
     with pytest.raises(Conflict):
         decision_hour.cast_vote(ctx, a, p.id, True)
     close(ctx, session)
-    [reveal] = [r for r in ledger.of_type("OY_ACILDI") if r["payload"]["secmen"] == "aylin"]
+    [reveal] = [r for r in ledger.of_type("OY_ACILDI") if r["payload"]["secmen"] == alias]
     doc = reveal["payload"]["oy"]
+    assert doc["secmen"] == alias
     assert doc["secim"] == "HAYIR"
     assert verify_commit(commit_rec["payload"]["commit"], doc, reveal["payload"]["tuz"])
 
@@ -377,7 +379,9 @@ def test_raid_cluster_is_flagged_and_excluded(ctx):
     decision_hour.cast_vote(ctx, owner, p.id, False)
     close(ctx, session)
     result = item_of(ctx, session, p).result
-    assert len(result["flagged"]) == 5
+    # Sonuçta yalnızca sayı ve gerekçe; dışlanan hesapların adları yok.
+    assert result["flagged_count"] == 5 and "flagged" not in result
+    assert not any(r.nickname in str(result) for r in raiders)
     assert result["passed"] is False
 
 
@@ -440,7 +444,12 @@ def test_results_endpoint_lists_votes_for_reveal(client, ctx):
     close(ctx, session)
     body = client.get(f"/decision-hour/sessions/{session.id}").json()
     votes = body["items"][0]["result"]["votes"]
-    assert {v["voter"] for v in votes} >= {"aylin", "baris"}
+    # aylin ve baris ağırlık 1: gizli, yalnızca oturuma özel takma kimlikle; Hâtif açık.
+    secret = {v["pseudonym"] for v in votes if not v["open"]}
+    assert secret == {decision_hour.pseudonym(ctx, u.id, session.id) for u in (a, b)}
+    assert {v["voter"] for v in votes if v["open"]} == {"Hâtif"}
+    result = str(body["items"][0]["result"])  # öneren (aylin) açık bilgi; oylar değil
+    assert "aylin" not in result and "baris" not in result and a.id not in result
     assert all("ledger_hash" in v for v in votes)
 
 
@@ -548,7 +557,7 @@ def test_proposal_needs_majority_in_every_disproportionate_scope(ctx):
     assert (sub["yes"], sub["no"], sub["passed"]) == (1, 2, False)
     assert main["overall"] == {
         "passed": False,
-        "summary": "Genel: %88 EVET ✓ · İstanbul: %33 EVET ✗ → Reddedildi",
+        "summary": "Genel'de geçti (%88) · İstanbul'da geçemedi (%33) → Reddedildi",
     }
     assert reload(later, p).status == "REJECTED"
     assert dict(later.graph.resource("butce").shares)["sehir:istanbul"] == 4000  # pay korundu
@@ -562,7 +571,7 @@ def test_proposal_passes_when_every_scope_agrees_and_shares_change(ctx):
     decision_hour.cast_vote(ctx, i3, p.id, False, vote_scope_id="sehir:istanbul")
     later = close(ctx, session)
     assert item_of(later, session, p).result["overall"]["summary"] == (
-        "Genel: %100 EVET ✓ · İstanbul: %67 EVET ✓ → Kabul edildi")
+        "Genel'de geçti (%100) · İstanbul'da geçti (%67) → Kabul edildi")
     assert reload(later, p).status == "ACCEPTED"
     assert dict(later.graph.resource("butce").shares)["sehir:istanbul"] == 2000
     view = decision_hour.session_view(later, session.id)

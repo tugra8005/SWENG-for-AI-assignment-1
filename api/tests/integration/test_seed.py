@@ -115,7 +115,7 @@ def test_decision_hour_runs_all_voting_scenarios(seeded):
 
     # 7. Baskın: beş hesap işaretlenip dışlanır; öneri reddedilir.
     rb = result(later, session, ids["baskin"])
-    assert len(rb["flagged"]) == 5
+    assert rb["flagged_count"] == 5 and "flagged" not in rb
     assert rb["passed"] is False
 
     # 10. Eşzamanlı çoğunluk: Genel'de geçer, İstanbul'da reddedilir → öneri reddedilir.
@@ -123,7 +123,7 @@ def test_decision_hour_runs_all_voting_scenarios(seeded):
         later, session, ids["pay_yarisi"], "sehir:istanbul")
     assert (main["yes"], main["cast"], main["passed"]) == (16, 25, True)
     assert (ist["yes"], ist["cast"], ist["passed"]) == (2, 9, False)
-    assert main["overall"]["summary"] == "Genel: %64 EVET ✓ · İstanbul: %22 EVET ✗ → Reddedildi"
+    assert main["overall"]["summary"] == "Genel'de geçti (%64) · İstanbul'da geçemedi (%22) → Reddedildi"
     assert later.db.get(Proposal, ids["pay_yarisi"]).status == "REJECTED"
     cut = result(later, session, ids["kesinti"])
     assert (cut["yes"], cut["cast"], cut["passed"], cut["overall"]["summary"]) == (13, 21, True, None)

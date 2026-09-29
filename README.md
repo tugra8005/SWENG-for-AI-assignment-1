@@ -191,7 +191,7 @@ Senaryo 12'yi oynatacaksanız A parçasını bu komuttan önce, B parçasını o
 - **Senaryo 2, kilit:** **aylin** olarak **Havale** sayfasında genel havaleyi **Geri al**'a basın: *"Karar Saati penceresi açık: havale grafı bu oturum için kilitli."* **Karar Saati** sayfasında aylin'in pusulasında "Oyunuz havale zinciriyle ceren adlı yurttaşa gidiyor" yazar.
 - **Senaryo 14, aynı kaynak:** pusulada №18 ve №19 aynı bütçeye dokunur ve kartlarının altında uyarı çıkar. №18'de *"№19 ile aynı kaynağı etkiliyor; önce bu öneri uygulanır, kabul edilirse №19 uygulanamaz."*, №19'da *"№18 ile aynı kaynağı etkiliyor; önce №18 uygulanır."* yazar. Kapanışta öneriler numara sırasıyla uygulanır.
 - **Senaryo 10, ayrı oylama:** İstanbul'da oturan **ayse** olarak **Karar Saati** pusulasında №17 iki kez görünür: Genel oylaması ve altında *"İstanbul oylaması · orantısız etkilenen kapsam"*. İstanbul oylamasında havale yalnızca İstanbul seçmenleri arasında çözülür. Beklenen sonuç için ayse'nin №17'de oy vermemesi gerekir (verirse İstanbul yüzdesi değişir).
-- **Senaryo 2, ağırlık:** **ceren** olarak **Karar Saati** → oy pusulası. №9 "Gece metro seferleri" için **Oy ağırlığınız: 3** yazar. **Evet** deyin; oy mühürlenir ve ekranda commit görünür. Diğer önerilere oy vermeyin; yüzdeler oy planına göre ayarlandı.
+- **Senaryo 2, ağırlık ve açık oy:** **ceren** olarak **Karar Saati** → oy pusulası. №9 "Gece metro seferleri" için **Oy ağırlığınız: 3** ve altında *"Oyunuz açık olacak: 2 yurttaşın oyunu taşıyorsunuz."* yazar: başkalarının oyunu taşıyan temsilcinin oyu sonuçta adıyla görünür. Oy vermediğiniz diğer önerilerde *"Oyunuz gizli"* yazar. **EVET** ve **HAYIR** aynı görünür; **EVET**'e basın, seçenek dolar ve altında *"Seçiminiz: EVET · mühürlendi"* yazar. Diğer önerilere oy vermeyin; yüzdeler oy planına göre ayarlandı.
 
 **Oturumu kapatın:**
 
@@ -199,11 +199,11 @@ Senaryo 12'yi oynatacaksanız A parçasını bu komuttan önce, B parçasını o
 docker compose exec api meşveret-dev run-karar-saati --close
 ```
 
-**Karar Saati → Geçmiş oturumlar → #1** sayfasında oylar tek tek düşer. Beklenen sonuçlar:
+**Karar Saati → Geçmiş oturumlar → #1** sayfasında her öneri için toplamlar, eşik çizgisi, mühür ve **Açık oylar (temsilciler)** listesi durur. Ağırlığı 1 olan seçmenlerin oyları gizlidir ve yalnızca toplamlara katılır. **Oyların açılışını izle** oyları tek tek düşürür: açık oylar takma adla, gizli oylar *"gizli · 3f9a0c21"* gibi oturuma özel takma kimlikle. Beklenen sonuçlar:
 
 | Öneri | Sonuç |
 |---|---|
-| №9 Gece metro seferleri | 8 EVET, 5 HAYIR → **KABUL**. ceren'in oyu olmasaydı 5–5 eşitlikti ve basit çoğunluk sağlanmazdı; ceren'in fişinde "×3 · havale: aylin, baris" yazar |
+| №9 Gece metro seferleri | 8 EVET, 5 HAYIR → **KABUL**. ceren'in oyu olmasaydı 5–5 eşitlikti ve basit çoğunluk sağlanmazdı. Açık oylar listesinde yalnızca temsilciler ve Hâtif durur: *"ceren EVET ×3 · havale: aylin, baris"*; diğer 9 oy gizlidir (senaryo 2) |
 | №13 red_bekleme 30 → 45 gün | 18/30 = %60 → **RET** (yönetmelik eşiği ≥ 2/3) |
 | №14 sessiz_onay_suresi 24 → 36 saat | 20/30 = 2/3 → **KABUL**. Yönetmelik sayfasında maddenin geçmişi görünür |
 | №10 Silme: hakaret (IK-2) | 18/30 = %60 → **RET**: başkasının içeriğini silmek 2/3 ister; mesaj görünür kalır (senaryo 4) |
@@ -211,8 +211,9 @@ docker compose exec api meşveret-dev run-karar-saati --close
 | №12 Silme: ceren'in kendi mesajı | 7/12 = %58 → **KABUL**: kendi mesajı basit çoğunlukla; 2/3 gerekseydi geçemezdi (senaryo 4) |
 | №8 Kapanış | 22:00 metni en çok onayı alır → **KARAR** (senaryo 5) |
 | №15 Parklar sabaha kadar açık kalsın | 5 hesap baskın şüphesiyle dışlandı; 2 EVET, 4 HAYIR → **RET** (senaryo 7) |
-| №17 İstanbul payının yarısı Ankara'ya | İki sayım: **Genel: %64 EVET ✓ · İstanbul: %22 EVET ✗ → Reddedildi** (senaryo 10) |
+| №17 İstanbul payının yarısı Ankara'ya | İki sayım: **Genel'de geçti (%64) · İstanbul'da geçemedi (%22) → Reddedildi** (senaryo 10) |
 | №18 Tüm şehirlerin payında %10 kesinti | Orantısız değil, tek oylama: 13/21 → **KABUL**; bütçe payları 3.600 / 5.400 / 4.500 / 4.500 olur (senaryo 10) |
+| №19 Tüm şehirlerin payında %5 artış | 13/21 kabul oyu, ama mühür **UYGULANAMADI**: №18 aynı bütçenin paylarını önce değiştirdi (senaryo 14) |
 | №16 Belgesel film gösterimleri | Hâtif ×3 HAYIR (iki yurttaş Kültür alanında Hâtif'e havale etti); 4 EVET, 6 HAYIR → **RET** (senaryo 8) |
 
 ### 4. Silme: gerekçe, 2/3 ve kendi mesajı
@@ -233,7 +234,9 @@ Silme istisnadır ("tartışmalar silinmez"). Başkasının içeriğini silmek i
 
 ### 7. Baskın
 
-№15 sonucunun altında "Baskın şüphesiyle işaretlenip dışlanan 5 hesap" bölümü bu hesapları listeler: mavi_kus, sari_kedi, yesil_at, mor_balik, turuncu_ari. Hesaplar seed anından yaklaşık 5 saat önce, 32 dakika içinde açıldı ve Parklar konusunda birbirlerine yanıt verdi. İçerikleri silinmedi; yalnızca bu oylamadan dışlandılar. Dışlanmasalardı öneri 7 EVET'e 4 HAYIR'la geçerdi.
+№15 sonucunun altında *"5 hesabın oyu baskın şüphesiyle sayılmadı"* ve kümenin gerekçesi yazar. Hesaplar adlarıyla listelenmez, defterdeki açılış kaydı da yalnızca sayıyı taşır: yanlış pozitifler herkese teşhir edilmez. Hesaplar seed anından yaklaşık 5 saat önce, 32 dakika içinde açıldı ve Parklar konusunda birbirlerine yanıt verdi. İçerikleri silinmedi; yalnızca bu oylamadan dışlandılar. Dışlanmasalardı öneri 7 EVET'e 4 HAYIR'la geçerdi. Dışlanan kişi bunu kendisi görür: **mavi_kus** olarak giriş yapıp oturum sayfasında **Oyumu doğrula**'ya basın; *"Bu oylamada baskın şüphesiyle dışlandınız: …"* yazar.
+
+**Oyumu doğrula.** Oturum sayfasında ya da profilin *Oylarım* bölümünde **Oyumu doğrula** yalnızca giriş yapmış kişiye kendi oylarını gösterir. **deniz** olarak açın: her oylama için oyu, *"gizli oy · bu oturumdaki takma kimliğiniz …"*, mühür ve açılış kayıtlarının defter bağlantıları ve *"commit yeniden hesaplandı, eşleşiyor"*. **ceren** için №9 *"açık oy (takma adınızla)"* olarak görünür. Takma kimlik aynı kişi için başka oturumda farklıdır.
 
 ### 10. Eşzamanlı çoğunluk
 

@@ -77,9 +77,14 @@ function VotePanel({ t, onChanged }: { t: any; onChanged: () => void }) {
           <TermDim>oylar gizli; ara sayım gösterilmez. oyunuzu değiştirebilirsiniz.</TermDim>
           {v.flagged_self ? <Term>!! dışlandınız: {v.flagged_self}</Term> : null}
           {v.i_am_voter ? (
-            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <AmberButton label={`evet${v.my_vote === true ? ' ✓' : ''}`} onPress={() => call(() => api(`/cellar/threads/${t.id}/reveal-vote`, { method: 'PUT', body: { yes: true } }))} />
-              <AmberButton label={`hayır${v.my_vote === false ? ' ✓' : ''}`} subtle onPress={() => call(() => api(`/cellar/threads/${t.id}/reveal-vote`, { method: 'PUT', body: { yes: false } }))} />
+            <View style={{ gap: 6 }}>
+              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <AmberButton label="evet" selected={v.my_vote === true} onPress={() => call(() => api(`/cellar/threads/${t.id}/reveal-vote`, { method: 'PUT', body: { yes: true } }))} />
+                <AmberButton label="hayır" selected={v.my_vote === false} onPress={() => call(() => api(`/cellar/threads/${t.id}/reveal-vote`, { method: 'PUT', body: { yes: false } }))} />
+              </View>
+              {v.my_vote !== null && v.my_vote !== undefined ? (
+                <TermDim>seçiminiz: {v.my_vote ? 'evet' : 'hayır'} · kaydedildi; değiştirebilirsiniz</TermDim>
+              ) : null}
             </View>
           ) : !v.flagged_self ? (
             <TermDim>Oylama açıldığında bu başlıkta yazmamıştınız; seçmen değilsiniz.</TermDim>

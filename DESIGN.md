@@ -343,11 +343,11 @@ stateDiagram-v2
   Hepsi PostgreSQL'e JSONB olarak yazılır. Sayım yalnızca bu görüntüyü kullanır.
 - **Kilit:** pencere açıkken havale verme ve geri alma reddedilir ("Karar Saati penceresi açık; havaleler bu oturum için kilitli").
 - **Mühürlü oy (commit-reveal):**
-  - Oy anında deftere yalnızca `commit = sha256(kanonik_json(oturum, öneri, seçmen, seçim) ‖ tuz)` yazılır. Tuzu ve seçimi sunucu PostgreSQL'de tutar.
+  - Oy anında deftere yalnızca `commit = sha256(kanonik_json(oturum, öneri, seçmen, seçim) ‖ tuz)` yazılır. `seçmen`, açık oyda takma ad, gizli oyda oturuma özel takma kimliktir (§7.9). Tuzu ve seçimi sunucu PostgreSQL'de tutar.
   - Pencere kapanınca tüm seçimler ve tuzlar deftere açılır; herkes her commit'i yeniden hesaplayabilir.
   - Meydan'da oy bir kez verilir ve pencere boyunca değiştirilemez.
 - **Eşikler:** YONETMELIK için `yonetmelik_esigi`; başkasının içeriğini silen SILME için `silme_esigi`; kendi mesajını silen SILME ve itiraz almış hızlı şerit önerileri için `basit_cogunluk`. Oranlar yalnızca kullanılan (çekimser olmayan) ağırlıklar üzerinden hesaplanır. Yeter sayı (kuorum) yoktur; hiç oy kullanılmamışsa öneri reddedilir.
-- **Sonuç açıklama ekranı:** açılan oylar tek tek düşer (takma ad, ağırlık, seçim); yanında çubuk ve eşik çizgisi ilerler.
+- **Sonuç açıklama ekranı:** toplamlar, eşik çizgisi, mühür ve açık oylar (temsilciler) listesi. "Oyların açılışını izle" ile oylar tek tek düşer: açık oylar takma adla, gizli oylar takma kimlikle (§7.9).
 
 **Olgunlaşma.** Bir öneri Karar Saati'nde ancak yeterince uzun süre yayında kaldıktan sonra oylanır. Süre önerinin etkisiyle ölçeklenir; etki, seçmen kapsamının genişliğiyle ölçülür:
 
@@ -436,6 +436,20 @@ Pay etkisi bir fark değil, **hedef paylar** olarak bildirilir ("İstanbul 4.000
 
 **Gerekçe.** İki öneri aynı pastayı aynı anda bölerse ikisini birden uygulamanın doğru bir anlamı yoktur. Ya ikincisi birincinin üzerine yazar ve birinci oylamanın sonucu sessizce silinir, ya da hedefler toplanır ve kimsenin oylamadığı bir dağılım ortaya çıkar. Seçmenler ikinci öneriyi eski paylara göre oyladı; yeni paylar üzerindeki etkisini oylamadılar. Numara sırası basit ve önceden bilinen bir kuraldır; pusuladaki uyarı onu oylamadan önce görünür kılar. Çakışan öneriyi reddetmek ise kabul oyu almış bir fikri cezalandırırdı; bu yüzden yalnızca uygulanmaz ve yeniden açılmasının önü açık kalır.
 
+### 7.9 Oy gizliliği: temsilcinin oyu açık, seçmenin oyu gizli
+
+- **Kural.** Bir oylamada ağırlığı 1'den büyük olan seçmenin oyu **açıktır**: sonuç sayfasında takma adı, oyu, ağırlığı ve havale edenler görünür. Ağırlık 1'den büyükse zinciri kendisinde biten en az bir havale taşıyordur. Belirleyici Müşavir etiketi değil, o oylamadaki ağırlıktır. Hâtif'in oyu her zaman açıktır. Ağırlığı 1 olan seçmenin oyu **gizlidir**: sonuç sayfasında yalnızca toplamlara katılır, kartı gösterilmez.
+- **Ne zaman belirlenir.** Karar Saati açılışındaki anlık görüntüde, her oylama için ayrı (`SessionItem.open_voters`). Pencere boyunca havale kilitli olduğu için değişmez. Aynı kural silme, yönetmelik, kapanış (onay oylaması) ve eşzamanlı çoğunluk alt oylamaları için geçerlidir. Alt oylamada havale kapsam içinde çözüldüğü için aynı kişi Genel oylamasında açık, İstanbul oylamasında gizli olabilir. Mahzen ifşa oylaması zaten gizlidir; ifşa gerçekleşse bile deftere yalnızca sayılar yazılır, kimin nasıl oy verdiği açılmaz.
+- **Defter.** Gizli oy deftere kimlikle değil oturuma özel takma kimlikle yazılır: `HMAC(sunucu_anahtarı, "oy:" ‖ oturum ‖ ":" ‖ user_id)` değerinin ilk 8 hex karakteri. Commit belgesi, `OY_MUHUR` ve `OY_ACILDI` kayıtları bu takma kimliği taşır; açık oylarınki takma adı. Aynı kişinin farklı oturumlardaki takma kimlikleri eşleştirilemez. "oy:" ön eki bir alan ayracıdır. Anahtar Mahzen Gölge kimlikleriyle ortaktır; ayraç olmasaydı #5 numaralı oturumdaki takma kimlik #5 numaralı Mahzen başlığındaki Gölge kimliğiyle aynı çıkabilir ve ikisini bağlardı. Çift oy engeli sunucu tarafında kalır (`Ballot` satırı kişiyle).
+- **Arayüz.**
+  - Pusulada her oylamanın altında durum yazar: "Oyunuz gizli" ya da "Oyunuz açık olacak: 2 yurttaşın oyunu taşıyorsunuz."
+  - Sonuç sayfası toplamları ve "Açık oylar (temsilciler)" listesini gösterir. "Oyların açılışını izle" canlandırmasında gizli oylar takma kimlikle, açık oylar takma adla düşer.
+  - **Oyumu doğrula** (oturum sayfası ve profil) kullanıcının yalnızca kendi oylarını gösterir: o oturumdaki takma kimliği, mühür ve açılış kayıtlarının hash'leri, sunucuda yeniden hesaplanan commit.
+  - Baskın şüphesiyle dışlanan hesaplar sonuç sayfasında ve defterde adıyla listelenmez, yalnızca sayısıyla; dışlanan kişi bunu kendi pusulasında ve "Oyumu doğrula"da görür.
+- **Eski kayıtlar.** Bu kuraldan önceki oturumların oy kayıtları takma adla yazılmıştır. Defter değiştirilemediği için (D6) geriye dönük gizlenemez; kural yeni oturumlardan itibaren işler. Demo `seed --reset` ile temiz başlar.
+
+**Gerekçe.** Azınlığın karşı oyu çoğunluk tarafından görülüp cezalandırılamamalıdır: açık oy, küçük bir toplulukta hayır diyenlerin bir sonraki oylamada, tartışmada ya da Mahzen'de hedef alınmasına yol açar. Temsilcinin oyu ise temsil ettiklerine karşı hesap verebilir olmalıdır: başkalarının oyunu taşıyan kişinin o oyu nasıl kullandığını, oyunu ona havale edenler görebilmelidir. Meclislerde açık oy, sandıkta gizli oy ilkesinin karşılığıdır. Havale bu iki rol arasındaki sınırı belirler: oy taşıyan temsilcidir.
+
 ## 8. Havale
 
 ### 8.1 Çözümleme
@@ -503,7 +517,7 @@ Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçe
    - boyutu en az `baskin_min_kume`,
    - kenar yoğunluğu (kenar sayısı / olası kenar sayısı) en az `baskin_yogunluk_esigi`,
    - katılım anlarının yayılımı en fazla `baskin_katilim_araligi`.
-4. İşaretli hesaplar o oylamanın seçmen listesinden ve paydasından çıkar. Kendilerine ve sonuç ekranında gerekçesiyle gösterilir. İçerikleri silinmez; başka oylamalarda yeniden değerlendirilirler.
+4. İşaretli hesaplar o oylamanın seçmen listesinden ve paydasından çıkar. Kendilerine gerekçesiyle gösterilir (pusulada ve "Oyumu doğrula"da). Sonuç ekranında ve defterde yalnızca sayıları ve gerekçe metni görünür, adları görünmez: yanlış pozitifler (§15, 8. madde) herkese teşhir edilmez. İçerikleri silinmez; başka oylamalarda yeniden değerlendirilirler.
 
 ## 10. Mahzen
 
@@ -654,7 +668,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 1. **İfşa oylaması bir çoğunluk tiranlığıdır.** Seçmen listesinin yarısından fazlası, karşı oy verenler ve oy vermeyenler dahil başlıkta yazan herkesin kimliğini açığa çıkarır. Bu, her katılımcıya ilk yazışında gösterilen uyarıyla kabul edilmiş bir tiranlıktır; uyarı rızayı belgeler, tiranlığı ortadan kaldırmaz.
 2. **Başlık yağdırarak oylamayı öldürme.** İfşa oylamasına silinme koruması yoktur. Oylamanın geçmesini istemeyen biri, kapasiteyi dolduracak kadar yeni başlık açarak başlığı ve oylamayı birlikte silebilir. Koruma verilseydi oylama açmak başlığı ölümsüz yapardı. İki kötü seçenekten geçicilik korunmuştur.
 3. **Sahte hesap.** Gerçek çözüm kimlik doğrulaması (e-Devlet) gerektirir; kapsam dışıdır. E-posta doğrulaması hesap çoğaltmayı yalnızca yavaşlatır. Ek olarak, belge bekleme süresini yalnızca adres *değişikliğine* koyduğu için kayıtta seçilen şehirde oy hakkı hemen doğar. Sahte hesaplar şehir kapsamına beklemeden girebilir. Baskın tespiti bunu kısmen hafifletir.
-4. **Commit-reveal'da sunucuya güven.** Tuzları ve seçimleri pencere boyunca sunucu tutar. Sunucu, pencere açıkken oyları okuyabilir ya da seçmen adına oy verebilir. Defter, commit'lerin sonradan değiştirilmediğini kanıtlar; sunucunun dürüst olduğunu kanıtlamaz. Gerçek çözüm, tuzun istemcide üretilip saklanmasıdır (istemci kaybolursa oy açılamaz); bu ödevde yapılmamıştır.
+4. **Commit-reveal'da sunucuya güven.** Tuzları ve seçimleri pencere boyunca sunucu tutar. Sunucu, pencere açıkken oyları okuyabilir ya da seçmen adına oy verebilir. Defter, commit'lerin sonradan değiştirilmediğini kanıtlar; sunucunun dürüst olduğunu kanıtlamaz. Gerçek çözüm, tuzun istemcide üretilip saklanmasıdır (istemci kaybolursa oy açılamaz); bu ödevde yapılmamıştır. Aynı güven oy gizliliği için de geçerlidir: sunucu takma kimlikle kişiyi eşleştirir (§15, 33. madde).
 5. **Etiketleme öneri sahibinde.** Seçmen kapsamını ve etkilenen kaynakları öneriyi açan seçer. Kaynak etiketini hiç koymayan biri R2'yi atlatabilir. İtiraz eşiği ve Hâtif'in H2 denetimi bunu hafifletir; engellemez.
 6. **Havale yoğunlaşması ve süper-delegeler.** Zincirleme serbesttir; oylar birkaç kişide toplanabilir. Müşavir etiketi yoğunlaşmayı görünür yapar ama sınırlamaz. Havale alma üst sınırı yoktur. Süre dolumu (§8.5) unutulmuş havalelerden birikmiş gücü düzenli olarak sıfırlar, ama bilinçli olarak yenilenen havalelerin yoğunlaşmasını sınırlamaz; bu bilinçli bir seçimdir.
 7. **Hâtif'e verilen oylar fiilen operatörünün eline geçer.** Hâtif'in davranışı kural tabanlıdır ve kuralları sistemi işleten yazar. Hâtif'e havale eden, oyunu kural yazarına emanet etmiş olur. Hâtif sembolik olsa da havale alabildiği için bu etki gerçektir.
@@ -667,7 +681,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 14. **Mahzen anonimliği sunucuya karşı değildir.** Sunucu gerçek kimliği saklar. ETKILESIM grafı Mahzen etkinliğinden de beslenir. Başlıklar arası eşleştirme yalnızca istemci tarafında imkânsızdır.
 15. **Düşük katılımda Hâtif belirleyici olur.** Yeter sayı yoktur ve Hâtif her oturumda oy verir. Hiçbir yurttaşın oy vermediği bir oylamada Hâtif'in tek oyu sonucu belirler; denetimlerden geçen bir öneri böylece yalnızca bir kural motorunun onayıyla kabul edilebilir. Hâtif'e havale edenler arttıkça bu etki büyür (bkz. 7. madde).
 16. **Silme gizlemedir.** Silinen içerik defterde herkese açık kalır. Silme oylaması içeriği sitenin görünür yüzünden kaldırır, kayıttan kaldırmaz.
-17. **Pencere boyunca kimin oy verdiği bellidir.** Oyun içeriği mühürlüdür ama commit kaydı seçmenin takma adıyla deftere hemen yazılır. Pencere kapanmadan kimin oy verdiği, kimin henüz vermediği görülebilir; bu bilgi son dakika baskısına yol açabilir.
+17. **Pencere boyunca kimin oy verdiği bellidir (yalnızca temsilciler için).** Oyun içeriği mühürlüdür. Açık oyların commit kaydı takma adla, gizli oylarınki oturuma özel takma kimlikle deftere hemen yazılır. Pencere kapanmadan temsilcilerden kimin oy verdiği, kimin henüz vermediği görülebilir; bu bilgi son dakika baskısına yol açabilir. Gizli oy verenlerin sayısı da görünür, kimliği görünmez.
 18. **Mahzen'de oy değiştirmek bir yarışa dönüşebilir.** İfşa, eşiğin aşıldığı an gerçekleşir ve geri alınamaz. Fikrini değiştirmek isteyen bir seçmenin HAYIR'a dönmesi, eşiği aşan son EVET'ten sonra gelirse etkisizdir.
 19. **Olgunlaşma acil kararları geciktirir.** Genel kapsamlı bir öneri en az 7 gün bekler; olgunlaşma Pazar oturumundan hemen sonra dolarsa bu neredeyse iki haftaya çıkar. Acil durumlar için hızlandırılmış bir yol yoktur. Süreler yönetmelik maddesidir ve oylamayla kısaltılabilir, ama kısaltma önerisi de 7 gün olgunlaşır. Ayrıca itiraz bir erteleme aracına dönüşebilir: hızlı şeritteki bir öneriye eşik kadar itiraz eden azınlık, onu en az 48 saat, genel kapsamda en az 7 gün geciktirir.
 20. **Hâtif'in içerik denetimi kelimeye bakar, anlama bakmaz.** Anahtar kelime kullanmadan yapılan hakaret (ima, alay, küçümseme) Hâtif'ten HAYIR alır. Bir hakaret kelimesini eleştirmek için anan mesaj ("'cahil' demek yanlış") EVET alabilir. Hâtif tek bir oydur ve gerekçesini açıkça yazar; karar seçmenlerindir.
@@ -695,6 +709,11 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 31. **Ölü el.** Bugünkü kurucular yarının topluluğunu bağlar. D1–D7 metinlerindeki ya da izinli aralıklardaki (§5.2) bir hata ya da eksik oylamayla düzeltilemez. Tek çıkış forumu baştan kurmaktır (yeni tohum, yeni defter). Temel Yasa'nın sonsuzluk maddesinin bedeli de budur.
 32. **Aralıklar parametreleri tek tek sınırlar, birleşimlerini değil.** Artık her sayısal parametrenin aralığı var; `basit_cogunluk` en fazla 2/3 olabilir. Ama aralık içindeki değerlerin birleşimi hâlâ zarar verebilir: `basit_cogunluk` 2/3 ve `itiraz_esigi` %2 birlikte, küçük bir azınlığın her hızlı şerit önerisini 2/3 gerektiren bir oylamaya çekmesine izin verir. Sayısal olmayan parametrelerin (`karar_saati` günü ve saati) ve içerik kurallarının aralığı yoktur.
 
+33. **Sunucu takma kimlik ile kişiyi eşleştirir.** Gizli oyun takma kimliği sunucu anahtarıyla üretilir; anahtarı bilen sunucu hangi takma kimliğin kime ait olduğunu hesaplayabilir ve `Ballot` satırı kişiyle saklanır (çift oy engeli için). Gizlilik diğer yurttaşlara karşıdır, sunucuya karşı değildir; commit-reveal'daki sunucu güveni açığının (4. madde) aynısı.
+34. **"Oyumu doğrula" bir makbuzdur.** Kişi takma kimliğini ve defterdeki kaydı gösterebilir; böylece oyunu bir başkasına kanıtlayabilir. Bu, baskı ve oy satın alma riskini açar: sandıktaki gizliliğin amacı seçmenin oyunu kanıtlayamamasıdır. Doğrulanabilirlik bilerek tercih edilmiştir.
+35. **Küçük seçmen kümelerinde ve oybirliğinde gizlilik fiilen bozulur.** 9 kişilik İstanbul oylamasında herkes EVET dediyse herkesin oyu bellidir. Toplamlar ve açık oylar birlikte, küçük kümelerde kalan birkaç gizli oyu tahmin ettirebilir. Eşzamanlı çoğunlukta aynı kişi Genel'de açık, alt kapsamda gizli olabilir; açık oyu gizli olanı tahmin ettirebilir.
+36. **Havale almak gizliliği kaybetmek demektir.** Temsilci, oylamadaki ağırlığı 1'den büyükse gizli oy veremez. Gizli kalmak isteyen biri, havale verenlerden havaleyi geri almalarını istemekten başka bir şey yapamaz: Meşveret'te havale alanın havaleyi geri çevirme olanağı yoktur.
+
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
 
 | # | Gereksinim | Karşılayan mekanizma |
@@ -715,6 +734,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | 14 | Oy hakkı havale edilebilir | Genel ve alan bazlı HAVALE, miras, zincir, döngü yasağı (R4), pencere kilidi, havale süresi ve yenileme (§8.5) |
 | 15 | Bilirkişiler; API ile bağlı yapay zekâ olabilir | Hâtif: kural tabanlı sembolik bilirkişi (gerçek API bilinçli olarak kapsam dışı) |
 | 16 | Çoğunluğun azınlığı ezmesi engellenmeli (uzmanlar ve bölme) | Bölme, iki yönde: (1) kapsam + R2 otomatik daralma (parça bütün adına karar veremez); (2) eşzamanlı çoğunluk (§7.7): bütün bir parçanın payını orantısız azaltırsa parça ayrıca oylar ve öneri ancak iki oylamada da çoğunlukla geçer (Calhoun, ABD iki meclisli yapı, AB çifte çoğunluk). Uzmanlar: alan bazlı havale ve Müşavirler. Ayrıca nitelikli çoğunluk (yönetmelik ve silme 2/3), gerekçeli silme (R7) ve Şerh |
+| 16a | (ek) Çoğunluk azınlığın karşı oyunu görüp cezalandıramamalı | Oy gizliliği (§7.9): ağırlığı 1 olan seçmenin oyu gizli, sonuçta yalnızca toplamlar; defterde oturuma özel takma kimlik. Temsilcinin (ağırlığı >1) ve Hâtif'in oyu açık. Baskın şüphelileri isimle teşhir edilmez |
 | 17 | Kalabalık (ölçek) sorunu | Havale (sıvı demokrasi), sessiz onay hızlı şeridi, Karar Saati'nde toplu oylama, seçmeni kapsamla daraltma |
 | 18 | Sonunda uzlaşma; farklı görüşler oylanabilir | KAPANIS: rakip karar metinleri + onay oylaması + Şerh; süre sonra yeniden açma |
 | 19 | Akran öğrenmesi temelli tartışma | Kalıcı tartışma alanı, açık sürüm geçmişi, Müşavir görünürlüğü, Mahzen diskuru; olgunlaşma süresi oylamadan önce tartışmaya en az 48 saat–7 gün ayırır |
@@ -755,6 +775,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Silme: içerik kuralları, R7 gerekçesi, 2/3 eşiği, kendi mesajı istisnası, H4, şeritteki kural | `test_regulation.py`, `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_decision_hour.py::test_deletion_needs_two_thirds_but_own_message_needs_simple_majority`, `test_seed.py::test_scenario_4_unjustified_deletion_is_rejected` |
 | Pay etkisi ve orantısızlık; R2'nin ters yönü; eşzamanlı çoğunluk (ayrı oylama, üyeler arası havale, sonuç satırı, payların işlenmesi) | `api/tests/domain/test_shares.py`, `test_rules.py`, `test_proposals.py`, `test_decision_hour.py::test_proposal_needs_majority_in_every_disproportionate_scope`, `::test_disproportionately_affected_scope_votes_separately_with_member_only_delegation`, `test_seed.py` (senaryo 10) |
 | Pay çakışması (taban payların saklanması, numara sırası, `CONFLICT` ret sayılmaz ve yeniden açılabilir, sessiz onayda da denetim, pusula uyarısı, Hâtif'in güncel yorumu) | `tests/integration/test_share_conflict.py`, `test_seed.py` (senaryo 14) |
+| Oy gizliliği (ağırlık 1 ve >1, Hâtif, eşzamanlı alt oylama, onay oylaması, açılışta sabit, defterde takma kimlik, oturumlar ve Gölge kimlikleriyle eşleşmeme, sonuç API'sinde kimlik yok, Oyumu doğrula yalnızca sahibine, baskın sayı olarak) | `tests/integration/test_vote_secrecy.py`, `test_decision_hour.py::test_results_endpoint_lists_votes_for_reveal` |
 | Şerhin dayandığı kaybeden metin; yeniden açma tarihi | `test_decision_hour.py::test_dissent_names_the_losing_text_it_rests_on`, `::test_reopening_is_offered_only_after_yeniden_acma` |
 | Değiştirilemez maddeler ve izinli aralıklar (R8, aralık karşılaştırması, graf bayrağı, ikinci savunma hattı) | `test_regulation.py::test_ranges_from_the_task`, `::test_every_numeric_parameter_has_a_range_and_defaults_lie_inside` ve aşağıdakiler |
 | Yönetmeliğin defterdeki izi (başlangıç kaydı, oturum sonu kaydı, sessiz değişikliğin ve metni aynı kalan sınır genişletmesinin tespiti, açılışta tespit ve anlık görüntülerin son oylanmış değerlerle alınması, değiştirilmiş eşiğin sayılmaması, kapanışta tespit ve geri alma, bayrak ve içerik kuralı geri alma, kod düzeyindeki fark, bekleyen kaydın referans olması, kalıcı geçmiş, `tamper-regulation` aracı ve `/_dev` karşılığı) | `tests/integration/test_regulation_integrity.py`, `ledger/tests/test_replication.py::test_last_record_of_a_type_is_served_by_every_node` |
@@ -785,6 +806,7 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Baskın | `raid` |
 | Pay etkisi | `share_effect` (`domain/shares.py`) |
 | Taban paylar, pay çakışması | `share_base`, `proposals.share_conflicts`, durum `CONFLICT` |
+| Açık oy, gizli oy, takma kimlik | `SessionItem.open_voters`, `decision_hour.pseudonym` (`domain/shade.vote_pseudonym`), `my_votes` |
 | Orantısız etkilenen kapsam | `disproportionate` |
 | Eşzamanlı çoğunluk, alt kapsam oylaması | `concurrent`, `SessionItem.vote_scope_id` |
 | İçerik kuralı (IK-1…) | `ContentRule` (madde türü `icerik_kurali`) |

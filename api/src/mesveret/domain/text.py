@@ -63,3 +63,16 @@ def genitive(phrase: str) -> str:
 def decimal_tr(value: float, digits: int = 1) -> str:
     """Türkçe ondalık yazımı: 61.538 → "61,5"."""
     return f"{value:.{digits}f}".replace(".", ",")
+
+
+_VOICELESS = set("fstkçşhp")
+
+
+def locative_name(name: str) -> str:
+    """Özel adın bulunma hâli, kesme işaretiyle: Genel → Genel'de, İstanbul → İstanbul'da,
+    İzmir → İzmir'de. Son ünlü kalın ise -da, ince ise -de; sert ünsüzle bitiyorsa t ile."""
+    word = turkish_lower(name.split()[-1]) if name.strip() else ""
+    last = next((c for c in reversed(word) if c in _VOWELS), "e")
+    vowel = "a" if last in _BACK else "e"
+    cons = "t" if word and word[-1] in _VOICELESS else "d"
+    return f"{name}'{cons}{vowel}"

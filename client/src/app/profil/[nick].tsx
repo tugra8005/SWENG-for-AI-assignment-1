@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { api } from '@/api/client';
 import { CityPicker } from '@/components/city-picker';
 import { DelegationExpiryStrip, daysLeftLabel } from '@/components/delegation-expiry';
+import { MyVotes } from '@/components/my-votes';
 import {
   Button,
   ErrorNotice,
@@ -120,6 +121,8 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
         </View>
       )}
 
+      <Kicker style={{ marginTop: 6 }}>Oylarım</Kicker>
+      <MyVotes />
       <Rule faint />
       <Kicker>Kapsam üyelikleri ve oy hakkı</Kicker>
       {p.memberships.map((m: any) => (

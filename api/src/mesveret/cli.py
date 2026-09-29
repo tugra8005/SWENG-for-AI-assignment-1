@@ -100,7 +100,9 @@ def _print_items(view: dict) -> None:
             outcome = f"kazanan metin #{r['winner']}" if r["winner"] else r["note"]
             typer.echo(f"  #{p['id']} {p['title']}: {outcome}")
         else:
-            verdict = "KABUL" if r.get("passed") else "RET"
+            conflict = (r.get("overall") or {}).get("conflict")
+            verdict = ("UYGULANAMADI (pay çakışması)" if conflict
+                       else "KABUL" if r.get("passed") else "RET")
             typer.echo(f"  #{p['id']} {p['title']}: {r.get('yes')}/{r.get('cast')} EVET → {verdict}")
 
 

@@ -130,13 +130,16 @@ export function LifeBar({ lifetime }: { lifetime: number }) {
 
 // --- form ---------------------------------------------------------------------------------------
 
-export function AmberButton({ label, onPress, disabled, subtle }: {
+export function AmberButton({ label, onPress, disabled, subtle, selected }: {
   label: string; onPress: () => void | Promise<void>; disabled?: boolean; subtle?: boolean;
+  /** Tarafsız seçenek düğmesi seçiliyse dolu amber. */
+  selected?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   return (
     <Pressable
       accessibilityRole="button"
+      aria-pressed={selected}
       disabled={disabled || busy}
       onPress={async () => {
         setBusy(true);
@@ -150,10 +153,11 @@ export function AmberButton({ label, onPress, disabled, subtle }: {
         s.button,
         subtle && { borderColor: cellar.amberDim },
         (pressed || hovered) && { backgroundColor: cellar.amberGlow },
+        selected && { backgroundColor: cellar.amber },
         (disabled || busy) && { opacity: 0.45 },
       ]}
     >
-      <Text style={[s.term, { fontSize: 13 }]}>[ {busy ? '…' : label} ]</Text>
+      <Text style={[s.term, { fontSize: 13 }, selected && { color: cellar.bg }]}>[ {busy ? '…' : label} ]</Text>
     </Pressable>
   );
 }

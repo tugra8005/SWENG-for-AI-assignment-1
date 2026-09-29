@@ -46,6 +46,13 @@ def vote(body: VoteIn, ctx: Ctx = Depends(get_ctx), user: User = Depends(current
     return {"commit": b.commit, "message": "Oyunuz mühürlendi; pencere kapanınca açılacak."}
 
 
+@router.get("/decision-hour/my-votes")
+def my_votes(session_id: int | None = None, ctx: Ctx = Depends(get_ctx),
+             user: User = Depends(current_user)) -> dict:
+    """Oyumu doğrula: yalnızca oturum açmış kullanıcının kendi oyları."""
+    return decision_hour.my_votes(ctx, user, session_id)
+
+
 @router.get("/decision-hour/sessions")
 def sessions(ctx: Ctx = Depends(get_ctx)) -> list[dict]:
     return decision_hour.list_sessions(ctx)

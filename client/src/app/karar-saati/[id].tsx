@@ -16,13 +16,14 @@ import {
   Tag,
 } from '@/components/paper';
 import { ProposalTitle } from '@/components/proposal-title';
+import { MyVotes } from '@/components/my-votes';
 import { RevealTally } from '@/components/reveal-tally';
 import { fmtDateTime, TYPE_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
 export default function SessionResults() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, izle } = useLocalSearchParams<{ id: string; izle?: string }>();
   const s = useApi<any>(`/decision-hour/sessions/${id}`, 15_000);
   const data = s.data;
   if (!data) return <Page>{s.error ? <ErrorNotice error={s.error} /> : <Loading />}</Page>;
@@ -41,8 +42,9 @@ export default function SessionResults() {
       <Muted>
         {fmtDateTime(data.opened_at)} – {fmtDateTime(data.closed_at ?? data.closes_at)}
       </Muted>
-      <View style={{ marginTop: 6 }}>
+      <View style={{ marginTop: 6, gap: 8 }}>
         <Seal hash={data.ledger_hash} label="oturum" />
+        <MyVotes sessionId={data.id} />
       </View>
       <Rule double />
       {open ? (
@@ -68,7 +70,7 @@ export default function SessionResults() {
           </PressLink>
           {subs.length ? <Kicker>{main.vote_scope.name} oylaması</Kicker> : null}
           {main.result ? (
-            <RevealTally result={main.result} />
+            <RevealTally result={main.result} autoplay={izle === String(main.proposal.id)} />
           ) : (
             <Muted>{main.sealed_votes} mühürlü oy · açılış pencere kapanınca</Muted>
           )}

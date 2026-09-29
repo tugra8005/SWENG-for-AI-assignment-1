@@ -112,13 +112,19 @@ function Result({ p }: { p: any }) {
           {r.winner ? `Kazanan metin: #${r.winner}. ` : ''}
           {r.note}
         </Body>
+      ) : r.overall?.summary ? (
+        // Eşzamanlı çoğunlukta tek oylamanın "eşik aşıldı"sı yanıltır; her oylama özet satırında.
+        <Body>
+          {r.yes} EVET · {r.no} HAYIR · {r.abstained} çekimser ({r.vote_scope?.name ?? 'ana'} oylaması)
+        </Body>
       ) : (
         <Body>
           {r.yes} EVET · {r.no} HAYIR · {r.abstained} çekimser — {r.passed ? 'eşik aşıldı' : 'eşik aşılamadı'}
         </Body>
       )}
       {r.overall?.summary ? <Text style={st.summary}>{r.overall.summary}</Text> : null}
-      <Link href={`/karar-saati/${p.session_id}`} style={[st.link, { marginTop: 4 }]}>
+      {r.overall?.conflict ? <Body>{r.overall.conflict.note}</Body> : null}
+      <Link href={`/karar-saati/${p.session_id}?izle=${p.id}`} style={[st.link, { marginTop: 4 }]}>
         Oyların açılışını izle →
       </Link>
     </InfoNotice>
