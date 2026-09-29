@@ -36,12 +36,15 @@ const weekdayTimeFmt = new Intl.DateTimeFormat('tr-TR', {
   hour: '2-digit',
   minute: '2-digit',
 });
+const dayMonthFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, day: 'numeric', month: 'long' });
 const numberFmt = new Intl.NumberFormat('tr-TR');
 const decimalFmt = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 export const fmtDate = (iso?: string | null) => (iso ? dateFmt.format(new Date(iso)) : '—');
 export const fmtDateTime = (iso?: string | null) => (iso ? dateTimeFmt.format(new Date(iso)) : '—');
 export const fmtLong = (d: Date) => longFmt.format(d);
+/** "4 Ekim" */
+export const fmtDayMonth = (iso?: string | null) => (iso ? dayMonthFmt.format(new Date(iso)) : '—');
 export const fmtTime = (iso?: string | null) => (iso ? timeFmt.format(new Date(iso)) : '—');
 
 /** "11 Ekim Pazar 20:00" — Karar Saati oturumunu anmak için. */
@@ -49,10 +52,13 @@ export const fmtSession = (iso?: string | null) => (iso ? sessionFmt.format(new 
 export const fmtNumber = (n: number) => numberFmt.format(n);
 /** "Pazar 20:00" */
 export const fmtWeekdayTime = (iso?: string | null) => (iso ? weekdayTimeFmt.format(new Date(iso)) : '—');
-/** Türkçe yüzde: "%20". */
+/* Bütün sayı ve yüzde biçimlendirmesi buradan geçer (sunucudaki karşılığı domain/text.percent_tr).
+ * Türkçede yüzde işareti sayının önünde, eksi işareti de onun önündedir: "-%50,0". */
+const sign = (x: number) => (Math.round(x * 1000) / 1000 < 0 ? '-' : '');
+/** Tam sayı Türkçe yüzde: 1/5 → "%20". */
 export const fmtPercent = (part: number, whole: number) => `%${Math.round((part / whole) * 100)}`;
-/** Tek ondalıklı Türkçe yüzde: 0.615 → "%61,5". */
-export const fmtPercent1 = (ratio: number) => `%${decimalFmt.format(ratio * 100)}`;
+/** Tek ondalıklı Türkçe yüzde: 0.615 → "%61,5", -0.5 → "-%50,0". */
+export const fmtPercent1 = (ratio: number) => `${sign(ratio)}%${decimalFmt.format(Math.abs(ratio) * 100)}`;
 
 const UNIT_ABLATIVE = ['', "'den", "'den", "'ten", "'ten", "'ten", "'dan", "'den", "'den", "'dan"];
 const TENS_ABLATIVE = ['', "'dan", "'den", "'dan", "'tan", "'den", "'tan", "'ten", "'den", "'dan"];
@@ -144,7 +150,7 @@ export function describeArticleValue(kind: string, value: any): string {
   if (kind === 'yuzde_puani') return `${String(value.deger).replace('.', ',')} yüzde puanı`;
   if (kind === 'itiraz') return `max(${value.min}, aktif üye sayısı × ${value.oran}) · aktif: son ${value.aktiflik_gun} gün`;
   if (kind === 'karar_saati') {
-    const day = String(value.gun).charAt(0) + String(value.gun).slice(1).toLowerCase();
+    const day = String(value.gun).charAt(0) + String(value.gun).slice(1).toLocaleLowerCase('tr-TR');
     return `${day} ${value.saat} · ${value.pencere_dakika} dk pencere`;
   }
   return Object.entries(value)

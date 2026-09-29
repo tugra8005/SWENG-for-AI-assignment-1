@@ -14,6 +14,7 @@ import {
   Page,
   Rule,
 } from '@/components/paper';
+import { useApi } from '@/lib/useApi';
 
 export default function Verify() {
   const params = useLocalSearchParams<{ email?: string }>();
@@ -21,6 +22,7 @@ export default function Verify() {
   const [code, setCode] = useState('');
   const [error, setError] = useState<unknown>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const health = useApi<{ ortam?: string }>('/health');
 
   const submit = async () => {
     setError(null);
@@ -47,10 +49,12 @@ export default function Verify() {
       <View style={{ maxWidth: 440, width: '100%', alignSelf: 'center' }}>
         <Kicker>Yurttaşlık kaydı · Form 2</Kicker>
         <H1>E-posta doğrulama</H1>
-        <Muted>
-          Geliştirme ortamında e-posta gönderilmez; altı haneli kod sunucu konsoluna basılır
-          (docker compose logs api).
-        </Muted>
+        <Muted>E-posta adresinize gönderilen altı haneli kodu girin.</Muted>
+        {health.data?.ortam === 'dev' ? (
+          <Muted style={{ fontSize: 13, marginTop: 4 }}>
+            Geliştirme ortamı: e-posta gönderilmez; kod sunucu konsoluna basılır (docker compose logs api).
+          </Muted>
+        ) : null}
         <Rule />
         <Field
           label="E-posta"

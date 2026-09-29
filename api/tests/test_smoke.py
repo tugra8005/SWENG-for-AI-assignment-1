@@ -18,6 +18,7 @@ def test_health_reports_missing_dependencies_without_crashing(monkeypatch):
     client = TestClient(create_app(with_lifespan=False))
     body = client.get("/health").json()
     assert body["durum"] == "eksik"
+    assert body["ortam"] == "dev"
     assert body["postgres"].startswith("hata")
     assert body["neo4j"].startswith("hata")
 

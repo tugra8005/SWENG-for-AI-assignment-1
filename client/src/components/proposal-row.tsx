@@ -20,7 +20,8 @@ export type ProposalSummary = {
   deadline_at: string | null;
 };
 
-export function ProposalRow({ p }: { p: ProposalSummary }) {
+/** `sectionStatus`: bölüm başlığı bu durumu zaten söylüyorsa etiket tekrarlanmaz. */
+export function ProposalRow({ p, sectionStatus }: { p: ProposalSummary; sectionStatus?: string }) {
   const { now } = useClock();
   const remaining =
     p.deadline_at && (p.status === 'SILENT' || p.status === 'RIVAL_PERIOD')
@@ -33,9 +34,11 @@ export function ProposalRow({ p }: { p: ProposalSummary }) {
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
             <Tag>{TYPE_LABELS[p.type] ?? p.type}</Tag>
-            <Tag tone={p.status === 'ACCEPTED' ? 'ink' : p.status === 'REJECTED' ? 'muted' : 'seal'}>
-              {STATUS_LABELS[p.status] ?? p.status}
-            </Tag>
+            {p.status !== sectionStatus ? (
+              <Tag tone={p.status === 'ACCEPTED' ? 'ink' : p.status === 'REJECTED' ? 'muted' : 'seal'}>
+                {STATUS_LABELS[p.status] ?? p.status}
+              </Tag>
+            ) : null}
           </View>
           <ProposalTitle title={p.title} effective={p.effective_title} style={st.title} />
           <Muted style={{ fontSize: 14 }}>

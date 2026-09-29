@@ -35,7 +35,12 @@ function DecisionHourBand() {
         <Kicker style={open ? { color: paper.bgDeep } : undefined}>
           {open ? 'Karar Saati · pencere açık' : 'Karar Saati · sonraki oturum'}
         </Kicker>
-        <Countdown target={open ? open.closes_at : status.next_scheduled_at} big />
+        <Countdown
+          target={open ? open.closes_at : status.next_scheduled_at}
+          big
+          color={open ? paper.bg : paper.ink}
+          prefix={open ? 'kapanışa' : undefined}
+        />
         <Text style={[st.bandNote, open && { color: paper.bgDeep }]}>
           {open
             ? `${open.item_count} öneri oylanıyor · kapanış ${fmtDateTime(open.closes_at)}`
@@ -65,7 +70,7 @@ function AreaTree({ areas }: { areas: Area[] }) {
             {depth > 0 ? '└ ' : '§ '}
             {a.name}
           </Text>
-          <Mono style={{ color: paper.muted }}>{a.topic_count || ''}</Mono>
+          <Mono style={{ color: paper.muted }}>{a.topic_count ? `${a.topic_count} konu` : ''}</Mono>
         </PressLink>
         {render(a.id, depth + 1)}
       </View>
@@ -100,12 +105,12 @@ export default function Home() {
 
       <Section title="İtiraza açık öneriler" aside={<Kicker>hızlı şerit · sessiz onay</Kicker>}>
         {proposals.loading ? <Loading /> : null}
-        {fast.map((p) => <ProposalRow key={p.id} p={p} />)}
+        {fast.map((p) => <ProposalRow key={p.id} p={p} sectionStatus="SILENT" />)}
         {!proposals.loading && fast.length === 0 ? <EmptyLine>itiraza açık öneri yok</EmptyLine> : null}
       </Section>
 
       <Section title="Karar Saati kuyruğu" aside={<Kicker>yavaş şerit</Kicker>}>
-        {slow.map((p) => <ProposalRow key={p.id} p={p} />)}
+        {slow.map((p) => <ProposalRow key={p.id} p={p} sectionStatus="QUEUED" />)}
         {!proposals.loading && slow.length === 0 ? <EmptyLine>kuyrukta öneri yok</EmptyLine> : null}
       </Section>
 

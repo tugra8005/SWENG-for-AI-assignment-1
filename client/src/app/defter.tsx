@@ -114,6 +114,26 @@ function RegulationIntegrity({ r }: { r: any }) {
   );
 }
 
+/** İki satırlık başlık: zincir ve yönetmelik ayrı ayrı. Biri bozuksa ikisi de bordo, onay işareti yok. */
+function Verdict({ chainOk, regulation }: { chainOk: boolean; regulation?: string }) {
+  const regOk = regulation === 'tutarli';
+  const allOk = chainOk && (regulation === undefined || regOk);
+  const tone = allOk ? paper.ok : paper.seal;
+  const regLabel = { tutarli: 'tutarlı', farkli: 'FARKLI', kayit_yok: 'KAYIT YOK' }[regulation ?? ''] ?? regulation;
+  return (
+    <View accessibilityRole="summary" style={{ gap: 2 }}>
+      <Text style={[st.verdict, { color: tone }]}>
+        {allOk ? '✓ ' : ''}Zincir: {chainOk ? 'tutarlı' : 'TUTARSIZ'}
+      </Text>
+      {regulation !== undefined ? (
+        <Text style={[st.verdict, { color: tone }]}>
+          {allOk ? '✓ ' : ''}Yönetmelik: {regLabel}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 export default function Ledger() {
   const params = useLocalSearchParams<{ h?: string }>();
   const [verify, setVerify] = useState<any>(null);
@@ -151,9 +171,7 @@ export default function Ledger() {
         <Button label="Doğrula" onPress={runVerify} />
         {verify ? (
           <View style={{ marginTop: 14, gap: 10 }}>
-            <Text style={[st.verdict, { color: verify.ok ? paper.ok : paper.seal }]}>
-              {verify.ok ? '✓ Üç düğüm tutarlı' : '✗ Tutarsızlık bulundu'}
-            </Text>
+            <Verdict chainOk={verify.ok} regulation={verify.yonetmelik?.status} />
             {verify.yonetmelik ? <RegulationIntegrity r={verify.yonetmelik} /> : null}
             {verify.nodes.map((n: any) => {
               const s = STATUS[n.status] ?? { label: n.status, tone: paper.ink };

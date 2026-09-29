@@ -1,9 +1,21 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button, H1, Kicker, LockIcon, Loading, Muted, Page, Rule, Section } from '@/components/paper';
+import {
+  Anchor,
+  Button,
+  H1,
+  Kicker,
+  LockIcon,
+  Loading,
+  Muted,
+  Page,
+  Rule,
+  Section,
+  useScrollTo,
+} from '@/components/paper';
 import { useAuth } from '@/lib/auth';
-import { describeArticleValue, fmtDate } from '@/lib/format';
+import { describeArticleValue, fmtDate, fmtNumber } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -28,6 +40,83 @@ function History({ a }: { a: any }) {
       {describeArticleValue(a.kind, h.new_value)}
     </Text>
   ));
+}
+
+const GROUPS = ['Oylama eşikleri', 'Süreler', 'Havale', 'Mahzen', 'Baskın tespiti'] as const;
+const anchorId = (name: string) => `yonetmelik-${name.toLocaleLowerCase('tr-TR').replace(/\s+/g, '-')}`;
+
+/** Sayfa başındaki küçük içindekiler. */
+function Contents() {
+  const scrollTo = useScrollTo();
+  const entries = ['Değiştirilemez Maddeler', 'İçerik kuralları', ...GROUPS];
+  return (
+    <View style={st.toc} role="navigation" aria-label="İçindekiler">
+      <Kicker>İçindekiler</Kicker>
+      <View style={st.tocList}>
+        {entries.map((e, i) => (
+          <Pressable key={e} onPress={() => scrollTo(anchorId(e))} accessibilityRole="link" hitSlop={4}>
+            {({ hovered }: any) => (
+              <Text style={[st.tocItem, hovered && { textDecorationLine: 'underline' }]}>
+                {i + 1}. {e}
+              </Text>
+            )}
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const WEIGHT_ROWS: { key: string; label: string; window?: string }[] = [
+  { key: 'yanit', label: 'Yanıt (bir yurttaşın diğerine yanıtı)' },
+  { key: 'havale', label: 'Havale' },
+  { key: 'yakin_kayit', label: 'Yakın zamanda kayıt', window: 'yakin_kayit_dk' },
+  { key: 'ortak_baslik', label: 'Aynı Mahzen başlığında yakın zamanda yazma', window: 'ortak_baslik_dk' },
+];
+
+/** etkilesim_agirliklari: ham anahtar-değer yerine küçük tablo. */
+function WeightsTable({ value }: { value: Record<string, number> }) {
+  return (
+    <View style={st.table} aria-label="Etkileşim ağırlıkları">
+      <View style={[st.tr, st.thead]}>
+        <Text style={[st.th, { flex: 1 }]}>Sinyal</Text>
+        <Text style={[st.th, st.num]}>Ağırlık</Text>
+        <Text style={[st.th, st.num]}>Pencere</Text>
+      </View>
+      {WEIGHT_ROWS.map((r) => (
+        <View key={r.key} style={st.tr}>
+          <Text style={[st.td, { flex: 1 }]}>{r.label}</Text>
+          <Text style={[st.tdNum, st.num]}>{fmtNumber(value[r.key])}</Text>
+          <Text style={[st.tdNum, st.num]}>{r.window ? `${value[r.window]} dk` : '—'}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function Parameter({ a }: { a: any }) {
+  return (
+    <View style={st.article}>
+      <View style={st.titleRow}>
+        <Text style={st.paramTitle}>{a.title ?? a.key}</Text>
+        <Text style={st.paramKey}>{a.key}</Text>
+      </View>
+      {a.kind === 'agirliklar' ? (
+        <WeightsTable value={a.value} />
+      ) : (
+        <Text style={st.value}>{describeArticleValue(a.kind, a.value)}</Text>
+      )}
+      {a.range ? (
+        <View style={st.floor} aria-label={`izinli aralık ${a.range}, değiştirilemez`}>
+          <LockIcon size={11} />
+          <Text style={st.floorText}>izinli: {a.range}</Text>
+        </View>
+      ) : null}
+      <Muted>{a.description}</Muted>
+      <History a={a} />
+      <ProposeChange articleKey={a.key} />
+    </View>
+  );
 }
 
 /** Yönetmeliğin tabanı: anayasa sayfası gibi, çift çerçeveli belge. */
@@ -95,8 +184,14 @@ export default function Regulation() {
       </Muted>
       <Rule double />
       {!list.data ? <Loading /> : null}
-      {list.data ? <Constitution items={constitution} ranged={(list.data ?? []).filter((a) => a.range)} /> : null}
+      {list.data ? <Contents /> : null}
       {list.data ? (
+        <Anchor id={anchorId('Değiştirilemez Maddeler')}>
+          <Constitution items={constitution} ranged={(list.data ?? []).filter((a) => a.range)} />
+        </Anchor>
+      ) : null}
+      {list.data ? (
+        <Anchor id={anchorId('İçerik kuralları')}>
         <Section title="İçerik kuralları" aside={<Kicker>silmenin tek dayanağı</Kicker>}>
           <Muted>
             Başkasının içeriğini silme önerisi bu kurallardan en az birine dayanmak ve ihlal eden kısmı
@@ -131,38 +226,40 @@ export default function Regulation() {
             );
           })}
         </Section>
+        </Anchor>
       ) : null}
-      {list.data ? (
-        <Section title="Parametreler">
-          {params.map((a, i) => (
-            <View key={a.key} style={st.article}>
-              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'baseline' }}>
-                <Text style={st.num}>Madde {i + 1}</Text>
-                <Text style={st.key}>{a.key}</Text>
-              </View>
-              <Text style={st.value}>{describeArticleValue(a.kind, a.value)}</Text>
-              {a.range ? (
-                <View style={st.floor} aria-label={`izinli aralık ${a.range}, değiştirilemez`}>
-                  <LockIcon size={11} />
-                  <Text style={st.floorText}>izinli: {a.range}</Text>
-                </View>
-              ) : null}
-              <Muted>{a.description}</Muted>
-              <History a={a} />
-              <ProposeChange articleKey={a.key} />
-            </View>
-          ))}
-        </Section>
-      ) : null}
+      {list.data
+        ? GROUPS.map((g) => (
+            <Anchor key={g} id={anchorId(g)}>
+              <Section title={g}>
+                {params.filter((a) => (a.group ?? 'Süreler') === g).map((a) => (
+                  <Parameter key={a.key} a={a} />
+                ))}
+              </Section>
+            </Anchor>
+          ))
+        : null}
     </Page>
   );
 }
 
 const st = StyleSheet.create({
   article: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: paper.hairline, gap: 4 },
-  num: { fontFamily: fonts.monoMedium, fontSize: 11, letterSpacing: 1.2, color: paper.seal, textTransform: 'uppercase' },
+  titleRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, rowGap: 2, alignItems: 'baseline' },
+  paramTitle: { fontFamily: fonts.serifBold, fontSize: 19, lineHeight: 25, color: paper.ink },
+  paramKey: { fontFamily: fonts.mono, fontSize: 12, color: paper.muted },
+  toc: { marginTop: 14, gap: 6 },
+  tocList: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 4 },
+  tocItem: { fontFamily: fonts.monoMedium, fontSize: 12, color: paper.seal, letterSpacing: 0.3 },
+  table: { borderTopWidth: 1, borderColor: paper.ink, marginVertical: 4, maxWidth: 560 },
+  thead: { borderBottomColor: paper.ink },
+  tr: { flexDirection: 'row', gap: 10, paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: paper.hairline },
+  th: { fontFamily: fonts.monoMedium, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: paper.inkSoft },
+  td: { fontFamily: fonts.serif, fontSize: 15, lineHeight: 20, color: paper.ink },
+  tdNum: { fontFamily: fonts.mono, fontSize: 13, color: paper.ink },
+  num: { width: 64, textAlign: 'right' },
   key: { fontFamily: fonts.monoBold, fontSize: 15, color: paper.ink },
-  value: { fontFamily: fonts.serifBold, fontSize: 20, color: paper.ink },
+  value: { fontFamily: fonts.serifMedium, fontSize: 18, color: paper.ink },
   history: { fontFamily: fonts.mono, fontSize: 12, color: paper.seal },
   ruleText: { fontFamily: fonts.serif, fontSize: 17, lineHeight: 25, color: paper.ink },
   floor: { flexDirection: 'row', alignItems: 'center', gap: 6 },

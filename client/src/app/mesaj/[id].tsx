@@ -2,7 +2,18 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
 import { DiffText } from '@/components/diff';
-import { Body, ErrorNotice, H1, Kicker, Loading, Muted, Page, Rule, Seal } from '@/components/paper';
+import {
+  Body,
+  ErrorNotice,
+  H1,
+  Kicker,
+  Loading,
+  Muted,
+  Nick,
+  Page,
+  Rule,
+  Seal,
+} from '@/components/paper';
 import { fmtDateTime } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
@@ -25,7 +36,7 @@ export default function History() {
       {h.data?.versions.map((v: any) => (
         <View key={v.version} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: paper.hairline, gap: 6 }}>
           <Kicker>
-            Sürüm {v.version} · {v.editor} · {fmtDateTime(v.created_at)}
+            Sürüm {v.version} · <Nick>{v.editor}</Nick> · {fmtDateTime(v.created_at)}
             {v.via_proposal_id ? ` · №${v.via_proposal_id} numaralı düzenleme önerisiyle` : ''}
           </Kicker>
           {v.diff ? <DiffText chunks={v.diff} /> : <Body>{v.text}</Body>}

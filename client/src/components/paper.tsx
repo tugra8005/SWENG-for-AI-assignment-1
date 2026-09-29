@@ -3,10 +3,10 @@
  * Kâğıt zemin, mürekkep, tek vurgu mühür bordosu; serif metin, mono hash ve sayılar.
  */
 import { Link, router, usePathname } from 'expo-router';
-import { type ReactNode, useState } from 'react';
+import { createContext, type ReactNode, useContext, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  ImageBackground,
+  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +19,7 @@ import {
   type ViewStyle,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/api/client';
 import { useAuth } from '@/lib/auth';
@@ -49,6 +50,10 @@ export const Muted = ({ children, style, numberOfLines }: TP) => (
 );
 export const Mono = ({ children, style, numberOfLines }: TP) => (
   <Text style={[s.mono, style]} numberOfLines={numberOfLines}>{children}</Text>
+);
+/** Takma ad kimliktir: büyük harfli bir etiketin içinde bile dönüştürülmez ("baris" "BARİS" olmaz). */
+export const Nick = ({ children }: { children: ReactNode }) => (
+  <Text style={{ textTransform: 'none', letterSpacing: 0.3 }}>{children}</Text>
 );
 /** Küçük, harf aralıklı, mono etiket (bölüm başlıkları, alan adları). */
 export const Kicker = ({ children, style }: TP) => <Text style={[s.kicker, style]}>{children}</Text>;
@@ -81,18 +86,72 @@ function issueNumber(d: Date): number {
   return Math.floor((d.getTime() - Date.UTC(2025, 0, 1)) / 86_400_000) + 1;
 }
 
+function NavLinks({ single }: { single?: boolean }) {
+  const path = usePathname();
+  const links = NAV.map((n) => {
+    const active = n.href === '/' ? path === '/' : path.startsWith(n.href);
+    return (
+      <Link key={n.href} href={n.href} style={[s.navItem, active && s.navActive]}>
+        {n.label}
+      </Link>
+    );
+  });
+  if (!single) return <>{links}</>;
+  // Telefonda menü tek satırdır ve yatay kaydırılır; satır kırılıp başlığı büyütmez.
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ flexGrow: 1, flexShrink: 1 }}
+      contentContainerStyle={{ columnGap: 16, alignItems: 'center', paddingRight: 8 }}
+    >
+      {links}
+    </ScrollView>
+  );
+}
+
+/** Oturum bağlantıları. Takma ad kimliktir: büyük harfe çevrilmez. */
+function Account({ small }: { small?: boolean }) {
+  const { me, logout } = useAuth();
+  const text = small ? s.accountSmall : s.account;
+  if (!me) {
+    return (
+      <Link href="/giris" style={[text, { color: paper.seal }]}>
+        giriş
+      </Link>
+    );
+  }
+  return (
+    <View style={{ flexDirection: 'row', gap: small ? 10 : 14, alignItems: 'center' }}>
+      <Link href={`/profil/${encodeURIComponent(me.nickname)}`} style={[text, { color: paper.ink }]}>
+        {me.nickname}
+      </Link>
+      <Pressable onPress={logout} accessibilityRole="button">
+        <Text style={text}>çıkış</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export function Masthead() {
   const { now } = useClock();
-  const { me, logout } = useAuth();
-  const path = usePathname();
   const { width } = useWindowDimensions();
   const narrow = width < 560;
   const today = new Date(now());
   return (
     <View style={{ marginBottom: 18 }}>
       <View style={s.mastTop}>
-        <Kicker>Resmî kayıt · Sayı {issueNumber(today)}</Kicker>
-        <Kicker style={{ textAlign: 'right' }}>{fmtLong(today)}</Kicker>
+        {narrow ? (
+          <>
+            <Kicker style={{ flexShrink: 1 }}>{fmtLong(today)}</Kicker>
+            <Account small />
+          </>
+        ) : (
+          <>
+            <Kicker>Resmî kayıt · Sayı {issueNumber(today)}</Kicker>
+            <Kicker style={{ textAlign: 'right' }}>{fmtLong(today)}</Kicker>
+          </>
+        )}
       </View>
       <Rule double style={{ marginTop: 6 }} />
       <Pressable
@@ -107,30 +166,40 @@ export function Masthead() {
         <Text style={s.mastSub}>Oylamayla yönetilen forum — her karar kayda geçer</Text>
       </Pressable>
       <Rule style={{ marginBottom: 0 }} />
-      <View style={s.nav}>
-        {NAV.map((n) => {
-          const active = n.href === '/' ? path === '/' : path.startsWith(n.href);
-          return (
-            <Link key={n.href} href={n.href} style={[s.navItem, active && s.navActive]}>
-              {n.label}
-            </Link>
-          );
-        })}
-        <View style={{ flex: 1 }} />
-        {me ? (
-          <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-            <Link href={`/profil/${encodeURIComponent(me.nickname)}`} style={s.navItem}>
-              {me.nickname}
-            </Link>
-            <Pressable onPress={logout} accessibilityRole="button">
-              <Text style={[s.navItem, { color: paper.muted }]}>çıkış</Text>
-            </Pressable>
-          </View>
+      <View style={[s.nav, narrow && { flexWrap: 'nowrap' }]}>
+        {narrow ? (
+          <NavLinks single />
         ) : (
-          <Link href="/giris" style={[s.navItem, { color: paper.seal }]}>Giriş</Link>
+          <>
+            <NavLinks />
+            <View style={{ flex: 1 }} />
+            <Account />
+          </>
         )}
       </View>
       <Rule double style={{ marginTop: 0 }} />
+    </View>
+  );
+}
+
+/** Telefonda ana sayfa dışındaki başlık: ince, yapışkan çubuk. */
+function CompactBar() {
+  const { now } = useClock();
+  const today = new Date(now());
+  return (
+    <View style={s.compact}>
+      <View style={s.compactTop}>
+        <Text style={s.compactDate} numberOfLines={1}>{fmtLong(today)}</Text>
+        <Account small />
+      </View>
+      <View style={s.compactRow}>
+        <Pressable onPress={() => router.push('/')} accessibilityRole="link" accessibilityLabel="Meşveret ana sayfa">
+          <Text style={s.compactTitle}>MEŞVERET</Text>
+        </Pressable>
+        <NavLinks single />
+      </View>
+      <View style={[s.rule, { height: 2 }]} />
+      <View style={[s.rule, { marginTop: 2 }]} />
     </View>
   );
 }
@@ -148,22 +217,90 @@ export function Footer() {
   );
 }
 
-export function Page({ children, bare }: { children: ReactNode; bare?: boolean }) {
+type ScrollApi = { register: (id: string, node: View | null) => void; scrollTo: (id: string) => void };
+const ScrollCtx = createContext<ScrollApi | null>(null);
+
+/** Sayfa içi bağlantı hedefi (ör. içindekiler). */
+export function Anchor({ id, children }: { id: string; children: ReactNode }) {
+  const ctx = useContext(ScrollCtx);
   return (
-    <ImageBackground
-      source={grain}
-      resizeMode="repeat"
-      style={s.page}
-      imageStyle={{ width: '100%', height: '100%' }}
-    >
-      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-        <View style={s.column}>
-          {!bare && <Masthead />}
-          {children}
-          {!bare && <Footer />}
-        </View>
+    <View nativeID={id} ref={(node) => ctx?.register(id, node)}>
+      {children}
+    </View>
+  );
+}
+
+/** Sayfanın kendi kaydırma alanında bir Anchor'a kaydırır. */
+export function useScrollTo(): (id: string) => void {
+  return useContext(ScrollCtx)?.scrollTo ?? (() => undefined);
+}
+
+/** İfşa geçişi için: zemin rengi, kâğıt dokusu ve künye (başlık, alt bilgi) canlandırılır. */
+export type PageReveal = {
+  background: Animated.AnimatedInterpolation<string>;
+  paper: Animated.AnimatedInterpolation<number>;
+  chrome: Animated.AnimatedInterpolation<number>;
+};
+
+export function Page({ children, bare, reveal }: { children: ReactNode; bare?: boolean; reveal?: PageReveal }) {
+  const path = usePathname();
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const compact = !bare && width < 560 && path !== '/';
+  const scrollRef = useRef<ScrollView>(null);
+  const columnRef = useRef<View>(null);
+  const anchors = useRef(new Map<string, View>());
+  const scrollApi = useMemo<ScrollApi>(
+    () => ({
+      register: (id, node) => {
+        if (node) anchors.current.set(id, node);
+        else anchors.current.delete(id);
+      },
+      scrollTo: (id) => {
+        const target = anchors.current.get(id);
+        const column = columnRef.current;
+        if (!target || !column) return;
+        target.measureLayout(column, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y + 6), animated: true }));
+      },
+    }),
+    [],
+  );
+  const chrome = reveal ? { opacity: reveal.chrome } : null;
+  return (
+    <Animated.View style={[s.page, { paddingTop: insets.top }, reveal && { backgroundColor: reveal.background }]}>
+      {/* Kâğıt dokusu; ifşa geçişinde siyahtan kâğıda dönerken belirir. */}
+      <Animated.Image
+        source={grain}
+        resizeMode="repeat"
+        style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }, reveal && { opacity: reveal.paper }]}
+      />
+      {compact ? (
+        <Animated.View style={chrome}>
+          <CompactBar />
+        </Animated.View>
+      ) : null}
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[s.scroll, compact && { paddingTop: 14 }, { paddingBottom: 40 + insets.bottom }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ScrollCtx.Provider value={scrollApi}>
+          <View ref={columnRef} style={s.column}>
+            {!bare && !compact && (
+              <Animated.View style={chrome}>
+                <Masthead />
+              </Animated.View>
+            )}
+            {children}
+            {!bare && (
+              <Animated.View style={chrome}>
+                <Footer />
+              </Animated.View>
+            )}
+          </View>
+        </ScrollCtx.Provider>
       </ScrollView>
-    </ImageBackground>
+    </Animated.View>
   );
 }
 
@@ -270,14 +407,21 @@ export function CensorStrip({
   basis?: DeletionBasis | null;
 }) {
   const label = deletionLabel(proposalId, basis);
+  const { width } = useWindowDimensions();
+  // Telefonda süs blokları gizlenir; metin tek satırda ve ortada kalır.
+  const blocks = width >= 560;
   return (
     <View style={s.strip} aria-label={label}>
       <Link href={`/oneri/${proposalId}`}>
-        <Text style={s.stripText}>████ {label} ████</Text>
+        <Text style={s.stripText} numberOfLines={1}>
+          {blocks ? `████ ${label} ████` : label}
+        </Text>
       </Link>
       {hash ? (
         <Pressable onPress={() => router.push({ pathname: '/defter', params: { h: hash } })}>
-          <Text style={[s.stripText, { opacity: 0.85, fontSize: 11 }]}>defterde: ⌗ {shortHash(hash)}</Text>
+          <Text style={[s.stripText, { fontSize: 12 }]} numberOfLines={1}>
+            defterde: ⌗ {shortHash(hash)}
+          </Text>
         </Pressable>
       ) : null}
     </View>
@@ -328,7 +472,8 @@ export function InfoNotice({ children }: { children: ReactNode }) {
 type ButtonProps = {
   label: string;
   onPress: () => void | Promise<void>;
-  variant?: 'primary' | 'secondary' | 'quiet';
+  /** quiet: bordo bağlantı; minor: küçük gri, istisnai eylemler için (silme öner gibi). */
+  variant?: 'primary' | 'secondary' | 'quiet' | 'minor';
   disabled?: boolean;
   small?: boolean;
   /** Aç/kapa düğmesi (ör. ilgi alanı): verilirse düğme onay kutusu olarak duyurulur. */
@@ -347,10 +492,20 @@ export function Button({ label, onPress, variant = 'primary', disabled, small, c
     }
   };
   const isDisabled = disabled || busy;
-  if (variant === 'quiet') {
+  if (variant === 'quiet' || variant === 'minor') {
     return (
       <Pressable onPress={press} disabled={isDisabled} accessibilityRole="button" hitSlop={6}>
-        <Text style={[s.quiet, isDisabled && { opacity: 0.5 }]}>{label}</Text>
+        {({ hovered }: any) => (
+          <Text
+            style={[
+              variant === 'quiet' ? s.quiet : s.minor,
+              variant === 'minor' && hovered && !isDisabled && { textDecorationLine: 'underline' },
+              isDisabled && s.quietOff,
+            ]}
+          >
+            {label}
+          </Text>
+        )}
       </Pressable>
     );
   }
@@ -367,11 +522,19 @@ export function Button({ label, onPress, variant = 'primary', disabled, small, c
         s.button,
         small && { paddingVertical: 6, paddingHorizontal: 10 },
         primary ? { backgroundColor: paper.seal, borderColor: paper.seal } : { borderColor: paper.ink },
-        pressed && { transform: [{ translateY: 1 }] },
-        isDisabled && { opacity: 0.45 },
+        pressed && !isDisabled && { transform: [{ translateY: 1 }] },
+        // Devre dışı her düğme aynı görünür: gri çerçeve, gri yazı (soluk bordo yok).
+        isDisabled && !busy && s.buttonOff,
       ]}
     >
-      <Text style={[s.buttonText, { color: primary ? paper.sheet : paper.ink }, small && { fontSize: 11 }]}>
+      <Text
+        style={[
+          s.buttonText,
+          { color: primary ? paper.sheet : paper.ink },
+          small && { fontSize: 11 },
+          isDisabled && !busy && { color: paper.muted },
+        ]}
+      >
         {busy ? '…' : label}
       </Text>
     </Pressable>
@@ -407,6 +570,37 @@ export function Field({ label, hint, ...props }: TextInputProps & { label: strin
   );
 }
 
+/** Tek seçimlik listenin bir seçeneği (radyo). */
+export function ChoiceChip({
+  label,
+  note,
+  on,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  note?: string;
+  on: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      disabled={disabled}
+      onPress={onPress}
+      accessibilityRole="radio"
+      aria-checked={on}
+      aria-disabled={disabled}
+      style={[s.choice, on && s.choiceOn, disabled && !on && s.buttonOff]}
+    >
+      <Text style={[s.choiceText, on && { color: paper.sheet }, disabled && !on && { color: paper.muted }]}>
+        {label}
+      </Text>
+      {note ? <Text style={[s.choiceNote, on && { color: paper.bgDeep }]}>{note}</Text> : null}
+    </Pressable>
+  );
+}
+
 /** Seçenekler arasından tek seçim (sade radyo listesi). */
 export function Choice<T extends string>({
   label,
@@ -423,38 +617,44 @@ export function Choice<T extends string>({
     <View style={{ marginBottom: 14 }} accessibilityRole="radiogroup" accessibilityLabel={label}>
       <Kicker style={{ marginBottom: 6 }}>{label}</Kicker>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {options.map((o) => {
-          const on = o.value === value;
-          return (
-            <Pressable
-              key={o.value}
-              disabled={o.disabled}
-              onPress={() => onChange(o.value)}
-              accessibilityRole="radio"
-              aria-checked={on}
-              aria-disabled={o.disabled}
-              style={[s.choice, on && s.choiceOn, o.disabled && { opacity: 0.4 }]}
-            >
-              <Text style={[s.choiceText, on && { color: paper.sheet }]}>{o.label}</Text>
-              {o.note ? <Text style={[s.choiceNote, on && { color: paper.bgDeep }]}>{o.note}</Text> : null}
-            </Pressable>
-          );
-        })}
+        {options.map((o) => (
+          <ChoiceChip
+            key={o.value}
+            label={o.label}
+            note={o.note}
+            on={o.value === value}
+            disabled={o.disabled}
+            onPress={() => onChange(o.value)}
+          />
+        ))}
       </View>
     </View>
   );
 }
 
-export function Countdown({ target, big }: { target: string | null; big?: boolean }) {
+export function Countdown({
+  target,
+  big,
+  color = paper.ink,
+  prefix,
+}: {
+  target: string | null;
+  big?: boolean;
+  /** Koyu zeminde açık renk verilir; aksi hâlde sayı zeminle kaybolur. */
+  color?: string;
+  /** "kapanışa" gibi küçük önek. */
+  prefix?: string;
+}) {
   const { now } = useClock();
   useTick(1000);
-  if (!target) return <Mono>—</Mono>;
+  if (!target) return <Mono style={{ color }}>—</Mono>;
   const ms = new Date(target).getTime() - now();
   return (
     <Text
-      style={[s.mono, big ? s.countBig : { fontSize: 16 }]}
-      accessibilityLabel={`Kalan süre ${fmtCountdown(ms)}`}
+      style={[s.mono, big ? s.countBig : { fontSize: 16 }, { color }]}
+      accessibilityLabel={`${prefix ? `${prefix} ` : 'Kalan süre '}${fmtCountdown(ms)}`}
     >
+      {prefix ? <Text style={s.countPrefix}>{prefix} </Text> : null}
       {fmtCountdown(ms)}
     </Text>
   );
@@ -528,6 +728,20 @@ const s = StyleSheet.create({
     color: paper.ink,
   },
   navActive: { color: paper.seal, textDecorationLine: 'underline' },
+  account: { fontFamily: fonts.monoMedium, fontSize: 12, letterSpacing: 0.6, color: paper.muted },
+  accountSmall: { fontFamily: fonts.monoMedium, fontSize: 11, letterSpacing: 0.4, color: paper.muted },
+  compact: { paddingHorizontal: layout.gutter, paddingTop: 6 },
+  compactTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
+  compactDate: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: paper.inkSoft,
+    flexShrink: 1,
+  },
+  compactRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 4, paddingBottom: 6 },
+  compactTitle: { fontFamily: fonts.serifDisplay, fontSize: 19, letterSpacing: 1.5, color: paper.ink },
   cellarLink: {
     fontFamily: fonts.mono,
     fontSize: 12,
@@ -578,6 +792,9 @@ const s = StyleSheet.create({
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as any } : null),
   },
   buttonText: { fontFamily: fonts.monoBold, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase' },
+  buttonOff: { backgroundColor: 'transparent', borderColor: paper.disabled },
+  quietOff: { color: paper.muted, textDecorationLine: 'none' },
+  minor: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 0.4, color: paper.muted },
   quiet: {
     fontFamily: fonts.monoMedium,
     fontSize: 12,
@@ -588,6 +805,7 @@ const s = StyleSheet.create({
   input: {
     fontFamily: fonts.serif,
     fontSize: 17,
+    lineHeight: 26,
     color: paper.ink,
     borderBottomWidth: 1.5,
     borderBottomColor: paper.ink,
@@ -595,9 +813,10 @@ const s = StyleSheet.create({
     paddingHorizontal: 4,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : null),
   },
-  choice: { borderWidth: 1, borderColor: paper.ink, paddingVertical: 6, paddingHorizontal: 10 },
+  choice: { borderWidth: 1, borderColor: paper.ink, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start' },
   choiceOn: { backgroundColor: paper.ink },
   choiceText: { fontFamily: fonts.monoMedium, fontSize: 12, color: paper.ink, letterSpacing: 0.5 },
   choiceNote: { fontFamily: fonts.serifItalic, fontSize: 12, color: paper.muted },
   countBig: { fontSize: 44, letterSpacing: 2, fontFamily: fonts.monoMedium, color: paper.ink },
+  countPrefix: { fontSize: 15, letterSpacing: 0.5, fontFamily: fonts.monoMedium },
 });

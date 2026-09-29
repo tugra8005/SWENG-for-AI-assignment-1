@@ -107,7 +107,8 @@ const st = StyleSheet.create({
     borderWidth: 2,
     borderColor: paper.seal,
     padding: 12,
-    marginVertical: 8,
+    marginTop: 8,
+    marginBottom: 20, // altındaki açıklama paragrafıyla arasında nefes payı
     backgroundColor: paper.sealWash,
   },
   narrowText: { fontFamily: fonts.serifBold, fontSize: 20, color: paper.seal, marginTop: 4 },

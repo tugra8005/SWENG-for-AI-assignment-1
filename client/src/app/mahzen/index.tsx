@@ -89,7 +89,12 @@ export default function CellarIndex() {
         onCancel={() => router.replace('/')}
       />
       <Banner>MAHZEN</Banner>
-      <TermDim>anonim · geçici · kapasite {list.data?.capacity ?? '…'} başlık · yükselme sınırı {list.data?.bump_limit ?? '…'} yanıt</TermDim>
+      {/* Değerler yüklenmeden (uyarı penceresinin arkasında) "kapasite … başlık" gösterilmez. */}
+      {list.data ? (
+        <TermDim>anonim · geçici · kapasite {list.data.capacity} başlık · yükselme sınırı {list.data.bump_limit} yanıt</TermDim>
+      ) : (
+        <TermDim>anonim · geçici</TermDim>
+      )}
       <View style={cellarStyles.rule} />
       <NewThread onCreated={(id) => router.push(`/mahzen/${id}`)} />
       <View style={cellarStyles.rule} />

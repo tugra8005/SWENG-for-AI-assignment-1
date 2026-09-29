@@ -1,29 +1,30 @@
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { api } from '@/api/client';
 import {
   Body,
-  Choice,
   Button,
   CensorStrip,
-  type DeletionBasis,
+  Choice,
   ErrorNotice,
   Field,
   Kicker,
   Loading,
   Muted,
+  Nick,
   Page,
   PressLink,
   Rule,
   Seal,
   Section,
   Tag,
+  type DeletionBasis,
 } from '@/components/paper';
 import { maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
-import { fmtDateAblative, fmtDateTime, STATUS_LABELS, TYPE_LABELS, withDative } from '@/lib/format';
+import { fmtDateAblative, fmtDateTime, fmtDayMonth, STATUS_LABELS, TYPE_LABELS, withDative } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -38,7 +39,39 @@ type Msg = {
   ledger_hash?: string | null;
   deleted_by_proposal_id?: number;
   deletion_basis?: DeletionBasis | null;
+  pending_deletion?: Pending | null;
 };
+
+type Pending = { proposal_id: number; decides_at: string | null };
+
+/** Aktif silme oylamasındaki içeriğin üstündeki küçük işaret: "№10 silme oylamasında · 4 Ekim". */
+function PendingDeletion({ pending }: { pending?: Pending | null }) {
+  if (!pending) return null;
+  return (
+    <Link href={`/oneri/${pending.proposal_id}`} style={st.pending}>
+      №{pending.proposal_id} silme oylamasında{pending.decides_at ? ` · ${fmtDayMonth(pending.decides_at)}` : ''}
+    </Link>
+  );
+}
+
+/** İkincil eylemler "⋯" arkasında durur; silme istisnadır, arayüz de öyle gösterir. */
+function MoreActions({ label, children }: { label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+      {open ? children : null}
+      <Pressable
+        onPress={() => setOpen(!open)}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        aria-expanded={open}
+        hitSlop={8}
+      >
+        <Text style={st.more}>{open ? '×' : '⋯'}</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 function propose(params: Record<string, string | number>) {
   router.push({ pathname: '/oneri/yeni', params: params as any });
@@ -66,6 +99,7 @@ function Message({ m, topic, onChanged }: { m: Msg; topic: any; onChanged: () =>
   };
   return (
     <View style={st.msg} nativeID={`m${m.id}`}>
+      <PendingDeletion pending={m.pending_deletion} />
       <View style={st.msgHead}>
         <Link href={`/profil/${encodeURIComponent(m.author ?? '')}`} style={st.author}>
           {m.author}
@@ -95,16 +129,17 @@ function Message({ m, topic, onChanged }: { m: Msg; topic: any; onChanged: () =>
         {me && open && !editing ? (
           <>
             <Button label="Yanıtla" variant="quiet" onPress={() => router.setParams({ reply: String(m.id) })} />
-            {mine ? (
-              <Button label="Düzenle" variant="quiet" onPress={() => setEditing(true)} />
-            ) : (
-              <Button
-                label="Düzenleme öner"
-                variant="quiet"
-                onPress={() => propose({ type: 'DUZENLEME', message: m.id })}
-              />
-            )}
-            <Button label="Silme öner" variant="quiet" onPress={() => propose({ type: 'SILME', message: m.id })} />
+            {mine ? <Button label="Düzenle" variant="quiet" onPress={() => setEditing(true)} /> : null}
+            <MoreActions label={`#${m.id} numaralı mesaj için diğer eylemler`}>
+              {mine ? null : (
+                <Button
+                  label="düzenleme öner"
+                  variant="minor"
+                  onPress={() => propose({ type: 'DUZENLEME', message: m.id })}
+                />
+              )}
+              <Button label="silme öner" variant="minor" onPress={() => propose({ type: 'SILME', message: m.id })} />
+            </MoreActions>
           </>
         ) : null}
       </View>
@@ -151,7 +186,7 @@ function Decision({ d, onChanged }: { d: any; onChanged: () => void }) {
         </Muted>
         {d.dissents.map((x: any) => (
           <View key={x.id} style={st.dissent}>
-            <Kicker>Şerh · {x.author}</Kicker>
+            <Kicker>Şerh · <Nick>{x.author}</Nick></Kicker>
             {x.based_on ? (
               <Text style={st.dissentBasis}>
                 Dayandığı metin: #{x.based_on.id} «{x.based_on.text}» · {x.based_on.author}
@@ -248,6 +283,7 @@ export default function TopicPage() {
           <Link href={`/konu/${t.parent.id}`} style={st.crumb}>› {t.parent.title}</Link>
         ) : null}
       </View>
+      <PendingDeletion pending={t.pending_deletion} />
       <Kicker>
         Konu №{t.id} · sahibi: {t.owner_scope} · {t.status === 'CLOSED' ? 'karara bağlandı' : 'açık'}
       </Kicker>
@@ -273,11 +309,13 @@ export default function TopicPage() {
               </Link>
             ) : null}
             {me && t.status === 'OPEN' ? (
-              <Button
-                label="Açılış metnine düzenleme öner"
-                variant="quiet"
-                onPress={() => propose({ type: 'DUZENLEME', message: t.opening.id })}
-              />
+              <MoreActions label="Açılış metni için diğer eylemler">
+                <Button
+                  label="açılış metnine düzenleme öner"
+                  variant="minor"
+                  onPress={() => propose({ type: 'DUZENLEME', message: t.opening.id })}
+                />
+              </MoreActions>
             ) : null}
           </View>
         </View>
@@ -308,7 +346,9 @@ export default function TopicPage() {
               ) : null}
             </View>
           )}
-          <Button label="Konuyu silme öner" variant="quiet" onPress={() => propose({ type: 'SILME', topic: t.id })} />
+          <MoreActions label="Konu için diğer eylemler">
+            <Button label="konuyu silme öner" variant="minor" onPress={() => propose({ type: 'SILME', topic: t.id })} />
+          </MoreActions>
         </View>
       ) : null}
 
@@ -381,6 +421,20 @@ const st = StyleSheet.create({
   msgHead: { flexDirection: 'row', gap: 10, alignItems: 'baseline', flexWrap: 'wrap', marginBottom: 4 },
   author: { fontFamily: fonts.serifBold, fontSize: 16, color: paper.ink },
   meta: { fontFamily: fonts.mono, fontSize: 11, color: paper.muted },
+  more: { fontFamily: fonts.monoBold, fontSize: 16, lineHeight: 18, color: paper.muted, paddingHorizontal: 4 },
+  pending: {
+    alignSelf: 'flex-start',
+    fontFamily: fonts.monoMedium,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    color: paper.seal,
+    borderWidth: 1,
+    borderColor: paper.seal,
+    borderStyle: 'dashed',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    marginBottom: 6,
+  },
   decision: {
     marginTop: 22,
     borderWidth: 3,

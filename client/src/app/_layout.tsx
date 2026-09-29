@@ -24,6 +24,9 @@ import { paper } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
 
+// Uygulama yolsuz açıldığında (Android'de Expo Go) ilk ekran Meydan olsun, Mahzen değil.
+export const unstable_settings = { anchor: 'index' };
+
 export default function RootLayout() {
   const [loaded] = useFonts({
     Newsreader_400Regular,
@@ -42,8 +45,14 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
+    if (Platform.OS !== 'web') return;
     // Büyük harf dönüşümü Türkçe kurallarla yapılsın (i → İ).
-    if (Platform.OS === 'web') document.documentElement.lang = 'tr';
+    document.documentElement.lang = 'tr';
+    // Chrome yer tutucuyu satır kutusuna kırpar; "İ"nin noktası düşer ("ör. İstanbul" → "Istanbul").
+    const style = document.createElement('style');
+    style.textContent = 'input::placeholder, textarea::placeholder { overflow: visible; }';
+    document.head.appendChild(style);
+    return () => style.remove();
   }, []);
 
   if (!loaded) return null;
@@ -59,6 +68,7 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: paper.bg },
           }}
         >
+          <Stack.Screen name="index" />
           <Stack.Screen name="mahzen" options={{ contentStyle: { backgroundColor: '#000' } }} />
         </Stack>
       </ClockProvider>

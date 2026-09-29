@@ -408,7 +408,7 @@ R2 bir alt kapsamın bütünün kaynağı hakkında karar vermesini engeller. Bu
 **Kural.**
 
 - **Pay etkisi zorunludur (R2, ters yön).** Bölünebilir kaynağı etkileyen ve bütün adına oylanan öneri etkisini kapsam başına yeni paylarla bildirir. Göreli değişim her alt kapsam için (yeni − eski) / eski'dir.
-- **Orantısızlık.** Bir alt kapsamın payı azalıyor ve bu azalma, payı olan tüm alt kapsamların ortalama göreli değişiminden en az `orantisizlik_esigi` (varsayılan 10) yüzde puanı fazlaysa, o kapsam *orantısız etkilenen* sayılır. Herkese eşit oranda kesinti orantısız değildir: her şehrin payında %10 kesinti ortalamayla aynıdır. "İstanbul payının yarısı Ankara'ya" önerisinde İstanbul %-50, ortalama %-4,2'dir; fark 45,8 puan.
+- **Orantısızlık.** Bir alt kapsamın payı azalıyor ve bu azalma, payı olan tüm alt kapsamların ortalama göreli değişiminden en az `orantisizlik_esigi` (varsayılan 10) yüzde puanı fazlaysa, o kapsam *orantısız etkilenen* sayılır. Herkese eşit oranda kesinti orantısız değildir: her şehrin payında %10 kesinti ortalamayla aynıdır. "İstanbul payının yarısı Ankara'ya" önerisinde İstanbul -%50, ortalama -%4,2'dir; fark 45,8 puan.
 - **Ayrı oylama.** Orantısız etkilenen her alt kapsam için aynı Karar Saati'nde ayrı bir oylama açılır. Seçmenleri o kapsamda oy hakkı olanlardır. Havale yalnızca o kapsamın seçmenleri arasında çözülür: dışarıya giden havale bu oylamada uygulanmaz ve üye oyunu kendisi verir. Pusulada ayrı bir satırdır ve oy ayrı mühürlenir; aynı kişi iki oylamada farklı oy verebilir.
 - **Eşzamanlı çoğunluk.** Öneri ancak hem kendi seçmen kapsamında hem de orantısız etkilenen her alt kapsamda gerekli çoğunluğu alırsa geçer. Sonuç ekranı her sayımı ayrı gösterir: "Genel: %64 EVET ✓ · İstanbul: %22 EVET ✗ → Reddedildi".
 - **Yavaş şerit.** Orantısız etkilenen kapsamı olan öneri sessiz onayla geçemez (veto atlanmış olurdu); doğrudan Karar Saati kuyruğuna girer. Orantısız etkisi olmayan pay değişikliği (eşit kesinti) normal hızlı şeritte kalır.
@@ -588,15 +588,21 @@ Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçe
 - **Mesaj:** takma ad, zaman damgası, mühür gibi duran küçük mono defter hash'i.
 - **Sansür şeridi:** tam genişlikte siyah şerit, üzerinde mono yazıyla oylama numarası. Bordo #7A1E2B siyah üstünde 2,0:1 kontrast verdiği için şeritteki yazıda aynı tonun açık hâli (#D4576B, 5,4:1) kullanılır.
 - **Karar Saati:** büyük geri sayım; sonuç açıklamasında oylar sayılarak düşer.
-- **Profil:** resmî kayıt belgesi düzeni.
+- **Profil:** resmî kayıt belgesi düzeni. Noktalı satırda değer sığmazsa telefonda etiket üstte, değer altta yığılır. Dar ekranda MÜŞAVİR mührü başlığın altında, sağda ve küçük durur.
+- **Başlık (künye):** tam gazete başlığı masaüstünde her sayfada, telefonda yalnızca Meydan ana sayfasında. Telefonda diğer sayfalarda ince, yapışkan bir çubuk durur: küçük MEŞVERET ve tek satırlık, yatay kaydırılan menü. Kullanıcı adı ve çıkış en üstteki tarih satırındadır.
+- **Takma adlar** hiçbir yerde büyük harfe çevrilmez; Türkçe büyük harf "baris"i "BARİS" yapar, kimliği değiştirir. Büyük harfli bir etiketin içinde geçen takma ad dönüşümden ayrılır (`Nick`).
+- **Devre dışı düğmeler** tek biçimdedir: gri çerçeve, gri yazı; soluk bordo yok.
+- **İkincil eylemler:** mesajda birincil eylem "Yanıtla"dır. Düzenleme ve silme önerileri küçük, gri ve "⋯" arkasındadır; silme istisnadır, arayüz de öyle gösterir. Aktif silme oylamasındaki mesajın ve konunun üstünde "№10 silme oylamasında · 4 Ekim" işareti durur ve öneriye bağlanır.
+- **Sürüm farkı:** eklenen metin yalnızca açık bordo zeminle vurgulanır; altı çizili metin bağlantı sanıldığı için kullanılmaz. Silinen metin üstü çizili ve soluktur.
+- **Yönetmelik sayfası:** parametreler beş grupta (Oylama eşikleri, Süreler, Havale, Mahzen, Baskın tespiti). Sayfa başındaki içindekiler bu gruplara, Değiştirilemez Maddeler'e ve İçerik kuralları'na atlar. Her parametrenin başlığı okunur Türkçe addır, anahtarı yanında küçük mono durur. Okunur ad ve grup sunucudadır (`domain/regulation.ARTICLE_META`). Yönetmelik önerilerinin başlıkları da okunur adla üretilir ("Yönetmelik: Red bekleme süresi"). Etkileşim ağırlıkları tablo olarak gösterilir.
 
 ### 13.2 Mahzen
 
-- **Renkler:** tam siyah (#000) zemin, fosfor amberi (#FFB000, 11,5:1). Sönük amber (#7A5500, 3,1:1) yalnızca çerçeve, çubuk ve büyük yazıda kullanılır.
+- **Renkler:** tam siyah (#000) zemin, fosfor amberi (#FFB000, 11,5:1). Çürümüş metnin alt sınırı #B88000 (6,1:1). Sönük amber (#8F6400, 4,0:1) yalnızca çerçeve, çubuk ve büyük yazıda kullanılır.
 - **Yazı:** her yerde IBM Plex Mono, başlıklarda VT323.
 - **Kimlik:** isim yok; yalnızca başlık kimlikleri ve "Gölge" etiketi.
 - **Çürüme:** başlık kapasitede alt sıralara indikçe yazı soluklaşır ve bazı karakterler deterministik olarak bozulur. Kontrast 4,5:1'in altına inmez. Bozulan metnin erişilebilir etiketi özgün metni taşır. Yanında bir ömür çubuğu vardır.
-- **CRT:** hafif tarama çizgileri; tek katman, kapatılabilir, tercih saklanır.
+- **CRT:** hafif tarama çizgileri; tek katman, kapatılabilir, tercih saklanır. Her üç satırdan biri %14 kararır. Oranlar o satırda da AA kalır: çürümüş amber 4,7:1, sönük amber 3,2:1, tam amber 8,4:1. İlk sürümde karartma %39'du; çürümüş amber 2,5:1'e, sönük amber 1,8:1'e iniyordu (tasarım denetimi, 2026-09-28).
 - **Giriş:** ekran kararma geçişi ve uyarı.
 
 ### 13.3 İfşa geçişi
@@ -608,11 +614,11 @@ Yaklaşık 1,5 saniyelik geçişte:
 - mono font serife geçer,
 - başlık kimliklerinin üzerine takma adlar yazılır.
 
-Geçiş, ifşadan sonra başlığı ilk açan herkeste bir kez oynar.
+Geçiş, ifşadan sonra başlığı ilk açan herkeste bir kez oynar. Sahne sayfa sütununun içindedir ve tipografisi ifşa edilmiş sayfayla aynıdır: kâğıt katmanı o sayfanın kendisidir, amber katman üstünde söner. Künye (başlık ve alt bilgi) ile kâğıt dokusu geçişin son %30'unda belirir. Son kare son sayfayla aynı olduğu için geçiş bitince beklemeden sayfaya geçilir. Azaltılmış harekette tercih web'de ilk çizimden önce `matchMedia` ile okunur; tercih sonradan açılırsa başlamış animasyon durdurulur ve son hâl gösterilir.
 
 ### 13.4 Genel
 
-Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oyların düşmesi, mühür, ifşa geçişi) `prefers-reduced-motion` açıkken kapanır; web'de `matchMedia`, Android'de sistem ayarı `AccessibilityInfo.isReduceMotionEnabled` ile okunur. Bu durumda son hâl anında gösterilir. Büyük harf dönüşümünün Türkçe kurallarla (i → İ) yapılması için web'de sayfa dili `tr` olarak ayarlanır. Seçim ve aç/kapa durumları `aria-checked`, pasif düğmeler `aria-disabled`, form alanları etiketleriyle (`aria-label`) duyurulur; react-native-web 0.21 eski `accessibilityState` nesnesini DOM'a aktarmadığı için `aria-*` özellikleri kullanılır (React Native'de de geçerlidir). Sayılar Türkçe yazılır: ondalık virgül ("%61,5") ve sayıya göre ek ("#7'ye", "#19'a").
+Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oyların düşmesi, mühür, ifşa geçişi) `prefers-reduced-motion` açıkken kapanır; web'de `matchMedia`, Android'de sistem ayarı `AccessibilityInfo.isReduceMotionEnabled` ile okunur. Bu durumda son hâl anında gösterilir. Büyük harf dönüşümünün Türkçe kurallarla (i → İ) yapılması için web'de sayfa dili `tr` olarak ayarlanır. Seçim ve aç/kapa durumları `aria-checked`, pasif düğmeler `aria-disabled`, form alanları etiketleriyle (`aria-label`) duyurulur; react-native-web 0.21 eski `accessibilityState` nesnesini DOM'a aktarmadığı için `aria-*` özellikleri kullanılır (React Native'de de geçerlidir). Sayılar Türkçe yazılır: ondalık virgül ("%61,5"), yüzde işareti sayının önünde ve eksi işareti onun da önünde ("-%50,0"), sayıya göre ek ("#7'ye", "#19'a", "29.12.2026'dan"). Bütün yüzde biçimlendirmesi tek yardımcıdan geçer: sunucuda `domain/text.percent_tr`, istemcide `lib/format.ts`.
 
 ## 14. Belgede cevabı olmayan noktalar ve verilen kararlar
 
@@ -779,6 +785,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Şerhin dayandığı kaybeden metin; yeniden açma tarihi | `test_decision_hour.py::test_dissent_names_the_losing_text_it_rests_on`, `::test_reopening_is_offered_only_after_yeniden_acma` |
 | Değiştirilemez maddeler ve izinli aralıklar (R8, aralık karşılaştırması, graf bayrağı, ikinci savunma hattı) | `test_regulation.py::test_ranges_from_the_task`, `::test_every_numeric_parameter_has_a_range_and_defaults_lie_inside` ve aşağıdakiler |
 | Yönetmeliğin defterdeki izi (başlangıç kaydı, oturum sonu kaydı, sessiz değişikliğin ve metni aynı kalan sınır genişletmesinin tespiti, açılışta tespit ve anlık görüntülerin son oylanmış değerlerle alınması, değiştirilmiş eşiğin sayılmaması, kapanışta tespit ve geri alma, bayrak ve içerik kuralı geri alma, kod düzeyindeki fark, bekleyen kaydın referans olması, kalıcı geçmiş, `tamper-regulation` aracı ve `/_dev` karşılığı) | `tests/integration/test_regulation_integrity.py`, `ledger/tests/test_replication.py::test_last_record_of_a_type_is_served_by_every_node` |
+| Tasarım denetimi sonrası: madde adları ve grupları, okunur öneri başlığı, Türkçe yüzde biçimi, aktif silme işareti, benzersiz Mahzen başlıkları | `test_regulation.py::test_every_parameter_has_a_readable_title_and_a_group`, `test_text.py`, `test_proposals.py::test_regulation_proposal_validates_value_and_goes_to_slow_lane`, `::test_deletion_goes_to_slow_lane_and_hides_content`, `test_seed.py::test_cellar_has_decaying_threads` |
 | Değiştirilemez maddeler (ayrıntı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 

@@ -65,6 +65,18 @@ def decimal_tr(value: float, digits: int = 1) -> str:
     return f"{value:.{digits}f}".replace(".", ",")
 
 
+def percent_tr(value: float, digits: int = 1, *, compact: bool = False) -> str:
+    """Türkçe yüzde; işaret yüzde işaretinin önünde: 33.33 → "%33,3", -50 → "-%50,0".
+
+    ``compact`` tam sayıda ondalığı atar: 50 → "%50", 66.67 → "%66,7". Bütün yüzdeler buradan geçer
+    (istemcide karşılığı ``lib/format.ts``)."""
+    text = decimal_tr(abs(value), digits)
+    if compact and text.endswith("," + "0" * digits):
+        text = text[: -(digits + 1)]
+    sign = "-" if round(value, digits) < 0 else ""
+    return f"{sign}%{text}"
+
+
 _VOICELESS = set("fstkçşhp")
 
 

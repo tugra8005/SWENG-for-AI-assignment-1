@@ -8,7 +8,7 @@ Yavaş şerit (Karar Saati): SILME, YONETMELIK, KAPANIS ve itiraz eşiğine ula�
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -38,6 +38,7 @@ from mesveret.domain.regulation import (
     CONTENT_RULE_KIND,
     RegulationError,
     article_kind,
+    article_title,
     validate_value,
 )
 from mesveret.domain.rules import (
@@ -303,7 +304,8 @@ def _prepare_regulation(ctx: Ctx, inp: ProposalInput) -> Prepared:
     if ctx.reg.is_unchangeable(key):
         # Değer doğrulanmaz: öneri R8'de "Bu madde değiştirilemez" gerekçesiyle reddedilir.
         return Prepared(
-            ProposalType.YONETMELIK, _title(inp.title or f"Yönetmelik: {key}"), body, None, scope,
+            ProposalType.YONETMELIK,
+            _title(inp.title or f"Yönetmelik: {article_title(key, old_value)}"), body, None, scope,
             [regulation.article_resource_id(key)], f"MADDE:{key}",
             {"article_key": key, "action": action, "old_value": old_value,
              "new_value": inp.new_value},
@@ -325,7 +327,8 @@ def _prepare_regulation(ctx: Ctx, inp: ProposalInput) -> Prepared:
     if new_value == old_value:
         raise DomainError("Önerilen değer mevcut değerle aynı.")
     return Prepared(
-        ProposalType.YONETMELIK, _title(inp.title or f"Yönetmelik: {key}"), body, None, scope,
+        ProposalType.YONETMELIK,
+        _title(inp.title or f"Yönetmelik: {article_title(key, old_value)}"), body, None, scope,
         [regulation.article_resource_id(key)], f"MADDE:{key}",
         {"article_key": key, "action": "degistir", "old_value": old_value, "new_value": new_value},
     )
@@ -792,6 +795,21 @@ def is_mature(ctx: Ctx, p: Proposal) -> bool:
     return maturity(ctx, p)["mature"]
 
 
+def decides_at(ctx: Ctx, p: Proposal) -> datetime | None:
+    """Açık önerinin karara bağlanacağı an: sessiz onay bitişi, açık oturumun kapanışı ya da
+    olgunlaştıktan sonraki ilk Karar Saati."""
+    from mesveret.services import decision_hour  # decision_hour bu modülü içe aktarır
+
+    if p.status == "SILENT":
+        return p.deadline_at
+    if p.status == "VOTING":
+        session = decision_hour.open_session_row(ctx)
+        return session.closes_at if session else None
+    if p.status in ("QUEUED", "RIVAL_PERIOD"):
+        return maturity(ctx, p)["first_session_at"]
+    return None
+
+
 # --- görünümler ---------------------------------------------------------------------------------
 
 
@@ -885,6 +903,11 @@ def proposal_view(ctx: Ctx, p: Proposal, viewer: User | None) -> dict:
                                  for c in p.payload.get("rules", [])]
         body["excerpt"] = p.payload.get("excerpt", "")
         body["own"] = bool(p.payload.get("own"))
+    if p.type == "YONETMELIK":
+        key = p.payload["article_key"]
+        body["article"] = {"key": key, "kind": article_kind(key),
+                           "title": article_title(key, p.payload.get("new_value")
+                                                  or p.payload.get("old_value"))}
     if p.type != "KAPANIS":
         key = threshold_key(p)
         raw = ctx.reg.raw(key)

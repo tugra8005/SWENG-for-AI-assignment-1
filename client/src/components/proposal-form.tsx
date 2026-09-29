@@ -15,7 +15,7 @@ import {
   Rule,
 } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
-import { describeArticleValue } from '@/lib/format';
+import { describeArticleValue, fmtPercent1 } from '@/lib/format';
 import { shareImpact, toRows } from '@/lib/shares';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
@@ -475,13 +475,13 @@ export function ProposalForm({
                       />
                     </View>
                     <Text style={{ fontFamily: fonts.mono, fontSize: 12, color: flagged.includes(row.scopeId) ? paper.seal : paper.muted }}>
-                      {row.relative === null ? '—' : `%${(row.relative * 100).toFixed(1).replace('.', ',')}`}
+                      {row.relative === null ? '—' : fmtPercent1(row.relative)}
                       {flagged.includes(row.scopeId) ? ' · orantısız → ayrı oylama' : ''}
                     </Text>
                   </View>
                 ))}
                 <Muted style={{ fontSize: 13 }}>
-                  Ortalama değişim: {average === null ? '—' : `%${(average * 100).toFixed(1).replace('.', ',')}`}
+                  Ortalama değişim: {average === null ? '—' : fmtPercent1(average)}
                   {flagged.length ? ' · orantısız etkilenen kapsam varsa öneri doğrudan Karar Saati kuyruğuna girer.' : ''}
                 </Muted>
               </View>

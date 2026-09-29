@@ -4,10 +4,13 @@ from fractions import Fraction
 import pytest
 
 from mesveret.domain.regulation import (
+    ARTICLE_META,
     DEFAULT_ARTICLES,
+    PARAMETER_GROUPS,
     Ratio,
     Regulation,
     RegulationError,
+    article_title,
     describe_range,
     range_violations,
     validate_value,
@@ -257,3 +260,16 @@ def test_zero_duration_is_valid_shape_but_ranges_decide():
 
 def test_principle_values_validate():
     assert validate_value("D1", REG.raw("D1")) == REG.raw("D1")
+
+
+def test_every_parameter_has_a_readable_title_and_a_group():
+    params = {k for k, a in DEFAULT_ARTICLES.items()
+              if not a.unchangeable and a.kind != "icerik_kurali"}
+    assert set(ARTICLE_META) == params
+    for key, (title, group) in ARTICLE_META.items():
+        assert group in PARAMETER_GROUPS, key
+        assert title and "_" not in title, key
+    assert article_title("sessiz_onay_suresi") == "Sessiz onay süresi"
+    assert article_title("IK-2", {"baslik": "Hakaret ve tehdit"}) == "IK-2 Hakaret ve tehdit"
+    assert Ratio(Fraction(2, 3), ">=").describe() == "en az 2/3 (%66,7)"
+    assert Ratio(Fraction(1, 2), ">").describe() == "1/2 (%50) — fazlası"

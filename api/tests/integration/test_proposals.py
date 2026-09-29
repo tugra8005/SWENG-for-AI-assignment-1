@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy import select
@@ -277,6 +277,11 @@ def test_deletion_goes_to_slow_lane_and_hides_content(ctx, client, ledger):
     assert view["content_rules"] == [{"code": "IK-1", "title": "Spam ve reklam"}]
     assert view["excerpt"] == "sipariş için profilime tıklayın"
     assert view["threshold"] == {"key": "silme_esigi", "oran": "2/3", "karsilastirma": ">="}
+    # Oylama sürerken mesajın üstünde işaret: hangi öneri, ne zaman karara bağlanacak.
+    pending = next(m for m in client.get(f"/topics/{topic.id}").json()["messages"]
+                   if m["id"] == msg.id)["pending_deletion"]
+    assert pending["proposal_id"] == p.id
+    assert datetime.fromisoformat(pending["decides_at"]) == proposals.maturity(ctx, p)["first_session_at"]
     proposals.accept(ctx, p)
     ctx.commit()
     view = client.get(f"/topics/{topic.id}").json()
@@ -444,7 +449,7 @@ def test_rejected_rule_addition_cannot_return_under_a_new_code(ctx):
     assert err.value.violations[0]["rule"] == "R6"
 
 
-def test_regulation_proposal_validates_value_and_goes_to_slow_lane(ctx):
+def test_regulation_proposal_validates_value_and_goes_to_slow_lane(ctx, client):
     a = make_user(ctx, "ayse")
     with pytest.raises(DomainError):
         proposals.open_proposal(ctx, a, ProposalInput(
@@ -455,6 +460,10 @@ def test_regulation_proposal_validates_value_and_goes_to_slow_lane(ctx):
         type="YONETMELIK", article_key="red_bekleme", new_value={"gun": 45}, body="Daha uzun olsun.",
     ))
     assert p.status == "QUEUED" and p.scope_id == "genel" and p.area_id is None
+    # Başlıkta okunur ad; snake_case anahtar yalnızca detayda.
+    assert p.title == "Yönetmelik: Red bekleme süresi"
+    assert client.get(f"/proposals/{p.id}").json()["article"] == {
+        "key": "red_bekleme", "kind": "sure", "title": "Red bekleme süresi"}
     proposals.accept(ctx, p)
     ctx.invalidate_regulation()
     assert ctx.reg.duration("red_bekleme") == timedelta(days=45)
@@ -583,7 +592,8 @@ def test_disproportionate_proposal_goes_to_slow_lane_and_oracle_lists_scopes(ctx
     rows = {r["scope_id"]: r for r in effect["rows"]}
     assert (rows["sehir:istanbul"]["old"], rows["sehir:istanbul"]["new"]) == (4000, 2000)
     assert rows["sehir:istanbul"]["disproportionate"] is True
-    assert rows["sehir:izmir"]["change_pct"] == "0,0"
+    assert rows["sehir:izmir"]["change_pct"] == "%0,0"
+    assert rows["sehir:istanbul"]["change_pct"] == "-%50,0"  # Türkçe: eksi, yüzde, sayı
 
 
 def test_equal_cut_stays_in_fast_lane_and_applies_shares_on_acceptance(ctx, client, ledger):

@@ -10,6 +10,7 @@ import {
   ErrorNotice,
   Field,
   H1,
+  H2,
   Kicker,
   Muted,
   Page,
@@ -97,7 +98,10 @@ export default function Register() {
           placeholder="GG.AA.YYYY"
           hint="Kayıt için 18 yaşını doldurmuş olmalısınız. Yaş grubunuz buradan hesaplanır."
         />
-        <Kicker style={{ marginTop: 6, marginBottom: 8 }}>Adres</Kicker>
+        <View style={{ marginTop: 18, marginBottom: 10 }}>
+          <H2>Adres</H2>
+          <Rule style={{ marginTop: 4, marginBottom: 0 }} />
+        </View>
         <CityPicker value={form.city} onChange={set('city')} />
         <Field label="İlçe" value={form.district} onChangeText={set('district')} />
         <Field label="Açık adres (isteğe bağlı)" value={form.address_line} onChangeText={set('address_line')} />

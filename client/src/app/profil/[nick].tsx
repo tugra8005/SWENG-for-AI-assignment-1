@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { createContext, useContext, useState } from 'react';
+import { StyleSheet, Text, type TextStyle, View, useWindowDimensions } from 'react-native';
 
 import { api } from '@/api/client';
+import { AreaGroups } from '@/components/area-groups';
 import { CityPicker } from '@/components/city-picker';
 import { DelegationExpiryStrip, daysLeftLabel } from '@/components/delegation-expiry';
 import { MyVotes } from '@/components/my-votes';
@@ -13,6 +14,7 @@ import {
   Kicker,
   Loading,
   Muted,
+  Nick,
   Page,
   Rule,
 } from '@/components/paper';
@@ -21,14 +23,42 @@ import { fmtDate } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
-function Line({ label, children }: { label: string; children: React.ReactNode }) {
+const StackedCtx = createContext(false);
+
+/** Satırın değeri: yan yana düzende sağa, yığılmış düzende sola yaslı. */
+function Value({ style, children }: { style?: TextStyle | (TextStyle | false | null | undefined)[]; children: React.ReactNode }) {
+  const stacked = useContext(StackedCtx);
+  return <Text style={[st.lineValue, stacked && { textAlign: 'left' }, StyleSheet.flatten(style)]}>{children}</Text>;
+}
+
+/** Noktalı satır. Telefonda etiket ya da değer tek satıra sığmazsa ikisi alt alta yığılır. */
+function Line({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
+  const { width } = useWindowDimensions();
+  const [stacked, setStacked] = useState(false);
+  const narrow = width < 560;
+  const value = typeof children === 'string' ? <Value>{children}</Value> : children;
+  if (narrow && stacked) {
+    return (
+      <StackedCtx.Provider value>
+        <View style={st.lineStacked}>
+          <Text style={st.lineLabel}>{label}</Text>
+          <View style={st.stackedValue}>{value}</View>
+        </View>
+      </StackedCtx.Provider>
+    );
+  }
   return (
-    <View style={st.line}>
+    <View
+      style={st.line}
+      onLayout={(e) => {
+        // Tek satırlık satır 34–38 px (dolgu + 22/26 px satır yüksekliği); değer iki satıra kırılırsa
+        // 56 px'i bulur. Bir kez yığılınca öyle kalır.
+        if (narrow && e.nativeEvent.layout.height > 46) setStacked(true);
+      }}
+    >
       <Text style={st.lineLabel}>{label}</Text>
       <View style={st.leader} />
-      <View style={{ flexShrink: 1, alignItems: 'flex-end' }}>
-        {typeof children === 'string' ? <Text style={st.lineValue}>{children}</Text> : children}
-      </View>
+      <View style={{ flexShrink: 1, alignItems: 'flex-end' }}>{value}</View>
     </View>
   );
 }
@@ -36,9 +66,16 @@ function Line({ label, children }: { label: string; children: React.ReactNode })
 const REASON: Record<string, string> = {
   KAYIT: 'kayıtla',
   ADRES_DEGISIKLIGI: 'adres değişikliğiyle',
-  YAS: 'yaş',
   KATILIM: 'katılımla',
 };
+
+/** Üyeliğin nasıl doğduğu. Yaş grubu üyeliği kayıt gününde başladıysa "kayıtla" denir. */
+function reasonLabel(m: any, memberSince: string): string {
+  if (m.reason === 'YAS') {
+    return fmtDate(m.since) === fmtDate(memberSince) ? 'kayıtla' : 'yaş grubuna geçişle';
+  }
+  return REASON[m.reason] ?? m.reason;
+}
 
 function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
   const areas = useApi<any[]>('/areas');
@@ -63,10 +100,10 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
       <Kicker style={{ marginTop: 6 }}>Verdiğiniz havaleler (kalan süre)</Kicker>
       {p.delegations_given.length ? (
         p.delegations_given.map((g: any) => (
-          <Line key={`g-${g.area_id ?? 'genel'}`} label={`${g.area_name} → ${g.target}`}>
-            <Text style={[st.lineValue, g.expiring && { color: paper.seal }]}>
+          <Line key={`g-${g.area_id ?? 'genel'}`} label={<>{g.area_name} → <Nick>{g.target}</Nick></>}>
+            <Value style={[g.expiring && { color: paper.seal }]}>
               {fmtDate(g.expires_at)} · {daysLeftLabel(g.days_left)}
-            </Text>
+            </Value>
           </Line>
         ))
       ) : (
@@ -75,10 +112,10 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
       <Kicker style={{ marginTop: 6 }}>Aldığınız havaleler (kalan süre)</Kicker>
       {p.delegations_received_list.length ? (
         p.delegations_received_list.map((r: any) => (
-          <Line key={`r-${r.from}-${r.area_id ?? 'genel'}`} label={`${r.from} · ${r.area_name}`}>
-            <Text style={[st.lineValue, r.expiring && { color: paper.seal }]}>
+          <Line key={`r-${r.from}-${r.area_id ?? 'genel'}`} label={<><Nick>{r.from}</Nick> · {r.area_name}</>}>
+            <Value style={[r.expiring && { color: paper.seal }]}>
               {fmtDate(r.expires_at)} · {daysLeftLabel(r.days_left)}
-            </Text>
+            </Value>
           </Line>
         ))
       ) : (
@@ -127,21 +164,21 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
       <Kicker>Kapsam üyelikleri ve oy hakkı</Kicker>
       {p.memberships.map((m: any) => (
         <Line key={m.scope_id} label={m.name}>
-          <Text style={[st.lineValue, !m.has_vote_right && { color: paper.seal }]}>
-            {m.has_vote_right ? 'oy hakkı var' : `oy hakkı ${fmtDate(m.vote_right_from)}`} · {REASON[m.reason] ?? m.reason}{' '}
-            {fmtDate(m.since)}
-          </Text>
+          <Value style={[!m.has_vote_right && { color: paper.seal }]}>
+            {m.has_vote_right ? 'oy hakkı var' : `oy hakkı ${fmtDate(m.vote_right_from)}`} ·{' '}
+            {reasonLabel(m, p.member_since)} {fmtDate(m.since)}
+          </Value>
         </Line>
       ))}
 
       <Rule faint />
       <Kicker style={{ marginBottom: 6 }}>İlgi alanları (katılımdan 14 gün sonra oy hakkı)</Kicker>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {(areas.data ?? []).map((a) => {
+      <AreaGroups
+        areas={areas.data ?? []}
+        renderItem={(a) => {
           const on = memberOf.has(`ilgi:${a.id}`);
           return (
             <Button
-              key={a.id}
               small
               variant={on ? 'primary' : 'secondary'}
               checked={on}
@@ -149,15 +186,27 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
               onPress={() => toggleInterest(a.id)}
             />
           );
-        })}
-      </View>
+        }}
+      />
       <ErrorNotice error={error} />
+    </View>
+  );
+}
+
+/** Dar ekranda mühür başlığın üstüne binmez: başlığın altında, sağda ve daha küçük durur. */
+function CounselorStamp({ small }: { small?: boolean }) {
+  return (
+    <View style={small ? st.stampSmall : st.stamp} accessibilityLabel="Müşavir damgası">
+      <Text style={[st.stampText, small && { fontSize: 15, letterSpacing: 2 }]}>MÜŞAVİR</Text>
+      <Text style={st.stampSub}>havaleyle, atamasız</Text>
     </View>
   );
 }
 
 export default function Profile() {
   const { nick } = useLocalSearchParams<{ nick: string }>();
+  const { width } = useWindowDimensions();
+  const narrow = width < 560;
   const { me } = useAuth();
   const isSelf = me?.nickname.toLocaleLowerCase('tr-TR') === String(nick).toLocaleLowerCase('tr-TR');
   const pub = useApi<any>(`/users/${encodeURIComponent(String(nick))}`);
@@ -173,10 +222,11 @@ export default function Profile() {
         <View style={st.docInner}>
           <Text style={st.docHead}>MEŞVERET</Text>
           <Text style={st.docTitle}>Yurttaş Kayıt Belgesi</Text>
+          {p.counselor_areas.length && narrow ? <CounselorStamp small /> : null}
           <Rule double />
           <Line label="Belge no">{`⌗ ${p.id.slice(0, 8).toUpperCase()}`}</Line>
           <Line label="Takma ad">
-            <Text style={[st.lineValue, { fontFamily: fonts.serifBold, fontSize: 20 }]}>{p.nickname}</Text>
+            <Value style={{ fontFamily: fonts.serifBold, fontSize: 20, lineHeight: 26 }}>{p.nickname}</Value>
           </Line>
           <Line label="Roller">{p.roles.join(' · ')}</Line>
           <Line label="Kayıt tarihi">{fmtDate(p.member_since)}</Line>
@@ -190,17 +240,12 @@ export default function Profile() {
               ? p.delegations_received.map((d: any) => `${d.name}: ${d.count}`).join(' · ')
               : 'yok'}
           </Line>
-          {p.counselor_areas.length ? (
-            <View style={st.stamp} accessibilityLabel="Müşavir damgası">
-              <Text style={st.stampText}>MÜŞAVİR</Text>
-              <Text style={st.stampSub}>havaleyle, atamasız</Text>
-            </View>
-          ) : null}
+          {p.counselor_areas.length && !narrow ? <CounselorStamp /> : null}
           {isSelf ? <Private p={p} onChanged={own.reload} /> : null}
           {me && !isSelf && p.roles[0] !== undefined ? (
             <View style={{ marginTop: 16 }}>
               <Button
-                label={`${p.nickname} adlı yurttaşa havale et`}
+                label="Bu yurttaşa havale et"
                 variant="secondary"
                 onPress={() => router.push({ pathname: '/havale', params: { target: p.nickname } })}
               />
@@ -221,9 +266,17 @@ const st = StyleSheet.create({
   docHead: { fontFamily: fonts.monoMedium, fontSize: 12, letterSpacing: 4, textAlign: 'center', color: paper.inkSoft },
   docTitle: { fontFamily: fonts.serifBold, fontSize: 28, textAlign: 'center', color: paper.ink },
   line: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, paddingVertical: 6 },
-  lineLabel: { fontFamily: fonts.monoMedium, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', color: paper.inkSoft },
+  lineLabel: { fontFamily: fonts.monoMedium, fontSize: 11, lineHeight: 16, letterSpacing: 1.2, textTransform: 'uppercase', color: paper.inkSoft },
+  lineStacked: { paddingVertical: 6, gap: 2 },
+  stackedValue: {
+    alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    borderStyle: 'dotted',
+    borderColor: paper.muted,
+    paddingBottom: 3,
+  },
   leader: { flex: 1, borderBottomWidth: 1, borderStyle: 'dotted', borderColor: paper.muted, marginBottom: 4, minWidth: 20 },
-  lineValue: { fontFamily: fonts.serif, fontSize: 16, color: paper.ink, textAlign: 'right' },
+  lineValue: { fontFamily: fonts.serif, fontSize: 16, lineHeight: 22, color: paper.ink, textAlign: 'right' },
   stamp: {
     position: 'absolute',
     right: 10,
@@ -233,6 +286,17 @@ const st = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 2,
     transform: [{ rotate: '8deg' }],
+    alignItems: 'center',
+    opacity: 0.85,
+  },
+  stampSmall: {
+    alignSelf: 'flex-end',
+    marginTop: 6,
+    borderWidth: 2,
+    borderColor: paper.seal,
+    paddingHorizontal: 8,
+    paddingVertical: 1,
+    transform: [{ rotate: '4deg' }],
     alignItems: 'center',
     opacity: 0.85,
   },

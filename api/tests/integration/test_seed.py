@@ -162,6 +162,11 @@ def test_cellar_has_decaying_threads(seeded):
     listing = cellar.list_threads(seeded, None)
     assert len(listing["threads"]) == 91
     assert listing["threads"][-1]["lifetime"] < 0.2
+    titles = [t["title"] for t in listing["threads"]]
+    assert len(set(titles)) == len(titles)  # tekrar eden başlık yok
+    # Alt sıralarda çürümenin farklı aşamaları: yarı ömürden silinmek üzereye.
+    tail = [t["lifetime"] for t in listing["threads"][-40:]]
+    assert max(tail) > 0.4 and min(tail) < 0.15
 
 
 def test_counselor_label_in_seed(seeded, client):

@@ -59,7 +59,9 @@ function CrtOverlay() {
         source={scanlines}
         resizeMode="repeat"
         style={StyleSheet.absoluteFill}
-        imageStyle={{ width: '100%', height: '100%', opacity: 0.9 }}
+        // Görüntüde her üç satırdan biri 110/255 alfa; 0,33 opaklıkla satır %14 kararır. Daha koyusu
+        // çürümüş ve sönük amberi AA'nın altına indirir (denetim, DESIGN.md §13).
+        imageStyle={{ width: '100%', height: '100%', opacity: 0.33 }}
       />
     </View>
   );
@@ -149,9 +151,10 @@ export function AmberButton({ label, onPress, disabled, subtle, selected }: {
           setBusy(false);
         }
       }}
-      style={({ pressed, hovered }: any) => [
+      style={({ pressed, hovered, focused }: any) => [
         s.button,
         subtle && { borderColor: cellar.amberDim },
+        focused && s.focusRing,
         (pressed || hovered) && { backgroundColor: cellar.amberGlow },
         selected && { backgroundColor: cellar.amber },
         (disabled || busy) && { opacity: 0.45 },
@@ -253,8 +256,12 @@ const s = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
     alignSelf: 'flex-start',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : null),
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer', outlineWidth: 0 } as any) : null),
   },
+  // Tarayıcının beyaz odak halkası yerine amber halka (klavyeyle gezinirken görünür kalır).
+  focusRing: Platform.OS === 'web'
+    ? ({ outlineStyle: 'solid', outlineWidth: 2, outlineColor: cellar.amber, outlineOffset: 2 } as any)
+    : {},
   input: {
     fontFamily: fonts.mono,
     fontSize: 14,

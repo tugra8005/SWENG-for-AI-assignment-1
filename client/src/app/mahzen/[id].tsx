@@ -110,9 +110,10 @@ export default function Thread() {
   useEffect(() => {
     AsyncStorage.getItem(seenKey).then((v) => setSeen(v === '1'));
   }, [seenKey]);
+  // Geçişin son karesi ifşa edilmiş sayfanın kendisi olduğu için beklemeden geçilir.
   const markSeen = useCallback(() => {
     AsyncStorage.setItem(seenKey, '1');
-    setTimeout(() => setSeen(true), 600);
+    setSeen(true);
   }, [seenKey]);
 
   if (!t) {
@@ -126,11 +127,7 @@ export default function Thread() {
 
   if (t.frozen && seen !== null) {
     if (!seen) {
-      return (
-        <View style={{ flex: 1, backgroundColor: cellar.bg }}>
-          <RevealTransition title={t.title} posts={t.posts} onDone={markSeen} />
-        </View>
-      );
+      return <RevealTransition t={t} onDone={markSeen} />;
     }
     return (
       <Page>

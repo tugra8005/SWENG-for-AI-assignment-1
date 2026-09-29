@@ -23,10 +23,12 @@ from mesveret.context import Ctx
 from mesveret.db.models import LedgerOutbox, Proposal, RegulationChange
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.regulation import (
+    ARTICLE_META,
     CONTENT_RULE_KIND,
     DEFAULT_ARTICLES,
     RegulationError,
     article_kind,
+    article_title,
     content_rule_number,
     describe_range,
     range_bounds,
@@ -122,6 +124,8 @@ def _entry(ctx: Ctx, key: str, kind: str, value: Any, history: list[dict]) -> di
         "removed": value is None,
         "unchangeable": ctx.reg.is_unchangeable(key),
         "range": describe_range(key),  # değiştirilemez izinli aralık
+        "title": article_title(key, value),
+        "group": ARTICLE_META[key][1] if key in ARTICLE_META else None,
     }
 
 

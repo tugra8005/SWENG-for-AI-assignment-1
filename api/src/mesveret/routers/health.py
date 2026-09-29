@@ -37,4 +37,5 @@ def health(request: Request) -> dict:
     all_ok = parts["postgres"] == "ok" and (in_memory or parts["neo4j"] == "ok") and all(
         v == "ok" for v in ledger.values()
     )
-    return {"durum": "ok" if all_ok else "eksik", **parts}
+    # "ortam": istemci geliştirmeye özgü notları (ör. doğrulama kodu konsolda) yalnızca dev'de gösterir.
+    return {"durum": "ok" if all_ok else "eksik", "ortam": get_settings().env, **parts}

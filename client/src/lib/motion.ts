@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated } from 'react-native';
+import { AccessibilityInfo, Animated, Platform } from 'react-native';
+
+/** Web'de ilk çizimden önce eşzamanlı okunur; yoksa animasyon bir kare başlayıp sonra durur. */
+function initialReduced(): boolean {
+  if (Platform.OS !== 'web' || typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 /** ``prefers-reduced-motion`` (web) / sistem ayarı (Android). Açıksa animasyonlar kapanır. */
 export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReduced] = useState(initialReduced);
   useEffect(() => {
     let alive = true;
     AccessibilityInfo.isReduceMotionEnabled().then((v) => alive && setReduced(v));

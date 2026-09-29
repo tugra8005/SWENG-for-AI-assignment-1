@@ -37,7 +37,7 @@ from mesveret.domain.raid import detect_raids
 from mesveret.domain.regulation import Regulation
 from mesveret.domain.shade import vote_pseudonym
 from mesveret.domain.tally import tally_approval, tally_binary
-from mesveret.domain.text import decimal_tr, locative_name
+from mesveret.domain.text import locative_name, percent_tr
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
 from mesveret.services import ledger, ontology, proposals, regulation, topics
 from mesveret.services.oracle import ORACLE_ID
@@ -403,12 +403,12 @@ def _binary_result(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Pro
 
 
 def _pct(yes: int, cast: int) -> str:
-    return f"%{decimal_tr(100 * yes / cast)}" if cast else "oy yok"
+    return percent_tr(100 * yes / cast) if cast else "oy yok"
 
 
 def _pct_whole(yes: int, cast: int) -> str:
     """Özet satırı için tam sayı yüzde (yarım yukarı yuvarlanır): 7/8 → "%88"."""
-    return f"%{(200 * yes + cast) // (2 * cast)}" if cast else "oy yok"
+    return percent_tr((200 * yes + cast) // (2 * cast), 0) if cast else "oy yok"
 
 
 def _close_approval(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Proposal) -> None:

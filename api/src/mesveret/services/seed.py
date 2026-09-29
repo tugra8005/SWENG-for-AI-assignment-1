@@ -111,6 +111,7 @@ POOL_SURNAMES = [
 POOL_EXTRA_INTERESTS = {"leyla": ("sinema",), "nazli": ("sinema",), "selin": ("felsefe",)}
 RAIDERS = ["mavi_kus", "sari_kedi", "yesil_at", "mor_balik", "turuncu_ari"]
 
+# 90 dolgu başlığın her biri ayrı bir soru; aynı başlık listede iki kez görünmez.
 MAHZEN_PROMPTS = [
     "Bir ağaç ormanda devrilirse ve kimse duymazsa ses çıkar mı?",
     "Theseus'un gemisi: parçaları tek tek değişen şey hâlâ aynı mıdır?",
@@ -127,6 +128,92 @@ MAHZEN_PROMPTS = [
     "Güzellik bakanın gözünde midir?",
     "Adalet eşitlik midir, hakkaniyet mi?",
     "Hatırlamadığımız şeyler bizi hâlâ biz yapar mı?",
+    "Söz veren kişi değiştiyse söz hâlâ bağlar mı?",
+    "Yalnızlık seçilince özgürlük, dayatılınca ceza mıdır?",
+    "Sanat eseri anlamını yapanın niyetinden mi, bakanın yorumundan mı alır?",
+    "Bir şehir binalarından mı ibarettir, insanlarından mı?",
+    "Hiç görmediğimiz bir rengi hayal edebilir miyiz?",
+    "Sıkılmak zihnin bir uyarısı mıdır, bir hastalığı mı?",
+    "Geleceğin insanlarına karşı borcumuz var mı?",
+    "Bir hayvanın acısı bir insanınkinden daha mı az önemlidir?",
+    "Hata yapma hakkı olmayan bir toplum özgür olabilir mi?",
+    "Merak öğretilebilir mi?",
+    "Rüyada verilen bir karar bizim kararımız mıdır?",
+    "Affetmek unutmayı gerektirir mi?",
+    "Çeviri bir metni korur mu, yeniden mi yazar?",
+    "Kötülük bir eksiklik midir, kendi başına bir şey mi?",
+    "Kuralları değişen oyun aynı oyun mu kalır?",
+    "Anonimlik dürüstlüğü mü artırır, sorumsuzluğu mu?",
+    "Bir toplum hiç kimsenin istemediği bir kararı nasıl alır?",
+    "Gelenek geçmişin oyu mudur?",
+    "Sessizlik bir cevap sayılır mı?",
+    "Kendimize yalan söyleyebilir miyiz?",
+    "Bir şeyi sevmek onu anlamayı gerektirir mi?",
+    "Bilim bir yöntem midir, bir tavır mı?",
+    "Sayılar keşfedilir mi, icat mı edilir?",
+    "Kıskançlık adalet duygusunun bir kırıntısı mıdır?",
+    "Unutulma hakkı ile hatırlama ödevi çatışırsa hangisi kazanır?",
+    "Bir kitabı yarıda bırakmak ona haksızlık mıdır?",
+    "Müzik bir dil midir?",
+    "Cesaret korkunun yokluğu mudur, ona rağmen davranmak mı?",
+    "Herkesin payını aynı oranda kesen karar adil midir?",
+    "İnsan doğası diye bir şey var mı?",
+    "Merhamet adaletin önüne geçebilir mi?",
+    "Bir yapay zekâya kötü davranmak ahlaken yanlış olabilir mi?",
+    "Tesadüf dediğimiz şey bilgisizliğimizin adı mıdır?",
+    "Mülkiyet doğal bir hak mıdır?",
+    "Bir fikri çürütmek onu savunanı da çürütür mü?",
+    "Utanç ahlakın bekçisi midir?",
+    "Çocukluğumuzdaki biz ile bugünkü biz aynı kişi miyiz?",
+    "Oy vermemek de bir oy mudur?",
+    "Şiir düzyazıya çevrilebilir mi?",
+    "Evren bir anlam taşımak zorunda mı?",
+    "Bir sırrı saklamak yalan söylemek midir?",
+    "Yavaşlık bir erdem olabilir mi?",
+    "Bir şehrin gecesi gündüzünden daha mı dürüsttür?",
+    "Mükemmel bir dünya sıkıcı olur muydu?",
+    "Tartışmayı kazanmak haklı olmak mıdır?",
+    "Bir eşya ne zaman çöpe dönüşür?",
+    "Nostalji geçmişe mi özlemdir, gençliğe mi?",
+    "Bilgiye erişmek onu bilmek demek mi?",
+    "Kuralı çiğnemek hangi durumda kurala sadakattir?",
+    "Bir hikâyenin sonu başını değiştirir mi?",
+    "Başkası adına karar vermek ne zaman meşrudur?",
+    "Kura adil bir seçim yöntemi midir?",
+    "Kimliğimizi seçer miyiz, yoksa bize mi verilir?",
+    "Sınırsız seçenek özgürlük müdür, yük mü?",
+    "Sınırlar haritada mı çizilir, akılda mı?",
+    "İyi niyet kötü sonucu hafifletir mi?",
+    "Bir melodinin sahibi olabilir mi?",
+    "Gülmek bir itiraz biçimi midir?",
+    "Eski bir mektubu okumak yazarının mahremiyetini çiğner mi?",
+    "Toplu taşımada telefonla konuşmak kaba mıdır?",
+    "Uyku ölümün provası mıdır?",
+    "Herkesin bildiği yalan hâlâ yalan mıdır?",
+    "Sabır bir tür teslimiyet midir?",
+    "Kendi seçmediğimiz bir mirastan sorumlu muyuz?",
+    "Sonsuz bir kütüphanede kaybolmak mümkün mü?",
+    "Sokak kedileri kimindir?",
+    "Bir tartışmada son sözü söyleyen mi kazanır?",
+    "Tanımadığımız birine güvenmek akıl mıdır, umut mu?",
+    "Bir fotoğraf anı korur mu, onun yerine mi geçer?",
+    "Hiç değişmeyen bir fikir ölü müdür?",
+    "Hız bizi özgürleştirir mi, köleleştirir mi?",
+    "Geri alınabilen bir karar gerçekten karar mıdır?",
+    "Boş bir sayfa korkutucu mudur, davetkâr mı?",
+    "Hiç kimse okumazsa yazmanın anlamı var mı?",
+    "Bir şehirde kaybolmak onu tanımanın ilk adımı mıdır?",
+]
+MAHZEN_OPENERS = [
+    "Kısa bir cevap arıyorum ama sanırım yok.",
+    "Dün gece aklıma takıldı, yazmadan duramadım.",
+    "Kimse adımı bilmediği için rahatça sorabiliyorum.",
+    "Meydan'da sorsam oylamaya döner; burada sadece konuşalım.",
+    "İki tarafı da ikna edici buluyorum.",
+    "Cevabınız ne olursa olsun gerekçesini merak ediyorum.",
+    "Bir arkadaşla tartıştık, anlaşamadık.",
+    "Belki saçma bir soru, ama saçma sorular da cevap ister.",
+    "Bu başlık da birkaç güne kalmaz, biliyorum.",
 ]
 MAHZEN_REPLIES = [
     "Soru yanlış sorulmuş olabilir.", "Tanımları netleştirmeden ilerleyemeyiz.",
@@ -396,12 +483,13 @@ def _cellar(w: World) -> None:
     for i in range(90):
         when = _t(days=6, hours=-i * 1.5)
         author = w.pool[(i * 7) % len(w.pool)]
-        prompt = MAHZEN_PROMPTS[i % len(MAHZEN_PROMPTS)]
+        prompt = MAHZEN_PROMPTS[i]
         replies = [(w.pool[(i * 5 + j * 11 + 3) % len(w.pool)],
                     MAHZEN_REPLIES[(i + j) % len(MAHZEN_REPLIES)]) for j in range(i % 3)]
 
         def make(c: Ctx, author=author, prompt=prompt, i=i, replies=replies) -> None:
-            t = cellar.create_thread(c, w.users[author], prompt[:110], f"{prompt} ({i + 1}. düşünce)",
+            t = cellar.create_thread(c, w.users[author], prompt,
+                                     f"{prompt} {MAHZEN_OPENERS[i % len(MAHZEN_OPENERS)]}",
                                      acknowledge=True)
             for j, (nick, text) in enumerate(replies):
                 cellar.reply(c.at(c.now + timedelta(minutes=40 + j * 50)), w.users[nick], t.id,
@@ -611,15 +699,15 @@ def scenario_ids(ctx: Ctx) -> dict[str, int]:
     titles = {
         "istanbul": "Etkinlik bütçesinin tamamı İstanbul'a",
         "metro": "Gece metro seferleri",
-        "yonetmelik_60": "Yönetmelik: red_bekleme",
-        "yonetmelik_67": "Yönetmelik: sessiz_onay_suresi",
+        "yonetmelik_60": "Yönetmelik: Red bekleme süresi",
+        "yonetmelik_67": "Yönetmelik: Sessiz onay süresi",
         "kapanis": "Kapanış: Parkların kapanış saati",
         "baskin": "Parklar sabaha kadar açık kalsın",
         "hatif": "Belgesel film gösterimleri",
         "pay_yarisi": "İstanbul payının yarısı Ankara'ya",
         "kesinti": "Tüm şehirlerin payında %10 kesinti",
         "artis": "Tüm şehirlerin payında %5 artış",
-        "olgunlasma": "Yönetmelik: musavir_esigi",
+        "olgunlasma": "Yönetmelik: Müşavir eşiği",
     }
     out = {}
     for key, title in titles.items():

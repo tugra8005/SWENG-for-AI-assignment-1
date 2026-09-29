@@ -6,7 +6,7 @@ import { api } from '@/api/client';
 import {
   Body,
   Button,
-  Choice,
+  ChoiceChip,
   ErrorNotice,
   Field,
   H1,
@@ -17,6 +17,7 @@ import {
   Rule,
   Section,
 } from '@/components/paper';
+import { AreaGroups } from '@/components/area-groups';
 import { DelegationExpiryStrip, daysLeftLabel, renewDelegation } from '@/components/delegation-expiry';
 import { useAuth } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
@@ -130,12 +131,14 @@ export default function Delegations() {
 
       <Section title="Yeni havale">
         <Field label="Takma ad" value={target} onChangeText={setTarget} autoCapitalize="none" />
-        <Choice
-          label="Alan"
-          value={area}
-          options={[{ value: '', label: 'Genel (tüm alanlar)' }, ...(areas.data ?? []).map((a) => ({ value: a.id, label: a.name }))]}
-          onChange={setArea}
-        />
+        <View style={{ marginBottom: 14, gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel="Alan">
+          <Kicker>Alan</Kicker>
+          <ChoiceChip label="Genel (tüm alanlar)" on={area === ''} onPress={() => setArea('')} />
+          <AreaGroups
+            areas={areas.data ?? []}
+            renderItem={(a) => <ChoiceChip label={a.name} on={area === a.id} onPress={() => setArea(a.id)} />}
+          />
+        </View>
         <ErrorNotice error={error} />
         <Button label="Havale et" onPress={give} disabled={!target.trim() || d?.locked} />
         <Muted style={{ marginTop: 8, fontSize: 13 }}>

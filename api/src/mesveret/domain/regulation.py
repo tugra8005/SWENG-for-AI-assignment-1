@@ -24,6 +24,8 @@ from datetime import timedelta
 from fractions import Fraction
 from typing import Any
 
+from mesveret.domain.text import percent_tr
+
 
 class RegulationError(ValueError):
     """Geçersiz madde değeri; mesaj kullanıcıya gösterilir."""
@@ -48,7 +50,7 @@ class Ratio:
 
     def describe(self) -> str:
         op = "fazlası" if self.comparison == ">" else "en az"
-        pct = f"%{float(self.value) * 100:.4g}"
+        pct = percent_tr(float(self.value) * 100, compact=True)
         return f"{self.value} ({pct}) — {op}" if self.comparison == ">" else f"{op} {self.value} ({pct})"
 
 
@@ -151,6 +153,49 @@ PRINCIPLES = [
       "eklenemez, listeden madde çıkarılamaz, bir madde değiştirilebilir yapılamaz, bir aralık "
       "genişletilemez.")),
 ]
+
+
+# Parametrelerin okunur Türkçe adları ve yönetmelik sayfasındaki grupları. Öneri başlıkları ve
+# listeler bu adları kullanır; snake_case anahtar yalnızca ayrıntıda küçük mono olarak görünür.
+PARAMETER_GROUPS = ("Oylama eşikleri", "Süreler", "Havale", "Mahzen", "Baskın tespiti")
+ARTICLE_META: dict[str, tuple[str, str]] = {
+    "basit_cogunluk": ("Basit çoğunluk", "Oylama eşikleri"),
+    "yonetmelik_esigi": ("Yönetmelik değişikliği eşiği", "Oylama eşikleri"),
+    "silme_esigi": ("Silme eşiği", "Oylama eşikleri"),
+    "itiraz_esigi": ("İtiraz eşiği", "Oylama eşikleri"),
+    "orantisizlik_esigi": ("Orantısızlık eşiği", "Oylama eşikleri"),
+    "sessiz_onay_suresi": ("Sessiz onay süresi", "Süreler"),
+    "red_bekleme": ("Red bekleme süresi", "Süreler"),
+    "olgunlasma_dar": ("Olgunlaşma süresi (dar kapsam)", "Süreler"),
+    "olgunlasma_genis": ("Olgunlaşma süresi (geniş kapsam)", "Süreler"),
+    "olgunlasma_genel": ("Olgunlaşma süresi (genel)", "Süreler"),
+    "kapanis_rakip_suresi": ("Kapanışta rakip metin süresi", "Süreler"),
+    "yeniden_acma": ("Yeniden açma süresi", "Süreler"),
+    "ilgi_bekleme": ("İlgi kapsamında bekleme süresi", "Süreler"),
+    "adres_bekleme": ("Adres değişikliğinde bekleme süresi", "Süreler"),
+    "karar_saati": ("Karar Saati", "Süreler"),
+    "havale_suresi": ("Havale süresi", "Havale"),
+    "havale_uyari_suresi": ("Havale uyarı süresi", "Havale"),
+    "musavir_esigi": ("Müşavir eşiği", "Havale"),
+    "mahzen_kapasite": ("Mahzen kapasitesi", "Mahzen"),
+    "mahzen_ust_sinir": ("Mahzen yükselme sınırı", "Mahzen"),
+    "mahzen_ifsa_esigi": ("İfşa eşiği", "Mahzen"),
+    "baskin_yeni_uye_suresi": ("Yeni üye süresi", "Baskın tespiti"),
+    "baskin_katilim_araligi": ("Katılım aralığı", "Baskın tespiti"),
+    "baskin_min_kume": ("En küçük küme", "Baskın tespiti"),
+    "baskin_yogunluk_esigi": ("Yoğunluk eşiği", "Baskın tespiti"),
+    "baskin_min_agirlik": ("En düşük etkileşim ağırlığı", "Baskın tespiti"),
+    "etkilesim_agirliklari": ("Etkileşim ağırlıkları", "Baskın tespiti"),
+}
+
+
+def article_title(key: str, value: Mapping | None = None) -> str:
+    """Maddenin okunur adı: "Red bekleme süresi"; içerik kuralı ve ilke için "IK-2 Hakaret ve tehdit"."""
+    if key in ARTICLE_META:
+        return ARTICLE_META[key][0]
+    if value and value.get("baslik"):
+        return f"{key} {value['baslik']}"
+    return key
 
 
 def _articles() -> dict[str, Article]:

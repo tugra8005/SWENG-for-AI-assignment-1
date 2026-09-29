@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
 
-from mesveret.domain.text import decimal_tr
+from mesveret.domain.text import decimal_tr, percent_tr
 
 
 @dataclass(frozen=True)
@@ -69,7 +69,12 @@ def share_impact(resource_id: str, old_shares: Mapping[str, int], effect: Mappin
 
 
 def pct(ratio: Fraction | None) -> str:
-    """Göreli değişim yüzde olarak, Türkçe ondalıkla: -1/2 → "-50,0"."""
+    """Göreli değişim Türkçe yüzde olarak: -1/2 → "-%50,0", 1/3 → "%33,3"."""
+    return "—" if ratio is None else percent_tr(float(ratio) * 100)
+
+
+def pp(ratio: Fraction | None) -> str:
+    """Yüzde puanı (işaretsiz sayı): 0.458 → "45,8"."""
     return "—" if ratio is None else decimal_tr(float(ratio) * 100)
 
 
@@ -91,8 +96,8 @@ def impact_lines(impacts: Sequence[ShareImpact], scope_name: Callable[[str], str
             affected.append(scope_name(sid))
             lines.append(
                 f"Orantısız etkilenen kapsam: {scope_name(sid)} — pay {points(row.old)} → "
-                f"{points(row.new)} (%{pct(row.relative)}); alt kapsamların ortalama değişimi "
-                f"%{pct(imp.average)}, fark {pct(imp.gap(sid))} yüzde puanı "
+                f"{points(row.new)} ({pct(row.relative)}); alt kapsamların ortalama değişimi "
+                f"{pct(imp.average)}, fark {pp(imp.gap(sid))} yüzde puanı "
                 f"(eşik {_number(imp.threshold_pp)})."
             )
     if affected:
@@ -100,7 +105,7 @@ def impact_lines(impacts: Sequence[ShareImpact], scope_name: Callable[[str], str
         lines.append(f"Karar Saati'nde {names} seçmenleri ayrıca oylar; öneri her oylamada "
                      "gerekli çoğunluğu almalı (eşzamanlı çoğunluk).")
     elif impacts:
-        avg = ", ".join(f"%{pct(imp.average)}" for imp in impacts)
+        avg = ", ".join(pct(imp.average) for imp in impacts)
         lines.append(f"Pay etkisi: orantısız etkilenen kapsam yok (ortalama değişim {avg}); "
                      "tek oylama.")
     return lines

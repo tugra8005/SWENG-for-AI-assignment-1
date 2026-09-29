@@ -206,6 +206,11 @@ def _message_view(ctx: Ctx, msg: Message, names: dict[str, str]) -> dict:
     }
 
 
+def _with_pending(view: dict, pending: dict | None) -> dict:
+    """Silinmemiş mesaja aktif silme oylamasını ekler (silinmiş mesaj yalnızca şerittir)."""
+    return view if "deleted_by_proposal_id" in view else {**view, "pending_deletion": pending}
+
+
 def deletion_basis(ctx: Ctx, proposal_id: int) -> dict:
     """Sansür şeridi için: silme hangi içerik kuralına dayandı, ya da yazarın isteği miydi."""
     p = ctx.db.get(Proposal, proposal_id)
@@ -305,6 +310,12 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
         for p in active
         if p.payload.get("topic_id") == topic.id or p.payload.get("parent_topic_id") == topic.id
     ]
+    # Aktif silme oylamaları: mesajın ya da konunun üstünde küçük bir işaret olarak gösterilir.
+    pending: dict[int | None, dict] = {}
+    for p in active:
+        if p.type == "SILME" and p.status != "DRAFT" and p.payload.get("topic_id") == topic.id:
+            pending.setdefault(p.payload.get("message_id"),
+                               {"proposal_id": p.id, "decides_at": proposals.decides_at(ctx, p)})
     subtopics = ctx.db.execute(
         select(Topic).where(Topic.parent_id == topic.id).order_by(Topic.id)
     ).scalars().all()
@@ -312,7 +323,9 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
     body.update({
         "author": names.get(topic.author_id),
         "opening": _message_view(ctx, opening, names) if opening else None,
-        "messages": [_message_view(ctx, m, names) for m in messages if not m.is_opening],
+        "messages": [_with_pending(_message_view(ctx, m, names), pending.get(m.id))
+                     for m in messages if not m.is_opening],
+        "pending_deletion": pending.get(None),
         "decision": decision_view,
         "narrowings": narrowings,
         "subtopics": [topic_summary(ctx, t) for t in subtopics],

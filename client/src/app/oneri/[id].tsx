@@ -15,6 +15,7 @@ import {
   Loading,
   Mono,
   Muted,
+  Nick,
   Page,
   Rule,
   Seal,
@@ -258,17 +259,19 @@ export default function ProposalPage() {
               <Muted>Kabul edilirse bu kurala dayanan silme önerileri açılamaz; kodu bir daha kullanılmaz.</Muted>
             </Section>
           ) : p.type === 'YONETMELIK' ? (
-            <Section title={`Madde: ${p.payload.article_key}`}>
+            <Section
+              title={`Madde: ${p.article?.title ?? p.payload.article_key}`}
+              aside={<Text style={st.articleKey}>{p.payload.article_key}</Text>}
+            >
               <Body>
-                <Text style={{ fontFamily: fonts.monoMedium }}>{JSON.stringify(p.payload.old_value)}</Text>
+                <Text style={{ color: paper.inkSoft }}>
+                  {describeArticleValue(p.article?.kind ?? '', p.payload.old_value)}
+                </Text>
                 {'  →  '}
-                <Text style={{ fontFamily: fonts.monoBold, color: paper.seal }}>
-                  {JSON.stringify(p.payload.new_value)}
+                <Text style={{ fontFamily: fonts.serifBold, color: paper.seal }}>
+                  {describeArticleValue(p.article?.kind ?? '', p.payload.new_value)}
                 </Text>
               </Body>
-              <Muted>
-                {describeArticleValue('', p.payload.old_value)} → {describeArticleValue('', p.payload.new_value)}
-              </Muted>
             </Section>
           ) : null}
 
@@ -276,7 +279,7 @@ export default function ProposalPage() {
             <Section title="Karar metinleri" aside={<Kicker>onay oylaması</Kicker>}>
               {p.texts.map((t: any) => (
                 <View key={t.id} style={st.text}>
-                  <Kicker>Metin #{t.id} · {t.author}</Kicker>
+                  <Kicker>Metin #{t.id} · <Nick>{t.author}</Nick></Kicker>
                   <Body>{t.text}</Body>
                   <Seal hash={t.ledger_hash} />
                 </View>
@@ -297,7 +300,7 @@ export default function ProposalPage() {
           ) : null}
 
           {p.share_effect?.map((e: any) => (
-            <Section key={e.resource_id} title={`Pay etkisi · ${e.name}`} aside={<Kicker>ortalama %{e.average_pct}</Kicker>}>
+            <Section key={e.resource_id} title={`Pay etkisi · ${e.name}`} aside={<Kicker>ortalama {e.average_pct}</Kicker>}>
               {e.rows.map((r: any) => (
                 <View key={r.scope_id} style={st.shareRow}>
                   <Text style={st.shareScope}>{r.name}</Text>
@@ -305,7 +308,7 @@ export default function ProposalPage() {
                     {fmtNumber(r.old)} → {fmtNumber(r.new)}
                   </Text>
                   <Text style={[st.shareNums, r.disproportionate && { color: paper.seal, fontFamily: fonts.monoBold }]}>
-                    %{r.change_pct}
+                    {r.change_pct}
                     {r.disproportionate ? ' · orantısız' : ''}
                   </Text>
                 </View>
@@ -426,6 +429,7 @@ const st = StyleSheet.create({
   },
   oracleLine: { fontFamily: fonts.mono, fontSize: 13, lineHeight: 19, color: paper.ink },
   oracleLineSmall: { fontSize: 11, lineHeight: 16, color: paper.muted },
+  articleKey: { fontFamily: fonts.mono, fontSize: 12, color: paper.muted },
   oracleStage: { fontFamily: fonts.monoMedium, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: paper.seal, marginTop: 4 },
   quote: { borderLeftWidth: 3, borderLeftColor: paper.hairline, paddingLeft: 12, marginVertical: 6 },
   text: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: paper.hairline, gap: 4 },
