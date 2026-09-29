@@ -18,6 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
+import { DevSwitcher } from '@/components/dev-switcher';
 import { AuthProvider } from '@/lib/auth';
 import { ClockProvider } from '@/lib/clock';
 import { paper } from '@/theme/tokens';
@@ -69,6 +70,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="mahzen" options={{ contentStyle: { backgroundColor: '#000' } }} />
         </Stack>
+        <DevSwitcher />
       </ClockProvider>
     </AuthProvider>
   );

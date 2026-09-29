@@ -17,6 +17,7 @@ from typing import Any
 
 from sqlalchemy import select
 
+from mesveret import clock
 from mesveret.context import Ctx
 from mesveret.db.models import (
     Ballot,
@@ -29,7 +30,7 @@ from mesveret.db.models import (
     SessionItem,
     User,
 )
-from mesveret.domain.commit import make_commit, new_salt, verify_commit
+from mesveret.domain.commit import derived_salt, make_commit, new_salt, verify_commit
 from mesveret.domain.decision_hour import next_occurrence
 from mesveret.domain.delegation import resolve_all
 from mesveret.domain.oracle import label_check, oracle_vote
@@ -271,7 +272,9 @@ def _cast(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Proposal, us
     if existing:
         raise Conflict("Bu oylamada oyunuzu zaten verdiniz; mühürlü oy değiştirilemez.")
     normalized = _normalize_choice(p, choice, ctx)
-    salt = new_salt()
+    # Geliştirme ortamında tuz türetilir: demo ve tohum iki çalıştırmada aynı defteri üretir.
+    salt = (derived_salt(ctx.settings.shade_key.encode(), session.id, p.id, item.vote_scope_id,
+                         user.id) if ctx.settings.is_dev else new_salt())
     ref = _voter_ref(ctx, item, session.id, user.id, {user.id: user.nickname})
     doc = _ballot_doc(session.id, p.id, item.vote_scope_id, ref, normalized)
     b = Ballot(session_id=session.id, proposal_id=p.id, vote_scope_id=item.vote_scope_id,
@@ -542,6 +545,8 @@ def status(ctx: Ctx) -> dict:
     ).scalar_one_or_none()
     return {
         "now": ctx.now,
+        # Demo modunda saat durur; istemci de bu anda durur (geri sayımlar akmaz).
+        "frozen": clock.is_frozen(ctx.db),
         "open_session": None if current is None else {
             "id": current.id, "opened_at": current.opened_at, "closes_at": current.closes_at,
             "item_count": _proposal_count(items_of(ctx, current)),

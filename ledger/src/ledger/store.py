@@ -56,6 +56,24 @@ class Store:
                 (r.seq, r.prev_hash, r.ts, r.type, payload, r.payload_hash, r.hash),
             )
 
+    def append_many(self, records: list[Record]) -> None:
+        """Toplu ekleme: tek SQLite işlemi (tek fsync). Biri başarısız olursa hiçbiri eklenmez."""
+        rows = [
+            (r.seq, r.prev_hash, r.ts, r.type,
+             json.dumps(r.payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+             r.payload_hash, r.hash)
+            for r in records
+        ]
+        with self.lock:
+            self._conn.execute("BEGIN")
+            try:
+                self._conn.executemany(
+                    f"INSERT INTO records ({_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
+            except Exception:
+                self._conn.execute("ROLLBACK")
+                raise
+            self._conn.execute("COMMIT")
+
     def tip(self) -> Record | None:
         with self.lock:
             row = self._conn.execute(

@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("mesveret.ledger")
 
 FLUSH_LOCK_KEY = 424242
+BATCH_SIZE = 200  # bir toplu gönderimdeki en fazla kayıt
 
 
 # --- istemciler ---------------------------------------------------------------------------------
@@ -35,6 +36,7 @@ FLUSH_LOCK_KEY = 424242
 
 class LedgerClient(Protocol):
     def append(self, type_: str, payload: Any, ts: str) -> dict: ...
+    def append_batch(self, items: list[tuple[str, Any, str]]) -> list[dict]: ...
     def node_urls(self) -> list[str]: ...
     def get(self, url: str, path: str) -> Any: ...
     def reset(self) -> None: ...
@@ -46,11 +48,21 @@ class HttpLedgerClient:
         self._nodes = node_urls
         self._headers = {"X-Ledger-Token": token}
         self._timeout = timeout
+        # Kalıcı bağlantı: her kayıt için yeni TCP bağlantısı açılmaz.
+        self._http = httpx.Client(headers=self._headers, timeout=timeout)
 
     def append(self, type_: str, payload: Any, ts: str) -> dict:
-        r = httpx.post(
-            f"{self.leader_url}/append", json={"type": type_, "payload": payload, "ts": ts},
-            headers=self._headers, timeout=self._timeout,
+        r = self._http.post(
+            f"{self.leader_url}/append", json={"type": type_, "payload": payload, "ts": ts})
+        r.raise_for_status()
+        return r.json()
+
+    def append_batch(self, items: list[tuple[str, Any, str]]) -> list[dict]:
+        """Toplu ekleme: lider kayıtları tek işlemde yazar ve takipçilere tek istekte çoğaltır."""
+        r = self._http.post(
+            f"{self.leader_url}/append-batch",
+            json={"records": [{"type": t, "payload": p, "ts": ts} for t, p, ts in items]},
+            timeout=max(self._timeout, 30.0),
         )
         r.raise_for_status()
         return r.json()
@@ -97,6 +109,11 @@ class FakeLedgerClient:
                    "payload": json.loads(_canonical(payload)), "payload_hash": ph, "hash": h}
             self.records.append(rec)
             return rec
+
+    def append_batch(self, items: list[tuple[str, Any, str]]) -> list[dict]:
+        if self.fail:
+            raise ConnectionError("sahte defter kapalı")
+        return [self.append(t, p, ts) for t, p, ts in items]
 
     def node_urls(self) -> list[str]:
         return [self.URL]
@@ -164,24 +181,31 @@ def flush(ctx: Ctx, limit: int = 500) -> int:
         .order_by(LedgerOutbox.id).limit(limit)
     ).scalars().all()
     sent = 0
+    # Zaman damgası azalmaz: geride kalan kayıt bir öncekinin anını alır.
+    stamps = []
     for row in pending:
-        ts = row.ts if last_ts is None or row.ts >= last_ts else last_ts
+        last_ts = row.ts if last_ts is None or row.ts >= last_ts else last_ts
+        stamps.append(last_ts)
+    # Toplu gönderim: kayıtlar sırayla, parça parça; bir parça başarısız olursa kalanlar bekler.
+    for start in range(0, len(pending), BATCH_SIZE):
+        rows, ts_list = pending[start:start + BATCH_SIZE], stamps[start:start + BATCH_SIZE]
         try:
-            rec = ctx.ledger.append(row.type, row.payload, ts.isoformat())
-        except Exception as exc:  # noqa: BLE001  (lider erişilemez: kayıt bekler)
-            log.warning("defter gönderimi başarısız (outbox #%s): %s", row.id, exc)
+            recs = ctx.ledger.append_batch(
+                [(r.type, r.payload, ts.isoformat()) for r, ts in zip(rows, ts_list, strict=True)])
+        except Exception as exc:  # noqa: BLE001  (lider erişilemez: kayıtlar bekler)
+            log.warning("defter gönderimi başarısız (outbox #%s…): %s", rows[0].id, exc)
             break
-        row.ts = ts
-        row.sent_at = datetime.now(UTC)
-        row.ledger_seq = rec["seq"]
-        row.ledger_hash = rec["hash"]
-        if row.ref_table and (model := models.get(row.ref_table)):
-            key = int(row.ref_id) if row.ref_id and row.ref_id.isdigit() else row.ref_id
-            target = db.get(model, key)
-            if target is not None:
-                setattr(target, row.ref_attr or "ledger_hash", rec["hash"])
-        last_ts = ts
-        sent += 1
+        for row, ts, rec in zip(rows, ts_list, recs, strict=True):
+            row.ts = ts
+            row.sent_at = datetime.now(UTC)
+            row.ledger_seq = rec["seq"]
+            row.ledger_hash = rec["hash"]
+            if row.ref_table and (model := models.get(row.ref_table)):
+                key = int(row.ref_id) if row.ref_id and row.ref_id.isdigit() else row.ref_id
+                target = db.get(model, key)
+                if target is not None:
+                    setattr(target, row.ref_attr or "ledger_hash", rec["hash"])
+            sent += 1
     db.commit()
     return sent
 

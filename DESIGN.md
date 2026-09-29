@@ -64,6 +64,7 @@ flowchart LR
 - Üç depo arasında dağıtık işlem yoktur. PostgreSQL işlemsel çekirdektir.
 - Bir servis çağrısı önce PostgreSQL işlemini tamamlar, ardından Neo4j'yi günceller.
 - Deftere gidecek kayıt, aynı PostgreSQL işlemi içinde `ledger_outbox` tablosuna yazılır. İstek sonunda lidere senkron gönderilir; başarısız olursa arka planda sırayla yeniden denenir. Defterdeki sıra böylece PostgreSQL'deki sırayla aynı kalır.
+- Gönderim topludur: bekleyen kayıtlar sırayla, 200'lük parçalar hâlinde lidere tek istekte gider (`/append-batch`). Lider parçayı zincire bağlayıp tek SQLite işleminde yazar ve takipçilere tek istekte çoğaltır (`/replicate-batch`). Zaman damgası azalırsa parçanın hiçbir kaydı eklenmez. Kayıt başına ayrı istek, 250 oyluk bir Karar Saati açılışını 15 sn sürdürüyordu; toplu gönderimle 2,7 sn sürüyor. Zincir, kayıtları tek tek eklemekle aynıdır (`ledger/tests/test_replication.py::test_batch_is_the_same_chain_as_single_appends`).
 - Neo4j yazımı PostgreSQL commit'inden sonra başarısız olursa iki depo ayrışabilir. Ödev ölçeğinde bu kabul edilmiştir. `meşveret-dev seed --reset` her şeyi yeniden kurar.
 
 ## 3. Veri yerleşimi
@@ -584,7 +585,7 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
 
 ## 12. Zaman ve geliştirme CLI'ı
 
-- **Sahte saat:** PostgreSQL'de tek satırlık ofset tutulur, `now = gerçek_utc + ofset`. Tüm zaman karşılaştırmaları bu saatle yapılır.
+- **Sahte saat:** PostgreSQL'de tek satırlık ofset tutulur, `now = gerçek_utc + ofset`. Tüm zaman karşılaştırmaları bu saatle yapılır. Demo modunda saat durur (`frozen_at`): geri sayımlar akmaz, zamanlayıcı kendiliğinden bir iş işlemez, zamanı yalnızca komutlar ilerletir. İstemci de sunucunun durmuş anında durur.
 - **Zamanlayıcı:** API içindeki arka plan iş parçacığı 5 saniyede bir `tick(now)` çağırır. Vadesi gelen işler: havale süresi dolumu, havale kabul süresi, sessiz onay bitişi, rakip metin süresi, haftalık Karar Saati açılışı ve kapanışı.
 - **Zamanlayıcı kilidi:** tek bir PostgreSQL advisory lock (`scheduler.exclusive`).
   - Kilit oturum düzeyindedir ve ayrı bir bağlantıda tutulur; işlerin içindeki ara commit'ler onu bırakmaz. Önceki sürüm işlem düzeyinde bir kilit kullanıyordu: haftalık oturumu açan işin içindeki commit kilidi tick'in ortasında bırakıyordu. İki süreç aynı anı işlerken aynı açılış işi iki tarafta birden çalışıyordu (`test_scheduler_lock.py` bunu eski kilitle yakalar).
@@ -597,6 +598,19 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
   - `run-karar-saati --close` — saati pencere sonuna ilerletir, oyları açar, sayar ve sonuçları uygular.
   - `tamper-regulation MADDE JSON` — bir yönetmelik değerini oylamasız, doğrudan graf deposuna yazar; öneri, R8, değişiklik geçmişi ve defter kaydı yoktur. Biçim yine doğrulanır (uygulama okuyamayacağı bir değerle çökmesin), izinli aralık bilerek atlanır. Operatörün sessiz değişikliğini taklit eder (§5.3, README senaryo 12).
   - `seed [--reset]`, `now`.
+  - `demo goto N | next | prev | durum | bitir`: sınıf gösterimi (DEMO.md, `services/demo.py`). Her adım yığını deterministik bir duruma getirir ve o adımda hangi kullanıcıyla hangi sayfanın açılacağını yazar.
+    - Taban durum: tohum ve Karar Saati #1'in açılıp kapanması (oy planı ve senaryo 2'nin canlı oyu).
+    - `goto` baştan kurar: tohum, saati dondurma, taban durum, önceki adımların geçişleri. Canlıda kurtarma içindir.
+    - `next` yalnızca bir sonraki adımın geçişini uygular.
+    - Hepsi zamanlayıcı kilidi altında çalışır.
+- **Tekrarlanabilirlik (geliştirme ortamı).** Demo iki çalıştırmada ekranda aynı sayıları ve aynı defter zincirini üretir. Bunu sağlayan kaynaklar:
+  - Tohum kullanıcılarının kimliği takma addan türetilir (`uuid5`); Gölge kimlikleri ve oy takma kimlikleri buna bağlıdır.
+  - Geliştirme ortamında oy tuzu sunucu anahtarından HMAC ile türetilir; üretimde rastgeledir. Anahtarı bilmeyen tuzu tahmin edemez, ama aynı girdiyle hep aynı tuz çıkar.
+  - Saat demo boyunca durur.
+  - `scripts/demo-kaydi.mjs` iki çalıştırmayı karşılaştırır: her ekrandaki rakam içeren dizgiler ve defterin hash zinciri.
+- **Geliştirme menüsü.** İstemcinin sağ alt köşesindeki küçük menü demo adımının sayfalarını o kullanıcıyla açar ve hesap değiştirir (`/_dev/login-as`, `/_dev/demo`). İki katmanda kapalıdır:
+  - Üretim API'sinde (`ENV` ≠ `dev`) bu uç noktalar hiç eklenmez.
+  - Üretim derlemesinde (`__DEV__` yanlış) bileşen hiçbir şey çizmez ve paketten ayıklanır; `expo export` çıktısında menünün dizgileri yoktur.
 - CLI komutları `services/devtools.py` üzerinden çalışır. Docker'sız geliştirme modunda (`scripts/dev_local.sh`, bellek içi graf) aynı işlemler yalnızca o modda açılan `/_dev` uç noktalarından sunulur; CLI ayrı süreçte bellek içi grafa erişemez.
 - **Tohum** (`services/seed.py`) geçmiş tarihli içeriği bir zaman çizelgesine yazar ve zaman sırasıyla oluşturur; defter kayıtlarının zaman damgaları içeriğin zamanıyla aynı olur. Karar Saati senaryolarındaki yüzdeler, Hâtif'in oyu ve havale ağırlıkları hesaba katılarak kurulmuş bir geliştirme oy planına (`dev_vote_plan`) dayanır; `test_seed.py` senaryoların sonuçlarını doğrular. Oylanacak senaryo önerileri 21–22 Eylül'de açılır ve son planlı oturumdan (Pazar 27 Eylül) sonra olgunlaşır; böylece o oturumu kaçırıp kuyrukta beklemeleri tutarlıdır. Senaryo 9'un önerisi tohum anından 10 dakika önce açılır ve olgunlaşmamıştır.
 
@@ -822,6 +836,8 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Değiştirilemez maddeler (ayrıntı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
 | Havale kabulü (bekleyen havale ağırlığa sayılmaz ve oy verende kalır; pencereden hemen önce verilen kabulsüz havale gizli oyu açığa çıkarmaz; ret, kabul süresi, iade ve pencere kilidi; "havale kabul etmiyorum"; zincirin ek onay istememesi; eskisinin yenisi kabul edilene kadar kalması; yenilemenin yeniden kabul istememesi; kabul anında R4; Hâtif) | `tests/integration/test_delegation_acceptance.py`, `test_seed.py::test_seed_delegations_start_accepted_with_one_pending_and_one_rejected` |
 | Zamanlayıcı kilidi ve işlerin idempotentliği (her iş ikinci kez çalışınca yazmaz; aynı aralığa ikinci tick boş; iki süreç aynı anda tick ederken her iş bir kez; komut kilidi tutarken arka plan adımı atlar; advance-time aradaki işleri kendisi işler) | `tests/integration/test_scheduler_lock.py` |
+| Demo modu (adımın baştan kurulması ve donmuş saat, `next`'in yalnızca geçişi uygulaması, 10a'daki bozulmanın 10b'de geri alınması, aynı adımın iki kurulumunda aynı defter, geliştirme uç noktalarının yalnızca `ENV=dev`'de olması) | `tests/integration/test_demo.py`; iki uçtan uca çalıştırmanın karşılaştırması `scripts/demo-kaydi.mjs` (DEMO.md **Ölçüm**) |
+| Toplu defter eklemesi (zincir tek tek eklemeyle aynı, azalan zaman damgası hiçbir kaydı eklemez, geride kalan takipçi toplu çoğaltmada yetişir) | `ledger/tests/test_replication.py` |
 | Mahzen çürümesi (başlıkta en fazla %15, gövdede %25; ilk %70'te bozulma yok; blok yalnızca son %5'te; çoğunluk benzer karakter; deterministik) | `client/scripts/check-decay.mjs` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 

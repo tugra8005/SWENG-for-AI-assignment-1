@@ -79,9 +79,9 @@ def _validate(ctx: Ctx, d: RegisterData) -> None:
         raise Conflict("Bu e-posta adresiyle kayıtlı bir hesap var.")
 
 
-def _new_user(ctx: Ctx, d: RegisterData, *, verified: bool) -> User:
+def _new_user(ctx: Ctx, d: RegisterData, *, verified: bool, user_id: str | None = None) -> User:
     user = User(
-        id=str(uuid.uuid4()),
+        id=user_id or str(uuid.uuid4()),
         nickname=d.nickname.strip(),
         nickname_key=nickname_key(d.nickname),
         full_name=d.full_name.strip(),
@@ -123,11 +123,12 @@ def _activate(ctx: Ctx, user: User) -> None:
     interactions.on_registration(ctx, user)
 
 
-def create_verified_user(ctx: Ctx, **fields) -> User:
-    """Tohum ve testler için: doğrulanmış kullanıcıyı ``ctx.now`` anında oluşturur."""
+def create_verified_user(ctx: Ctx, *, user_id: str | None = None, **fields) -> User:
+    """Tohum ve testler için: doğrulanmış kullanıcıyı ``ctx.now`` anında oluşturur. Tohum sabit
+    kimlik verir (takma addan türetilmiş): Gölge kimlikleri ve takma kimlikler her tohumda aynı."""
     d = RegisterData(**fields)
     _validate(ctx, d)
-    user = _new_user(ctx, d, verified=True)
+    user = _new_user(ctx, d, verified=True, user_id=user_id)
     _activate(ctx, user)
     return user
 

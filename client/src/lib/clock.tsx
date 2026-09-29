@@ -14,6 +14,7 @@ const ClockContext = createContext<ClockState | null>(null);
 
 export function ClockProvider({ children }: { children: ReactNode }) {
   const [offsetMs, setOffset] = useState(0);
+  const [frozenAt, setFrozenAt] = useState<number | null>(null);
   const [status, setStatus] = useState<any | null>(null);
 
   const sync = useCallback(async () => {
@@ -22,6 +23,8 @@ export function ClockProvider({ children }: { children: ReactNode }) {
       const st = await api('/decision-hour');
       const after = Date.now();
       setOffset(new Date(st.now).getTime() - (before + after) / 2);
+      // Demo modunda sunucunun saati durur; istemci de o anda durur.
+      setFrozenAt(st.frozen ? new Date(st.now).getTime() : null);
       setStatus(st);
     } catch {
       /* sunucu yoksa yerel saat kullanılır */
@@ -37,7 +40,7 @@ export function ClockProvider({ children }: { children: ReactNode }) {
     };
   }, [sync]);
 
-  const now = useCallback(() => Date.now() + offsetMs, [offsetMs]);
+  const now = useCallback(() => frozenAt ?? Date.now() + offsetMs, [frozenAt, offsetMs]);
   return (
     <ClockContext.Provider value={{ offsetMs, status, now, sync }}>{children}</ClockContext.Provider>
   );

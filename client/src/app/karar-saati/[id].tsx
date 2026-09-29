@@ -1,7 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import {
+  Anchor,
   Countdown,
   ErrorNotice,
   H1,
@@ -14,6 +16,7 @@ import {
   Rule,
   Seal,
   Tag,
+  useScrollTo,
 } from '@/components/paper';
 import { ProposalTitle } from '@/components/proposal-title';
 import { MyVotes } from '@/components/my-votes';
@@ -21,6 +24,17 @@ import { RevealTally } from '@/components/reveal-tally';
 import { fmtDateTime, TYPE_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
+
+/** ``?izle=N``: sayım N'nin bölümünde oynar; sayfa oraya kaydırılır, yoksa sayım ekranın
+ * dışında, sayfanın aşağısında oynar ve görünmez. */
+function ScrollToProposal({ id }: { id: string }) {
+  const scrollTo = useScrollTo();
+  useEffect(() => {
+    const t = setTimeout(() => scrollTo(`oneri-${id}`), 250);
+    return () => clearTimeout(t);
+  }, [id, scrollTo]);
+  return null;
+}
 
 export default function SessionResults() {
   const { id, izle } = useLocalSearchParams<{ id: string; izle?: string }>();
@@ -57,8 +71,10 @@ export default function SessionResults() {
       {!open && data.items.length === 0 ? (
         <InfoNotice>Bu oturumda oylanacak öneri yoktu; kuyruktaki öneriler henüz olgunlaşmamıştı ya da kuyruk boştu.</InfoNotice>
       ) : null}
+      {izle ? <ScrollToProposal id={String(izle)} /> : null}
       {groups.map(({ main, subs }) => (
-        <View key={main.proposal.id} style={st.item}>
+        <Anchor key={main.proposal.id} id={`oneri-${main.proposal.id}`}>
+        <View style={st.item}>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <Text style={st.no}>№{main.proposal.id}</Text>
             <Tag>{TYPE_LABELS[main.proposal.type]}</Tag>
@@ -96,6 +112,7 @@ export default function SessionResults() {
             <InfoNotice>{main.result.overall.conflict.note}</InfoNotice>
           ) : null}
         </View>
+        </Anchor>
       ))}
     </Page>
   );

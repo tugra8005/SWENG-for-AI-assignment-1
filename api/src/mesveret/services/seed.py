@@ -28,6 +28,7 @@ biçimde 21–22 Eylül'de açılır; böylece o oturumu kaçırıp kuyrukta bek
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
@@ -108,6 +109,9 @@ POOL_SURNAMES = [
 ]
 # Öneri açan tohum hesaplarının seçmen kapsamına üyeliği (R5) rastgeleliğe bırakılmaz.
 POOL_EXTRA_INTERESTS = {"leyla": ("sinema",), "nazli": ("sinema",), "selin": ("felsefe",)}
+# Tohum kullanıcılarının kimliği takma addan türetilir: Gölge kimlikleri, oy takma kimlikleri ve
+# defter kayıtları her tohumda aynı çıkar (demo iki çalıştırmada aynı sayıları gösterir).
+SEED_NAMESPACE = uuid.UUID("6d6e7376-6572-6574-2d73-656564000001")
 RAIDERS = ["mavi_kus", "sari_kedi", "yesil_at", "mor_balik", "turuncu_ari"]
 
 # 90 dolgu başlığın her biri ayrı bir soru; aynı başlık listede iki kez görünmez.
@@ -248,7 +252,8 @@ class World:
 def _user(c: Ctx, w: World, nickname: str, full_name: str, city: str, birth: date,
           interests: tuple[str, ...] = (), last_login: datetime | None = None) -> None:
     user = auth.create_verified_user(
-        c, nickname=nickname, full_name=full_name, email=f"{nickname}@mesveret.test",
+        c, user_id=str(uuid.uuid5(SEED_NAMESPACE, nickname)),
+        nickname=nickname, full_name=full_name, email=f"{nickname}@mesveret.test",
         password=DEMO_PASSWORD, birth_date=birth, city=city, district="Merkez", address_line="",
     )
     for area in interests:

@@ -155,3 +155,48 @@ def test_all_records_of_a_type_in_order(cluster):
         recs = cluster.clients[url].get("/records/of-type/OYLAMASIZ_DEGISIKLIK").json()
         assert [(r["seq"], r["payload"]) for r in recs] == [(1, {"i": 1}), (3, {"i": 3})]
     assert c.get("/records/of-type/YOK").json() == []
+
+
+def batch(cluster, items):
+    return cluster.clients[LEADER].post("/append-batch", json={"records": [
+        {"type": "TEST", "payload": {"i": i}, "ts": f"2026-09-29T10:00:{i:02d}Z"} for i in items]})
+
+
+def test_batch_append_links_records_and_replicates_in_one_call(cluster):
+    cluster.append(1)
+    r = batch(cluster, [2, 3, 4])
+    assert r.status_code == 200
+    recs = r.json()
+    assert [x["seq"] for x in recs] == [2, 3, 4]
+    assert recs[0]["prev_hash"] == cluster.clients[LEADER].get("/records/1").json()["hash"]
+    assert recs[1]["prev_hash"] == recs[0]["hash"]
+    for url in (LEADER, F2, F3):
+        assert cluster.tip(url)["hash"] == recs[-1]["hash"]
+        assert cluster.clients[url].get("/verify").json()["ok"] is True
+
+
+def test_batch_with_decreasing_timestamp_adds_nothing(cluster):
+    cluster.append(5)
+    r = cluster.clients[LEADER].post("/append-batch", json={"records": [
+        {"type": "TEST", "payload": {"i": 6}, "ts": "2026-09-29T10:00:06Z"},
+        {"type": "TEST", "payload": {"i": 7}, "ts": "2026-09-29T10:00:01Z"}]})
+    assert r.status_code == 409
+    assert cluster.tip(LEADER)["seq"] == 1
+
+
+def test_follower_that_was_down_catches_up_on_next_batch(cluster):
+    cluster.down.add(F3)
+    batch(cluster, [1, 2])
+    assert cluster.tip(F3)["seq"] == 0
+    cluster.down.clear()
+    batch(cluster, [3, 4])
+    assert cluster.tip(F3)["seq"] == 4 == cluster.tip(F2)["seq"]
+    assert cluster.tip(F3)["hash"] == cluster.tip(LEADER)["hash"]
+
+
+def test_batch_is_the_same_chain_as_single_appends(tmp_path):
+    single, batched = Cluster(tmp_path / "a"), Cluster(tmp_path / "b")
+    for i in (1, 2, 3):
+        single.append(i)
+    batch(batched, [1, 2, 3])
+    assert single.tip(LEADER)["hash"] == batched.tip(LEADER)["hash"]

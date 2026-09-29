@@ -98,6 +98,11 @@ def create_app(
     for module in (health, auth, users, ontology, topics, proposals, decision_hour, cellar,
                    ledger_router):
         app.include_router(module.router)
+    if settings.is_dev:
+        # Hesap değiştirici ve demo adımı: üretimde bu uç noktalar hiç yoktur.
+        from mesveret.routers import dev_demo
+
+        app.include_router(dev_demo.router)
     return app
 
 

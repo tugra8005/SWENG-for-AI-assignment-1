@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     scheduler_interval_seconds: float = 5.0
 
     cors_origins: str = "*"
+    # Demo modunun terminale bastığı bağlantılar için istemcinin adresi.
+    client_url: str = "http://localhost:8081"
 
     @property
     def is_dev(self) -> bool:

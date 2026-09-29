@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { api, ApiError } from '@/api/client';
+import { useAuth } from '@/lib/auth';
 
 export type Resource<T> = {
   data: T | null;
@@ -9,23 +10,27 @@ export type Resource<T> = {
   reload: () => Promise<void>;
 };
 
-type State<T> = { path: string | null; data: T | null; error: ApiError | null; done: boolean };
+type State<T> = { key: string | null; data: T | null; error: ApiError | null; done: boolean };
 
-/** Basit veri kancası: ``path`` null ise istek atmaz; ``pollMs`` verilirse periyodik yeniler. */
+/** Basit veri kancası: ``path`` null ise istek atmaz; ``pollMs`` verilirse periyodik yeniler.
+ * Oturum açan kişi değişince (giriş, çıkış, geliştirme menüsünden hesap değiştirme) yeniden okur. */
 export function useApi<T = any>(path: string | null, pollMs?: number): Resource<T> {
-  const [state, setState] = useState<State<T>>({ path, data: null, error: null, done: false });
+  const { me } = useAuth();
+  const who = me?.user_id ?? '';
+  const key = path === null ? null : `${who}|${path}`;
+  const [state, setState] = useState<State<T>>({ key, data: null, error: null, done: false });
 
   const fetchInto = useCallback(
     async (isAlive: () => boolean) => {
       if (!path) return;
       try {
         const data = await api<T>(path);
-        if (isAlive()) setState({ path, data, error: null, done: true });
+        if (isAlive()) setState({ key, data, error: null, done: true });
       } catch (e) {
-        if (isAlive()) setState((s) => ({ ...s, path, error: e as ApiError, done: true }));
+        if (isAlive()) setState((s) => ({ ...s, key, error: e as ApiError, done: true }));
       }
     },
-    [path],
+    [path, key],
   );
 
   useEffect(() => {
@@ -42,7 +47,7 @@ export function useApi<T = any>(path: string | null, pollMs?: number): Resource<
 
   const reload = useCallback(() => fetchInto(() => true), [fetchInto]);
 
-  const fresh = state.path === path;
+  const fresh = state.key === key;
   return {
     data: fresh ? state.data : null,
     error: fresh ? state.error : null,

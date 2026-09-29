@@ -71,6 +71,7 @@ Yalnızca `ENV=dev` iken çalışır. Tüm zamanlanmış işler sahte bir saate 
 | `meşveret-dev advance-time --hours 25` | Sahte saati ilerletir; aradaki işleri (havale dolumu ve kabul süresi, sessiz onay bitişi, rakip metin süresi, haftalık Karar Saati) kendi vade anlarında sırayla işler ve her birini bir satırla yazar. Komut sürerken API'nin arka plan zamanlayıcısı bekler; işlerin tümü bu komutun çıktısında görünür. `--days`, `--minutes`, `--to 2026-10-04T20:00:00+03:00` da kullanılabilir |
 | `meşveret-dev run-karar-saati` | Hemen bir Karar Saati oturumu açar (anlık görüntü, havale kilidi, baskın tespiti, Hâtif'in oyu) ve tohumdaki oy planına göre tohum kullanıcılarının oylarını verir. `--no-scripted-votes` ile yalnızca oturumu açar |
 | `meşveret-dev run-karar-saati --close` | Saati pencere sonuna ilerletir, oyları açar, sayar ve sonuçları uygular |
+| `meşveret-dev demo goto N` / `demo next` / `demo prev` / `demo durum` / `demo bitir` | Sınıf gösterimi (DEMO.md): her adım yığını deterministik bir duruma getirir ve hangi kullanıcıyla hangi sayfanın açılacağını yazar. `goto` baştan kurar (~20 sn, kurtarma için), `next` yalnızca geçişi uygular (~1,5 sn). Demo boyunca saat durur; `bitir` yeniden akıtır |
 | `meşveret-dev tamper-regulation MADDE 'JSON'` | Yönetmelikteki bir değeri oylamasız, doğrudan veritabanında değiştirir: öneri, R8 denetimi, değişiklik geçmişi ve defter kaydı yoktur. Operatörün sessiz değişikliğini taklit eder (senaryo 12) |
 
 Komutlar API konteynerinde çalışır:
@@ -86,6 +87,10 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 ```
 
 `--mode rechain` verilirse bozulan kayıttan sonraki hash'ler de yeniden hesaplanır. Düğüm kendi içinde tutarlı görünür ama liderden ayrışır; doğrulama bunu "tutarsız" olarak gösterir.
+
+## Sınıf gösterimi
+
+Yaklaşık iki dakikalık canlı gösterim ve yedek videosu için [DEMO.md](DEMO.md). Geliştirme ortamında istemcinin sağ alt köşesinde küçük bir menü durur: demo adımının sayfalarını o kullanıcıyla açar ve hesap değiştirir. Üretim derlemesinde menü yoktur, üretim API'sinde `/_dev` uç noktaları yoktur.
 
 ## Demo senaryoları
 

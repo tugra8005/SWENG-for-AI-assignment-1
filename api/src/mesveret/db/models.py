@@ -34,6 +34,18 @@ class SimClockRow(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
     offset_us: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    # Demo modu: doluysa saat bu anda durur (geri sayımlar, zaman damgaları iki çalıştırmada aynı).
+    frozen_at: Mapped[datetime | None] = mapped_column(TS)
+
+
+class DemoState(Base):
+    """Sınıf gösterimi modu: yığının hangi demo adımında olduğu (yalnızca geliştirme)."""
+
+    __tablename__ = "demo_state"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    step: Mapped[str] = mapped_column(String(8))
+    updated_at: Mapped[datetime] = mapped_column(TS)
 
 
 class SchedulerState(Base):

@@ -190,6 +190,102 @@ def seed(
             typer.echo(line)
 
 
+demo_app = typer.Typer(help="Sınıf gösterimi: adım adım deterministik demo (yalnızca geliştirme).",
+                       no_args_is_help=True)
+app.add_typer(demo_app, name="demo")
+
+
+def _print_step(out: dict, elapsed: float) -> None:
+    from mesveret.config import get_settings
+
+    base = get_settings().client_url.rstrip("/")
+    typer.echo(f"Adım {out['step']} ({out['index']}/{out['total']}) · {out['title']}")
+    typer.echo(f"  soru: {out['answers']}")
+    frozen = "donmuş" if out["frozen"] else "akıyor"
+    typer.echo(f"  saat: {_fmt(out['now'])} ({frozen}) · hazırlık {elapsed:.1f} sn")
+    for line in out.get("events", []):
+        typer.echo(f"  • {line}")
+    for i, sc in enumerate(out["screens"], start=1):
+        typer.echo(f"  {i}) {sc['user']} olarak  {base}{sc['path']}")
+        typer.echo(f"     {sc['show']}")
+    nxt = f"meşveret-dev demo next  (→ {out['next']})" if out["next"] else "son adım"
+    typer.echo(f"  sonraki: {nxt}")
+
+
+def _demo(action) -> None:
+    import time
+
+    from mesveret.errors import DomainError
+
+    with _ctx() as ctx:
+        start = time.monotonic()
+        try:
+            out = action(ctx)
+        except DomainError as exc:
+            typer.echo(exc.message, err=True)
+            raise typer.Exit(code=1) from exc
+        _print_step(out, time.monotonic() - start)
+
+
+def _rebuild(ctx):
+    """Demo için: yığını sıfırlar, tohumlar ve taze bir bağlam döner."""
+    from mesveret.context import Ctx
+    from mesveret.db.base import get_sessionmaker
+    from mesveret.services import seed as seed_service
+
+    for _ in seed_service.run(ctx, reset=True):
+        pass
+    db = get_sessionmaker()()
+    return Ctx(db=db, graph=ctx.graph, now=clock.now(db), settings=ctx.settings, ledger=ctx.ledger)
+
+
+@demo_app.command("goto")
+def demo_goto(step: str = typer.Argument(..., help="Adım: 1–9, 10a, 10b (10 = 10a)")) -> None:
+    """Adımı baştan kurar (tohum, dondurulmuş saat, önceki adımlar). Canlıda kurtarma için."""
+    from mesveret.services import demo
+
+    _demo(lambda ctx: demo.goto(ctx, step, rebuild=lambda: _rebuild(ctx)))
+
+
+@demo_app.command("next")
+def demo_next() -> None:
+    """Bir sonraki adımın yalnızca geçişini uygular (hızlı)."""
+    from mesveret.services import demo
+
+    _demo(lambda ctx: demo.next_step(ctx, rebuild=lambda: _rebuild(ctx)))
+
+
+@demo_app.command("prev")
+def demo_prev() -> None:
+    """Bir önceki adımı baştan kurar."""
+    from mesveret.services import demo
+
+    _demo(lambda ctx: demo.prev_step(ctx, rebuild=lambda: _rebuild(ctx)))
+
+
+@demo_app.command("durum")
+def demo_status() -> None:
+    """Şu anki adımı ve açılacak sayfaları yeniden yazar."""
+    from mesveret.services import demo
+
+    with _ctx() as ctx:
+        out = demo.view(ctx)
+        if out is None:
+            typer.echo("Demo başlamadı: meşveret-dev demo goto 1")
+            return
+        _print_step(out, 0.0)
+
+
+@demo_app.command("bitir")
+def demo_finish() -> None:
+    """Demo modundan çıkar: saat yeniden akar."""
+    from mesveret.services import demo
+
+    with _ctx() as ctx:
+        demo.finish(ctx)
+        typer.echo(f"Demo modu kapandı; saat {_fmt(clock.now(ctx.db))} anından itibaren akıyor.")
+
+
 def main() -> None:
     app()
 

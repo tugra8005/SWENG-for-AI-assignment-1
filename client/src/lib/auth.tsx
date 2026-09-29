@@ -11,6 +11,8 @@ type AuthState = {
   me: Me | null;
   ready: boolean;
   login: (identifier: string, password: string) => Promise<void>;
+  /** Yalnızca geliştirme menüsü: sunucunun verdiği token'la oturum açar. */
+  loginWithToken: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -63,6 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  const loginWithToken = useCallback(
+    async (token: string) => {
+      setToken(token);
+      await AsyncStorage.setItem(KEY, token);
+      await refresh();
+    },
+    [refresh],
+  );
+
   const logout = useCallback(async () => {
     setToken(null);
     setMe(null);
@@ -70,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ me, ready, login, logout, refresh }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ me, ready, login, loginWithToken, logout, refresh }}>{children}</AuthContext.Provider>
   );
 }
 

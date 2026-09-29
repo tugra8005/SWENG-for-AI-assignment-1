@@ -62,6 +62,10 @@ class AppendIn(BaseModel):
     ts: str
 
 
+class AppendBatchIn(BaseModel):
+    records: list[AppendIn]
+
+
 class RecordIn(BaseModel):
     seq: int
     prev_hash: str
@@ -70,6 +74,10 @@ class RecordIn(BaseModel):
     payload: Any
     payload_hash: str
     hash: str
+
+
+class RecordBatchIn(BaseModel):
+    records: list[RecordIn]
 
 
 ClientFactory = Callable[[str], httpx.Client]
@@ -108,6 +116,42 @@ def create_app(cfg: NodeConfig, client_factory: ClientFactory | None = None) -> 
                 return problem
             store.append(rec)
             return None
+
+    def apply_many(recs: list[Record]) -> str | None:
+        """Takipçide bir kayıt dizisini zincir sırasıyla denetler ve tek işlemde ekler. Zaten
+        bulunan (aynı hash'li) kayıtlar atlanır; sorun varsa hiçbiri eklenmez."""
+        with store.lock:
+            tip = store.tip()
+            seq, prev, ts = (tip.seq, tip.hash, tip.ts) if tip else (0, GENESIS_PREV, None)
+            fresh: list[Record] = []
+            for rec in recs:
+                if rec.seq <= seq and not fresh:
+                    existing = store.get(rec.seq)
+                    if not existing or existing.hash != rec.hash:
+                        return "çatışan kayıt"
+                    continue
+                problem = record_problem(rec, seq + 1, prev, ts)
+                if problem:
+                    return problem
+                fresh.append(rec)
+                seq, prev, ts = rec.seq, rec.hash, rec.ts
+            if fresh:
+                store.append_many(fresh)
+            return None
+
+    def push_batch(url: str, recs: list[Record]) -> None:
+        client = factory(url)
+        r = client.post("/replicate-batch", json={"records": [x.to_dict() for x in recs]})
+        if r.status_code != 409:
+            r.raise_for_status()
+            return
+        # Takipçi geride: eksik kayıtları da ekleyerek bir kez daha gönder.
+        follower_tip = r.json().get("detail", {}).get("tip_seq")
+        if follower_tip is None or follower_tip >= recs[0].seq:
+            raise RuntimeError(f"{url} kayıtları reddetti: {r.text}")
+        missing = store.range(follower_tip + 1, recs[-1].seq - follower_tip)
+        client.post("/replicate-batch",
+                    json={"records": [x.to_dict() for x in missing]}).raise_for_status()
 
     def push_to(url: str, rec: Record) -> None:
         client = factory(url)
@@ -187,6 +231,44 @@ def create_app(cfg: NodeConfig, client_factory: ClientFactory | None = None) -> 
             store.append(rec)
             replicate(rec)
         return rec.to_dict()
+
+    @app.post("/append-batch", dependencies=[Depends(require_token)])
+    def append_batch(body: AppendBatchIn) -> list[dict]:
+        """Toplu ekleme: kayıtlar sırayla zincire bağlanır, tek işlemde yazılır ve takipçilere tek
+        istekte çoğaltılır. Zaman damgası azalırsa hiçbiri eklenmez."""
+        if cfg.role != "leader":
+            raise HTTPException(403, "Yalnızca lider düğüm kayıt kabul eder.")
+        if not body.records:
+            return []
+        with store.lock:
+            tip = store.tip()
+            seq, prev, last_ts = (tip.seq, tip.hash, tip.ts) if tip else (0, GENESIS_PREV, None)
+            recs: list[Record] = []
+            for item in body.records:
+                try:
+                    ts = format_ts(item.ts)
+                except ValueError as exc:
+                    raise HTTPException(422, str(exc)) from exc
+                if last_ts and ts < last_ts:
+                    raise HTTPException(409, "Zaman damgası son kayıttan önce olamaz.")
+                rec = build_record(seq + 1, prev, ts, item.type, item.payload)
+                recs.append(rec)
+                seq, prev, last_ts = rec.seq, rec.hash, rec.ts
+            store.append_many(recs)
+            for url in cfg.followers:
+                try:
+                    push_batch(url, recs)
+                except Exception as exc:  # noqa: BLE001  (takipçi daha sonra yetişir)
+                    log.warning("toplu çoğaltma başarısız %s: %s", url, exc)
+        return [r.to_dict() for r in recs]
+
+    @app.post("/replicate-batch", dependencies=[Depends(require_token)])
+    def replicate_batch_in(body: RecordBatchIn) -> dict:
+        recs = [Record(**r.model_dump()) for r in body.records]
+        problem = apply_many(recs)
+        if problem:
+            raise HTTPException(409, {"reason": problem, "tip_seq": tip_dict()["seq"]})
+        return tip_dict()
 
     @app.post("/replicate", dependencies=[Depends(require_token)])
     def replicate_in(body: RecordIn) -> dict:
