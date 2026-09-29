@@ -19,6 +19,8 @@ Senaryolar (README'de adım adım):
 10. Eşzamanlı çoğunluk — "İstanbul payının yarısı Ankara'ya" Genel'de geçer, İstanbul'un ayrı
     oylamasında reddedilir; "Tüm şehirlerin payında %10 kesinti" orantısız değildir, tek oylamayla
     geçer.
+14. Pay çakışması — "Tüm şehirlerin payında %5 artış" aynı bütçeye dokunur ve kabul oyu alır, ama
+    №18 (kesinti) önce uygulandığı için hedefleri geçersizdir: çakışma nedeniyle uygulanamaz.
 
 Oylanacak senaryo önerileri, son planlı oturumdan (Pazar 27 Eylül) sonra olgunlaşacak
 biçimde 21–22 Eylül'de açılır; böylece o oturumu kaçırıp kuyrukta bekliyor olmaları tutarlıdır.
@@ -378,6 +380,15 @@ def _scenarios_voting(w: World) -> None:
         share_effect={"butce": {"sehir:istanbul": 3600, "sehir:ankara": 5400,
                                 "sehir:izmir": 4500, "sehir:bursa": 4500}},
     ), _t(days=7, hours=6), ["okan", "pinar", "rana"])
+    # 14. Pay çakışması: aynı bütçe, kesintiden sonraki numara. Kabul oyu alır ama kesinti önce
+    #     uygulandığı için hedefleri (4.000 → 4.200 …) geçersizdir.
+    _queued_by_objection(w, "artis", "ece", ProposalInput(
+        type="KONU", title="Tüm şehirlerin payında %5 artış",
+        body="Etkinlik bütçesinde her şehrin payı %5 artsın; yedekteki kısım kullanılsın.",
+        area_id="kent", scope_id="genel", resource_ids=["butce"],
+        share_effect={"butce": {"sehir:istanbul": 4200, "sehir:ankara": 6300,
+                                "sehir:izmir": 5250, "sehir:bursa": 5250}},
+    ), _t(days=7, hours=5), ["tolga", "umut", "yasemin"])
 
 
 def _cellar(w: World) -> None:
@@ -506,6 +517,9 @@ def _vote_plan(ctx: Ctx, w: World) -> None:
               for n in ("mert", "rana", "deniz", "hakan", "vedat", "cansu", "gulsen", "melis",
                         "emre")]
     plan += [("kesinti", n, "EVET" if i < 12 else "HAYIR") for i, n in enumerate(names[:20])]
+    # 14. Pay çakışması: artış da 12 + Hâtif = 13/21 ile kabul oyu alır; kesinti (daha küçük
+    #     numara) önce uygulandığı için çakışma nedeniyle uygulanamaz.
+    plan += [("artis", n, "EVET" if i < 12 else "HAYIR") for i, n in enumerate(names[:20])]
 
     for key, nick, choice in plan:
         ctx.db.add(DevVotePlan(proposal_id=w.ids[key], voter_id=w.users[nick].id, choice=choice))
@@ -587,7 +601,7 @@ def _build(ctx: Ctx) -> Iterator[str]:
     yield "Senaryo önerileri: " + ", ".join(
         f"{k}=#{w.ids[k]}" for k in ("istanbul", "metro", "yonetmelik_60", "yonetmelik_67",
                                      "silme_60", "silme_67", "silme_kendi", "kapanis", "baskin",
-                                     "hatif", "pay_yarisi", "kesinti", "olgunlasma"))
+                                     "hatif", "pay_yarisi", "kesinti", "artis", "olgunlasma"))
     yield f"Mahzen demo başlığı: #{w.ids['mahzen']}"
     yield "Sonraki adım: README'deki senaryolar (meşveret-dev run-karar-saati)."
 
@@ -604,6 +618,7 @@ def scenario_ids(ctx: Ctx) -> dict[str, int]:
         "hatif": "Belgesel film gösterimleri",
         "pay_yarisi": "İstanbul payının yarısı Ankara'ya",
         "kesinti": "Tüm şehirlerin payında %10 kesinti",
+        "artis": "Tüm şehirlerin payında %5 artış",
         "olgunlasma": "Yönetmelik: musavir_esigi",
     }
     out = {}

@@ -207,6 +207,8 @@ class Dissent(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     decision_id: Mapped[int] = mapped_column(ForeignKey("decisions.id"), index=True)
     author_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    # Şerhin dayandığı kaybeden metin: yazarın sahibi olduğu ya da onay verdiği.
+    closure_text_id: Mapped[int | None] = mapped_column(ForeignKey("closure_texts.id"))
     text: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(TS)
     ledger_hash: Mapped[str | None] = mapped_column(String(64))

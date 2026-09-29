@@ -90,6 +90,9 @@ export default function SessionResults() {
               {main.result.overall.summary}
             </Text>
           ) : null}
+          {main.result?.overall?.conflict ? (
+            <InfoNotice>{main.result.overall.conflict.note}</InfoNotice>
+          ) : null}
         </View>
       ))}
     </Page>

@@ -183,6 +183,11 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
             ):
                 raise DomainError("Pay etkisi {kaynak: {kapsam: yeni_pay}} biçiminde olmalı.")
             payload["share_effect"] = {rid: dict(eff) for rid, eff in inp.share_effect.items()}
+            # Hedefler bu paylara göre bildirildi; kapanışta paylar değişmişse öneri uygulanamaz.
+            payload["share_base"] = {
+                rid: dict(r.shares) for rid in payload["share_effect"]
+                if (r := ctx.graph.resource(rid)) is not None and r.divisible
+            }
         parent_rid = None
         if t is ProposalType.ALT_KONU:
             parent = _live_topic(ctx, inp.parent_topic_id)
@@ -603,9 +608,9 @@ def add_rival(ctx: Ctx, user: User, proposal_id: int, text: str) -> ClosureText:
 
 
 def end_silent_period(ctx: Ctx, p: Proposal) -> None:
-    """Sessiz onay süresi doldu ve itiraz eşiği aşılmadı: kabul."""
+    """Sessiz onay süresi doldu ve itiraz eşiği aşılmadı: kabul (pay çakışması yoksa)."""
     if p.status == "SILENT":
-        accept(ctx, p)
+        accept_or_conflict(ctx, p)
 
 
 def end_rival_period(ctx: Ctx, p: Proposal) -> None:
@@ -700,6 +705,56 @@ def _apply(ctx: Ctx, p: Proposal, winner_text_id: int | None) -> None:
         }, ref=d)
 
 
+def share_conflicts(ctx: Ctx, p: Proposal) -> list[dict]:
+    """Önerinin pay hedefleri, dayandıkları paylar (``share_base``) değiştiyse geçersizdir.
+
+    Kaynak başına çakışma döner; ``by``, aynı kaynağa dokunup bu öneri açıldıktan sonra kabul
+    edilmiş en son öneridir (aynı oturumda öneriler numara sırasıyla uygulandığı için, numarası
+    daha küçük olan)."""
+    out = []
+    for rid, base in (p.payload.get("share_base") or {}).items():
+        r = ctx.graph.resource(rid)
+        if r is None or dict(r.shares) == {sid: int(v) for sid, v in base.items()}:
+            continue
+        later = ctx.db.execute(
+            select(Proposal).where(
+                Proposal.id != p.id, Proposal.status == "ACCEPTED",
+                Proposal.decided_at >= p.created_at,
+            ).order_by(Proposal.decided_at.desc(), Proposal.id.desc())
+        ).scalars()
+        by = next((q.id for q in later if rid in (q.payload.get("share_effect") or {})), None)
+        out.append({"resource_id": rid, "name": r.name, "by": by})
+    return out
+
+
+def conflict_note(conflicts: list[dict]) -> str:
+    parts = [(f"№{c['by']} {c['name']} paylarını daha önce değiştirdi" if c["by"]
+              else f"{c['name']} payları öneri açıldıktan sonra değişti") for c in conflicts]
+    return ("Kabul oyu aldı ama çakışma nedeniyle uygulanamadı: " + "; ".join(parts) + ". "
+            "Öneri reddedilmiş sayılmaz; güncel paylarla aynı içerikle yeniden açılabilir.")
+
+
+def mark_conflict(ctx: Ctx, p: Proposal, conflicts: list[dict]) -> None:
+    note = conflict_note(conflicts)
+    p.status, p.decided_at, p.outcome_note = "CONFLICT", ctx.now, note
+    ctx.graph.set_proposal_status(p.id, p.status)
+    ledger.enqueue(ctx, "ONERI_SONUCU", {
+        "oneri": p.id, "sonuc": "UYGULANAMADI", "not": note,
+        "cakisma": [{"kaynak": c["resource_id"], "oneri": c["by"]} for c in conflicts],
+    })
+    ctx.db.flush()
+
+
+def accept_or_conflict(ctx: Ctx, p: Proposal, *, note: str | None = None) -> list[dict]:
+    """Kabul eder; pay hedefleri geçersizse uygulamaz, çakışma olarak işaretler. Çakışmaları döner."""
+    conflicts = share_conflicts(ctx, p)
+    if conflicts:
+        mark_conflict(ctx, p, conflicts)
+    else:
+        accept(ctx, p, note=note)
+    return conflicts
+
+
 def accept(ctx: Ctx, p: Proposal, *, winner_text_id: int | None = None, note: str | None = None) -> None:
     _apply(ctx, p, winner_text_id)
     p.status, p.decided_at, p.outcome_note = "ACCEPTED", ctx.now, note
@@ -774,7 +829,7 @@ def list_proposals(ctx: Ctx, state: str | None, viewer: User | None) -> list[dic
     if state == "open":
         q = q.where(Proposal.status.in_(OPEN_STATUSES))
     elif state == "decided":
-        q = q.where(Proposal.status.in_(("ACCEPTED", "REJECTED")))
+        q = q.where(Proposal.status.in_(("ACCEPTED", "REJECTED", "CONFLICT")))
     elif state == "draft":
         if viewer is None:
             return []
@@ -798,6 +853,13 @@ def proposal_view(ctx: Ctx, p: Proposal, viewer: User | None) -> dict:
     if p.status == "SILENT":
         body["objections"] = {"count": objection_count(ctx, p), "threshold": objection_threshold(ctx, p)}
     impacts = share_impacts(ctx, p)
+    if p.status in (*OPEN_STATUSES, "CONFLICT") and (changed := share_conflicts(ctx, p)):
+        # Pay tablosu öneri açıldıktan sonra değişti: Hâtif'in sayısal yorumu güncel paylara göre
+        # yeniden üretilir; açılıştaki yorum "öneri anında" etiketiyle kalır.
+        body["oracle_current"] = {
+            "lines": impact_lines(impacts, lambda sid: ontology.scope_label(ctx, sid)),
+            "cause": [c["by"] for c in changed if c["by"]],
+        }
     body["share_effect"] = [
         {"resource_id": imp.resource_id, "name": ctx.graph.resource(imp.resource_id).name,
          "average_pct": pct(imp.average), "threshold_pp": float(imp.threshold_pp),

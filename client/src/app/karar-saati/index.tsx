@@ -66,6 +66,12 @@ function BallotItem({ item, onVoted }: { item: any; onVoted: () => void }) {
       {item.narrowings?.map((n: any, i: number) => (
         <Text key={i} style={{ fontFamily: fonts.serifBold, color: paper.seal }}>{n.message}</Text>
       ))}
+      {item.shared_resource_notes?.map((n: string) => (
+        <Text key={n} style={st.sharedNote}>
+          <Text style={{ fontFamily: fonts.monoBold }}>AYNI KAYNAK · </Text>
+          {n}
+        </Text>
+      ))}
       <View style={{ flexDirection: 'row', gap: 16, alignItems: 'baseline', marginTop: 4 }}>
         <Kicker>Oy ağırlığınız</Kicker>
         <Text style={st.weight}>{item.weight}</Text>
@@ -198,6 +204,7 @@ const st = StyleSheet.create({
   no: { fontFamily: fonts.monoMedium, fontSize: 13, color: paper.seal },
   title: { fontFamily: fonts.serifBold, fontSize: 20, lineHeight: 26, color: paper.ink },
   weight: { fontFamily: fonts.monoBold, fontSize: 28, color: paper.ink },
+  sharedNote: { fontFamily: fonts.serif, fontSize: 14, lineHeight: 20, color: paper.seal, borderLeftWidth: 2, borderLeftColor: paper.seal, paddingLeft: 8 },
   textOpt: { flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: paper.hairline, padding: 10 },
   box: { fontFamily: fonts.mono, fontSize: 20, color: paper.seal },
   commit: { fontFamily: fonts.mono, fontSize: 12, color: paper.seal, marginTop: 8 },

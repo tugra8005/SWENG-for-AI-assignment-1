@@ -412,15 +412,22 @@ def _close_proposal(ctx: Ctx, session: DecisionSession, p: Proposal, items: list
             summary = " · ".join(parts) + (" → Kabul edildi" if passed else " → Reddedildi")
         for it in subs:
             it.result = results[it.id]
-        main.result = {**results[main.id], "overall": {"passed": passed, "summary": summary}}
+        overall: dict[str, Any] = {"passed": passed, "summary": summary}
         note = summary or results[main.id]["note"]
         if passed:
             try:
-                proposals.accept(ctx, p, note=note)
+                conflicts = proposals.accept_or_conflict(ctx, p, note=note)
             except DomainError as exc:
+                conflicts = []
                 proposals.reject(ctx, p, f"Kabul edildi ama uygulanamadı: {exc.message}")
+            if conflicts:
+                # Öneriler numara sırasıyla uygulanır; önce uygulanan öneri aynı kaynağın paylarını
+                # değiştirdiyse bu önerinin hedefleri geçersizdir.
+                overall["conflict"] = {"note": p.outcome_note,
+                                       "by": [c["by"] for c in conflicts if c["by"]]}
         else:
             proposals.reject(ctx, p, note)
+        main.result = {**results[main.id], "overall": overall}
     for it in items:
         ledger.enqueue(ctx, "OYLAMA_SONUCU", {
             "oturum": session.id, "oneri": p.id, "kapsam": it.vote_scope_id,
@@ -505,10 +512,32 @@ def status(ctx: Ctx) -> dict:
     }
 
 
+def shared_resource_notes(ctx: Ctx, session: DecisionSession) -> dict[int, list[str]]:
+    """Aynı bölünebilir kaynağın paylarına dokunan öneriler kapanışta numara sırasıyla uygulanır;
+    önce uygulanan kabul edilirse sonrakinin pay hedefleri geçersiz olur."""
+    touched: dict[int, set[str]] = {}
+    for item in items_of(ctx, session):
+        if not item.concurrent:
+            p = ctx.db.get(Proposal, item.proposal_id)
+            if rids := set(p.payload.get("share_base") or {}):
+                touched[p.id] = rids
+    notes: dict[int, list[str]] = {}
+    for pid, rids in touched.items():
+        for other in sorted(touched):
+            if other == pid or not rids & touched[other]:
+                continue
+            notes.setdefault(pid, []).append(
+                f"№{other} ile aynı kaynağı etkiliyor; önce №{other} uygulanır." if other < pid
+                else f"№{other} ile aynı kaynağı etkiliyor; önce bu öneri uygulanır, kabul "
+                     f"edilirse №{other} uygulanamaz.")
+    return notes
+
+
 def ballot(ctx: Ctx, user: User) -> dict:
     session = open_session_row(ctx)
     if session is None:
         return {"session": None, "items": []}
+    shared = shared_resource_notes(ctx, session)
     out = []
     for item in items_of(ctx, session):
         p = ctx.db.get(Proposal, item.proposal_id)
@@ -527,6 +556,7 @@ def ballot(ctx: Ctx, user: User) -> dict:
             "voted": voted,
             "weight": sum(1 for e in item.eligible if item.resolved.get(e) == user.id),
             "narrowings": p.narrowings,
+            "shared_resource_notes": shared.get(p.id, []),
         }
         if user.id in flagged:
             entry.update(can_vote=False, reason=f"Baskın şüphesiyle dışlandınız. {flagged[user.id]}")
@@ -558,6 +588,7 @@ def session_view(ctx: Ctx, session_id: int) -> dict:
     hashes = {b.id: b.reveal_ledger_hash for b in ctx.db.execute(
         select(Ballot).where(Ballot.session_id == s.id)).scalars()}
     commits = ctx.db.execute(select(Ballot).where(Ballot.session_id == s.id)).scalars().all()
+    shared = shared_resource_notes(ctx, s)
     items = []
     for item in items_of(ctx, s):
         p = ctx.db.get(Proposal, item.proposal_id)
@@ -574,6 +605,7 @@ def session_view(ctx: Ctx, session_id: int) -> dict:
             "eligible_count": len(item.eligible),
             "sealed_votes": sum(1 for b in commits if b.proposal_id == p.id
                                 and b.vote_scope_id == item.vote_scope_id),
+            "shared_resource_notes": shared.get(p.id, []),
             "result": result,
         })
     return {"id": s.id, "status": s.status, "opened_at": s.opened_at, "closes_at": s.closes_at,
@@ -583,19 +615,23 @@ def session_view(ctx: Ctx, session_id: int) -> dict:
 # --- şerh ---------------------------------------------------------------------------------------
 
 
-def dissent_refusal(ctx: Ctx, d: Decision, user: User) -> Forbidden | Conflict | None:
-    """Kullanıcı bu karara şerh ekleyemiyorsa nedenini (hata olarak) döner; ekleyebiliyorsa None."""
-    losing = {ct.id: ct for ct in ctx.db.execute(select(ClosureText).where(
+def dissent_options(ctx: Ctx, d: Decision, user: User) -> list[ClosureText]:
+    """Kullanıcının şerhini dayandırabileceği kaybeden metinler: sahibi olduğu ya da onay verdiği."""
+    losing = ctx.db.execute(select(ClosureText).where(
         ClosureText.proposal_id == d.proposal_id, ClosureText.id != d.closure_text_id
-    )).scalars()}
-    owns_losing = any(ct.author_id == user.id for ct in losing.values())
+    ).order_by(ClosureText.id)).scalars().all()
     p = ctx.db.get(Proposal, d.proposal_id)
     b = ctx.db.execute(select(Ballot).where(
         Ballot.session_id == p.session_id, Ballot.proposal_id == p.id,
         Ballot.vote_scope_id == p.scope_id, Ballot.voter_id == user.id,
     )).scalar_one_or_none() if p and p.session_id else None
-    supported_losing = b is not None and bool(set(b.choice or []) & set(losing))
-    if not (owns_losing or supported_losing):
+    approved = set(b.choice or []) if b is not None else set()
+    return [ct for ct in losing if ct.author_id == user.id or ct.id in approved]
+
+
+def dissent_refusal(ctx: Ctx, d: Decision, user: User) -> Forbidden | Conflict | None:
+    """Kullanıcı bu karara şerh ekleyemiyorsa nedenini (hata olarak) döner; ekleyebiliyorsa None."""
+    if not dissent_options(ctx, d, user):
         return Forbidden("Şerhi yalnızca kaybeden metinlerin sahipleri ya da destekçileri ekleyebilir.")
     if ctx.db.execute(select(Dissent.id).where(
         Dissent.decision_id == d.id, Dissent.author_id == user.id
@@ -604,18 +640,28 @@ def dissent_refusal(ctx: Ctx, d: Decision, user: User) -> Forbidden | Conflict |
     return None
 
 
-def add_dissent(ctx: Ctx, user: User, decision_id: int, text: str) -> Dissent:
+def add_dissent(ctx: Ctx, user: User, decision_id: int, text: str,
+                closure_text_id: int | None = None) -> Dissent:
     d = ctx.db.get(Decision, decision_id)
     if d is None:
         raise NotFound("Karar bulunamadı.")
     if (refusal := dissent_refusal(ctx, d, user)) is not None:
         raise refusal
+    options = {ct.id: ct for ct in dissent_options(ctx, d, user)}
+    if closure_text_id is None and len(options) == 1:
+        closure_text_id = next(iter(options))
+    if closure_text_id not in options:
+        raise DomainError("Şerhin dayandığı kaybeden metni seçin (sahibi olduğunuz ya da onay "
+                          "verdiğiniz metinlerden biri).")
     text = topics.check_square_text(text, max_len=5000)
-    dissent = Dissent(decision_id=d.id, author_id=user.id, text=text, created_at=ctx.now)
+    dissent = Dissent(decision_id=d.id, author_id=user.id, closure_text_id=closure_text_id,
+                      text=text, created_at=ctx.now)
     ctx.db.add(dissent)
     ctx.db.flush()
+    basis = options[closure_text_id]
     ledger.enqueue(ctx, "SERH", {
         "karar": d.id, "yazar": user.nickname, "metin": text,
+        "dayandigi_metin": {"id": basis.id, "metin": basis.text},
     }, ref=dissent)
     ctx.commit()
     return dissent

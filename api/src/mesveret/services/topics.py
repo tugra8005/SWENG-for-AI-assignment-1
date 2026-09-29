@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 
 from mesveret.context import Ctx
 from mesveret.db.models import (
+    ClosureText,
     Decision,
     Dissent,
     Message,
@@ -262,18 +263,32 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
         dissents = ctx.db.execute(
             select(Dissent).where(Dissent.decision_id == decision.id).order_by(Dissent.id)
         ).scalars().all()
-        dn = nickname_map(ctx, [d.author_id for d in dissents])
+        texts = {ct.id: ct for ct in ctx.db.execute(
+            select(ClosureText).where(ClosureText.proposal_id == decision.proposal_id)
+        ).scalars()}
+        dn = nickname_map(ctx, [d.author_id for d in dissents]
+                          + [ct.author_id for ct in texts.values()])
+
+        def text_view(ct: ClosureText | None) -> dict | None:
+            return None if ct is None else {"id": ct.id, "text": ct.text,
+                                            "author": dn.get(ct.author_id)}
+
+        options = (decision_hour.dissent_options(ctx, decision, viewer) if viewer else [])
         decision_view = {
             "id": decision.id, "proposal_id": decision.proposal_id, "text": decision.text,
             "created_at": decision.created_at, "ledger_hash": decision.ledger_hash,
             "dissents": [
                 {"id": d.id, "author": dn.get(d.author_id), "text": d.text,
-                 "created_at": d.created_at, "ledger_hash": d.ledger_hash}
+                 "created_at": d.created_at, "ledger_hash": d.ledger_hash,
+                 "based_on": text_view(texts.get(d.closure_text_id))}
                 for d in dissents
             ],
             "viewer_can_dissent": viewer is not None
             and decision_hour.dissent_refusal(ctx, decision, viewer) is None,
+            "viewer_dissent_options": [text_view(ct) for ct in options],
         }
+    reopen_after = (topic.closed_at + ctx.reg.duration("yeniden_acma")
+                    if topic.status == "CLOSED" and topic.closed_at else None)
     active = ctx.db.execute(
         select(Proposal).where(Proposal.status.in_(ACTIVE_STATUSES)).order_by(Proposal.id)
     ).scalars().all()
@@ -303,6 +318,8 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
         "subtopics": [topic_summary(ctx, t) for t in subtopics],
         "proposals": related,
         "parent": topic_summary(ctx, get_topic(ctx, topic.parent_id)) if topic.parent_id else None,
+        "reopen_after": reopen_after,
+        "can_reopen": reopen_after is not None and ctx.now >= reopen_after,
         "viewer": {
             "can_post": viewer is not None and topic.status == "OPEN",
             "is_participant": viewer is not None and is_participant(ctx, topic, viewer.id),

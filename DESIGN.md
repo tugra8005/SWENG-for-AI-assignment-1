@@ -370,8 +370,9 @@ stateDiagram-v2
 - Karar Saati'nde **onay oylaması** yapılır: her seçmen kabul edebileceği tüm metinleri işaretler. Metnin puanı, onu işaretleyen seçmenlerin ağırlıkları toplamıdır.
 - **En yüksek puanı alan tek metin Karar olur.** Eşitlik varsa ya da hiç onay yoksa Karar çıkmaz ve öneri reddedilmiş sayılır.
 - Kaybeden bir metnin sahibi ya da o metni onaylamış bir seçmen Karar'a bir **Şerh** ekleyebilir. Kişi başına Karar başına bir Şerh hakkı vardır. Şerh düzenlenemez, hiçbir önerinin hedefi olamaz ve deftere yazılır.
+- Şerh, dayandığı kaybeden metni taşır: yazarın sahibi olduğu ya da onay verdiği metinlerden biri. Tek seçenek varsa o seçilir; birden fazlaysa yazar seçer. Konu sayfasında Karar kutusunun altındaki **Şerhler** bölümü her şerhi yazarı ve dayandığı metinle gösterir. Bir onaylayanın şerhi, o metne onay verdiğini kendi isteğiyle açığa çıkarır.
 - Kararlı konunun tartışma alanı salt okunur olur.
-- **Yeniden açma:** `yeniden_acma` süresi geçtikten sonra, yeni bir öneri türü eklemeden, `reopens_topic_id` alanlı bir KONU önerisiyle yapılır. Karar ve Şerhler geçmişte kalır.
+- **Yeniden açma:** `yeniden_acma` süresi geçtikten sonra, yeni bir öneri türü eklemeden, `reopens_topic_id` alanlı bir KONU önerisiyle yapılır. Karar ve Şerhler geçmişte kalır. Süre dolmadan konu sayfasındaki düğme devre dışıdır ve açılabileceği tarih yazar.
 
 ### 7.4 Silme
 
@@ -423,6 +424,17 @@ R2 bir alt kapsamın bütünün kaynağı hakkında karar vermesini engeller. Bu
 - **AB Konseyi'nde çifte çoğunluk (nitelikli çoğunluk).** Karar için üye devletlerin %55'i ve AB nüfusunun %65'i gerekir. Aynı oy iki farklı sayımda çoğunluk almalıdır.
 
 Meşveret'teki biçim bunların en dar olanıdır: ikinci sayım yalnızca orantısız etkilenen kapsam(lar) için ve yalnızca o kapsamın payı söz konusu olduğunda açılır.
+
+### 7.8 Aynı kaynağa dokunan öneriler (pay çakışması)
+
+Pay etkisi bir fark değil, **hedef paylar** olarak bildirilir ("İstanbul 4.000 → 4.200"). Öneri açılırken dayandığı paylar da saklanır (`share_base`).
+
+- **Kural.** Aynı oturumda aynı bölünebilir kaynağa dokunan öneriler kapanışta öneri numarası sırasıyla uygulanır. Bir öneri kabul oyu aldığında, kaynağın güncel payları önerinin dayandığı paylardan farklıysa önerinin hedefleri geçersizdir. Öneri uygulanmaz ve **çakışma nedeniyle uygulanamadı** (`CONFLICT`) olarak işaretlenir. Bu, deftere `ONERI_SONUCU` (sonuç `UYGULANAMADI`, çakışan öneri numarasıyla) olarak yazılır ve sonuç sayfasında açıklanır. Aynı denetim sessiz onayla kabulde de yapılır; paylar önceki bir oturumda değişmişse de geçerlidir.
+- **Ret sayılmaz.** Öneri kabul oyu almıştır; hedefleri bayatlamıştır. Bu yüzden `red_bekleme` uygulanmaz ve aynı içerik güncel paylarla hemen yeniden açılabilir.
+- **Uyarı.** Karar Saati açıldığında aynı kaynağa dokunan her önerinin pusula kartında hangi önerinin önce uygulanacağı yazar.
+- **Hâtif.** Açık ya da çakışmış bir önerinin dayandığı paylar değiştiyse Hâtif'in sayısal yorumu güncel paylara göre yeniden üretilir. Öneri anındaki yorum küçük harfle, "öneri anında" etiketiyle kalır.
+
+**Gerekçe.** İki öneri aynı pastayı aynı anda bölerse ikisini birden uygulamanın doğru bir anlamı yoktur. Ya ikincisi birincinin üzerine yazar ve birinci oylamanın sonucu sessizce silinir, ya da hedefler toplanır ve kimsenin oylamadığı bir dağılım ortaya çıkar. Seçmenler ikinci öneriyi eski paylara göre oyladı; yeni paylar üzerindeki etkisini oylamadılar. Numara sırası basit ve önceden bilinen bir kuraldır; pusuladaki uyarı onu oylamadan önce görünür kılar. Çakışan öneriyi reddetmek ise kabul oyu almış bir fikri cezalandırırdı; bu yüzden yalnızca uygulanmaz ve yeniden açılmasının önü açık kalır.
 
 ## 8. Havale
 
@@ -742,6 +754,8 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | İçerik kuralı ekleme ve kaldırma: kod verme, kodun yeniden kullanılmaması, R6, kaldırılan kurala dayanan silme | `test_regulation.py`, `test_proposals.py::test_content_rule_can_be_added_by_regulation_vote`, `::test_content_rule_can_be_removed_and_its_code_is_never_reused`, `test_decision_hour.py::test_pending_deletion_citing_a_removed_rule_gets_oracle_no`, `graph_contract.py` |
 | Silme: içerik kuralları, R7 gerekçesi, 2/3 eşiği, kendi mesajı istisnası, H4, şeritteki kural | `test_regulation.py`, `test_rules.py`, `test_oracle.py`, `test_proposals.py`, `test_decision_hour.py::test_deletion_needs_two_thirds_but_own_message_needs_simple_majority`, `test_seed.py::test_scenario_4_unjustified_deletion_is_rejected` |
 | Pay etkisi ve orantısızlık; R2'nin ters yönü; eşzamanlı çoğunluk (ayrı oylama, üyeler arası havale, sonuç satırı, payların işlenmesi) | `api/tests/domain/test_shares.py`, `test_rules.py`, `test_proposals.py`, `test_decision_hour.py::test_proposal_needs_majority_in_every_disproportionate_scope`, `::test_disproportionately_affected_scope_votes_separately_with_member_only_delegation`, `test_seed.py` (senaryo 10) |
+| Pay çakışması (taban payların saklanması, numara sırası, `CONFLICT` ret sayılmaz ve yeniden açılabilir, sessiz onayda da denetim, pusula uyarısı, Hâtif'in güncel yorumu) | `tests/integration/test_share_conflict.py`, `test_seed.py` (senaryo 14) |
+| Şerhin dayandığı kaybeden metin; yeniden açma tarihi | `test_decision_hour.py::test_dissent_names_the_losing_text_it_rests_on`, `::test_reopening_is_offered_only_after_yeniden_acma` |
 | Değiştirilemez maddeler ve izinli aralıklar (R8, aralık karşılaştırması, graf bayrağı, ikinci savunma hattı) | `test_regulation.py::test_ranges_from_the_task`, `::test_every_numeric_parameter_has_a_range_and_defaults_lie_inside` ve aşağıdakiler |
 | Yönetmeliğin defterdeki izi (başlangıç kaydı, oturum sonu kaydı, sessiz değişikliğin ve metni aynı kalan sınır genişletmesinin tespiti, açılışta tespit ve anlık görüntülerin son oylanmış değerlerle alınması, değiştirilmiş eşiğin sayılmaması, kapanışta tespit ve geri alma, bayrak ve içerik kuralı geri alma, kod düzeyindeki fark, bekleyen kaydın referans olması, kalıcı geçmiş, `tamper-regulation` aracı ve `/_dev` karşılığı) | `tests/integration/test_regulation_integrity.py`, `ledger/tests/test_replication.py::test_last_record_of_a_type_is_served_by_every_node` |
 | Değiştirilemez maddeler (ayrıntı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
@@ -770,6 +784,7 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Diskur | `Discourse` (Neo4j etiketi `Diskur`) |
 | Baskın | `raid` |
 | Pay etkisi | `share_effect` (`domain/shares.py`) |
+| Taban paylar, pay çakışması | `share_base`, `proposals.share_conflicts`, durum `CONFLICT` |
 | Orantısız etkilenen kapsam | `disproportionate` |
 | Eşzamanlı çoğunluk, alt kapsam oylaması | `concurrent`, `SessionItem.vote_scope_id` |
 | İçerik kuralı (IK-1…) | `ContentRule` (madde türü `icerik_kurali`) |

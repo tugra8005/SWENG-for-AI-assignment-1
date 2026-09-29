@@ -18,6 +18,9 @@ class ProposalStatus(StrEnum):
     VOTING = "VOTING"  # Karar Saati penceresi açık
     ACCEPTED = "ACCEPTED"
     REJECTED = "REJECTED"
+    # Kabul oyu aldı ama pay hedefleri, önce uygulanan bir öneri kaynağın paylarını değiştirdiği
+    # için geçersiz: uygulanmadı. Ret sayılmaz (red_bekleme yok); aynı içerikle yeniden açılabilir.
+    CONFLICT = "CONFLICT"
 
 
 class Lane(StrEnum):

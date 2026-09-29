@@ -139,7 +139,9 @@ function Tally({ result, onReplay }: { result: any; onReplay: () => void }) {
           <Stamp
             reduced={reduced}
             text={
-              binary
+              result.overall?.conflict
+                ? 'UYGULANAMADI'
+                : binary
                 ? // Eşzamanlı çoğunlukta tek oylamanın sonucu önerinin kaderi değildir; özet satırı söyler.
                   result.concurrent || result.overall?.summary
                   ? result.passed

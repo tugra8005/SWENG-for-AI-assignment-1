@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { api } from '@/api/client';
 import {
   Body,
+  Choice,
   Button,
   CensorStrip,
   type DeletionBasis,
@@ -22,7 +23,7 @@ import {
 } from '@/components/paper';
 import { maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
-import { fmtDateTime, STATUS_LABELS, TYPE_LABELS, withDative } from '@/lib/format';
+import { fmtDateAblative, fmtDateTime, STATUS_LABELS, TYPE_LABELS, withDative } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -114,12 +115,18 @@ function Message({ m, topic, onChanged }: { m: Msg; topic: any; onChanged: () =>
 function Decision({ d, onChanged }: { d: any; onChanged: () => void }) {
   const { me } = useAuth();
   const [text, setText] = useState('');
+  const [basis, setBasis] = useState<string>('');
   const [error, setError] = useState<unknown>(null);
   const [open, setOpen] = useState(false);
+  const options: any[] = d.viewer_dissent_options ?? [];
+  const chosen = options.length === 1 ? String(options[0].id) : basis;
   const submit = async () => {
     setError(null);
     try {
-      await api(`/decisions/${d.id}/dissents`, { method: 'POST', body: { text } });
+      await api(`/decisions/${d.id}/dissents`, {
+        method: 'POST',
+        body: { text, closure_text_id: chosen ? Number(chosen) : null },
+      });
       setOpen(false);
       setText('');
       onChanged();
@@ -128,41 +135,69 @@ function Decision({ d, onChanged }: { d: any; onChanged: () => void }) {
     }
   };
   return (
-    <View style={st.decision}>
-      <Kicker style={{ color: paper.seal }}>Karar · №{d.proposal_id} numaralı kapanış oylaması</Kicker>
-      <Text style={st.decisionText}>{d.text}</Text>
-      <View style={st.actions}>
-        <Seal hash={d.ledger_hash} label="karar" />
-        <Muted style={{ fontSize: 13 }}>{fmtDateTime(d.created_at)}</Muted>
-      </View>
-      {d.dissents.length ? <Rule faint /> : null}
-      {d.dissents.map((x: any) => (
-        <View key={x.id} style={{ marginTop: 6 }}>
-          <Kicker>Şerh — {x.author}</Kicker>
-          <Body style={{ fontFamily: fonts.serifItalic }}>{x.text}</Body>
-          <Seal hash={x.ledger_hash} label="şerh" />
+    <>
+      <View style={st.decision}>
+        <Kicker style={{ color: paper.seal }}>Karar · №{d.proposal_id} numaralı kapanış oylaması</Kicker>
+        <Text style={st.decisionText}>{d.text}</Text>
+        <View style={st.actions}>
+          <Seal hash={d.ledger_hash} label="karar" />
+          <Muted style={{ fontSize: 13 }}>{fmtDateTime(d.created_at)}</Muted>
         </View>
-      ))}
-      {me && d.viewer_can_dissent ? (
-        open ? (
-          <View style={{ marginTop: 12 }}>
-            <Field
-              label="Şerh metni"
-              value={text}
-              onChangeText={setText}
-              multiline
-              hint="Şerh silinemez ve düzenlenemez; kaybeden metnin sahibi ya da destekçisi ekleyebilir."
-            />
-            <ErrorNotice error={error} />
-            <Button label="Şerhi mühürle" onPress={submit} disabled={!text.trim()} />
+      </View>
+      <Section title="Şerhler" aside={<Kicker>{d.dissents.length ? `${d.dissents.length} şerh` : 'kaybeden tarafın sözü'}</Kicker>}>
+        <Muted style={{ fontSize: 14 }}>
+          Kaybeden metinlerin sahipleri ve o metinlere onay verenler karara şerh düşebilir. Şerh silinemez,
+          düzenlenemez ve deftere yazılır.
+        </Muted>
+        {d.dissents.map((x: any) => (
+          <View key={x.id} style={st.dissent}>
+            <Kicker>Şerh · {x.author}</Kicker>
+            {x.based_on ? (
+              <Text style={st.dissentBasis}>
+                Dayandığı metin: #{x.based_on.id} «{x.based_on.text}» · {x.based_on.author}
+              </Text>
+            ) : null}
+            <Body style={{ fontFamily: fonts.serifItalic }}>{x.text}</Body>
+            <View style={st.actions}>
+              <Seal hash={x.ledger_hash} label="şerh" />
+              <Muted style={{ fontSize: 13 }}>{fmtDateTime(x.created_at)}</Muted>
+            </View>
           </View>
-        ) : (
-          <View style={{ marginTop: 10 }}>
-            <Button label="Şerh ekle" variant="quiet" onPress={() => setOpen(true)} />
-          </View>
-        )
-      ) : null}
-    </View>
+        ))}
+        {!d.dissents.length ? <Muted style={{ fontSize: 14 }}>Henüz şerh yok.</Muted> : null}
+        {me && d.viewer_can_dissent ? (
+          open ? (
+            <View style={{ marginTop: 12, gap: 6 }}>
+              {options.length > 1 ? (
+                <Choice
+                  label="Dayandığı kaybeden metin"
+                  value={basis}
+                  options={options.map((o) => ({ value: String(o.id), label: `#${o.id} ${o.text}` }))}
+                  onChange={setBasis}
+                />
+              ) : (
+                <Text style={st.dissentBasis}>
+                  Dayandığı metin: #{options[0]?.id} «{options[0]?.text}» · {options[0]?.author}
+                </Text>
+              )}
+              <Field
+                label="Şerh metni"
+                value={text}
+                onChangeText={setText}
+                multiline
+                hint="Şerh silinemez ve düzenlenemez."
+              />
+              <ErrorNotice error={error} />
+              <Button label="Şerhi mühürle" onPress={submit} disabled={!text.trim() || !chosen} />
+            </View>
+          ) : (
+            <View style={{ marginTop: 10 }}>
+              <Button label="Şerh ekle" variant="secondary" small onPress={() => setOpen(true)} />
+            </View>
+          )
+        ) : null}
+      </Section>
+    </>
   );
 }
 
@@ -260,7 +295,18 @@ export default function TopicPage() {
               ) : null}
             </>
           ) : (
-            <Button label="Yeniden açma öner" variant="secondary" small onPress={() => propose({ type: 'KONU', reopen: t.id })} />
+            <View style={{ gap: 4 }}>
+              <Button
+                label="Yeniden açma öner"
+                variant="secondary"
+                small
+                disabled={!t.can_reopen}
+                onPress={() => propose({ type: 'KONU', reopen: t.id })}
+              />
+              {!t.can_reopen && t.reopen_after ? (
+                <Muted style={{ fontSize: 13 }}>Karar {fmtDateAblative(t.reopen_after)} sonra yeniden açılabilir.</Muted>
+              ) : null}
+            </View>
           )}
           <Button label="Konuyu silme öner" variant="quiet" onPress={() => propose({ type: 'SILME', topic: t.id })} />
         </View>
@@ -344,6 +390,8 @@ const st = StyleSheet.create({
     backgroundColor: paper.sheet,
     gap: 6,
   },
+  dissent: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: paper.hairline, gap: 4 },
+  dissentBasis: { fontFamily: fonts.serif, fontSize: 14, lineHeight: 20, color: paper.inkSoft },
   decisionText: { fontFamily: fonts.serifMedium, fontSize: 22, lineHeight: 30, color: paper.ink },
   related: {
     flexDirection: 'row',

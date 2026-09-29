@@ -129,6 +129,13 @@ def test_decision_hour_runs_all_voting_scenarios(seeded):
     assert (cut["yes"], cut["cast"], cut["passed"], cut["overall"]["summary"]) == (13, 21, True, None)
     assert dict(later.graph.resource("butce").shares) == {
         "sehir:istanbul": 3600, "sehir:ankara": 5400, "sehir:izmir": 4500, "sehir:bursa": 4500}
+    # 14. Pay çakışması: artış kabul oyu alır ama kesinti önce uygulandı → uygulanmaz, ret değil.
+    assert ids["artis"] == ids["kesinti"] + 1
+    raise_ = result(later, session, ids["artis"])
+    assert (raise_["yes"], raise_["cast"], raise_["passed"]) == (13, 21, True)
+    assert raise_["overall"]["conflict"]["by"] == [ids["kesinti"]]
+    p = later.db.get(Proposal, ids["artis"])
+    assert p.status == "CONFLICT" and "çakışma nedeniyle uygulanamadı" in p.outcome_note
 
     # 8. Hâtif: yanlış alan etiketi yüzünden HAYIR, ağırlığı 3.
     rh = result(later, session, ids["hatif"])

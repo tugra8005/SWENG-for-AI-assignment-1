@@ -54,6 +54,28 @@ export const fmtPercent = (part: number, whole: number) => `%${Math.round((part 
 /** Tek ondalıklı Türkçe yüzde: 0.615 → "%61,5". */
 export const fmtPercent1 = (ratio: number) => `%${decimalFmt.format(ratio * 100)}`;
 
+const UNIT_ABLATIVE = ['', "'den", "'den", "'ten", "'ten", "'ten", "'dan", "'den", "'den", "'dan"];
+const TENS_ABLATIVE = ['', "'dan", "'den", "'dan", "'tan", "'den", "'tan", "'ten", "'den", "'dan"];
+
+/** Sayının ayrılma hâli, okunuşuna göre: 2026 → "'dan", 2027 → "'den", 2025 → "'ten". */
+export function ablativeSuffix(n: number): string {
+  if (n % 10) return UNIT_ABLATIVE[n % 10];
+  if (n % 100) return TENS_ABLATIVE[(n % 100) / 10];
+  if (n % 1_000_000) return "'den"; // yüz, bin
+  return "'dan"; // milyon, milyar
+}
+
+const numericDateFmt = new Intl.DateTimeFormat('tr-TR', {
+  timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric',
+});
+/** "29.12.2026" */
+export const fmtDateNumeric = (iso?: string | null) => (iso ? numericDateFmt.format(new Date(iso)) : '—');
+/** "29.12.2026'dan": tarihin ayrılma hâli (yılın okunuşuna göre). */
+export const fmtDateAblative = (iso: string) => {
+  const s = fmtDateNumeric(iso);
+  return `${s}${ablativeSuffix(Number(s.slice(-4)))}`;
+};
+
 const UNIT_DATIVE = ['', "'e", "'ye", "'e", "'e", "'e", "'ya", "'ye", "'e", "'a"];
 const TENS_DATIVE = ['', "'a", "'ye", "'a", "'a", "'ye", "'a", "'e", "'e", "'a"];
 
@@ -97,6 +119,7 @@ export const STATUS_LABELS: Record<string, string> = {
   VOTING: 'Oylamada',
   ACCEPTED: 'Kabul edildi',
   REJECTED: 'Reddedildi',
+  CONFLICT: 'Çakışma nedeniyle uygulanamadı',
 };
 
 export const TYPE_LABELS: Record<string, string> = {

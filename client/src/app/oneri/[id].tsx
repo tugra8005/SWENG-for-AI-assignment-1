@@ -42,15 +42,36 @@ function ObjectionMeter({ count, threshold }: { count: number; threshold: number
   );
 }
 
-function OracleOpinion({ text }: { text: string }) {
+function OracleOpinion({ text, current }: { text: string; current?: { lines: string[]; cause: number[] } }) {
+  const lines = (t: string, small?: boolean) =>
+    t.split('\n').map((line, i) => (
+      <Text
+        key={i}
+        style={[
+          st.oracleLine,
+          small && st.oracleLineSmall,
+          !small && line.startsWith('Etiket önerisi') && { fontFamily: fonts.monoBold },
+        ]}
+      >
+        {line}
+      </Text>
+    ));
   return (
     <View style={st.oracle}>
       <Kicker style={{ color: paper.ink }}>Bilirkişi görüşü · Hâtif (kural tabanlı)</Kicker>
-      {text.split('\n').map((line, i) => (
-        <Text key={i} style={[st.oracleLine, line.startsWith('Etiket önerisi') && { fontFamily: fonts.monoBold }]}>
-          {line}
-        </Text>
-      ))}
+      {current ? (
+        <>
+          <Text style={st.oracleStage}>
+            Güncel paylara göre
+            {current.cause.length ? ` (pay tablosu ${current.cause.map((n) => `№${n}`).join(', ')} ile değişti)` : ''}
+          </Text>
+          {lines(current.lines.join('\n'))}
+          <Text style={[st.oracleStage, { marginTop: 8 }]}>Öneri anında</Text>
+          {lines(text, true)}
+        </>
+      ) : (
+        lines(text)
+      )}
     </View>
   );
 }
@@ -369,7 +390,7 @@ export default function ProposalPage() {
         </View>
       )}
 
-      {p.oracle_comment ? <OracleOpinion text={p.oracle_comment} /> : null}
+      {p.oracle_comment ? <OracleOpinion text={p.oracle_comment} current={p.oracle_current} /> : null}
 
       <View style={[st.row, { marginTop: 16 }]}>
         <Seal hash={p.ledger_hash} label="ilan" />
@@ -398,6 +419,8 @@ const st = StyleSheet.create({
     gap: 4,
   },
   oracleLine: { fontFamily: fonts.mono, fontSize: 13, lineHeight: 19, color: paper.ink },
+  oracleLineSmall: { fontSize: 11, lineHeight: 16, color: paper.muted },
+  oracleStage: { fontFamily: fonts.monoMedium, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: paper.seal, marginTop: 4 },
   quote: { borderLeftWidth: 3, borderLeftColor: paper.hairline, paddingLeft: 12, marginVertical: 6 },
   text: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: paper.hairline, gap: 4 },
 });

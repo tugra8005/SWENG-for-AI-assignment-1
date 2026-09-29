@@ -24,6 +24,7 @@ class DelegationIn(BaseModel):
 
 class DissentIn(BaseModel):
     text: str
+    closure_text_id: int | None = None  # dayandığı kaybeden metin (tek seçenek varsa gerekmez)
 
 
 @router.get("/decision-hour")
@@ -58,7 +59,7 @@ def session(session_id: int, ctx: Ctx = Depends(get_ctx)) -> dict:
 @router.post("/decisions/{decision_id}/dissents", status_code=status.HTTP_201_CREATED)
 def dissent(decision_id: int, body: DissentIn, ctx: Ctx = Depends(get_ctx),
             user: User = Depends(current_user)) -> dict:
-    d = decision_hour.add_dissent(ctx, user, decision_id, body.text)
+    d = decision_hour.add_dissent(ctx, user, decision_id, body.text, body.closure_text_id)
     return {"id": d.id}
 
 

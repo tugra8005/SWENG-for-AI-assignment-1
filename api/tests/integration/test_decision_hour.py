@@ -312,6 +312,43 @@ def test_closure_approval_vote_and_dissent(ctx, client):
     assert [x["author"] for x in view["decision"]["dissents"]] == ["ceren", "aylin"]
 
 
+def test_dissent_names_the_losing_text_it_rests_on(ctx, client, ledger):
+    ctx, (a, b, c), topic, p, texts = _closure_with_three_texts(ctx)
+    e = make_user(ctx, "ebru")
+    session = decision_hour.open_session(ctx)
+    decision_hour.cast_vote(ctx, a, p.id, [texts[1]])
+    decision_hour.cast_vote(ctx, b, p.id, [texts[1]])
+    decision_hour.cast_vote(ctx, e, p.id, [texts[0], texts[2]])  # iki kaybeden metni onayladı
+    later = close(ctx, session)
+    view = client.get(f"/topics/{topic.id}", headers=headers_for(later, e)).json()
+    decision_id = view["decision"]["id"]
+    assert [o["id"] for o in view["decision"]["viewer_dissent_options"]] == [texts[0], texts[2]]
+    with pytest.raises(DomainError):  # birden fazla seçenek: dayandığı metin seçilmeli
+        decision_hour.add_dissent(later, e, decision_id, "Geç saat daha adil.")
+    decision_hour.add_dissent(later, e, decision_id, "Geç saat daha adil.", texts[2])
+    decision_hour.add_dissent(later, c, decision_id, "24:00 olmalıydı.")  # tek seçenek: kendi metni
+    view = client.get(f"/topics/{topic.id}").json()
+    assert [(x["author"], x["based_on"]["id"], x["based_on"]["author"])
+            for x in view["decision"]["dissents"]] == [
+        ("ebru", texts[2], "ceren"), ("ceren", texts[2], "ceren")]
+    serh = ledger.of_type("SERH")[0]["payload"]
+    assert serh["dayandigi_metin"] == {"id": texts[2], "metin": "Parklar 24:00'te kapansın."}
+
+
+def test_reopening_is_offered_only_after_yeniden_acma(ctx, client):
+    ctx, (a, _b, _c), topic, p, texts = _closure_with_three_texts(ctx)
+    session = decision_hour.open_session(ctx)
+    decision_hour.cast_vote(ctx, a, p.id, [texts[1]])
+    later = close(ctx, session)
+    view = client.get(f"/topics/{topic.id}").json()
+    closed_at = datetime.fromisoformat(view["decision"]["created_at"])  # kapanış anı
+    assert datetime.fromisoformat(view["reopen_after"]) == closed_at + timedelta(days=90)
+    assert view["can_reopen"] is False
+    after = advance(later, timedelta(days=91))
+    assert client.get(f"/topics/{topic.id}").json()["can_reopen"] is True
+    assert after.now > closed_at
+
+
 def test_closure_tie_gives_no_decision(ctx):
     ctx, (a, b, _c), _topic, p, texts = _closure_with_three_texts(ctx)
     session = decision_hour.open_session(ctx)
