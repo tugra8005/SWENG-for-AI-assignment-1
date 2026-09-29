@@ -1,8 +1,15 @@
 """Zamanlayıcı: sahte saate göre vadesi gelen işleri sırayla, her birini kendi vade anında işler.
 
 API içindeki arka plan iş parçacığı ``interval`` saniyede bir ``tick`` çağırır; geliştirme
-CLI'ı ``advance-time`` ile aynı fonksiyonu hedef anla çağırır. İki süreç aynı anda çalışırsa
-PostgreSQL advisory lock ikincisini bekletir.
+CLI'ı ``advance-time`` ile aynı fonksiyonu hedef anla çağırır.
+
+Kilit: tek bir PostgreSQL advisory lock (oturum düzeyinde, ayrı bir bağlantıda tutulur; işlerin
+içindeki ara commit'ler onu bırakmaz). ``tick`` bu kilidi alır. Zamanı değiştiren geliştirme
+komutları (``advance-time``, ``run-karar-saati``, ``seed``) kilidi saati değiştirmeden önce alır
+ve komut bitene kadar tutar; aradaki bütün vadesi gelen işleri kendileri işler, çıktıları da
+komutun çıktısına düşer. Arka plan iş parçacığı kilidi beklemez, dener: alamazsa o adımı atlar
+ve saati ancak kilidi aldıktan sonra okur. Böylece iki süreç aynı işi işleyemez; yine de her iş
+idempotenttir (durumu denetler, bir kez yazar).
 
 Olay kaynakları:
 - sessiz onay süresi biten hızlı şerit önerileri,
@@ -17,10 +24,12 @@ from __future__ import annotations
 
 import logging
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import datetime
 
-from sqlalchemy import select, text
+from sqlalchemy import Engine, select, text
+from sqlalchemy.orm import Session
 
 from mesveret import clock
 from mesveret.context import Ctx
@@ -31,6 +40,60 @@ from mesveret.services import ledger, proposals
 log = logging.getLogger("mesveret.scheduler")
 
 TICK_LOCK_KEY = 515151
+_held = threading.local()  # bu iş parçacığının tuttuğu kilitler (iç içe alım için)
+
+
+def _engine(bind: Engine | Session) -> Engine:
+    return bind.get_bind() if isinstance(bind, Session) else bind
+
+
+@contextmanager
+def exclusive(bind: Engine | Session, *, wait: bool = True) -> Iterator[bool]:
+    """Zamanlayıcı kilidi. ``wait=False`` ise kilit başkasındaysa beklemez, ``False`` verir.
+
+    Kilit ayrı bir bağlantıda oturum düzeyinde tutulur: kilidi alan kodun kendi oturumundaki
+    commit'ler kilidi bırakmaz. Aynı iş parçacığı kilidi iç içe alabilir (CLI komutu kilidi
+    tutarken ``tick`` çağırır)."""
+    engine = _engine(bind)
+    key = str(engine.url)
+    depth: dict[str, int] = getattr(_held, "depth", None) or {}
+    _held.depth = depth
+    if depth.get(key):
+        depth[key] += 1
+        try:
+            yield True
+        finally:
+            depth[key] -= 1
+        return
+    conn = engine.connect()
+    try:
+        if wait:
+            conn.execute(text("SELECT pg_advisory_lock(:k)"), {"k": TICK_LOCK_KEY})
+            got = True
+        else:
+            got = bool(conn.execute(text("SELECT pg_try_advisory_lock(:k)"),
+                                    {"k": TICK_LOCK_KEY}).scalar())
+        conn.commit()  # oturum düzeyindeki kilit commit'ten sonra da sürer
+    except Exception:
+        conn.invalidate()
+        conn.close()
+        raise
+    if not got:
+        conn.close()
+        yield False
+        return
+    depth[key] = 1
+    try:
+        yield True
+    finally:
+        depth[key] = 0
+        try:
+            conn.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": TICK_LOCK_KEY})
+            conn.commit()
+        except Exception:  # noqa: BLE001  (bağlantı düşerse kilit de düşer)
+            conn.invalidate()
+        finally:
+            conn.close()
 
 Event = tuple[datetime, str, Callable[[Ctx], None]]
 
@@ -101,7 +164,11 @@ def _state(ctx: Ctx) -> SchedulerState:
 def tick(ctx: Ctx, until: datetime | None = None) -> list[str]:
     """``until`` anına kadar vadesi gelen işleri işler; işlenenlerin açıklamalarını döner."""
     until = until or ctx.now
-    ctx.db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": TICK_LOCK_KEY})
+    with exclusive(ctx.db):
+        return _tick_locked(ctx, until)
+
+
+def _tick_locked(ctx: Ctx, until: datetime) -> list[str]:
     st = _state(ctx)
     done: list[str] = []
     while True:
@@ -122,23 +189,40 @@ def tick(ctx: Ctx, until: datetime | None = None) -> list[str]:
     return done
 
 
+def background_tick(sessionmaker, graph, settings, ledger_client) -> list[str] | None:
+    """Arka plan iş parçacığının bir adımı. Kilit başkasındaysa (bir geliştirme komutu zamanı
+    ilerletiyor) hiçbir şey yapmaz ve ``None`` döner; o komut aradaki işleri kendisi işler. Saat
+    kilit alındıktan sonra okunur."""
+    db = sessionmaker()
+    try:
+        with exclusive(db, wait=False) as got:
+            if not got:
+                return None
+            ctx = Ctx(db=db, graph=graph, now=clock.now(db), settings=settings,
+                      ledger=ledger_client)
+            return tick(ctx)
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
 def start_background(state) -> threading.Event:
     stop = threading.Event()
 
     def loop() -> None:
         while not stop.wait(state.settings.scheduler_interval_seconds):
-            db = state.sessionmaker()
             try:
-                now = clock.now(db)
-                ctx = Ctx(db=db, graph=state.graph, now=now, settings=state.settings,
-                          ledger=state.ledger)
-                for line in tick(ctx):
-                    log.info("işlendi: %s", line)
+                lines = background_tick(state.sessionmaker, state.graph, state.settings,
+                                        state.ledger)
             except Exception:
                 log.exception("zamanlayıcı hatası")
-                db.rollback()
-            finally:
-                db.close()
+                continue
+            if lines is None:
+                log.debug("zamanlayıcı kilidi bir geliştirme komutunda; adım atlandı")
+            for line in lines or []:
+                log.info("işlendi: %s", line)
 
     threading.Thread(target=loop, name="zamanlayici", daemon=True).start()
     return stop

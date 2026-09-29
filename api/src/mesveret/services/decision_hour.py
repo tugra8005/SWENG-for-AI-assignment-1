@@ -502,13 +502,20 @@ def due_events(ctx: Ctx, until: datetime, last: datetime | None) -> list:
     if current is not None and current.closes_at <= until:
         sid = current.id
         events.append((current.closes_at, f"Karar Saati #{sid} kapandı",
-                       lambda c, sid=sid: close_session(c, get_session(c, sid))))
+                       lambda c, sid=sid: _close_scheduled(c, sid)))
     if last is not None:
         occ = next_occurrence(last, ctx.reg.decision_hour())
         if occ <= until:
             events.append((occ, "haftalık Karar Saati açıldı",
                            lambda c, occ=occ: _open_scheduled(c, occ)))
     return events
+
+
+def _close_scheduled(ctx: Ctx, session_id: int) -> None:
+    """Zamanlanmış kapanış idempotenttir: oturum zaten kapandıysa hiçbir şey yazmaz."""
+    session = get_session(ctx, session_id)
+    if session.status == "OPEN":
+        close_session(ctx, session)
 
 
 def _open_scheduled(ctx: Ctx, occ: datetime) -> None:

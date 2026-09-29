@@ -585,9 +585,14 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
 ## 12. Zaman ve geliştirme CLI'ı
 
 - **Sahte saat:** PostgreSQL'de tek satırlık ofset tutulur, `now = gerçek_utc + ofset`. Tüm zaman karşılaştırmaları bu saatle yapılır.
-- **Zamanlayıcı:** API içindeki arka plan iş parçacığı 5 saniyede bir `tick(now)` çağırır. CLI ile eşzamanlı çalışmayı bir PostgreSQL advisory lock engeller.
+- **Zamanlayıcı:** API içindeki arka plan iş parçacığı 5 saniyede bir `tick(now)` çağırır. Vadesi gelen işler: havale süresi dolumu, havale kabul süresi, sessiz onay bitişi, rakip metin süresi, haftalık Karar Saati açılışı ve kapanışı.
+- **Zamanlayıcı kilidi:** tek bir PostgreSQL advisory lock (`scheduler.exclusive`).
+  - Kilit oturum düzeyindedir ve ayrı bir bağlantıda tutulur; işlerin içindeki ara commit'ler onu bırakmaz. Önceki sürüm işlem düzeyinde bir kilit kullanıyordu: haftalık oturumu açan işin içindeki commit kilidi tick'in ortasında bırakıyordu. İki süreç aynı anı işlerken aynı açılış işi iki tarafta birden çalışıyordu (`test_scheduler_lock.py` bunu eski kilitle yakalar).
+  - Zamanı değiştiren geliştirme komutları (`advance-time`, `run-karar-saati`, `run-karar-saati --close`, `seed`) kilidi saati değiştirmeden önce alır ve komut bitene kadar tutar. Aradaki bütün vadesi gelen işleri kendileri işler; satırlar komutun çıktısına düşer.
+  - Arka plan iş parçacığı kilidi beklemez, dener. Alamazsa o adımı atlar; saati ancak kilidi aldıktan sonra okur. Önceden komut saati ilerlettikten sonra arka plan iş parçacığı araya girip işleri kapabiliyordu; satırlar komut çıktısı yerine API günlüğüne düşüyordu.
+  - Her iş ayrıca idempotenttir: durumu denetler ve ikinci çalıştırmada deftere yazmaz (havale dolumu bitişi, kabul süresi isteğin durumunu, sessiz onay ve rakip süresi önerinin durumunu, açılış `scheduled_for`'u, kapanış oturumun durumunu denetler).
 - **`meşveret-dev`** (ASCII takma adı `mesveret-dev`), yalnızca `ENV=dev` iken çalışır:
-  - `advance-time --hours N | --days N | --to ISO` — ofseti ilerletir; aradaki işleri (sessiz onay bitişi, rakip süresi bitişi, haftalık Karar Saati açılış ve kapanışı) sırayla, her birini kendi vade anında işler.
+  - `advance-time --hours N | --days N | --to ISO` — ofseti ilerletir; aradaki işleri (havale dolumu ve kabul süresi, sessiz onay bitişi, rakip süresi bitişi, haftalık Karar Saati açılış ve kapanışı) zamanlayıcı kilidinin altında sırayla, her birini kendi vade anında işler ve her birini bir satırla yazar.
   - `run-karar-saati` — hemen bir oturum açar: anlık görüntü, kilit, baskın tespiti, Hâtif oyu, ardından tohumdaki oy planına göre tohum kullanıcılarının oyları (`--no-scripted-votes` ile kapatılır). Olgunlaşmamış öneriler oturuma alınmaz; komut bunları ve oylanacakları ilk oturumu listeler.
   - `run-karar-saati --close` — saati pencere sonuna ilerletir, oyları açar, sayar ve sonuçları uygular.
   - `tamper-regulation MADDE JSON` — bir yönetmelik değerini oylamasız, doğrudan graf deposuna yazar; öneri, R8, değişiklik geçmişi ve defter kaydı yoktur. Biçim yine doğrulanır (uygulama okuyamayacağı bir değerle çökmesin), izinli aralık bilerek atlanır. Operatörün sessiz değişikliğini taklit eder (§5.3, README senaryo 12).
@@ -655,6 +660,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Yönetmelik hash'inin zamanı | Kurulumda ve her oturum kapanışında; meşru değişiklikler yalnızca oturum kapanışında uygulanır |
 | Oylamasız farkın tespiti ve geri alınması | Açılışta anlık görüntülerden önce ve kapanışta oylar sayılmadan önce. Madde başına bir tespit ve bir geri alma kaydı; kayıt aşamayı taşır. Karşılaştırmanın referansı outbox'taki son durum satırıdır, deftere ulaştıysa defterdeki kopyası |
 | Kod düzeyindeki fark | İzinli aralık ve kodla eklenen madde tespit edilip yazılır, geri alınamaz |
+| Zaman ilerletilirken arka plan zamanlayıcısı | Bekler: komut kilidi saati değiştirmeden önce alır, aradaki işleri kendisi işler; arka plan adımı kilidi alamazsa atlar |
 | Havale bitişinin yeri | HAVALE ilişkisinin `bitis` özelliği; kabul edildiği ya da yenilendiği andaki `havale_suresi` ile hesaplanır, madde değişince yeniden hesaplanmaz |
 | Bekleyen havalenin yeri | PostgreSQL'de `DelegationRequest` satırı; grafa yalnızca kabul edilen havale girer, böylece ağırlık ve anlık görüntü bekleyeni yapısı gereği görmez |
 | Hâtif'e verilen havale | Kural gereği hemen kabul edilir (Hâtif giriş yapamaz; oyu zaten açıktır) |
@@ -815,6 +821,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Tasarım denetimi sonrası: madde adları ve grupları, okunur öneri başlığı, Türkçe yüzde biçimi, aktif silme işareti, benzersiz Mahzen başlıkları | `test_regulation.py::test_every_parameter_has_a_readable_title_and_a_group`, `test_text.py`, `test_proposals.py::test_regulation_proposal_validates_value_and_goes_to_slow_lane`, `::test_deletion_goes_to_slow_lane_and_hides_content`, `test_seed.py::test_cellar_has_decaying_threads` |
 | Değiştirilemez maddeler (ayrıntı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
 | Havale kabulü (bekleyen havale ağırlığa sayılmaz ve oy verende kalır; pencereden hemen önce verilen kabulsüz havale gizli oyu açığa çıkarmaz; ret, kabul süresi, iade ve pencere kilidi; "havale kabul etmiyorum"; zincirin ek onay istememesi; eskisinin yenisi kabul edilene kadar kalması; yenilemenin yeniden kabul istememesi; kabul anında R4; Hâtif) | `tests/integration/test_delegation_acceptance.py`, `test_seed.py::test_seed_delegations_start_accepted_with_one_pending_and_one_rejected` |
+| Zamanlayıcı kilidi ve işlerin idempotentliği (her iş ikinci kez çalışınca yazmaz; aynı aralığa ikinci tick boş; iki süreç aynı anda tick ederken her iş bir kez; komut kilidi tutarken arka plan adımı atlar; advance-time aradaki işleri kendisi işler) | `tests/integration/test_scheduler_lock.py` |
 | Mahzen çürümesi (başlıkta en fazla %15, gövdede %25; ilk %70'te bozulma yok; blok yalnızca son %5'te; çoğunluk benzer karakter; deterministik) | `client/scripts/check-decay.mjs` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 

@@ -18,16 +18,25 @@ from mesveret.services import decision_hour, regulation, scheduler
 
 
 def advance(ctx: Ctx, target: datetime) -> dict:
-    start = clock.now(ctx.db)
-    if target <= start:
-        raise DomainError("Hedef an şimdiden sonra olmalı.")
-    clock.set_now(ctx.db, target)
-    ctx.db.commit()
-    done = scheduler.tick(ctx.at(target), target)
+    """Saati ilerletir ve aradaki bütün vadesi gelen işleri kendisi işler. Zamanlayıcı kilidini
+    saati değiştirmeden önce alır: arka plan iş parçacığı bu sırada bekler, işler bu komutun
+    çıktısına düşer."""
+    with scheduler.exclusive(ctx.db):
+        start = clock.now(ctx.db)
+        if target <= start:
+            raise DomainError("Hedef an şimdiden sonra olmalı.")
+        clock.set_now(ctx.db, target)
+        ctx.db.commit()
+        done = scheduler.tick(ctx.at(target), target)
     return {"from": start, "to": target, "events": done}
 
 
 def open_decision_hour(ctx: Ctx, *, scripted: bool) -> dict:
+    with scheduler.exclusive(ctx.db):
+        return _open_decision_hour(ctx.at(clock.now(ctx.db)), scripted=scripted)
+
+
+def _open_decision_hour(ctx: Ctx, *, scripted: bool) -> dict:
     scheduler.ensure_state(ctx)
     session = decision_hour.open_session(ctx, scripted=False)
     problems = decision_hour.apply_vote_plan(ctx, session) if scripted else []
@@ -43,13 +52,15 @@ def open_decision_hour(ctx: Ctx, *, scripted: bool) -> dict:
 
 
 def close_decision_hour(ctx: Ctx) -> dict:
-    session = decision_hour.open_session_row(ctx)
-    if session is None:
-        raise Conflict("Açık bir Karar Saati oturumu yok.")
-    target = max(session.closes_at, clock.now(ctx.db))
-    clock.set_now(ctx.db, target)
-    ctx.db.commit()
-    done = scheduler.tick(ctx.at(session.closes_at), session.closes_at)
+    """Saati pencere sonuna ilerletir ve oturumu kilidin altında kapatır (bkz. ``advance``)."""
+    with scheduler.exclusive(ctx.db):
+        session = decision_hour.open_session_row(ctx)
+        if session is None:
+            raise Conflict("Açık bir Karar Saati oturumu yok.")
+        target = max(session.closes_at, clock.now(ctx.db))
+        clock.set_now(ctx.db, target)
+        ctx.db.commit()
+        done = scheduler.tick(ctx.at(target), target)
     return {"session": decision_hour.session_view(ctx, session.id), "events": done,
             "silent": regulation.session_silent_changes(ctx, session.id, "kapanis")}
 

@@ -68,7 +68,7 @@ Yalnızca `ENV=dev` iken çalışır. Tüm zamanlanmış işler sahte bir saate 
 |---|---|
 | `meşveret-dev seed --reset` | Her şeyi (PostgreSQL, Neo4j, üç defter düğümü) sıfırlar, tohum veriyi ve senaryoları kurar. Sahte saat: Salı 29 Eylül 2026, 10:00 İstanbul |
 | `meşveret-dev now` | Sahte saati ve bir sonraki Karar Saati'ni gösterir |
-| `meşveret-dev advance-time --hours 25` | Sahte saati ilerletir; aradaki işleri (sessiz onay bitişi, rakip metin süresi, haftalık Karar Saati) kendi vade anlarında sırayla işler. `--days`, `--minutes`, `--to 2026-10-04T20:00:00+03:00` da kullanılabilir |
+| `meşveret-dev advance-time --hours 25` | Sahte saati ilerletir; aradaki işleri (havale dolumu ve kabul süresi, sessiz onay bitişi, rakip metin süresi, haftalık Karar Saati) kendi vade anlarında sırayla işler ve her birini bir satırla yazar. Komut sürerken API'nin arka plan zamanlayıcısı bekler; işlerin tümü bu komutun çıktısında görünür. `--days`, `--minutes`, `--to 2026-10-04T20:00:00+03:00` da kullanılabilir |
 | `meşveret-dev run-karar-saati` | Hemen bir Karar Saati oturumu açar (anlık görüntü, havale kilidi, baskın tespiti, Hâtif'in oyu) ve tohumdaki oy planına göre tohum kullanıcılarının oylarını verir. `--no-scripted-votes` ile yalnızca oturumu açar |
 | `meşveret-dev run-karar-saati --close` | Saati pencere sonuna ilerletir, oyları açar, sayar ve sonuçları uygular |
 | `meşveret-dev tamper-regulation MADDE 'JSON'` | Yönetmelikteki bir değeri oylamasız, doğrudan veritabanında değiştirir: öneri, R8 denetimi, değişiklik geçmişi ve defter kaydı yoktur. Operatörün sessiz değişikliğini taklit eder (senaryo 12) |
@@ -138,7 +138,13 @@ Havale alan kişi kabul edene kadar yürürlüğe girmez ve oy verende kalır (D
 3. **Reddet**'e basın: şerit kaybolur, deftere `HAVALE_RED` (`neden: reddedildi`) yazılır; **elif** olarak Havale sayfasında **Kent · aylin · reddedildi** görünür. **Kabul et** derseniz havale grafa girer ve 180 günlük süresi o anda başlar; deftere `HAVALE_KABUL` yazılır. Kabul, elif'in Kent ve alt alanlarındaki oyunu aylin'in zincirine ekler: tohumdaki oy planı elif için bu alanlarda oy veremez ve sonuç tablosundaki sayılar değişebilir. Tablodaki sonuçları görmek istiyorsanız kabulü Karar Saati kapandıktan sonra deneyin ya da Reddet'i seçin.
 4. **ceren** olarak **Havale** → *Size gelen havaleler*: baris'in Ulaşım havalesinin yanında **İade et** vardır. İade ederseniz oy baris'e döner, deftere `HAVALE_IADE` yazılır ve baris'in Havale sayfasında **iade edildi** görünür (bu da senaryo 2'nin sonucunu değiştirir; en son deneyin).
 5. **mert** olarak **Profil** → *Yalnızca size görünür* bölümünde **Havale kabul etmiyorum**'u açın. Başka biri olarak mert'in profilinde **Bu yurttaşa havale et** düğmesi pasiftir: *"Bu yurttaş havale kabul etmiyor."* Havale sayfasından takma adla denenirse: *"mert havale kabul etmiyor."*
-6. Kabul edilmeyen havale `havale_kabul_suresi` (7 gün, izinli 1 – 30 gün) sonunda düşer. `meşveret-dev advance-time --days 7` sonrasında zamanlayıcı dolumu vade anında işler: `havale kabul süresi doldu: elif → aylin (kent)` satırı komut çıktısında ya da, API'nin arka plan zamanlayıcısı önce davrandıysa, `docker compose logs api` içinde görünür. Deftere `HAVALE_RED` (`neden: kabul_suresi_doldu`) yazılır; elif'in Havale sayfasında **Kent · aylin · kabul süresi doldu**. Karar Saati penceresi açıkken kabul ve iade kilitlidir; ret grafa dokunmadığı için yapılabilir.
+6. Kabul edilmeyen havale `havale_kabul_suresi` (7 gün, izinli 1 – 30 gün) sonunda düşer:
+
+   ```bash
+   docker compose exec api meşveret-dev advance-time --days 7
+   ```
+
+   Komut dolumu vade anında işler; çıktıda `• 2026-10-05T07:00:00+00:00 havale kabul süresi doldu: elif → aylin (kent)` satırı görünür (arada 4 Ekim Karar Saati'nin açılış ve kapanış satırları da vardır). Deftere `HAVALE_RED` (`neden: kabul_suresi_doldu`) yazılır; elif'in Havale sayfasında **Kent · aylin · kabul süresi doldu**. Karar Saati penceresi açıkken kabul ve iade kilitlidir; ret grafa dokunmadığı için yapılabilir.
 
 ### 11. Yönetmeliğin tabanı: değiştirilemez maddeler ve izinli aralıklar
 
@@ -288,6 +294,8 @@ Her havale kabul edildiği ya da yenilendiği andan `havale_suresi` (180 gün) s
    docker compose exec api meşveret-dev advance-time --days 140
    ```
 
+   Çıktı aradaki işleri sırayla listeler: her hafta Karar Saati'nin açılış ve kapanışı, sessiz onay bitişleri ve, senaryo 15'teki bekleyen havaleye dokunmadıysanız, `havale kabul süresi doldu: elif → aylin (kent)`.
+
 4. **aylin** olarak giriş yapın. Süresi `havale_uyari_suresi` (14 gün) içinde dolacağı için ana sayfanın başında bordo çerçeveli uyarı şeridi durur: **"Genel havaleniz (baris) 26 Şubat 2027 tarihinde doluyor, 10 gün kaldı. Dolunca oyunuz size döner."** ve **Yenile** düğmesi. Aynı şerit profilde ve Havale sayfasında da görünür; profilde verilen ve alınan havaleler kalan süreleriyle listelenir. **ceren** olarak şerit alınan havaleyi gösterir: *"Size verilen 1 havalenin süresi doluyor: baris (Ulaşım, 10 gün kaldı). Yenilemek havaleyi verenin elindedir."* Bildirim gönderilmez.
 5. (İsteğe bağlı) **deniz** olarak şeritteki **Yenile**'ye basın. Felsefe havalesinin (deniz → selin) süresi baştan başlar: Havale sayfasında **bitiş 15 Ağustos 2027 · 180 gün kaldı**. Deftere `HAVALE_YENILENDI` yazılır.
 6. Saati 41 gün daha ilerletin (toplam 181 gün):
@@ -296,7 +304,7 @@ Her havale kabul edildiği ya da yenilendiği andan `havale_suresi` (180 gün) s
    docker compose exec api meşveret-dev advance-time --days 41
    ```
 
-   Çıktıda her dolum bir satırdır: `havale süresi doldu: aylin → baris`, `havale süresi doldu: baris → ceren (ulasim)` ve diğerleri. Her dolum deftere `HAVALE_SURESI_DOLDU` olarak yazılır.
+   Çıktıda her dolum, vade anıyla birlikte bir satırdır: `• 2027-02-26T07:00:00+00:00 havale süresi doldu: aylin → baris`, `… havale süresi doldu: baris → ceren (ulasim)` ve diğerleri. Komut sürerken API'nin arka plan zamanlayıcısı bekler; dolumların tümü bu komutun çıktısında görünür, API günlüğüne bakmak gerekmez. Her dolum deftere bir kez `HAVALE_SURESI_DOLDU` olarak yazılır.
 7. **aylin** ve **baris** olarak Havale sayfası: *"Yürürlükte havaleniz yok; oyunuzu kendiniz kullanıyorsunuz."* İkisi de oylarını geri aldı. **ceren**: *"Size doğrudan havale veren yok."* Ulaşım önerilerinde ağırlığı 3'ten 1'e düştü.
 8. **selin**'in profilinde Müşavir damgası kalkmıştır: felsefedeki beş havaleden süresi dolanlar düştü. 5. adımı yaptıysanız deniz'in yenilediği havale kalır (*Aldığı havaleler: Felsefe: 1*); eşik 5 olduğu için etiket yine yoktur.
 
