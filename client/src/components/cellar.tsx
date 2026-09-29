@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { corrupt, type DecayKind } from '@/lib/decay';
 import { useAnimatedValue, useReducedMotion } from '@/lib/motion';
 import { cellar, fonts, layout, paper } from '@/theme/tokens';
 
@@ -95,27 +96,19 @@ export function mix(a: string, b: string, t: number): string {
   return `#${c(r1, r2)}${c(g1, g2)}${c(b1, b2)}`;
 }
 
-const GLITCH = ['░', '▒', '▓', '▚', '▞', '▙', '▟', '¦', '¤'];
-
-function noise(i: number, seed: number): number {
-  const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
-  return x - Math.floor(x);
+/** Soluklaşma: ömür boyunca amberden çürümüş ambere (bozulmadan bağımsız, baştan başlar). */
+export function decayColor(decay: number): string {
+  return mix(cellar.amber, cellar.amberDecayed, Math.max(0, (decay - 0.2) / 0.8));
 }
 
-/** Çürüyen metin: ``decay`` 0 (taze) → 1 (silinmek üzere). */
-export function DecayText({ text, decay, seed = 1, style, numberOfLines }: {
-  text: string; decay: number; seed?: number; style?: TextStyle | TextStyle[]; numberOfLines?: number;
+/** Çürüyen metin: ``decay`` 0 (taze) → 1 (silinmek üzere). Kurallar ``lib/decay.ts``'te. */
+export function DecayText({ text, decay, seed = 1, kind = 'body', style, numberOfLines }: {
+  text: string; decay: number; seed?: number; kind?: DecayKind; style?: TextStyle | TextStyle[];
+  numberOfLines?: number;
 }) {
-  const glitch = Math.max(0, (decay - 0.55) / 0.45) * 0.16;
-  const color = mix(cellar.amber, cellar.amberDecayed, Math.max(0, (decay - 0.2) / 0.8));
-  const shown = glitch
-    ? Array.from(text)
-        .map((ch, i) => (ch !== ' ' && noise(i, seed) < glitch ? GLITCH[Math.floor(noise(i + 7, seed) * GLITCH.length)] : ch))
-        .join('')
-    : text;
   return (
-    <Text accessibilityLabel={text} numberOfLines={numberOfLines} style={[s.term, { color }, style]}>
-      {shown}
+    <Text accessibilityLabel={text} numberOfLines={numberOfLines} style={[s.term, { color: decayColor(decay) }, style]}>
+      {corrupt(text, decay, seed, kind)}
     </Text>
   );
 }

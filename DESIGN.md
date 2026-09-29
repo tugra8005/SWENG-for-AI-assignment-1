@@ -601,7 +601,13 @@ Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçe
 - **Renkler:** tam siyah (#000) zemin, fosfor amberi (#FFB000, 11,5:1). Çürümüş metnin alt sınırı #B88000 (6,1:1). Sönük amber (#8F6400, 4,0:1) yalnızca çerçeve, çubuk ve büyük yazıda kullanılır.
 - **Yazı:** her yerde IBM Plex Mono, başlıklarda VT323.
 - **Kimlik:** isim yok; yalnızca başlık kimlikleri ve "Gölge" etiketi.
-- **Çürüme:** başlık kapasitede alt sıralara indikçe yazı soluklaşır ve bazı karakterler deterministik olarak bozulur. Kontrast 4,5:1'in altına inmez. Bozulan metnin erişilebilir etiketi özgün metni taşır. Yanında bir ömür çubuğu vardır.
+- **Çürüme:** başlık kapasitede alt sıralara indikçe yazı soluklaşır ve bazı karakterler deterministik olarak bozulur; metin okunur kalır (`client/src/lib/decay.ts`).
+  - Ömrün ilk %70'inde yalnızca soluklaşma olur. Bozulma son %30'da başlar ve orada doğrusal artar.
+  - Bozulan karakter oranı başlıkta en fazla %15, gövdede en fazla %25. Bu sert bir üst sınırdır: karakterler rastgele eşikle değil sayıyla seçilir, kısa başlıkta da aşılmaz. Boşluklar bozulmaz.
+  - Bozulmaların çoğu benzer görünen karakterdir: s → ş, o → ö, i → ı, l → ł. Tek tük ¤ ¦ görünür. Blok karakterler (░▒▓) yalnızca ömrün son %5'inde görünür.
+  - İlk sürümde bozulma ömrün yarısından sonra başlıyordu ve blok karakterler ağırlıktaydı. Silinmeye yakın başlıklarda kelimeler okunmaz hâle geliyordu.
+  - Kurallar `client/scripts/check-decay.mjs` ile denetlenir (`scripts/test.sh` çalıştırır).
+  - Kontrast 4,5:1'in altına inmez. Bozulan metnin erişilebilir etiketi özgün metni taşır. Yanında bir ömür çubuğu vardır.
 - **CRT:** hafif tarama çizgileri; tek katman, kapatılabilir, tercih saklanır. Her üç satırdan biri %14 kararır. Oranlar o satırda da AA kalır: çürümüş amber 4,7:1, sönük amber 3,2:1, tam amber 8,4:1. İlk sürümde karartma %39'du; çürümüş amber 2,5:1'e, sönük amber 1,8:1'e iniyordu (tasarım denetimi, 2026-09-28).
 - **Giriş:** ekran kararma geçişi ve uyarı.
 
@@ -787,6 +793,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Yönetmeliğin defterdeki izi (başlangıç kaydı, oturum sonu kaydı, sessiz değişikliğin ve metni aynı kalan sınır genişletmesinin tespiti, açılışta tespit ve anlık görüntülerin son oylanmış değerlerle alınması, değiştirilmiş eşiğin sayılmaması, kapanışta tespit ve geri alma, bayrak ve içerik kuralı geri alma, kod düzeyindeki fark, bekleyen kaydın referans olması, kalıcı geçmiş, `tamper-regulation` aracı ve `/_dev` karşılığı) | `tests/integration/test_regulation_integrity.py`, `ledger/tests/test_replication.py::test_last_record_of_a_type_is_served_by_every_node` |
 | Tasarım denetimi sonrası: madde adları ve grupları, okunur öneri başlığı, Türkçe yüzde biçimi, aktif silme işareti, benzersiz Mahzen başlıkları | `test_regulation.py::test_every_parameter_has_a_readable_title_and_a_group`, `test_text.py`, `test_proposals.py::test_regulation_proposal_validates_value_and_goes_to_slow_lane`, `::test_deletion_goes_to_slow_lane_and_hides_content`, `test_seed.py::test_cellar_has_decaying_threads` |
 | Değiştirilemez maddeler (ayrıntı) | `test_regulation.py`, `test_rules.py`, `graph_contract.py`, `test_proposals.py::test_lowering_regulation_threshold_to_half_is_rejected_at_opening`, `::test_removing_the_right_of_dissent_is_rejected_at_opening`, `test_seed.py::test_scenario_11_floor_of_the_regulation` |
+| Mahzen çürümesi (başlıkta en fazla %15, gövdede %25; ilk %70'te bozulma yok; blok yalnızca son %5'te; çoğunluk benzer karakter; deterministik) | `client/scripts/check-decay.mjs` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
 ## 19. Sözlük (Türkçe terim ↔ kod)

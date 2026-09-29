@@ -12,6 +12,7 @@ import {
   CellarPage,
   cellarStyles,
   DecayText,
+  decayColor,
   LifeBar,
   Term,
   TermDim,
@@ -21,15 +22,17 @@ import { RevealTransition } from '@/components/reveal-transition';
 import { RevealedThread } from '@/components/revealed-thread';
 import { useAuth } from '@/lib/auth';
 import { fmtDateTime } from '@/lib/format';
+import { CORRUPT_FROM } from '@/lib/decay';
 import { useApi } from '@/lib/useApi';
 import { cellar, fonts } from '@/theme/tokens';
 
 function PostText({ text, decay, seed }: { text: string; decay: number; seed: number }) {
   // >>N referansları vurgulanır (yalnızca aynı başlık içinde geçerlidir).
   const parts = text.split(/(>>\d+)/g);
-  if (decay > 0.55) return <DecayText text={text} decay={decay} seed={seed} />;
+  // Bozulma başlayana kadar yalnızca soluklaşma; >>N vurgusu korunur.
+  if (decay >= CORRUPT_FROM) return <DecayText text={text} decay={decay} seed={seed} />;
   return (
-    <Text style={st.text}>
+    <Text style={[st.text, { color: decayColor(decay) }]}>
       {parts.map((p, i) =>
         /^>>\d+$/.test(p) ? (
           <Text key={i} style={{ textDecorationLine: 'underline' }}>{p}</Text>
@@ -153,7 +156,7 @@ export default function Thread() {
       <Pressable onPress={() => router.push('/mahzen')} accessibilityRole="link">
         <TermDim style={{ fontSize: 12 }}>&lt; mahzen</TermDim>
       </Pressable>
-      <DecayText text={t.title} decay={decay} seed={t.id} style={st.title} />
+      <DecayText text={t.title} decay={decay} seed={t.id} kind="title" style={st.title} />
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <TermDim style={{ fontSize: 12 }}>No.{t.id} · {t.reply_count} yanıt · sıra {t.rank != null ? t.rank + 1 : '—'}</TermDim>
         {t.lifetime != null ? <LifeBar lifetime={t.lifetime} /> : null}

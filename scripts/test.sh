@@ -21,6 +21,9 @@ echo "== api: birim testleri"
 echo "== ledger: testler"
 (cd ledger && uv run pytest -q)
 
+echo "== istemci: Mahzen çürümesinin kuralları"
+(cd client && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-decay.mjs)
+
 if [[ $UNIT_ONLY -eq 1 ]]; then
   exit 0
 fi

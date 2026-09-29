@@ -112,7 +112,7 @@ export default function CellarIndex() {
               <TermDim style={{ fontSize: 11 }}>No.{t.id} · Gölge·{t.op_shade} · {fmtDateTime(t.bumped_at)}</TermDim>
               <LifeBar lifetime={t.lifetime} />
             </View>
-            <DecayText text={t.title} decay={decay} seed={t.id} style={{ fontSize: 17, lineHeight: 24 }} />
+            <DecayText text={t.title} decay={decay} seed={t.id} kind="title" style={{ fontSize: 17, lineHeight: 24 }} />
             <DecayText text={t.op_preview} decay={decay} seed={t.id + 1000} numberOfLines={2} style={{ fontSize: 13 }} />
             <TermDim style={{ fontSize: 11 }}>
               {t.reply_count} yanıt{t.bump_locked ? ' · yükselme sınırında' : ''}{t.has_vote ? ' · oylama açık' : ''}
