@@ -2,36 +2,42 @@
 
 Ölçülen süre 2 dakika 11 saniyedir: 10 adım (10. adım iki parçalı). Hedef yaklaşık 2 dakikaydı, 4 dakikaya kadar uzayabilirdi. Süre bu sınırın altında kaldığı için 1. ve 2. adım birleştirilmedi, 9. ve 10. adım kısaltılmadı. Süreler, `scripts/demo-kaydi.mjs` ile yapılan iki ölçüm çalıştırmasından gelir (aşağıda **Ölçüm**). Canlı demo çökerse yedek video oynatılır: [`docs/demo.mp4`](docs/demo.mp4). Video canlı anlatımın hızındadır; her adım konuşma notunu okuyacak kadar ekranda kalır, üstünden konuşulabilir.
 
-## Hazırlık (derse girmeden, ~1 dakika)
+## Hazırlık (derse girmeden)
 
-1. Yığın ve istemci:
+Uygulama menüsünde **Meşveret** yazın (başlatıcılar bir kez `sunum/kur.sh` ile eklenir):
 
-   ```bash
-   docker compose up -d
-   ```
+- **Meşveret · sunum (web)**: Docker yığınını ve Expo'yu başlatır, web paketini önceden derler, demo kurulu değilse 1. adımı kurar (~20 sn), uygulamayı sekmesiz ayrı bir Brave penceresinde açar.
+- **Meşveret · sunum (Android)**: aynı hazırlık, üstüne emülatörü pencereli açar (bu makinede hazırlıkla birlikte ~25 sn), portları yönlendirir, Android paketini önceden derler ve uygulamayı Expo Go'da başlatır.
+- **Meşveret · sunumu durdur**: emülatörü, Expo'yu ve sunum penceresini kapatır.
 
-   ```bash
-   cd client && npx expo start --web
-   ```
+Başlatıcılar her adımı yalnızca gerekiyorsa yapar: yığın ayaktaysa, Expo çalışıyorsa, demo kuruluysa geçer. İkisini birlikte açmak sorun değil. Aynı betikler terminalden de çalışır:
 
-2. Demoyu 1. adıma kurun (~20 sn: tohum, Karar Saati #1'in açılıp kapanması, ceren'in №9'a oyu, saati dondurma):
+```bash
+sunum/web.sh
+```
 
-   ```bash
-   docker compose exec api meşveret-dev demo goto 1
-   ```
+```bash
+sunum/android.sh
+```
 
-3. Tarayıcıda `http://localhost:8081` açın. Sağ alt köşede küçük bir menü durur (**adım 1 · …**). Menü adımın sayfalarını listeler; bir satıra tıklamak o kullanıcıyla giriş yapıp sayfayı açar. Menü yalnızca geliştirme ortamında görünür: üretim derlemesinde bileşen yoktur, üretim API'sinde `/_dev` uç noktaları yoktur.
-4. Terminalde bir sonraki adım için tek komut:
+`--sifirla` demo kuruluysa bile 1. adımı baştan kurar; `sunum/durdur.sh --demo-bitir --docker` saati yeniden akıtır ve yığını da durdurur.
 
-   ```bash
-   docker compose exec api meşveret-dev demo next
-   ```
+**Kumanda.** Hazırlık bitince aynı terminal penceresi kumandaya döner; uzun komut yazmak gerekmez:
 
-   Komut adımın başlığını, sorusunu ve hangi kullanıcıyla hangi sayfanın açılacağını yazar (~1,5 sn).
+| Tuş | İş |
+|---|---|
+| Enter | sonraki adım (`demo next`, ~1,5 sn) |
+| `p` | önceki adım |
+| `g N` | N. adımı baştan kur (`1`–`9`, `10a`, `10b`) |
+| `d` | şu anki adımı yeniden yaz |
+| `s` | 1. adımdan baştan başla |
+| `q` | kumandadan çık (yığın ve pencereler açık kalır) |
+
+Her adımda kumanda adımın başlığını, sorusunu ve hangi kullanıcıyla hangi sayfanın açılacağını yazar. Tarayıcıda ya da emülatörde sağ alt köşedeki küçük menü aynı sayfaları listeler; bir satıra tıklamak o kullanıcıyla giriş yapıp sayfayı açar. Menü yalnızca geliştirme ortamında görünür: üretim derlemesinde bileşen yoktur, üretim API'sinde `/_dev` uç noktaları yoktur.
 
 **Saat donmuştur.** Demo boyunca geri sayımlar akmaz, zamanlayıcı kendiliğinden bir şey işlemez. Zamanı yalnızca adım geçişleri ilerletir; iki çalıştırma ekranda aynı sayıları gösterir. Demodan çıkmak için `meşveret-dev demo bitir`.
 
-**Kurtarma.** Bir adım bozulursa `meşveret-dev demo goto N` o adımı baştan kurar (~20 sn). N: `1`–`9`, `10a`, `10b` (`10` = `10a`). `demo prev` bir önceki adımı kurar, `demo durum` şu anki adımı yeniden yazar.
+**Kurtarma.** Bir adım bozulursa kumandada `g N` (ya da `meşveret-dev demo goto N`) o adımı baştan kurar (~20 sn). Başlatıcılar olmadan elle: `docker compose up -d`, `cd client && npx expo start --web`, `docker compose exec api meşveret-dev demo goto 1`, ardından her adımda `docker compose exec api meşveret-dev demo next`.
 
 ## Adımlar
 

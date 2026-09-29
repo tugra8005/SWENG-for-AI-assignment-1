@@ -90,7 +90,7 @@ docker compose exec ledger-2 python -m ledger.tamper --seq 5
 
 ## Sınıf gösterimi
 
-Yaklaşık iki dakikalık canlı gösterim ve yedek videosu için [DEMO.md](DEMO.md). Geliştirme ortamında istemcinin sağ alt köşesinde küçük bir menü durur: demo adımının sayfalarını o kullanıcıyla açar ve hesap değiştirir. Üretim derlemesinde menü yoktur, üretim API'sinde `/_dev` uç noktaları yoktur.
+Yaklaşık iki dakikalık canlı gösterim ve yedek videosu için [DEMO.md](DEMO.md). Tek tıkla başlatma: `sunum/kur.sh` uygulama menüsüne üç başlatıcı ekler (**Meşveret · sunum (web)**, **sunum (Android)**, **sunumu durdur**). Başlatıcılar yığını, Expo'yu, demoyu ve pencereyi hazırlar, sonra terminal bir kumandaya döner (Enter = sonraki adım). Geliştirme ortamında istemcinin sağ alt köşesinde küçük bir menü durur: demo adımının sayfalarını o kullanıcıyla açar ve hesap değiştirir. Üretim derlemesinde menü yoktur, üretim API'sinde `/_dev` uç noktaları yoktur.
 
 ## Demo senaryoları
 
