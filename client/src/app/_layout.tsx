@@ -21,6 +21,7 @@ import { Platform } from 'react-native';
 import { DevSwitcher } from '@/components/dev-switcher';
 import { AuthProvider } from '@/lib/auth';
 import { ClockProvider } from '@/lib/clock';
+import { NotificationsProvider } from '@/lib/notifications';
 import { paper } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
@@ -57,6 +58,7 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
+      <NotificationsProvider>
       <ClockProvider>
         <StatusBar style="dark" />
         <Stack
@@ -72,6 +74,7 @@ export default function RootLayout() {
         </Stack>
         <DevSwitcher />
       </ClockProvider>
+      </NotificationsProvider>
     </AuthProvider>
   );
 }

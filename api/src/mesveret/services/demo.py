@@ -116,6 +116,8 @@ STEPS: list[Step] = [
                     "ağırlığa sayılmaz."),
              Screen("ceren", f"/karar-saati/1?izle={_ids(c)['metro']}",
                     "Mühürlü oylar açılıyor: ceren ×3 açık (temsilci), diğerleri gizli, yalnızca toplam."),
+             Screen("aylin", "/bildirimler",
+                    "Zil: Karar Saati #1'in sonucu; aylin'in oyunu havaleyle ceren kullandı (EVET)."),
          ]),
     Step("6", "Kapanış ve Şerh", "uzlaşma: kaybeden taraf kayda geçer", None, lambda c: [
         Screen("zeynep", f"/konu/{_ids(c)['park']}",

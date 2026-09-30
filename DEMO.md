@@ -1,6 +1,6 @@
 # Meşveret — sınıf gösterimi
 
-Ölçülen süre 2 dakika 18 saniyedir: 10 adım (10. adım iki parçalı). Hedef yaklaşık 2 dakikaydı, 4 dakikaya kadar uzayabilirdi. Süre bu sınırın altında kaldığı için 1. ve 2. adım birleştirilmedi, 9. ve 10. adım kısaltılmadı. Süreler, `scripts/demo-kaydi.mjs` ile yapılan iki ölçüm çalıştırmasından gelir (aşağıda **Ölçüm**). Canlı demo çökerse yedek video oynatılır: [`docs/demo.mp4`](docs/demo.mp4). Video canlı anlatımın hızındadır; her adım konuşma notunu okuyacak kadar ekranda kalır, üstünden konuşulabilir.
+Ölçülen süre 2 dakika 24 saniyedir: 10 adım (10. adım iki parçalı). Hedef yaklaşık 2 dakikaydı, 4 dakikaya kadar uzayabilirdi. Süre bu sınırın altında kaldığı için 1. ve 2. adım birleştirilmedi, 9. ve 10. adım kısaltılmadı. Süreler, `scripts/demo-kaydi.mjs` ile yapılan iki ölçüm çalıştırmasından gelir (aşağıda **Ölçüm**). Canlı demo çökerse yedek video oynatılır: [`docs/demo.mp4`](docs/demo.mp4). Video canlı anlatımın hızındadır; her adım konuşma notunu okuyacak kadar ekranda kalır, üstünden konuşulabilir.
 
 ## Hazırlık (derse girmeden)
 
@@ -52,7 +52,7 @@ Her adımda kumanda adımın başlığını, sorusunu ve hangi kullanıcıyla ha
 > **Konuşma:** Herkes takma adla görünür; ad, adres ve doğum tarihini yalnızca sahibi görür. Oy hakkını belirleyen kapsamlar seçilmez, türetilir: şehir adresten, yaş grubu doğum tarihinden.
 
 ### Adım 2 · Öneri ve sessiz onay
-**Süre:** 13 sn · **Soru:** ölçek: her şey oylanırsa kimse oy vermez
+**Süre:** 12 sn · **Soru:** ölçek: her şey oylanırsa kimse oy vermez
 
 1. Menü → **1) aylin → /oneri/20**: *Sessiz onay* bölümü, geri sayım ve **İtiraz et**.
 
@@ -76,12 +76,13 @@ Geçiş: saat bir gün ilerler, №20 itirazsız kabul edilir.
 > **Konuşma:** Genel çoğunluk İstanbul'un payını yarıya indirmek istedi. Orantısız etkilenen İstanbul ayrıca oyladı: Genel'de geçti, İstanbul'da kaldı, öneri reddedildi.
 
 ### Adım 5 · Havale ve Karar Saati
-**Süre:** 15 sn · **Soru:** uzmanlar: oyunu güvendiğine ver, o da hesap versin
+**Süre:** 21 sn · **Soru:** uzmanlar: oyunu güvendiğine ver, o da hesap versin
 
 1. Menü → **1) aylin → /havale**: zincir aylin → baris → ceren; üstteki şeritte elif'in bekleyen havalesi.
 2. Menü → **2) ceren → /karar-saati/1?izle=9**: mühürlü oylar tek tek açılır.
+3. Menü → **3) aylin → /bildirimler**: zildeki sonuç; aylin'in oyunu havaleyle ceren kullandı.
 
-> **Konuşma:** Oy havale edilebilir ama ancak alan kabul edince sayılır; elif'in havalesi bekliyor. Oylar mühürlüydü, şimdi açılıyor: ceren başkalarının oyunu taşıdığı için oyu açık, diğerleri gizli, yalnızca toplamda.
+> **Konuşma:** Oy havale edilebilir ama ancak alan kabul edince sayılır; elif'in havalesi bekliyor. Oylar mühürlüydü, şimdi açılıyor: ceren başkalarının oyunu taşıdığı için oyu açık, diğerleri gizli, yalnızca toplamda. Oturum kapanınca sonuç zile düşer: aylin oyunun ceren üzerinden kullanıldığını görür.
 
 ### Adım 6 · Kapanış ve Şerh
 **Süre:** 12 sn · **Soru:** uzlaşma: kaybeden taraf kayda geçer
@@ -162,21 +163,21 @@ DESIGN.md §15'teki bilinçli açıklardan en olası beşi:
 ## Ölçüm
 
 <!-- ölçüm: scripts/demo-kaydi.mjs --md ile güncellenir -->
-İki çalıştırma (A: 2026-09-30 07:04 UTC, B: 2026-09-30 07:07 UTC), 1440 × 900 Chromium, Docker yığını. *Süre* adımın ekranda kaldığı toplam süredir: `demo next` komutu, sayfaların menüden açılması, tıklamalar, canlandırmalar ve konuşma notunun okunma süresine (dakikada 132 kelime) tamamlayan bekleme. *İşlem* bunlardan yalnızca komut, sayfa ve tıklama kısmıdır; canlıda konuşma bununla üst üste biner.
+İki çalıştırma (A: 2026-09-30 08:20 UTC, B: 2026-09-30 08:23 UTC), 1440 × 900 Chromium, Docker yığını. *Süre* adımın ekranda kaldığı toplam süredir: `demo next` komutu, sayfaların menüden açılması, tıklamalar, canlandırmalar ve konuşma notunun okunma süresine (dakikada 132 kelime) tamamlayan bekleme. *İşlem* bunlardan yalnızca komut, sayfa ve tıklama kısmıdır; canlıda konuşma bununla üst üste biner.
 
 | Adım | A (sn) | B (sn) | İşlem A / B (sn) | Konuşma (sn) | Ekrandaki sayılar | A = B |
 |---|---|---|---|---|---|---|
-| 1 · Kayıt ve profil | 11,0 | 10,9 | 5,4 / 5,2 | 10,9 | 31 | ✓ |
-| 2 · Öneri ve sessiz onay | 12,6 | 12,4 | 2,9 / 2,8 | 10,9 | 18 | ✓ |
-| 3 · İstanbul vakası: R2 daraltma | 12,0 | 11,7 | 4,5 / 4,1 | 10,0 | 32 | ✓ |
-| 4 · Eşzamanlı çoğunluk | 9,7 | 9,7 | 5,3 / 5,2 | 8,2 | 34 | ✓ |
-| 5 · Havale ve Karar Saati | 15,2 | 15,2 | 11,6 / 11,6 | 12,3 | 297 | ✓ |
-| 6 · Kapanış ve Şerh | 12,0 | 12,0 | 7,1 / 7,0 | 10,5 | 71 | ✓ |
-| 7 · Silme | 12,3 | 12,1 | 5,7 / 5,4 | 10,5 | 44 | ✓ |
-| 8 · Değiştirilemez maddeler | 10,8 | 10,7 | 4,8 / 4,6 | 9,1 | 33 | ✓ |
-| 9 · Mahzen | 20,8 | 20,8 | 14,6 / 14,6 | 17,7 | 615 | ✓ |
-| 10a · Operatörün sessiz değişikliği | 10,0 | 10,1 | 3,5 / 3,6 | 8,2 | 16 | ✓ |
-| 10b · Karar Saati açılışında geri alınır | 11,7 | 11,6 | 5,9 / 5,9 | 9,5 | 22 | ✓ |
-| **Toplam** | **138,2** | **137,2** | | | | ✓ |
+| 1 · Kayıt ve profil | 10,9 | 10,9 | 5,3 / 5,3 | 10,9 | 33 | ✓ |
+| 2 · Öneri ve sessiz onay | 12,4 | 12,5 | 2,7 / 2,8 | 10,9 | 19 | ✓ |
+| 3 · İstanbul vakası: R2 daraltma | 11,6 | 11,7 | 4,1 / 4,2 | 10,0 | 34 | ✓ |
+| 4 · Eşzamanlı çoğunluk | 9,7 | 10,0 | 5,3 / 5,6 | 8,2 | 34 | ✓ |
+| 5 · Havale ve Karar Saati | 21,0 | 21,0 | 14,0 / 14,0 | 17,3 | 307 | ✓ |
+| 6 · Kapanış ve Şerh | 12,3 | 12,3 | 7,5 / 7,5 | 10,5 | 72 | ✓ |
+| 7 · Silme | 12,3 | 12,3 | 5,8 / 5,8 | 10,5 | 46 | ✓ |
+| 8 · Değiştirilemez maddeler | 10,7 | 10,9 | 4,7 / 4,9 | 9,1 | 33 | ✓ |
+| 9 · Mahzen | 20,9 | 21,1 | 14,6 / 14,8 | 17,7 | 615 | ✓ |
+| 10a · Operatörün sessiz değişikliği | 9,9 | 9,8 | 3,4 / 3,3 | 8,2 | 16 | ✓ |
+| 10b · Karar Saati açılışında geri alınır | 11,6 | 11,6 | 5,8 / 5,9 | 9,5 | 22 | ✓ |
+| **Toplam** | **143,5** | **144,2** | | | | ✓ |
 
 Defter: A 647 kayıt, B 647 kayıt; hash zinciri birebir aynı.

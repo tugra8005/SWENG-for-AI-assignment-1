@@ -3,7 +3,7 @@
  * Kâğıt zemin, mürekkep, tek vurgu mühür bordosu; serif metin, mono hash ve sayılar.
  */
 import { Link, router, usePathname } from 'expo-router';
-import { createContext, type ReactNode, useContext, useMemo, useRef, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -25,6 +25,7 @@ import { ApiError } from '@/api/client';
 import { useAuth } from '@/lib/auth';
 import { useClock, useTick } from '@/lib/clock';
 import { fmtCountdown, fmtLong, shortHash } from '@/lib/format';
+import { useNotifications } from '@/lib/notifications';
 import { fonts, layout, paper } from '@/theme/tokens';
 
 const grain = require('@/assets/images/paper-grain.png');
@@ -86,27 +87,76 @@ function issueNumber(d: Date): number {
   return Math.floor((d.getTime() - Date.UTC(2025, 0, 1)) / 86_400_000) + 1;
 }
 
-function NavLinks({ single }: { single?: boolean }) {
+function NavLinks({ narrow }: { narrow?: boolean }) {
   const path = usePathname();
   const links = NAV.map((n) => {
     const active = n.href === '/' ? path === '/' : path.startsWith(n.href);
     return (
-      <Link key={n.href} href={n.href} style={[s.navItem, active && s.navActive]}>
+      <Link key={n.href} href={n.href} style={[s.navItem, narrow && s.navItemNarrow, active && s.navActive]}>
         {n.label}
       </Link>
     );
   });
-  if (!single) return <>{links}</>;
-  // Telefonda menü tek satırdır ve yatay kaydırılır; satır kırılıp başlığı büyütmez.
+  if (!narrow) return <>{links}</>;
+  // Telefonda beş bölümün beşi de görünür: satıra yayılır, sığmazsa (320 px) alta kırılır.
+  // Önceki sürüm yatay kaydırıyordu; 375 px'te Havale, Yönetmelik ve Defter ekran dışında kalıyordu.
+  return <View style={s.navNarrow}>{links}</View>;
+}
+
+/** Zil: View'larla çizilir (bkz. LockIcon); gövde, ağız ve tokmak. */
+function BellGlyph({ color }: { color: string }) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={{ flexGrow: 1, flexShrink: 1 }}
-      contentContainerStyle={{ columnGap: 16, alignItems: 'center', paddingRight: 8 }}
+    <View style={{ width: 18, height: 18, alignItems: 'center' }}>
+      <View style={{ width: 2.5, height: 2, backgroundColor: color, borderRadius: 1 }} />
+      <View
+        style={{
+          width: 12,
+          height: 10,
+          borderWidth: 1.6,
+          borderBottomWidth: 0,
+          borderColor: color,
+          borderTopLeftRadius: 6,
+          borderTopRightRadius: 6,
+        }}
+      />
+      <View style={{ width: 16, height: 1.6, backgroundColor: color, borderRadius: 1 }} />
+      <View
+        style={{
+          width: 5,
+          height: 2.5,
+          marginTop: 1,
+          backgroundColor: color,
+          borderBottomLeftRadius: 2.5,
+          borderBottomRightRadius: 2.5,
+        }}
+      />
+    </View>
+  );
+}
+
+/** Bildirimler: okunmamış sayısı rozetle; sayfa değişince sayı tazelenir. */
+function Bell() {
+  const { unread, refresh } = useNotifications();
+  const path = usePathname();
+  useEffect(() => {
+    refresh();
+  }, [path, refresh]);
+  const label = unread ? `Bildirimler: ${unread} okunmamış` : 'Bildirimler';
+  return (
+    <Pressable
+      onPress={() => router.push('/bildirimler')}
+      accessibilityRole="link"
+      accessibilityLabel={label}
+      hitSlop={8}
+      style={Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : null}
     >
-      {links}
-    </ScrollView>
+      <BellGlyph color={path === '/bildirimler' ? paper.seal : paper.ink} />
+      {unread ? (
+        <View style={s.badge}>
+          <Text style={s.badgeText}>{unread > 9 ? '9+' : unread}</Text>
+        </View>
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -122,7 +172,8 @@ function Account({ small }: { small?: boolean }) {
     );
   }
   return (
-    <View style={{ flexDirection: 'row', gap: small ? 10 : 14, alignItems: 'center' }}>
+    <View style={{ flexDirection: 'row', gap: small ? 12 : 14, alignItems: 'center' }}>
+      <Bell />
       <Link href={`/profil/${encodeURIComponent(me.nickname)}`} style={[text, { color: paper.ink }]}>
         {me.nickname}
       </Link>
@@ -166,9 +217,9 @@ export function Masthead() {
         <Text style={s.mastSub}>Oylamayla yönetilen forum — her karar kayda geçer</Text>
       </Pressable>
       <Rule style={{ marginBottom: 0 }} />
-      <View style={[s.nav, narrow && { flexWrap: 'nowrap' }]}>
+      <View style={s.nav}>
         {narrow ? (
-          <NavLinks single />
+          <NavLinks narrow />
         ) : (
           <>
             <NavLinks />
@@ -182,21 +233,19 @@ export function Masthead() {
   );
 }
 
-/** Telefonda ana sayfa dışındaki başlık: ince, yapışkan çubuk. */
+/** Telefonda ana sayfa dışındaki başlık: ince, yapışkan çubuk. Üstte küçük MEŞVERET ve hesap
+ * (zil, takma ad, çıkış), altta beş bölümün tamamı. Tarih ana sayfanın başlığında durur. */
 function CompactBar() {
-  const { now } = useClock();
-  const today = new Date(now());
   return (
     <View style={s.compact}>
       <View style={s.compactTop}>
-        <Text style={s.compactDate} numberOfLines={1}>{fmtLong(today)}</Text>
-        <Account small />
-      </View>
-      <View style={s.compactRow}>
         <Pressable onPress={() => router.push('/')} accessibilityRole="link" accessibilityLabel="Meşveret ana sayfa">
           <Text style={s.compactTitle}>MEŞVERET</Text>
         </Pressable>
-        <NavLinks single />
+        <Account small />
+      </View>
+      <View style={s.compactRow}>
+        <NavLinks narrow />
       </View>
       <View style={[s.rule, { height: 2 }]} />
       <View style={[s.rule, { marginTop: 2 }]} />
@@ -743,20 +792,34 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     color: paper.ink,
   },
+  navItemNarrow: { fontSize: 11, letterSpacing: 0.4 },
+  navNarrow: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    columnGap: 10,
+    rowGap: 4,
+  },
   navActive: { color: paper.seal, textDecorationLine: 'underline' },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -8,
+    minWidth: 15,
+    height: 15,
+    paddingHorizontal: 3,
+    borderRadius: 8,
+    backgroundColor: paper.seal,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: { fontFamily: fonts.monoBold, fontSize: 9, lineHeight: 11, color: paper.bg },
   account: { fontFamily: fonts.monoMedium, fontSize: 12, letterSpacing: 0.6, color: paper.muted },
   accountSmall: { fontFamily: fonts.monoMedium, fontSize: 11, letterSpacing: 0.4, color: paper.muted },
   compact: { paddingHorizontal: layout.gutter, paddingTop: 6 },
   compactTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
-  compactDate: {
-    fontFamily: fonts.monoMedium,
-    fontSize: 10,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: paper.inkSoft,
-    flexShrink: 1,
-  },
-  compactRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 4, paddingBottom: 6 },
+  compactRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 6, paddingBottom: 7 },
   compactTitle: { fontFamily: fonts.serifDisplay, fontSize: 19, letterSpacing: 1.5, color: paper.ink },
   cellarLink: {
     fontFamily: fonts.mono,

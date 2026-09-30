@@ -53,7 +53,7 @@ from mesveret.domain.shares import ShareImpact, impact_lines, pct, share_impact
 from mesveret.domain.text import normalize
 from mesveret.domain.types import ProposalStatus, ProposalType, initial_lane
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
-from mesveret.services import ledger, ontology, regulation, topics
+from mesveret.services import ledger, notifications, ontology, regulation, topics
 from mesveret.services.profile import nickname_map
 
 MAX_TITLE = 200
@@ -575,6 +575,7 @@ def object_to(ctx: Ctx, user: User, proposal_id: int) -> dict:
         ledger.enqueue(ctx, "ONERI_YAVAS_SERIDE", {
             "oneri": p.id, "itiraz": count, "esik": threshold,
         })
+        notifications.moved_to_slow_lane(ctx, p, count, threshold)
     ctx.commit()
     return {"count": count, "threshold": threshold, "moved": moved}
 
@@ -614,6 +615,7 @@ def end_silent_period(ctx: Ctx, p: Proposal) -> None:
     """Sessiz onay süresi doldu ve itiraz eşiği aşılmadı: kabul (pay çakışması yoksa)."""
     if p.status == "SILENT":
         accept_or_conflict(ctx, p)
+        notifications.silent_period_ended(ctx, p)
 
 
 def end_rival_period(ctx: Ctx, p: Proposal) -> None:

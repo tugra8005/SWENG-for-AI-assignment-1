@@ -1,23 +1,24 @@
 {
  "label": "A",
- "started": "2026-09-30T07:04:03.289Z",
+ "started": "2026-09-30T08:20:26.700Z",
  "steps": [
   {
    "key": "1",
    "title": "Kayıt ve profil",
    "cli_ms": 0,
-   "mech_ms": 5381,
+   "mech_ms": 5262,
    "speak_ms": 10909,
-   "total_ms": 10958,
+   "total_ms": 10934,
    "screens": [
     {
      "user": "aylin",
      "path": "/profil/aylin",
-     "mech_ms": 4183,
+     "mech_ms": 4086,
      "numbers": [
       "637",
       "29",
       "2026",
+      "1",
       "5",
       "2026;",
       "F3AA5622",
@@ -44,11 +45,12 @@
     {
      "user": "ceren",
      "path": "/profil/aylin",
-     "mech_ms": 1198,
+     "mech_ms": 1176,
      "numbers": [
       "637",
       "29",
       "2026",
+      "1",
       "F3AA5622",
       "6",
       "2025",
@@ -60,19 +62,20 @@
   {
    "key": "2",
    "title": "Öneri ve sessiz onay",
-   "cli_ms": 1659,
-   "mech_ms": 2900,
+   "cli_ms": 1502,
+   "mech_ms": 2746,
    "speak_ms": 10909,
-   "total_ms": 12585,
+   "total_ms": 12429,
    "screens": [
     {
      "user": "aylin",
      "path": "/oneri/20",
-     "mech_ms": 1241,
+     "mech_ms": 1244,
      "numbers": [
       "637",
       "29",
       "2026",
+      "1",
       "№20",
       "29.09.2026",
       "07:00",
@@ -95,19 +98,20 @@
   {
    "key": "3",
    "title": "İstanbul vakası: R2 daraltma",
-   "cli_ms": 1982,
-   "mech_ms": 4469,
+   "cli_ms": 1627,
+   "mech_ms": 4064,
    "speak_ms": 10000,
-   "total_ms": 12008,
+   "total_ms": 11648,
    "screens": [
     {
      "user": "aylin",
      "path": "/konu/10",
-     "mech_ms": 1255,
+     "mech_ms": 1234,
      "numbers": [
       "637",
       "29",
       "2026",
+      "1",
       "№10",
       "29.09.2026",
       "07:00",
@@ -126,11 +130,12 @@
     {
      "user": "aylin",
      "path": "/oneri/20",
-     "mech_ms": 1232,
+     "mech_ms": 1203,
      "numbers": [
       "638",
       "30",
       "2026",
+      "1",
       "№20",
       "29.09.2026",
       "07:00",
@@ -151,15 +156,15 @@
   {
    "key": "4",
    "title": "Eşzamanlı çoğunluk",
-   "cli_ms": 1514,
-   "mech_ms": 5255,
+   "cli_ms": 1520,
+   "mech_ms": 5265,
    "speak_ms": 8182,
-   "total_ms": 9710,
+   "total_ms": 9714,
    "screens": [
     {
      "user": "ayse",
      "path": "/oneri/17",
-     "mech_ms": 3741,
+     "mech_ms": 3745,
      "numbers": [
       "638",
       "30",
@@ -202,19 +207,20 @@
   {
    "key": "5",
    "title": "Havale ve Karar Saati",
-   "cli_ms": 1482,
-   "mech_ms": 11619,
-   "speak_ms": 12273,
-   "total_ms": 15207,
+   "cli_ms": 1802,
+   "mech_ms": 13978,
+   "speak_ms": 17273,
+   "total_ms": 20995,
    "screens": [
     {
      "user": "aylin",
      "path": "/havale",
-     "mech_ms": 3764,
+     "mech_ms": 3770,
      "numbers": [
       "638",
       "30",
       "2026",
+      "1",
       "180",
       "7",
       "5",
@@ -233,11 +239,12 @@
     {
      "user": "ceren",
      "path": "/karar-saati/1?izle=9",
-     "mech_ms": 6373,
+     "mech_ms": 6458,
      "numbers": [
       "638",
       "30",
       "2026",
+      "1",
       "#1",
       "29.09.2026",
       "10:00",
@@ -517,25 +524,41 @@
       "№18",
       "5"
      ]
+    },
+    {
+     "user": "aylin",
+     "path": "/bildirimler",
+     "mech_ms": 1948,
+     "numbers": [
+      "638",
+      "30",
+      "2026",
+      "29.09.2026",
+      "11:00",
+      "#1",
+      "№9",
+      "5"
+     ]
     }
    ]
   },
   {
    "key": "6",
    "title": "Kapanış ve Şerh",
-   "cli_ms": 1552,
-   "mech_ms": 7052,
+   "cli_ms": 1824,
+   "mech_ms": 7488,
    "speak_ms": 10455,
-   "total_ms": 12037,
+   "total_ms": 12292,
    "screens": [
     {
      "user": "zeynep",
      "path": "/konu/7",
-     "mech_ms": 5500,
+     "mech_ms": 5664,
      "numbers": [
       "638",
       "30",
       "2026",
+      "1",
       "№7",
       "17.09.2026",
       "10:00",
@@ -611,19 +634,20 @@
   {
    "key": "7",
    "title": "Silme",
-   "cli_ms": 1848,
-   "mech_ms": 5681,
+   "cli_ms": 1847,
+   "mech_ms": 5783,
    "speak_ms": 10455,
-   "total_ms": 12320,
+   "total_ms": 12319,
    "screens": [
     {
      "user": "hale",
      "path": "/konu/6",
-     "mech_ms": 1581,
+     "mech_ms": 1585,
      "numbers": [
       "638",
       "30",
       "2026",
+      "1",
       "№6",
       "13.09.2026",
       "10:00",
@@ -654,11 +678,12 @@
     {
      "user": "emre",
      "path": "/oneri/yeni?type=SILME&message=33",
-     "mech_ms": 2252,
+     "mech_ms": 2351,
      "numbers": [
       "638",
       "30",
       "2026",
+      "3",
       "(2/3)",
       "#33",
       "2/3",
@@ -679,15 +704,15 @@
   {
    "key": "8",
    "title": "Değiştirilemez maddeler",
-   "cli_ms": 1679,
-   "mech_ms": 4819,
+   "cli_ms": 1636,
+   "mech_ms": 4704,
    "speak_ms": 9091,
-   "total_ms": 10782,
+   "total_ms": 10737,
    "screens": [
     {
      "user": "aylin",
      "path": "/oneri/yeni?type=YONETMELIK&article=yonetmelik_esigi",
-     "mech_ms": 1719,
+     "mech_ms": 1685,
      "numbers": [
       "638",
       "30",
@@ -715,7 +740,7 @@
     {
      "user": "aylin",
      "path": "/oneri/yeni?type=YONETMELIK&action=kaldir&article=D3",
-     "mech_ms": 1421,
+     "mech_ms": 1383,
      "numbers": [
       "638",
       "30",
@@ -736,15 +761,15 @@
   {
    "key": "9",
    "title": "Mahzen",
-   "cli_ms": 1603,
-   "mech_ms": 14591,
+   "cli_ms": 1646,
+   "mech_ms": 14601,
    "speak_ms": 17727,
-   "total_ms": 20821,
+   "total_ms": 20860,
    "screens": [
     {
      "user": "ayse",
      "path": "/mahzen",
-     "mech_ms": 4555,
+     "mech_ms": 4522,
      "numbers": [
       "100",
       "300",
@@ -1306,7 +1331,7 @@
     {
      "user": "ayse",
      "path": "/mahzen/92",
-     "mech_ms": 6174,
+     "mech_ms": 6154,
      "numbers": [
       "No.92",
       "6",
@@ -1349,7 +1374,7 @@
     {
      "user": "ayse",
      "path": "/mahzen/91",
-     "mech_ms": 2259,
+     "mech_ms": 2279,
      "numbers": [
       "638",
       "30",
@@ -1382,15 +1407,15 @@
   {
    "key": "10a",
    "title": "Operatörün sessiz değişikliği",
-   "cli_ms": 1821,
-   "mech_ms": 3475,
+   "cli_ms": 1744,
+   "mech_ms": 3399,
    "speak_ms": 8182,
-   "total_ms": 10013,
+   "total_ms": 9935,
    "screens": [
     {
      "user": "aylin",
      "path": "/defter",
-     "mech_ms": 1654,
+     "mech_ms": 1655,
      "numbers": [
       "638",
       "30",
@@ -1415,15 +1440,15 @@
   {
    "key": "10b",
    "title": "Karar Saati açılışında geri alınır",
-   "cli_ms": 2159,
-   "mech_ms": 5911,
+   "cli_ms": 2072,
+   "mech_ms": 5817,
    "speak_ms": 9545,
-   "total_ms": 11714,
+   "total_ms": 11627,
    "screens": [
     {
      "user": "aylin",
      "path": "/defter",
-     "mech_ms": 3752,
+     "mech_ms": 3745,
      "numbers": [
       "638",
       "30",
@@ -2104,5 +2129,5 @@
    "a0c9ebdc5ebdacb38e317e50a1e97ba83f6aa4d41bd7a7e12010539390513fa7"
   ]
  },
- "total_ms": 138155
+ "total_ms": 143490
 }

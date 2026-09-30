@@ -79,6 +79,7 @@ flowchart LR
 | Alan ağacı, Kapsam, UYE, Kaynak, SAHIBI | Neo4j | Ontoloji |
 | HAVALE, ETKILESIM | Neo4j | Karar Saati'nde PostgreSQL'e anlık görüntü alınır |
 | YonetmelikMaddesi (değerler) | Neo4j | Kod eşik ya da süre sabiti içermez |
+| Bildirimler | PostgreSQL | Yalnızca sahibine döner; deftere yazılmaz (§7.10) |
 | Mahzen başlıkları ve mesajları | PostgreSQL | `Diskur` düğümü + yazar ilişkileri Neo4j'de (baskın tespiti için) |
 | Defter kayıtları | ledger-1..3 (her birinde ayrı SQLite) | Silinmez |
 
@@ -451,6 +452,22 @@ Pay etkisi bir fark değil, **hedef paylar** olarak bildirilir ("İstanbul 4.000
 
 **Gerekçe.** Azınlığın karşı oyu çoğunluk tarafından görülüp cezalandırılamamalıdır: açık oy, küçük bir toplulukta hayır diyenlerin bir sonraki oylamada, tartışmada ya da Mahzen'de hedef alınmasına yol açar. Temsilcinin oyu ise temsil ettiklerine karşı hesap verebilir olmalıdır: başkalarının oyunu taşıyan kişinin o oyu nasıl kullandığını, oyunu ona havale edenler görebilmelidir. Meclislerde açık oy, sandıkta gizli oy ilkesinin karşılığıdır. Havale bu iki rol arasındaki sınırı belirler: oy taşıyan temsilcidir.
 
+### 7.10 Bildirimler
+
+Site içinde bir zil; e-posta ya da telefon bildirimi yoktur. Zil yalnızca kişinin katıldığı kararların sonucunu taşır (`services/notifications.py`):
+
+- **Karar Saati sonucu** (`KARAR_SAATI`): oturum kapanıp bütün sonuçlar uygulandıktan sonra, oturumda oy veren, oyu havaleyle kullanılan ya da önerisi oylanan her yurttaşa tek bildirim. Her öneri için bir satır: numara ve başlık (R2 daraltmasında etki başlığı), sonuç (kabul, ret, pay çakışması) ve kişinin payı: "oyunuz EVET", "oyunuz havaleyle ceren üzerinden: EVET", "sizin öneriniz". Eşzamanlı oylamada oy kapsam adıyla yazılır ("oyunuz HAYIR (İstanbul)"). Bağlantı oturumun sonuç sayfasıdır.
+- **Sessiz onay** (`SESSIZ_ONAY`): hızlı şeritteki öneri itiraz eşiği aşılmadan süresini doldurunca öneri sahibine: kabul edildi ya da pay çakışması nedeniyle uygulanamadı.
+- **Yavaş şerit** (`YAVAS_SERIT`): itiraz eşiği aşılıp öneri Karar Saati kuyruğuna geçince öneri sahibine.
+
+Ayrıntılar:
+
+- Gizli oy yalnızca sahibine gösterilir; başkasının oyu hiçbir bildirimde yoktur. Havaleyle kullanılan oyda temsilcinin oyu zaten açıktır (§7.9).
+- Hâtif giriş yapamadığı için bildirim almaz. Mahzen bildirim üretmez (§10, teşvik edilmez).
+- Bildirim deftere yazılmaz: kişiye özeldir, karar kaydı değildir; kararın kendisi zaten defterdedir. Metin üretildiği anda sabitlenir.
+- Havale uyarıları (bekleyen havale, süresi dolan havale) zile değil sayfa başındaki şeride düşer (§8); karar gerektirirler ve düğmeleri şeritte durur.
+- İstemci okunmamış sayısını 30 saniyede bir ve her sayfa değişiminde okur; rozet 9'dan sonra "9+" yazar. Bildirimler sayfası açılınca hepsi okundu sayılır; "yeni" işareti o görünümde kalır.
+
 ## 8. Havale
 
 ### 8.1 Çözümleme
@@ -488,7 +505,7 @@ Her havale kabul edildiği anda bir bitiş anı alır: `kabul anı + havale_sure
 - **Süre dolumu.** Zamanlayıcı bitiş anında havaleyi graftan siler ve deftere `HAVALE_SURESI_DOLDU` yazar (veren, alan, alan_id, veriliş, bitiş). Okumalar ayrıca o ana göre süzülür: bitişi geçmiş ama zamanlayıcının henüz silmediği bir havale yürürlükte sayılmaz.
 - **Karar Saati anlık görüntüsü esastır.** Pencere açıldığında yürürlükte olan havale o oturum için geçerlidir, pencere sırasında süresi dolsa bile. Dolum işlenir ve deftere yazılır, ama oturumun seçmen listesi ve ağırlıkları açılışta alındığı için oylamayı etkilemez.
 - **Zincir.** Ortadaki bir havalenin süresi dolarsa zincir o noktada kopar; alttaki havaleler üstteki kişide biter. A → B → C'de B → C dolarsa A'nın oyu B'ye gider, B kendi oyunu ve A'nınkini kullanır.
-- **Uyarı.** Bildirim sistemi yoktur. Süresi `havale_uyari_suresi` (14 gün, izinli aralık 3 – 30 gün) içinde dolacak havaleler, girişten sonra açılan ana sayfada, profilde ve Havale sayfasında bir uyarı şeridinde gösterilir. Verilen havale için şeritte **Yenile** vardır; alınan havaleyi yalnızca veren yenileyebilir. Pencere yönetmelik maddesidir; hash'e ve oylamasız değişiklik tespitine dahildir.
+- **Uyarı.** Zil yalnızca sonuçları taşır (§7.10); havale uyarıları sayfa başındaki şeritte durur. Süresi `havale_uyari_suresi` (14 gün, izinli aralık 3 – 30 gün) içinde dolacak havaleler, girişten sonra açılan ana sayfada, profilde ve Havale sayfasında bir uyarı şeridinde gösterilir. Verilen havale için şeritte **Yenile** vardır; alınan havaleyi yalnızca veren yenileyebilir. Pencere yönetmelik maddesidir; hash'e ve oylamasız değişiklik tespitine dahildir.
 - **Profil.** Verilen ve alınan havaleler kalan süreleriyle görünür.
 
 ### 8.6 Hâtif
@@ -506,7 +523,7 @@ Hâtif sembolik bir bilirkişidir: kural tabanlı bir servis hesabıdır, gerçe
 Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi kabul edene kadar hiçbir oya katılmaz.
 
 - **Bekleyen havale grafa girmez.** İstek PostgreSQL'de ayrı bir satırdır (`DelegationRequest`). Graf yalnızca kabul edilmiş havaleleri, yani HAVALE ilişkilerini taşır. Ağırlık, zincir çözümlemesi, oy hakkı ve Karar Saati anlık görüntüsü yalnızca grafı okuduğu için bekleyen havale bunlara yapısı gereği katılamaz; ayrı bir süzgece güvenilmez. Oy verende kalır: veren o alanda oy kullanabilir. Verenin aynı alanda kabul edilmiş eski bir havalesi varsa yenisi kabul edilene kadar o yürürlükte kalır.
-- **Kabul ve ret.** Alan kişi bekleyen havaleleri girişte açılan ana sayfada, profilde ve Havale sayfasında bir uyarı şeridinde görür: **Kabul et** / **Reddet**. Şerit kabul edince oyunun açık olacağını söyler. Kabul anında havale grafa girer ve süresi (§8.5) başlar. Reddedilen havale düşer; bildirim sistemi yoktur, veren kendi Havale sayfasında "reddedildi" görür. Veren bekleyen havalesini geri alabilir; aynı alanda yeni bir havale verirse bekleyen eskisi düşer.
+- **Kabul ve ret.** Alan kişi bekleyen havaleleri girişte açılan ana sayfada, profilde ve Havale sayfasında bir uyarı şeridinde görür: **Kabul et** / **Reddet**. Şerit kabul edince oyunun açık olacağını söyler. Kabul anında havale grafa girer ve süresi (§8.5) başlar. Reddedilen havale düşer; zile bildirim düşmez, veren kendi Havale sayfasında "reddedildi" görür. Veren bekleyen havalesini geri alabilir; aynı alanda yeni bir havale verirse bekleyen eskisi düşer.
 - **Kabul süresi.** `havale_kabul_suresi` (7 gün, izinli aralık 1 – 30 gün) içinde kabul edilmeyen havale düşer. Zamanlayıcı vade anında işler ve deftere yazar; veren "kabul süresi doldu" görür.
 - **İade.** Alan kişi kabul ettiği bir havaleyi istediği zaman iade edebilir; oy verene döner, veren "iade edildi" görür.
 - **Havale kabul etmiyorum.** Profildeki seçenek açıksa kişiye yeni havale verilemez ve başkasının profilinde havale düğmesi pasif görünür. Bekleyen ve kabul edilmiş havaleler kendiliğinden düşmez; kişi onları reddeder ya da iade eder.
@@ -628,7 +645,8 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
 - **Sansür şeridi:** tam genişlikte siyah şerit, üzerinde mono yazıyla oylama numarası. Bordo #7A1E2B siyah üstünde 2,0:1 kontrast verdiği için şeritteki yazıda aynı tonun açık hâli (#D4576B, 5,4:1) kullanılır.
 - **Karar Saati:** büyük geri sayım; sonuç açıklamasında oylar sayılarak düşer.
 - **Profil:** resmî kayıt belgesi düzeni. Noktalı satırda değer sığmazsa telefonda etiket üstte, değer altta yığılır. Dar ekranda MÜŞAVİR mührü başlığın altında, sağda ve küçük durur.
-- **Başlık (künye):** tam gazete başlığı masaüstünde her sayfada, telefonda yalnızca Meydan ana sayfasında. Telefonda diğer sayfalarda ince, yapışkan bir çubuk durur: küçük MEŞVERET ve tek satırlık, yatay kaydırılan menü. Kullanıcı adı ve çıkış en üstteki tarih satırındadır.
+- **Başlık (künye):** tam gazete başlığı masaüstünde her sayfada, telefonda yalnızca Meydan ana sayfasında. Telefonda diğer sayfalarda ince, yapışkan bir çubuk durur: üstte küçük MEŞVERET ile zil, kullanıcı adı ve çıkış; altta beş bölümün tamamı. Menü telefonda satıra yayılır, 320 px'te son bölüm alt satıra kırılır. İlk sürüm menüyü yatay kaydırıyordu; 375 px'te iç sayfalarda yalnızca Meydan ve Karar Saati görünüyor, Havale, Yönetmelik ve Defter ekran dışında kalıyordu (2026-09-30). Tarih ana sayfanın başlığındadır.
+- **Zil:** kullanıcı adının solunda, View'larla çizilmiş (kilit işareti gibi); okunmamış bildirim varsa bordo rozet. Bildirimler sayfasındayken zil bordodur.
 - **Takma adlar** hiçbir yerde büyük harfe çevrilmez; Türkçe büyük harf "baris"i "BARİS" yapar, kimliği değiştirir. Büyük harfli bir etiketin içinde geçen takma ad dönüşümden ayrılır (`Nick`).
 - **Devre dışı düğmeler** tek biçimdedir: gri çerçeve, gri yazı; soluk bordo yok.
 - **İkincil eylemler:** mesajda birincil eylem "Yanıtla"dır. Düzenleme ve silme önerileri küçük, gri ve "⋯" arkasındadır; silme istisnadır, arayüz de öyle gösterir. Aktif silme oylamasındaki mesajın ve konunun üstünde "№10 silme oylamasında · 4 Ekim" işareti durur ve öneriye bağlanır.
@@ -700,6 +718,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Konu açılış metninin sahibince düzenlenmesi | DUZENLEME önerisinden geçer |
 | Öneri sahibinin seçmen kapsamına üyeliği | Gerekli (R5) |
 | Doğrulama kanalı | Yalnızca e-posta (kayıtta telefon alanı yok) |
+| Bildirim kanalı | Yalnızca site içi zil: Karar Saati sonucu, sessiz onay ve itiraz; e-posta ya da telefon bildirimi yok (§7.10) |
 | Yaş sınırı | 18 (yaş grupları 18'den başlar) |
 | Bekleme süresi dolan yeni maddeler | Baskın ve etkileşim eşikleri, `mahzen_ifsa_esigi` (§5) |
 | Mahzen'de baskın tespitinin katılım anı | Hesabın açılış anı. Başlığa katılım o başlıktaki herkes için yenidir; ortak başlık sinyali tüm katılımcıları birbirine bağladığı için başlığa katılım anı kullanılsaydı genç bir başlıktaki herkes baskın sayılırdı |
@@ -807,6 +826,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 - Expo SDK 57, expo-router (`client/src/app/` altındaki her dosya bir ekran), TypeScript. Web ve Android aynı kod tabanıdır.
 - `src/components/paper.tsx` Meydan bileşenlerini (gazete başlığı, mühür, sansür şeridi, düğme, form alanları, geri sayım), `src/components/cellar.tsx` Mahzen bileşenlerini (CRT katmanı, çürüyen metin, ömür çubuğu, uyarı) içerir.
 - `src/lib/clock.tsx` istemciyi sunucunun sahte saatine eşitler; tüm geri sayımlar bu saate göre işler.
+- `src/lib/notifications.tsx` zildeki okunmamış sayısını tutar (30 sn'de bir ve sayfa değişiminde okur); başlık ve `/bildirimler` sayfası aynı sayıyı paylaşır.
 - `src/components/reveal-tally.tsx` Karar Saati sonuç açıklamasını, `src/components/reveal-transition.tsx` ifşa geçişini oynatır.
 - `src/components/proposal-title.tsx` daralan önerinin talep/etki başlığını, pay çubuğunu ve olgunlaşma satırını üretir; öneri sayfası, kartlar, konu sayfası ve Karar Saati ekranları bunu kullanır.
 - `src/lib/birth-date.ts` kayıt formundaki doğum tarihi alanına yardım eder: yazarken noktaları ekler (tek haneli gün ya da aydan sonra nokta yazılırsa başına 0 koyar, "YYYY-AA-GG" yapıştırılırsa çevirir) ve tarihi hemen denetler (gün 01–31, ay 01–12, takvimde olmayan gün, 1900 öncesi, gelecek, 18 yaş). Yaşı sunucunun `age_on`'u gibi ve sunucunun sahte saatine göre hesaplar; 18 yaş altında 18 yaşın dolacağı günü söyler. Denetim yardımcıdır; kararı sunucu verir. Uyarı alanın altında `aria-live="polite"` ile okunur.
@@ -846,6 +866,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Demo modu (adımın baştan kurulması ve donmuş saat, `next`'in yalnızca geçişi uygulaması, 10a'daki bozulmanın 10b'de geri alınması, aynı adımın iki kurulumunda aynı defter, geliştirme uç noktalarının yalnızca `ENV=dev`'de olması) | `tests/integration/test_demo.py`; iki uçtan uca çalıştırmanın karşılaştırması `scripts/demo-kaydi.mjs` (DEMO.md **Ölçüm**) |
 | Toplu defter eklemesi (zincir tek tek eklemeyle aynı, azalan zaman damgası hiçbir kaydı eklemez, geride kalan takipçi toplu çoğaltmada yetişir) | `ledger/tests/test_replication.py` |
 | Mahzen çürümesi (en fazla %10; ilk %55'te bozulma yok; yalnızca blok glifler; çürüme arttıkça bozulanlar yalnızca çoğalır; deterministik) | `client/scripts/check-decay.mjs` |
+| Bildirimler (oy veren, havaleyle oyu kullanılan ve öneri sahibi oturum başına tek bildirim alır; eşzamanlı oylamada kapsam adı; Hâtif ve katılmayan almaz; itiraz ve sessiz onay öneri sahibine; API: liste, okunmamış sayısı, okundu işaretleme, başkasının bildirimi işaretlenemez) | `tests/integration/test_notifications.py` |
 | Doğum tarihi yardımcısı (yazarken nokta, geri silme, tek haneli gün ve ay, ISO yapıştırma; geçersiz gün ve ay, takvimde olmayan gün, gelecek, 18. doğum günü, 29 Şubat) | `client/scripts/check-birth-date.mjs` |
 | Tohumdaki Mahzen (şiir metni olduğu gibi, demo başlığının altında; tartışmaların `>>N` referansları; liste sırası açılış sırası) | `test_seed.py::test_cellar_poem_thread_second_after_demo`, `::test_cellar_discussions_replace_filler_replies` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |

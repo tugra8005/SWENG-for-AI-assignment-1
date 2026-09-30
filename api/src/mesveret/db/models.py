@@ -408,3 +408,21 @@ class CellarBallot(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     yes: Mapped[bool] = mapped_column(Boolean)
     updated_at: Mapped[datetime] = mapped_column(TS)
+
+
+class Notification(Base):
+    """Site içi bildirim: kişinin oy verdiği ya da açtığı önerilerin sonucu (bkz. services/notifications).
+
+    Yalnızca sahibine görünür; deftere yazılmaz. Metin üretildiği anda sabitlenir.
+    """
+
+    __tablename__ = "notifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(24))  # KARAR_SAATI | SESSIZ_ONAY | YAVAS_SERIT
+    title: Mapped[str] = mapped_column(String(200))
+    lines: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    link: Mapped[str | None] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(TS)
+    read_at: Mapped[datetime | None] = mapped_column(TS)

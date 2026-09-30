@@ -40,7 +40,7 @@ from mesveret.domain.shade import vote_pseudonym
 from mesveret.domain.tally import tally_approval, tally_binary
 from mesveret.domain.text import locative_name, percent_tr
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
-from mesveret.services import ledger, ontology, proposals, regulation, topics
+from mesveret.services import ledger, notifications, ontology, proposals, regulation, topics
 from mesveret.services.oracle import ORACLE_ID
 from mesveret.services.profile import nickname_map
 
@@ -485,11 +485,14 @@ def close_session(ctx: Ctx, session: DecisionSession) -> None:
     regulation.restore_voted_state(ctx, session.id, stage="kapanis")
     reg = Regulation(session.regulation)
     groups: dict[int, list[SessionItem]] = {}
-    for item in items_of(ctx, session):
+    all_items = items_of(ctx, session)
+    for item in all_items:
         groups.setdefault(item.proposal_id, []).append(item)
     for pid, items in groups.items():
         _close_proposal(ctx, session, ctx.db.get(Proposal, pid), items, reg)
     session.status, session.closed_at = "CLOSED", ctx.now
+    # Oy verenlere ve öneri sahiplerine sonuç bildirimi (site içi zil).
+    notifications.session_closed(ctx, session, all_items)
     ledger.enqueue(ctx, "OTURUM_KAPANDI", {"oturum": session.id, "kapanis": ctx.now.isoformat()})
     # Oturumda kabul edilen değişikliklerden sonra yönetmeliğin tam hâli ve hash'i.
     regulation.record_state(ctx, session.id)

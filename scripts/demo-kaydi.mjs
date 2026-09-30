@@ -80,6 +80,7 @@ const ACTS = {
   5: [
     async (p) => { await show(p, 'kabulünüzü bekliyor'); await p.waitForTimeout(1500); await show(p, 'Verdiğiniz havaleler'); },
     async (p) => { await p.getByText('Yeniden oynat').first().waitFor({ timeout: 60000 }); },
+    async (p) => { await show(p, 'Karar Saati #1 sonuçlandı'); await show(p, 'havaleyle ceren'); },
   ],
   6: [async (p) => {
     await show(p, 'Şerhler');

@@ -242,6 +242,8 @@ docker compose exec api meşveret-dev run-karar-saati --close
 | №19 Tüm şehirlerin payında %5 artış | 13/21 kabul oyu, ama mühür **UYGULANAMADI**: №18 aynı bütçenin paylarını önce değiştirdi (senaryo 14) |
 | №16 Belgesel film gösterimleri | Hâtif ×3 HAYIR (iki yurttaş Kültür alanında Hâtif'e havale etti); 4 EVET, 6 HAYIR → **RET** (senaryo 8) |
 
+**Bildirimler.** Oturum kapanınca sonuçlar zile düşer: sağ üstte, takma adın solundaki zilde bordo rozet okunmamış sayısını gösterir. **aylin** olarak zile tıklayın: *"Karar Saati #1 sonuçlandı"* altında *"№9 Gece metro seferleri: kabul edildi · oyunuz havaleyle ceren üzerinden: EVET"* yazar. **umut** kendi önerisinin sonucunu (*"sizin öneriniz"*) ve oy verdiği her önerinin sonucunu görür; tohumda metro itirazla yavaş şeride geçtiği için bir de *"Önerinize itiraz edildi"* bildirimi vardır. Sayfa açılınca bildirimler okundu sayılır. Sessiz onayla kabul edilen öneriler de sahibine bildirilir (№20, saati bir gün ilerletince **emre**'ye).
+
 ### 4. Silme: gerekçe, 2/3 ve kendi mesajı
 
 Silme istisnadır ("tartışmalar silinmez"). Başkasının içeriğini silmek için en az bir içerik kuralına dayanmak, kuralı ihlal eden kısmı metinden alıntılamak ve kullanılan oyların 2/3'ünü almak gerekir. Kendi mesajı için gerekçe gerekmez, basit çoğunluk yeter. Oturum öncesi adımlar ve sonuçlar yukarıdaki Karar Saati bölümündedir.
