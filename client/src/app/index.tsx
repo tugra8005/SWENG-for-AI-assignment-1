@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -94,7 +94,10 @@ export default function Home() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, gap: 12, flexWrap: 'wrap' }}>
         <Body style={{ flex: 1, minWidth: 240, fontFamily: fonts.serifItalic, color: paper.inkSoft }}>
           Herkes konu önerebilir. Öneriler sessiz onayla ya da Karar Saati&apos;nde oylanarak kabul
-          edilir; her karar deftere mühürlenir.
+          edilir; her karar deftere mühürlenir.{' '}
+          <Link href="/nasil-isler" style={{ color: paper.seal, fontFamily: fonts.serifMedium, textDecorationLine: 'underline' }}>
+            Nasıl işler?
+          </Link>
         </Body>
         {me ? (
           <Button label="Konu öner" onPress={() => router.push('/oneri/yeni?type=KONU')} />

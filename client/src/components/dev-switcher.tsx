@@ -14,7 +14,9 @@ import { useAuth } from '@/lib/auth';
 import { fonts } from '@/theme/tokens';
 
 const HIDE_KEY = 'mesveret.devmenu';
-const USERS = ['aylin', 'ceren', 'ayse', 'baris', 'zeynep', 'hale', 'emre', 'elif', 'selin'];
+/** Projenin sahibinin tohum hesabı (api/src/mesveret/services/seed.py, OWNER). */
+export const OWNER = 'MostlyHarmless';
+const USERS = [OWNER, 'aylin', 'ceren', 'ayse', 'baris', 'zeynep', 'hale', 'emre', 'elif', 'selin'];
 
 type Screen = { user: string; path: string; show: string };
 type DemoView = { step: string | null; index?: number; total?: number; title?: string; screens?: Screen[] };
@@ -22,6 +24,47 @@ type DemoView = { step: string | null; index?: number; total?: number; title?: s
 export function DevSwitcher() {
   if (!__DEV__) return null;
   return <DevSwitcherInner />;
+}
+
+/** Giriş sayfasında tek tıkla giriş: yalnızca geliştirme derlemesinde ve /_dev varken. */
+export function QuickLogin() {
+  if (!__DEV__) return null;
+  return <QuickLoginInner />;
+}
+
+function QuickLoginInner() {
+  const { loginWithToken } = useAuth();
+  const [available, setAvailable] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api('/_dev/demo')
+      .then(() => alive && setAvailable(true))
+      .catch(() => undefined); // üretim API'si: /_dev yok, düğme görünmez
+    return () => {
+      alive = false;
+    };
+  }, []);
+  if (!available) return null;
+  const enter = async () => {
+    setError(null);
+    try {
+      const r = await api<{ token: string }>('/_dev/login-as', { method: 'POST', body: { nickname: OWNER } });
+      await loginWithToken(r.token);
+      router.replace('/');
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    }
+  };
+  return (
+    <View style={st.quick}>
+      <Pressable onPress={enter} accessibilityRole="button" style={st.quickButton}>
+        <Text style={st.quickLabel}>{OWNER} olarak gir</Text>
+      </Pressable>
+      <Text style={st.quickNote}>Geliştirme ortamı: şifresiz giriş. Üretimde bu düğme yoktur.</Text>
+      {error ? <Text style={[st.quickNote, { color: '#7A1E2B' }]}>{error}</Text> : null}
+    </View>
+  );
 }
 
 function DevSwitcherInner() {
@@ -180,4 +223,9 @@ const st = StyleSheet.create({
   link: { fontFamily: fonts.monoBold, fontSize: 13, color: SHEET, paddingHorizontal: 4 },
   muted: { fontFamily: fonts.serifItalic, fontSize: 12, color: '#B5AE9F' },
   error: { fontFamily: fonts.mono, fontSize: 11, color: '#E59AA6' },
+  // Giriş sayfasındaki geliştirme düğmesi: kesikli çerçeve, sayfanın asıl formundan ayrı dursun.
+  quick: { borderWidth: 1, borderStyle: 'dashed', borderColor: '#6B6558', padding: 12, gap: 8, marginBottom: 16 },
+  quickButton: { alignSelf: 'flex-start', backgroundColor: INK, paddingHorizontal: 14, paddingVertical: 9 },
+  quickLabel: { fontFamily: fonts.monoBold, fontSize: 13, letterSpacing: 0.4, color: SHEET },
+  quickNote: { fontFamily: fonts.serifItalic, fontSize: 14, color: '#4A463E' },
 });

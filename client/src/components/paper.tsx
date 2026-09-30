@@ -172,9 +172,14 @@ function Account({ small }: { small?: boolean }) {
     );
   }
   return (
-    <View style={{ flexDirection: 'row', gap: small ? 12 : 14, alignItems: 'center' }}>
+    // Dar ekranda uzun takma ad kısalır ("MostlyHarm…"); zil ve çıkış her zaman görünür.
+    <View style={{ flexDirection: 'row', gap: small ? 12 : 14, alignItems: 'center', flexShrink: 1, minWidth: 0 }}>
       <Bell />
-      <Link href={`/profil/${encodeURIComponent(me.nickname)}`} style={[text, { color: paper.ink }]}>
+      <Link
+        href={`/profil/${encodeURIComponent(me.nickname)}`}
+        numberOfLines={1}
+        style={[text, { color: paper.ink, flexShrink: 1 }]}
+      >
         {me.nickname}
       </Link>
       <Pressable onPress={logout} accessibilityRole="button">
@@ -258,6 +263,9 @@ export function Footer() {
     <View style={{ marginTop: 48, alignItems: 'center', gap: 10 }}>
       <Rule faint style={{ alignSelf: 'stretch' }} />
       <Muted style={{ fontSize: 13 }}>Meşveret · kararlar ve silinen içerikler defterde kalır</Muted>
+      <Link href="/nasil-isler" style={s.guideLink}>
+        Nasıl işler? Kılavuz →
+      </Link>
       {/* Mahzen teşvik edilmez: sade bir bağlantı, sayaç ya da bildirim yok. */}
       <Link href="/mahzen" style={s.cellarLink} accessibilityLabel="Mahzen">
         mahzen
@@ -821,6 +829,7 @@ const s = StyleSheet.create({
   compactTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
   compactRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 6, paddingBottom: 7 },
   compactTitle: { fontFamily: fonts.serifDisplay, fontSize: 19, letterSpacing: 1.5, color: paper.ink },
+  guideLink: { fontFamily: fonts.monoMedium, fontSize: 12, letterSpacing: 0.6, color: paper.seal, textDecorationLine: 'underline' },
   cellarLink: {
     fontFamily: fonts.mono,
     fontSize: 12,

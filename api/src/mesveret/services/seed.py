@@ -99,6 +99,11 @@ NAMED = [
     ("kaba_kul", "Kadir Bal", "İzmir", date(1999, 12, 1), ()),
 ]
 
+# Projenin sahibi: geliştirme menüsünde ve giriş sayfasında tek tıkla girilen hesap. Oy planında
+# yoktur; seçmen sayılarına bir kişi olarak katılır. Doğum tarihi yer tutucudur.
+OWNER = ("MostlyHarmless", "Alparslan Tuğra Şahin", "Tokat", date(2000, 1, 1))
+OWNER_EMAIL = "asdas20041@hotmail.com"
+
 POOL_NAMES = [
     "deniz", "elif", "ferhat", "gizem", "hakan", "irem", "kaan", "leyla", "mert", "nazli",
     "okan", "pinar", "rana", "selin", "tolga", "umut", "vedat", "yasemin", "zeynep", "burak",
@@ -416,10 +421,11 @@ class World:
 
 
 def _user(c: Ctx, w: World, nickname: str, full_name: str, city: str, birth: date,
-          interests: tuple[str, ...] = (), last_login: datetime | None = None) -> None:
+          interests: tuple[str, ...] = (), last_login: datetime | None = None,
+          email: str | None = None) -> None:
     user = auth.create_verified_user(
         c, user_id=str(uuid.uuid5(SEED_NAMESPACE, nickname)),
-        nickname=nickname, full_name=full_name, email=f"{nickname}@mesveret.test",
+        nickname=nickname, full_name=full_name, email=email or f"{nickname}@mesveret.test",
         password=DEMO_PASSWORD, birth_date=birth, city=city, district="Merkez", address_line="",
     )
     for area in interests:
@@ -482,6 +488,7 @@ def _queued_by_objection(w: World, key: str, author: str, inp: ProposalInput, op
 
 
 def _people(w: World) -> None:
+    w.at(_t(days=421), lambda c: _user(c, w, *OWNER, email=OWNER_EMAIL))
     for i, (nick, name, city, birth, interests) in enumerate(NAMED):
         w.at(_t(days=420 - i), lambda c, a=(nick, name, city, birth, interests):
              _user(c, w, *a))

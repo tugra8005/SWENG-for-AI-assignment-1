@@ -62,6 +62,12 @@ docker compose logs -f api | grep "SAHTE E-POSTA"
 
 Tohum hesaplarının hepsi doğrulanmıştır ve şifreleri **`mesveret-demo`**.
 
+**Kendi hesabınız.** Tohumda projenin sahibinin hesabı da vardır: **MostlyHarmless** (Alparslan Tuğra Şahin, Tokat). Geliştirme ortamında giriş sayfasının başındaki **MostlyHarmless olarak gir** düğmesi şifresiz girer; aynı hesap geliştirme menüsünün hesap listesinde ilk sıradadır. Şifreyle girişte takma ad (büyük/küçük harf fark etmez) ya da e-posta kullanılabilir; şifre diğer tohum hesaplarıyla aynıdır. Hesap oy planında yoktur; oylamalara yalnızca siz oy verirseniz katılır. Üretim derlemesinde düğme ve menü yoktur.
+
+### Kılavuz
+
+Ana sayfadaki **Nasıl işler?** bağlantısı (ve her sayfanın alt bilgisindeki **Nasıl işler? Kılavuz →**) `/nasil-isler` sayfasını açar: sistemin amacı, dört mekanizma ve her kavram için on bir canlandırmalı şekil (önerinin iki şeridi, Karar Saati penceresi, R2 daraltma, havale zinciri, yönetmelik ve değiştirilemez maddeler, Hâtif, silme, kapanış ve Şerh, baskın tespiti, defter, Mahzen), gerçek sayım bileşeniyle bir örnek, bilinçli açıklar ve sözlük. Süreler ve eşikler yönetmelikten canlı okunur; bir yönetmelik oylaması sayfayı eskitmez. Azaltılmış harekette şekiller son karelerinde durur.
+
 ## Geliştirme CLI'ı
 
 Yalnızca `ENV=dev` iken çalışır. Tüm zamanlanmış işler sahte bir saate göre işler; demo bu komutlarla yapılır.

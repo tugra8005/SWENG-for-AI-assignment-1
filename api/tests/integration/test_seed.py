@@ -209,6 +209,18 @@ def test_cellar_discussions_replace_filler_replies(seeded):
     assert fillers == sorted(fillers, reverse=True)
 
 
+def test_owner_account_logs_in_with_nickname_or_email(seeded, client):
+    """Projenin sahibinin hesabı: takma ad büyük/küçük harf duyarsız, e-posta da kabul edilir."""
+    owner = user(seeded, "MostlyHarmless")
+    assert (owner.full_name, owner.city, owner.email) == (
+        "Alparslan Tuğra Şahin", "Tokat", seed.OWNER_EMAIL)
+    for ident in ("mostlyharmless", seed.OWNER_EMAIL):
+        r = client.post("/auth/login", json={"identifier": ident, "password": seed.DEMO_PASSWORD})
+        assert r.status_code == 200 and r.json()["token"]
+        me = client.get("/auth/me", headers={"Authorization": f"Bearer {r.json()['token']}"}).json()
+        assert me["nickname"] == "MostlyHarmless"
+
+
 def test_counselor_label_in_seed(seeded, client):
     body = client.get("/users/selin").json()
     assert "Müşavir" in body["roles"]

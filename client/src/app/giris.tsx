@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { Body, Button, ErrorNotice, Field, H1, InfoNotice, Kicker, Muted, Page, Rule } from '@/components/paper';
+import { QuickLogin } from '@/components/dev-switcher';
 import { useAuth } from '@/lib/auth';
 import { paper } from '@/theme/tokens';
 
@@ -29,6 +30,7 @@ export default function Login() {
         <Kicker>Kimlik denetimi</Kicker>
         <H1>Giriş</H1>
         <Rule />
+        <QuickLogin />
         {dogrulandi ? <InfoNotice>E-postanız doğrulandı; şimdi giriş yapabilirsiniz.</InfoNotice> : null}
         <Field
           label="Takma ad ya da e-posta"
