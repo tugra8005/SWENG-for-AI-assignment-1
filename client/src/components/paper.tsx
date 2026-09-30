@@ -541,7 +541,12 @@ export function Button({ label, onPress, variant = 'primary', disabled, small, c
   );
 }
 
-export function Field({ label, hint, ...props }: TextInputProps & { label: string; hint?: string }) {
+export function Field({
+  label,
+  hint,
+  error,
+  ...props
+}: TextInputProps & { label: string; hint?: string; error?: string }) {
   const [focused, setFocused] = useState(false);
   return (
     <View style={{ marginBottom: 14 }}>
@@ -562,10 +567,20 @@ export function Field({ label, hint, ...props }: TextInputProps & { label: strin
           s.input,
           props.multiline && { minHeight: 110, textAlignVertical: 'top' },
           focused && { borderBottomColor: paper.seal, backgroundColor: paper.sheet },
+          error ? { borderBottomColor: paper.seal, borderBottomWidth: 2 } : null,
           props.style,
         ]}
       />
-      {hint ? <Muted style={{ fontSize: 13, marginTop: 4 }}>{hint}</Muted> : null}
+      {/* Yazarken değişen uyarı ekran okuyucuya kibarca okunur; kutu hep yerinde durur. */}
+      <View aria-live="polite">
+        {error ? (
+          <Text style={[s.body, { fontSize: 13, lineHeight: 19, marginTop: 4, color: paper.seal, fontFamily: fonts.serifMedium }]}>
+            {error}
+          </Text>
+        ) : hint ? (
+          <Muted style={{ fontSize: 13, marginTop: 4 }}>{hint}</Muted>
+        ) : null}
+      </View>
     </View>
   );
 }

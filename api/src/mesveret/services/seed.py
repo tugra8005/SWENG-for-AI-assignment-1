@@ -12,7 +12,8 @@ Senaryolar (README'de adım adım):
 4. Silme — gerekçesiz silme reddedilir; gerekçeli silme %60 ile geçemez, %67 ile geçer (sansür
    şeridi kuralı anar, içerik defterde durur); kendi mesajını silme basit çoğunlukla geçer.
 5. Kapanış — üç rakip metin, onay oylaması, kaybeden Şerh ekler.
-6. Mahzen — ifşa oylaması, geçiş animasyonu, öneri taslağı.
+6. Mahzen — ifşa oylaması, geçiş animasyonu, öneri taslağı; denetimsiz bir şiir başlığı ve dolgu
+   başlıklarda tartışmalar.
 7. Baskın — art arda açılmış bağlantılı hesaplar işaretlenip dışlanır.
 8. Hâtif — etiket önerisi ve deterministik oy.
 9. Olgunlaşma — Karar Saati'nden 10 dakika önce açılan genel kapsamlı öneri 7 gün bekler.
@@ -37,7 +38,7 @@ from sqlalchemy import select
 
 from mesveret import clock
 from mesveret.context import Ctx
-from mesveret.db.models import DevVotePlan, Proposal, SchedulerState, Topic, User
+from mesveret.db.models import CellarPost, DevVotePlan, Proposal, SchedulerState, Topic, User
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.scopes import ScopeSubtype
 from mesveret.services import (
@@ -224,6 +225,171 @@ MAHZEN_REPLIES = [
     "Sezgim hayır diyor ama gerekçem yok.", "Bu bir kategori hatası.",
     "Karşı örnek: rüyalar.", "Pratikte fark etmez, teoride çok şey değişir.",
 ]
+# Birkaç dolgu başlıkta genel yanıtların yerine gerçek bir tartışma: dolgu sırası → yanıtlar.
+# "op" başlığı açan kişidir; metindeki "{n}" n. mesaja (0 = açılış) >>N referansı olur.
+MAHZEN_DISCUSSIONS: dict[int, list[tuple[str, str]]] = {
+    1: [
+        ("ferhat", "Aynıdır. Gemi parçalarından değil, yaptığı yolculuktan ibaret."),
+        ("umut", ("{1} O zaman sökülen eski parçalarla ikinci bir gemi yapılırsa hangisi "
+                  "Theseus'un?")),
+        ("op", ("{2} İkisi de değil bence. Soru, bir şeye ad vermenin bir uzlaşma olduğunu "
+                "gösteriyor sadece.")),
+        ("ferhat", ("Bu forum da öyle: kuralları tek tek oylanarak değişiyor. Bir yıl sonra "
+                    "aynı forum mu olacak?")),
+    ],
+    30: [
+        ("irem", ("İkisini birden. Burada yazdığımı Meydan'da yazmazdım, ama burada yazdığım "
+                  "daha doğru.")),
+        ("kaan", "{1} Daha doğru mu, daha rahat mı? Rahatlık doğruluk değil."),
+        ("op", ("Gölge kimliği her başlıkta değişiyor; kimse itibar biriktiremiyor. Kaybedecek "
+                "itibar yoksa kazanacak da yok.")),
+        ("yasemin", ("{3} İfşa oylaması var ama. Her an adımın açılabileceğini bilmek beni "
+                     "dikkatli yazdırıyor.")),
+        ("irem", "{4} O zaman bu anonimlik değil, ertelenmiş imza."),
+    ],
+    52: [
+        ("dogan", "Oy vermemek, karar verme işini oy verenlere bırakmaktır. Bu da bir tercih."),
+        ("op", "{1} Tercih ama oy değil. Oy bir şey söyler; sessizlik yorumlanmayı bekler."),
+        ("ece", "Havale bunun için var. Karar vermek istemeyen, güvendiği birine bırakır."),
+        ("nevzat", ("{3} Havale sessizliğin kibar hâli bence. Oyunu devrediyorsun, "
+                    "sorumluluğunu değil.")),
+        ("op", ("{4} Onu da devrediyorsun. Havaleni geri almadığın her hafta onu yeniden "
+                "onaylamış oluyorsun.")),
+    ],
+    80: [
+        ("vedat", "Herkesin, yani kimsenin. Mama koyan çok, veterinere götüren az."),
+        ("op", ("{1} Götüren var aslında; faturayı kimse paylaşmak istemiyor. Bizim sokakta "
+                "bir teyze tek başına ödüyor.")),
+        ("melis", "Mahalle ortak bir kasa açsa? Asıl zor olan kasayı kimin tutacağı."),
+        ("gulsen", ("{3} Kasa açılırsa bu sefer hangi sokağın kedisi kimin payından beslenecek "
+                    "diye tartışırız.")),
+        ("op", "Yine de sahipsiz demeyi bırakalım. Sahibi mahalle."),
+    ],
+}
+
+# Mahzen'in doğası: Meydan'da içerik kuralları ve silme oylaması var, Mahzen'de yok. Anonim,
+# denetimsiz bir başlık yalnızca aşağı düşüp çürüyerek kaybolur. Şiir kullanıcının verdiği
+# metindir; değiştirilmeden, olduğu gibi durur.
+KOYLULER_BASLIK = "Köylüleri niçin öldürmeliyiz?"
+KOYLULER_SIIR = """Köylüleri niçin öldürmeliyiz?
+
+Çünkü onlar ağır kanlı adamlardır
+Değişen bir dünyaya karşı
+Kerpiç duvarlar gibi katı
+Çakır dikenleri gibi susuz
+Kayıtsızca direnerek yaşarlar.
+Aptal, kaba ve kurnazdırlar.
+İnanarak ve kolayca yalan söylerler.
+Paraları olsa da
+Yoksul görünmek gibi bir hünerleri vardır.
+Her şeyi hafife alır ve herkese söverler.
+Yağmuru, rüzgarı ve güneşi
+Bir gün olsun ekinleri akıllarına gelmeden
+Düşünemezler…
+Ve birbirlerinin sınırlarını sürerek
+Topraklarını büyütmeye çalışırlar.
+
+Köylüleri niçin öldürmeliyiz?
+
+Çünkü onlar karılarını döverler
+Seslerinin tonu yumuşak değildir
+Dışarda ezildikçe içerde zulüm kesilirler.
+Gazete okumaz ve haksızlığa
+Ancak kendileri uğrarlarsa karşı çıkarlar.
+Adım başı pınar olsa da köylerinde
+Temiz giyinmez ve her zaman
+Bir karış sakalla gezerler.
+Çocuklarını iyi yetiştiremezler
+Evlerinde kitap, müzik ve resim yoktur.
+Bir gün olsun dişlerini fırçalamaz
+Ve şapkalarını ancak yatarken çıkarırlar.
+
+Köylüleri niçin öldürmeliyiz?
+
+Çünkü onlar köpekleri boğuşunca kavga ederler.
+Birbirlerinin evlerine ancak
+Ölümlerde ve düğünlerde giderler.
+Şarkı söylemekten ve kederlenmekten utanırlar
+Gülmek ayıp eğlenmek zayıflıktır
+Ancak rakı içtiklerinde duygulanır ve ağlarlar.
+Binlerce yılın kalın kabuğu altında
+Yürekleri bir gaz lambası kadar kalmıştır.
+Aldanmak korkusu içinde
+Sürekli birbirlerini aldatırlar.
+Bir yere birlikte gitmeleri gerekirse
+Karılarından en az on adım önde yürürler
+Ve bir erkeklik işareti olarak
+Onları herkesin ortasında döverler.
+
+Köylüleri niçin öldürmeliyiz?
+
+Çünkü onlar yanlış partilere oy verirler
+Kendilerinden olanlarla alay edip
+Tuhaf bir şekilde başkalarına inanırlar.
+Devlet, tapu dairesi, banka borcu ve hastanedir
+Devletten korkar ve en çok ona hile yaparlar.
+Yiğittirler askerde subay dövecek kadar
+Ama bir memur karşısında -bu da tuhaftır-
+Ezim ezim ezilirler.
+Enflasyon denince buğday ve gübre fiyatlarını bilirler
+Cami duvarı, kahve ya da bir ağaç gövdesine yaslanıp
+On bir ay gökyüzünden bereket beklerler.
+Dindardırlar ahret korkusu içinde
+Ama bir kadının topuklarından
+Memelerini görecek kadar bıçkındırlar
+Harmanı kaldırdıktan sonra yılda bir kez
+Şehre giderler!
+
+Köylüleri niçin öldürmeliyiz?
+
+Çünkü onlar otobüslerde ayaklarını çıkarırlar
+Ayak ve ağız kokusu içinde kurulup koltuklara
+Herkesi bunalta bunalta, yüksek perdeden
+Kızlarının talihsizliğini
+ve hayırsız oğullarını anlatırlar.
+Yoksulluktan kıvrandıkları halde, şükür içinde
+Bunun, Tanrının bir lutfu olduğuna inanırlar.
+Ve önemsiz bir şeyden söz eder gibi, her fırsatta
+Gizli bir övünçle, uzak şehirdeki
+Zengin bir akrabalarından söz ederler.
+Kibardırlar lokantada yemek yemeyi bilecek kadar
+Ama sokağa çıkar çıkmaz sümküre sümküre
+Yollara tükürürler…
+Ve sonra şaşarak temizliğine ve düzenine
+Şehirde yaşamanın iyiliğinden konuşurlar.
+
+Köylüleri niçin öldürmeliyiz?
+
+Çünkü onlar ilk akşamdan uyurlar.
+Yarı gecelerde yıldızlara bakarak
+Başka dünyaları düşünmek gibi bir tutkuları yoktur.
+Gökyüzünü baharda yağmur yağarsa
+Ve yaz güneşleri ekinlerini yetirirse severler.
+Hayal güçleri kıttır ve hiçbir yeniliğe
+-Bu verimi yüksek bir tohum bile olsa-
+Sonuçlarını görmeden inanmazlar.
+Dünyanın gelişimine bir katkıları yoktur.
+Mülk düşkünüdürler amansız derecede
+Bir ülkenin geleceği
+Küçücük topraklarının ipoteği altındadır.
+Ve birer kaya parçası gibi dururlar su geçirmeden
+Zamanın derin ırmakları önünde…
+
+KÖYLÜLERİ, SÖYLEYİN NASIL
+NASIL KURTARALIM?"""
+KOYLULER_YANITLAR = [
+    ("harun", ("Başlığı görünce kapatacaktım. Sonuna kadar okuyun; son iki dizede soru "
+               "değişiyor.")),
+    ("ipek", ("{0} Meydan'da bu başlığa ilk gün silme önerisi gelirdi. Burada silme yok: "
+              "ya yukarıda kalır ya aşağıda çürür.")),
+    ("op", ("{2} Silinsin diye değil, okunsun diye koydum. Başlığına bakıp hüküm veren, "
+            "şiirin kimi konuştuğunu kaçırıyor.")),
+    ("kerem", "Kimi konuşuyor peki? Köylüyü mü, ona tepeden bakanı mı?"),
+    ("nazli", ("{4} Bence ona tepeden bakanı. Liste boyunca öldürmeyi soruyor, sonunda "
+               "kurtarmayı; asıl mesele bu dönüş.")),
+    ("melis", ("Bunu Meydan'da kendi adımla paylaşır mıydım? Sanmıyorum. Burada "
+               "paylaşılabilmesi iyi mi kötü mü, karar veremedim.")),
+]
 
 
 def _t(days: float = 0, hours: float = 0, minutes: float = 0) -> datetime:
@@ -378,21 +544,70 @@ def _background(w: World) -> None:
            "Ayda bir kez herkes sevdiği bir şiiri okusun.", "siir", "genel", _t(days=25))
     _msg(w, "m_felsefe", "tolga", "felsefe", "Menon'daki köle çocuk sahnesi hâlâ tartışmalı.",
          _t(days=25, hours=2))
+    _msg(w, "m_felsefe2", "selin", "felsefe",
+         "Sokrates çocuğa gerçekten hatırlatıyor mu, yoksa cevabı sorularının içine mi "
+         "saklıyor? İlk buluşmada bunu konuşalım.", _t(days=24, hours=20), reply_to="m_felsefe")
     _msg(w, "m_film1", "leyla", "film", "İlk film için Tarkovski'nin Solaris'ini öneriyorum.",
          _t(days=24))
     _msg(w, "m_film2", "mert", "film", "Solaris uzun; ilk buluşma için daha kısa bir film seçelim.",
          _t(days=24, hours=-2), reply_to="m_film1")
+    _msg(w, "m_felsefe3", "deniz", "felsefe",
+         "Menon'dan sonra Euthyphron'u öneririm: kısa ve hâlâ cevapsız bir sorusu var.",
+         _t(days=23, hours=22))
+    _msg(w, "m_film4", "nazli", "film",
+         "Kısa bir başlangıç için Dekalog'un ilk bölümü olabilir; bir saat sürer, konuşacak çok "
+         "şey bırakır.", _t(days=23, hours=20), reply_to="m_film2")
+    _msg(w, "m_felsefe4", "elif", "felsefe",
+         "Bir şey tanrılar sevdiği için mi iyidir, iyi olduğu için mi sevilir? Buradaki "
+         "oylamalara da uyuyor: kabul edildiği için mi doğru, doğru olduğu için mi kabul edildi?",
+         _t(days=23, hours=19), reply_to="m_felsefe3")
+    _msg(w, "m_film5", "leyla", "film", "Dekalog'a varım. Solaris'i kış aylarına saklayalım.",
+         _t(days=23, hours=18), reply_to="m_film4")
+    _msg(w, "m_felsefe5", "kaan", "felsefe",
+         "Buluşmalar çevrim içi de olabilir mi? İzmir'den katılmak istiyorum.",
+         _t(days=23, hours=16))
+    _msg(w, "m_felsefe6", "selin", "felsefe",
+         "Olur; her buluşmanın özetini de buraya yazarım.", _t(days=23, hours=14),
+         reply_to="m_felsefe5")
     _msg(w, "m_siir", "pinar", "siir", "Ben Nâzım'dan başlarım.", _t(days=23))
+    _msg(w, "m_siir2", "okan", "siir", "Ben Cemal Süreya getireceğim; kısa ama yoğun.",
+         _t(days=22, hours=20), reply_to="m_siir")
+    _msg(w, "m_siir3", "rana", "siir", "Çeviri şiir de okunabilir mi? Szymborska'yı çok seviyorum.",
+         _t(days=22, hours=14))
+    _msg(w, "m_siir4", "okan", "siir", "Tabii; aslını da yanında okursak daha iyi olur.",
+         _t(days=22, hours=2), reply_to="m_siir3")
     _msg(w, "m_film3", "ayse", "film", "Salon için perşembe akşamı uygun.", _t(days=22))
     w.at(_t(days=21), lambda c: topics.edit_own_message(
         c, w.users["ayse"], w.ids["m_film3"], "Salon için cuma akşamı uygun; perşembe dolu."))
+    _msg(w, "m_film6", "hakan", "film",
+         "Gösterimlerde Türkçe altyazılı kopya kullanalım; altyazı yüzünden gelmeyen olmasın.",
+         _t(days=21, hours=-4))
+    _msg(w, "m_siir5", "leyla", "siir",
+         "Okunan şiirleri bir listede toplayalım; yıl sonunda küçük bir seçki olur.",
+         _t(days=21, hours=-6))
     _topic(w, "belgesel-ayi", "nazli", "Belgesel ayı",
            "Kasım ayını belgesellere ayıralım; her hafta bir belgesel.", "belgesel",
            "ilgi:sinema", _t(days=20), parent="film")
     _topic(w, "pazar", "emre", "İstanbul semt pazarları",
            "Semt pazarlarının saatleri mahalleye göre ayarlansın.", "kent", "sehir:istanbul",
            _t(days=19))
+    _msg(w, "m_belgesel1", "nazli", "belgesel-ayi",
+         "İlk hafta için doğa belgeseli yerine bir şehir belgeseli öneriyorum.",
+         _t(days=18, hours=14))
+    _msg(w, "m_belgesel2", "mert", "belgesel-ayi",
+         "Her gösterimden sonra yarım saat konuşalım; sorusunu önceden buraya yazalım.",
+         _t(days=18), reply_to="m_belgesel1")
     _msg(w, "m_pazar", "ceren", "pazar", "Kadıköy pazarı akşam da açık olabilir.", _t(days=17))
+    _msg(w, "m_belgesel3", "ayse", "belgesel-ayi",
+         "Salon cuma akşamları bizde; belgesel ayında da aynı saat olsun.", _t(days=17, hours=-2))
+    _msg(w, "m_pazar2", "emre", "pazar",
+         "Akşam pazarı çalışanlar için iyi olur; ama sabah kurulan tezgâhın akşama kadar durması "
+         "zor.", _t(days=16, hours=20), reply_to="m_pazar")
+    _msg(w, "m_pazar3", "rana", "pazar",
+         "Hafta içi bir gün yalnızca akşam kurulan bir pazar denenebilir.", _t(days=16, hours=14))
+    _msg(w, "m_pazar4", "ceren", "pazar",
+         "Önce bir mahallede deneyelim; tutarsa öneri olarak açarım.", _t(days=16),
+         reply_to="m_pazar3")
 
 
 def _scenario_deletion(w: World) -> None:
@@ -433,6 +648,14 @@ def _scenario_closure(w: World) -> None:
     _msg(w, "m_park1", "burak", "parklar", "22:00 hem güvenli hem yeterli.", _t(days=10))
     _msg(w, "m_park2", "ilker", "parklar", "Yazın gece yarısına kadar açık kalmalı.",
          _t(days=10, hours=-3))
+    _msg(w, "m_park3", "zeynep", "parklar",
+         "Aydınlatma yetersizse saat tartışması anlamsız; önce ışıklandırma.",
+         _t(days=9, hours=20))
+    _msg(w, "m_park4", "burak", "parklar", "Gece yarısına kadar açık kalacaksa bekçi de gerekir.",
+         _t(days=9, hours=14), reply_to="m_park2")
+    _msg(w, "m_park5", "ilker", "parklar",
+         "Bekçi yerine iyi aydınlatma yeter; asıl tehlikeli olan boş kalan park.",
+         _t(days=9, hours=12), reply_to="m_park4")
     opened = _t(days=8, hours=12)
     w.at(opened, lambda c: w.ids.__setitem__("kapanis", proposals.open_proposal(
         c, w.users["zeynep"], ProposalInput(
@@ -505,24 +728,40 @@ def _scenarios_voting(w: World) -> None:
     ), _t(days=7, hours=5), ["tolga", "umut", "yasemin"])
 
 
+def _cellar_thread(c: Ctx, w: World, author: str, title: str, text: str,
+                   replies: list[tuple[str, str]], first: int, gap: int) -> int:
+    """Başlık ve yanıtları: ilk yanıt ``first`` dakika sonra, sonrakiler ``gap`` dakika arayla.
+
+    Yanıtta "op" başlığı açandır; "{n}" n. mesaja (0 = açılış) >>N referansına dönüşür.
+    """
+    t = cellar.create_thread(c, w.users[author], title, text, acknowledge=True)
+    op = c.db.execute(select(CellarPost.id).where(CellarPost.thread_id == t.id)).scalar_one()
+    refs = [f">>{op}"]
+    for j, (nick, body) in enumerate(replies):
+        post = cellar.reply(c.at(c.now + timedelta(minutes=first + j * gap)),
+                            w.users[author if nick == "op" else nick], t.id,
+                            body.format(*refs), acknowledge=True)
+        refs.append(f">>{post.id}")
+    return t.id
+
+
 def _cellar(w: World) -> None:
-    """6. Mahzen: 90 dolgu başlık (çürüme görünsün) ve ifşa oylaması açık demo başlığı."""
+    """6. Mahzen: 90 dolgu başlık (çürüme görünsün), şiir başlığı ve ifşa oylaması açık demo
+    başlığı. Dolgu başlıklar 1,5 saat arayla açılır; yanıtları bir sonraki başlıktan önce biter,
+    sıra açılış sırasıdır."""
     for i in range(90):
         when = _t(days=6, hours=-i * 1.5)
         author = w.pool[(i * 7) % len(w.pool)]
         prompt = MAHZEN_PROMPTS[i]
-        replies = [(w.pool[(i * 5 + j * 11 + 3) % len(w.pool)],
-                    MAHZEN_REPLIES[(i + j) % len(MAHZEN_REPLIES)]) for j in range(i % 3)]
-
-        def make(c: Ctx, author=author, prompt=prompt, i=i, replies=replies) -> None:
-            t = cellar.create_thread(c, w.users[author], prompt,
-                                     f"{prompt} {MAHZEN_OPENERS[i % len(MAHZEN_OPENERS)]}",
-                                     acknowledge=True)
-            for j, (nick, text) in enumerate(replies):
-                cellar.reply(c.at(c.now + timedelta(minutes=40 + j * 50)), w.users[nick], t.id,
-                             text, acknowledge=True)
-
-        w.at(when, make)
+        text = f"{prompt} {MAHZEN_OPENERS[i % len(MAHZEN_OPENERS)]}"
+        if i in MAHZEN_DISCUSSIONS:
+            replies, first, gap = MAHZEN_DISCUSSIONS[i], 10, 12
+        else:
+            replies = [(w.pool[(i * 5 + j * 11 + 3) % len(w.pool)],
+                        MAHZEN_REPLIES[(i + j) % len(MAHZEN_REPLIES)]) for j in range(i % 3)]
+            first, gap = 40, 50
+        w.at(when, lambda c, a=(author, prompt, text, replies, first, gap):
+             _cellar_thread(c, w, *a))
 
     at = _t(hours=8)
 
@@ -544,7 +783,11 @@ def _cellar(w: World) -> None:
         w.ids["mahzen"] = t.id
 
     w.at(at, demo)
-    w.at(_t(hours=5), lambda c: cellar.open_reveal_vote(c, w.users["ayse"], w.ids["mahzen"]))
+    # Şiir başlığı demo başlığından sonra açılır (demo No.91 kalır); son yanıtı demo başlığının
+    # son yanıtından önce gelir: listede demo başlığı en üstte, şiir ikinci.
+    w.at(_t(hours=7, minutes=45), lambda c: w.ids.__setitem__("koyluler", _cellar_thread(
+        c, w, "okan", KOYLULER_BASLIK, KOYLULER_SIIR, KOYLULER_YANITLAR, 12, 13)))
+    w.at(_t(hours=5),lambda c: cellar.open_reveal_vote(c, w.users["ayse"], w.ids["mahzen"]))
     for nick, yes in (("pinar", True), ("rana", True), ("selin", False)):
         w.at(_t(hours=4, minutes=30), lambda c, nick=nick, yes=yes: cellar.cast_reveal_vote(
             c, w.users[nick], w.ids["mahzen"], yes))

@@ -116,6 +116,13 @@ const ACTS = {
       await show(p, 'No.1 ·');  // listenin sonu: çürümüş başlık (metni bozuk, numarası değil)
     },
     async (p) => {
+      await p.getByText('Köylüleri niçin öldürmeliyiz?').first().waitFor({ timeout: 30000 });
+      await p.waitForTimeout(1500);
+      await show(p, 'NASIL KURTARALIM?');
+      await p.waitForTimeout(1500);
+      await show(p, 'karar veremedim');
+    },
+    async (p) => {
       await click(p, '[ evet ]', true);
       await p.getByText('ifşa edildi').first().waitFor({ timeout: 30000 });
       await p.waitForTimeout(1500);

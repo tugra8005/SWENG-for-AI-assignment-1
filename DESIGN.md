@@ -561,6 +561,8 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
 
   Dondurulmuş başlık kapasite havuzundan çıkar ve öneriden bağlantıyla Meydan görünümünde okunur.
 - **Teşvik edilmez:** Meydan'da altta sade bir metin bağlantısı olarak durur. Bildirim, sayaç yoktur; akışta Mahzen içeriği görünmez.
+- **Denetim yoktur:** Mahzen'de içerik kuralları (IK) ve silme önerisi yoktur. Kaba bir başlık ancak aşağı düşüp kapasiteden çıkarak kaybolur. Tohumdaki "Köylüleri niçin öldürmeliyiz?" başlığı (kaba bir şiir ve üzerine tartışma) bunu gösterir.
+- **Liste önizlemesi:** açılış mesajının ilk 240 karakteri tek akış hâlinde gösterilir; satır sonları boşluğa iner (şiir gibi çok satırlı metinlerde önizleme başlık ve boş satırdan ibaret kalmasın).
 
 ## 11. Defter
 
@@ -613,6 +615,8 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
   - Üretim derlemesinde (`__DEV__` yanlış) bileşen hiçbir şey çizmez ve paketten ayıklanır; `expo export` çıktısında menünün dizgileri yoktur.
 - CLI komutları `services/devtools.py` üzerinden çalışır. Docker'sız geliştirme modunda (`scripts/dev_local.sh`, bellek içi graf) aynı işlemler yalnızca o modda açılan `/_dev` uç noktalarından sunulur; CLI ayrı süreçte bellek içi grafa erişemez.
 - **Tohum** (`services/seed.py`) geçmiş tarihli içeriği bir zaman çizelgesine yazar ve zaman sırasıyla oluşturur; defter kayıtlarının zaman damgaları içeriğin zamanıyla aynı olur. Karar Saati senaryolarındaki yüzdeler, Hâtif'in oyu ve havale ağırlıkları hesaba katılarak kurulmuş bir geliştirme oy planına (`dev_vote_plan`) dayanır; `test_seed.py` senaryoların sonuçlarını doğrular. Oylanacak senaryo önerileri 21–22 Eylül'de açılır ve son planlı oturumdan (Pazar 27 Eylül) sonra olgunlaşır; böylece o oturumu kaçırıp kuyrukta beklemeleri tutarlıdır. Senaryo 9'un önerisi tohum anından 10 dakika önce açılır ve olgunlaşmamıştır.
+  - Mahzen: 90 dolgu başlık 1,5 saat arayla açılır; yanıtları bir sonraki başlıktan önce biter, liste sırası açılış sırasıdır. Dördünde genel yanıtların yerine el yazısı bir tartışma vardır (`MAHZEN_DISCUSSIONS`); yanıtlar `>>N` ile birbirine bağlanır. Şiir başlığı demo başlığından sonra açılır (demo başlığı No.91 kalır) ve listede onun altında durur.
+  - Meydan konularında (felsefe, film, şiir, belgesel, semt pazarları, parklar) yanıt zincirleri olan kısa tartışmalar vardır. Bu mesajları yazan tohum hesapları `baskin_yeni_uye_suresi`nden (7 gün) eski olduğu için etkileşimleri baskın tespitini etkilemez; baskın adayı yalnızca yeni katılımcılardır.
 
 ## 13. Tasarım dili
 
@@ -805,6 +809,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 - `src/lib/clock.tsx` istemciyi sunucunun sahte saatine eşitler; tüm geri sayımlar bu saate göre işler.
 - `src/components/reveal-tally.tsx` Karar Saati sonuç açıklamasını, `src/components/reveal-transition.tsx` ifşa geçişini oynatır.
 - `src/components/proposal-title.tsx` daralan önerinin talep/etki başlığını, pay çubuğunu ve olgunlaşma satırını üretir; öneri sayfası, kartlar, konu sayfası ve Karar Saati ekranları bunu kullanır.
+- `src/lib/birth-date.ts` kayıt formundaki doğum tarihi alanına yardım eder: yazarken noktaları ekler (tek haneli gün ya da aydan sonra nokta yazılırsa başına 0 koyar, "YYYY-AA-GG" yapıştırılırsa çevirir) ve tarihi hemen denetler (gün 01–31, ay 01–12, takvimde olmayan gün, 1900 öncesi, gelecek, 18 yaş). Yaşı sunucunun `age_on`'u gibi ve sunucunun sahte saatine göre hesaplar; 18 yaş altında 18 yaşın dolacağı günü söyler. Denetim yardımcıdır; kararı sunucu verir. Uyarı alanın altında `aria-live="polite"` ile okunur.
 - API adresi `EXPO_PUBLIC_API_URL` ile verilir.
 
 ## 18. Testler (§12 gereksinimi → test dosyası)
@@ -841,6 +846,8 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Demo modu (adımın baştan kurulması ve donmuş saat, `next`'in yalnızca geçişi uygulaması, 10a'daki bozulmanın 10b'de geri alınması, aynı adımın iki kurulumunda aynı defter, geliştirme uç noktalarının yalnızca `ENV=dev`'de olması) | `tests/integration/test_demo.py`; iki uçtan uca çalıştırmanın karşılaştırması `scripts/demo-kaydi.mjs` (DEMO.md **Ölçüm**) |
 | Toplu defter eklemesi (zincir tek tek eklemeyle aynı, azalan zaman damgası hiçbir kaydı eklemez, geride kalan takipçi toplu çoğaltmada yetişir) | `ledger/tests/test_replication.py` |
 | Mahzen çürümesi (en fazla %10; ilk %55'te bozulma yok; yalnızca blok glifler; çürüme arttıkça bozulanlar yalnızca çoğalır; deterministik) | `client/scripts/check-decay.mjs` |
+| Doğum tarihi yardımcısı (yazarken nokta, geri silme, tek haneli gün ve ay, ISO yapıştırma; geçersiz gün ve ay, takvimde olmayan gün, gelecek, 18. doğum günü, 29 Şubat) | `client/scripts/check-birth-date.mjs` |
+| Tohumdaki Mahzen (şiir metni olduğu gibi, demo başlığının altında; tartışmaların `>>N` referansları; liste sırası açılış sırası) | `test_seed.py::test_cellar_poem_thread_second_after_demo`, `::test_cellar_discussions_replace_filler_replies` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
 ## 19. Sözlük (Türkçe terim ↔ kod)

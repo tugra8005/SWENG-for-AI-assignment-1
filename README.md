@@ -52,6 +52,8 @@ Tarayıcıda `http://localhost:8081` açılır.
 
 ### Kayıt ve doğrulama kodu
 
+Doğum tarihi alanı yazarken noktaları kendisi ekler (`14031995` → `14.03.1995`) ve tarihi hemen denetler: takvimde olmayan gün, gelecekteki tarih ve 18 yaş altı gönderimden önce söylenir; geçerli tarih "14 Mart 1995 · 31 yaş" diye okunur. Yaş sunucunun sahte saatine göre hesaplanır; son kararı sunucu verir.
+
 E-posta gönderilmez; doğrulama kodu API konsoluna basılır:
 
 ```bash
@@ -103,7 +105,7 @@ Yaklaşık iki dakikalık canlı gösterim ve yedek videosu için [DEMO.md](DEMO
 | №13, №14 | 3 · Yönetmelik değişikliği |
 | №10, №11, №12 | 4 · Silme |
 | №8 | 5 · Kapanış |
-| Mahzen No.91 | 6 · Mahzen |
+| Mahzen No.91, No.92 | 6 · Mahzen |
 | №15 | 7 · Baskın |
 | №16 | 8 · Hâtif |
 | №21 | 9 · Olgunlaşma |
@@ -129,10 +131,11 @@ Senaryo 1, 6, 11 ve 15 anında oynatılır (15'te kabul Karar Saati sonuçların
 ### 6. Mahzen: ifşa oylaması ve geçiş
 
 1. **ayse** olarak Meydan'ın en altındaki sade **mahzen** bağlantısına tıklayın. Ekran kararır ve ilk giriş uyarısı çıkar; **anladım, devam** deyin.
-2. Liste kapasiteye yakındır (91/100). Alt sıralardaki başlıklar soluklaşır, karakterleri bozulur; ömür çubukları kısalır. Sağ üstteki **crt** anahtarı tarama çizgilerini kapatır.
-3. En üstteki **"Çoğunluk haklı olabilir mi?"** başlığını açın. Beş yazarı var; ayse'nin açtığı ifşa oylamasında iki EVET bir HAYIR oy var ve geçmek için 3 EVET gerekiyor. Ara sayım gösterilmez.
-4. **[ evet ]** deyin. EVET sayısı seçmen listesinin yarısını aştığı an ifşa gerçekleşir. Yaklaşık 1,5 saniyelik geçişte siyah zemin kâğıda, amber yazı mürekkebe döner, mono yazı serife geçer ve Gölge kimliklerinin üzerine takma adlar yazılır.
-5. Başlık artık Meydan görünümünde, herkesin takma adıyla ve defter mührüyle durur. **Öneri taslağı №22 →** ile taslağı açın (senaryo 1'in isteğe bağlı 4. adımını yaptıysanız numara №23 olur); alanı ve seçmen kapsamını seçip **Taslağı öneri olarak gönder** deyin. Öneri normal akışa (sessiz onay) girer.
+2. Liste kapasiteye yakındır (92/100). Alt sıralardaki başlıklar soluklaşır, karakterleri bozulur; ömür çubukları kısalır. Sağ üstteki **crt** anahtarı tarama çizgilerini kapatır. Birkaç başlıkta (ör. alt sıralardaki *Theseus'un gemisi*) yanıtlar `>>N` ile birbirine bağlanan bir tartışmadır; çürüme onları da bozar.
+3. İkinci sıradaki **"Köylüleri niçin öldürmeliyiz?"** başlığını açın: kaba bir şiir ve üzerine altı yanıt. Meydan'da içerik kuralları ve silme oylaması vardır; Mahzen'de yoktur. Başlık ancak aşağı düşüp kapasiteden çıkarak kaybolur. Açan kişinin Gölge kimliği yanıtlarda da görünür, başka başlıklarla eşleştirilemez.
+4. En üstteki **"Çoğunluk haklı olabilir mi?"** başlığını açın. Beş yazarı var; ayse'nin açtığı ifşa oylamasında iki EVET bir HAYIR oy var ve geçmek için 3 EVET gerekiyor. Ara sayım gösterilmez.
+5. **[ evet ]** deyin. EVET sayısı seçmen listesinin yarısını aştığı an ifşa gerçekleşir. Yaklaşık 1,5 saniyelik geçişte siyah zemin kâğıda, amber yazı mürekkebe döner, mono yazı serife geçer ve Gölge kimliklerinin üzerine takma adlar yazılır.
+6. Başlık artık Meydan görünümünde, herkesin takma adıyla ve defter mührüyle durur. **Öneri taslağı №22 →** ile taslağı açın (senaryo 1'in isteğe bağlı 4. adımını yaptıysanız numara №23 olur); alanı ve seçmen kapsamını seçip **Taslağı öneri olarak gönder** deyin. Öneri normal akışa (sessiz onay) girer.
 
 ### 15. Havale kabulü
 

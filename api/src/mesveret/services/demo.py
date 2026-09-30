@@ -52,6 +52,9 @@ def _ids(ctx: Ctx) -> dict[str, int]:
         select(CellarThread.id).where(CellarThread.title == "Çoğunluk haklı olabilir mi?")
     ).scalar_one_or_none()
     ids["mahzen"] = thread or 0
+    ids["koyluler"] = ctx.db.execute(
+        select(CellarThread.id).where(CellarThread.title == seed_service.KOYLULER_BASLIK)
+    ).scalar_one_or_none() or 0
     topic = ctx.db.execute(
         select(Topic.id).where(Topic.accepted_proposal_id == ids["istanbul"])
     ).scalar_one_or_none()
@@ -134,6 +137,9 @@ STEPS: list[Step] = [
          ]),
     Step("9", "Mahzen", "açıklar: anonimlik ve hesap verebilirlik", None, lambda c: [
         Screen("ayse", "/mahzen", "Kararma ve uyarı → anladım, devam. Alt sıralar çürüyor."),
+        Screen("ayse", f"/mahzen/{_ids(c)['koyluler']}",
+               "Şiir başlığı: Meydan'daki içerik kuralları ve silme oylaması burada yok; "
+               "başlık ancak aşağı düşüp çürüyerek kaybolur."),
         Screen("ayse", f"/mahzen/{_ids(c)['mahzen']}",
                "İfşa oylaması: [ evet ] → eşik aşılır, ışık yanar: Gölge kimliklerinin üstüne takma adlar."),
     ]),

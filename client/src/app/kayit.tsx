@@ -16,15 +16,12 @@ import {
   Page,
   Rule,
 } from '@/components/paper';
+import { checkBirthDate, istanbulDate, maskBirthDate } from '@/lib/birth-date';
+import { useClock } from '@/lib/clock';
 import { paper } from '@/theme/tokens';
 
-/** "GG.AA.YYYY" → "YYYY-AA-GG" */
-function parseDate(text: string): string | null {
-  const m = text.trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-  if (!m) return null;
-  const [, d, mo, y] = m;
-  return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
-}
+const BIRTH_HINT = 'Kayıt için 18 yaşını doldurmuş olmalısınız. Yaş grubunuz buradan hesaplanır.';
+const BIRTH_INCOMPLETE = 'Tarih eksik: GG.AA.YYYY biçiminde girin, örneğin 14.03.1995.';
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -38,15 +35,29 @@ export default function Register() {
     address_line: '',
   });
   const [error, setError] = useState<unknown>(null);
+  // Eksik tarih uyarısı alandan çıkınca ya da gönderince görünür, yazmaya dönünce kalkar;
+  // geçersiz tarih (gün 32, 31 Şubat, 18 yaş altı) yazarken hemen görünür.
+  const [birthLeft, setBirthLeft] = useState(false);
+  const clock = useClock();
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  // Yaş sunucunun (sahte) saatine göre hesaplanır; sunucu da aynı güne göre denetler.
+  const birth = checkBirthDate(form.birth, istanbulDate(clock.now()));
+  const birthError =
+    birth.state === 'invalid' || birth.state === 'partial'
+      ? (birth.error ?? (birthLeft ? BIRTH_INCOMPLETE : undefined))
+      : undefined;
+  const birthHint = birth.state === 'ok' ? `${birth.label} · ${birth.age} yaş` : BIRTH_HINT;
 
   const submit = async () => {
     setError(null);
-    const birth_date = parseDate(form.birth);
-    if (!birth_date) {
-      setError({ message: 'Doğum tarihini GG.AA.YYYY biçiminde girin.', violations: [] });
+    if (birth.state !== 'ok') {
+      setBirthLeft(true);
+      const message =
+        birth.state === 'empty' ? 'Doğum tarihini girin.' : (birth.error ?? BIRTH_INCOMPLETE);
+      setError({ message, violations: [] });
       return;
     }
+    const birth_date = birth.iso;
     try {
       await api('/auth/register', {
         method: 'POST',
@@ -94,9 +105,16 @@ export default function Register() {
         <Field
           label="Doğum tarihi"
           value={form.birth}
-          onChangeText={set('birth')}
+          onChangeText={(v) => {
+            setForm((f) => ({ ...f, birth: maskBirthDate(v) }));
+            setBirthLeft(false);
+          }}
+          onBlur={() => setBirthLeft(true)}
           placeholder="GG.AA.YYYY"
-          hint="Kayıt için 18 yaşını doldurmuş olmalısınız. Yaş grubunuz buradan hesaplanır."
+          keyboardType="number-pad"
+          maxLength={10}
+          hint={birthHint}
+          error={birthError}
         />
         <View style={{ marginTop: 18, marginBottom: 10 }}>
           <H2>Adres</H2>

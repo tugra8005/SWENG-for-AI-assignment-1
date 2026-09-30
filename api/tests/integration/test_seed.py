@@ -174,13 +174,39 @@ def test_scenario_6_cellar_reveal(seeded):
 
 def test_cellar_has_decaying_threads(seeded):
     listing = cellar.list_threads(seeded, None)
-    assert len(listing["threads"]) == 91
+    assert len(listing["threads"]) == 92
     assert listing["threads"][-1]["lifetime"] < 0.2
     titles = [t["title"] for t in listing["threads"]]
     assert len(set(titles)) == len(titles)  # tekrar eden başlık yok
     # Alt sıralarda çürümenin farklı aşamaları: yarı ömürden silinmek üzereye.
     tail = [t["lifetime"] for t in listing["threads"][-40:]]
     assert max(tail) > 0.4 and min(tail) < 0.15
+
+
+def test_cellar_poem_thread_second_after_demo(seeded):
+    """Şiir başlığı: metin olduğu gibi, demo başlığının hemen altında, demo başlığı No.91 kalır."""
+    listing = cellar.list_threads(seeded, None)["threads"]
+    assert [t["title"] for t in listing[:2]] == ["Çoğunluk haklı olabilir mi?", seed.KOYLULER_BASLIK]
+    assert listing[0]["id"] == 91
+    assert listing[1]["op_preview"].startswith("Köylüleri niçin öldürmeliyiz? Çünkü onlar ağır")
+    posts = cellar.thread_view(seeded, listing[1]["id"], None)["posts"]
+    assert posts[0]["text"] == seed.KOYLULER_SIIR
+    assert len(posts) == 1 + len(seed.KOYLULER_YANITLAR)
+    # "{n}" n. mesajın numarasına dönüşür: ikinci yanıt açılışa, üçüncüsü ikinci yanıta bağlanır.
+    assert posts[2]["text"].startswith(f">>{posts[0]['no']} ")
+    assert posts[3]["text"].startswith(f">>{posts[2]['no']} ")
+
+
+def test_cellar_discussions_replace_filler_replies(seeded):
+    listing = cellar.list_threads(seeded, None)["threads"]
+    for i, replies in seed.MAHZEN_DISCUSSIONS.items():
+        t = next(t for t in listing if t["title"] == seed.MAHZEN_PROMPTS[i])
+        posts = cellar.thread_view(seeded, t["id"], None)["posts"]
+        assert len(posts) == 1 + len(replies)
+        assert not any("{" in p["text"] for p in posts)
+    # Yanıtlar bir sonraki dolgu başlıktan önce biter: liste sırası açılış sırasıdır.
+    fillers = [t["id"] for t in listing if t["title"] in seed.MAHZEN_PROMPTS]
+    assert fillers == sorted(fillers, reverse=True)
 
 
 def test_counselor_label_in_seed(seeded, client):

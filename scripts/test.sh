@@ -24,6 +24,9 @@ echo "== ledger: testler"
 echo "== istemci: Mahzen çürümesinin kuralları"
 (cd client && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-decay.mjs)
 
+echo "== istemci: doğum tarihi yardımcısı"
+(cd client && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-birth-date.mjs)
+
 if [[ $UNIT_ONLY -eq 1 ]]; then
   exit 0
 fi

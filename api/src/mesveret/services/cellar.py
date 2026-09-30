@@ -301,7 +301,8 @@ def list_threads(ctx: Ctx, viewer: User | None) -> dict:
             "lifetime": lifetime_remaining(rank, capacity),
             "bump_locked": t.reply_count >= limit, "has_vote": t.id in open_votes,
             "op_shade": _shade(ctx, op.author_id, t.id) if op else None,
-            "op_preview": (op.text[:PREVIEW] if op else ""),
+            # Önizleme tek akış: satır sonları boşluğa iner (şiir gibi çok satırlı metinler).
+            "op_preview": (" ".join(op.text.split())[:PREVIEW] if op else ""),
         })
     return {"capacity": capacity, "bump_limit": limit, "threads": out}
 
