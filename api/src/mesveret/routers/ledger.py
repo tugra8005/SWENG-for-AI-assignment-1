@@ -18,6 +18,15 @@ def verify(ctx: Ctx = Depends(get_ctx)) -> dict:
     return result
 
 
+@router.get("/recent")
+def recent(limit: int = 5, ctx: Ctx = Depends(get_ctx)) -> dict:
+    """Defterin ucu (son kayıt numarası ve mührü) ve son kayıtlar; künye ve "Defterden" kutusu için."""
+    result = ledger.recent(ctx.ledger, max(1, min(limit, 20)))
+    if result is None:
+        raise DomainError("Deftere şu anda ulaşılamıyor.")
+    return result
+
+
 @router.get("/records/{hash_prefix}")
 def record(hash_prefix: str, ctx: Ctx = Depends(get_ctx)) -> dict:
     prefix = hash_prefix.strip().lower()

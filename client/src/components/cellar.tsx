@@ -79,9 +79,55 @@ export const Term = ({ children, style, numberOfLines }: TP) => (
   <Text style={[s.term, style]} numberOfLines={numberOfLines}>{children}</Text>
 );
 export const TermDim = ({ children, style }: TP) => <Text style={[s.term, s.dimText, style]}>{children}</Text>;
-export const Banner = ({ children, style }: TP) => (
-  <Text accessibilityRole="header" style={[s.banner, style]}>{children}</Text>
-);
+/** Mahzen başlığı: fosfor parlaması ve yanıp sönen blok imleç (azaltılmış harekette sabit). */
+export function Banner({ children, style, cursor = true }: TP & { cursor?: boolean }) {
+  return (
+    <Text accessibilityRole="header" style={[s.banner, s.glow, style]}>
+      {children}
+      {cursor ? <Cursor /> : null}
+    </Text>
+  );
+}
+
+/** Terminal imleci: ``▌`` yarım saniyede bir söner. */
+export function Cursor() {
+  const reduced = useReducedMotion();
+  const [on, setOn] = useState(true);
+  useEffect(() => {
+    if (reduced) return;
+    const id = setInterval(() => setOn((v) => !v), 530);
+    return () => clearInterval(id);
+  }, [reduced]);
+  return (
+    <Text aria-hidden style={{ opacity: on || reduced ? 1 : 0 }}>
+      ▌
+    </Text>
+  );
+}
+
+/** Mahzen'e girişte terminal açılışı: satırlar sırayla düşer, sonra liste görünür. Uygulama açıkken bir
+ * kez oynar; azaltılmış harekette hiç oynamaz. */
+let booted = false;
+
+export function useBoot(lines: string[] | null): { done: boolean; shown: string[] } {
+  const reduced = useReducedMotion();
+  const [count, setCount] = useState(0);
+  const skip = booted || reduced;
+  useEffect(() => {
+    if (skip || !lines) return;
+    if (count >= lines.length) {
+      const id = setTimeout(() => {
+        booted = true;
+        setCount((c) => c + 1);
+      }, 380);
+      return () => clearTimeout(id);
+    }
+    const id = setTimeout(() => setCount((c) => c + 1), count === 0 ? 120 : 300);
+    return () => clearTimeout(id);
+  }, [count, lines, skip]);
+  if (skip || !lines) return { done: true, shown: [] };
+  return { done: count > lines.length, shown: lines.slice(0, count) };
+}
 
 function hexToRgb(h: string) {
   const n = parseInt(h.slice(1), 16);
@@ -197,7 +243,7 @@ export function WarningModal({ visible, text, onAccept, onCancel }: {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={s.modalBack}>
         <View style={s.modal} accessibilityRole="alert">
-          <Banner style={{ fontSize: 30 }}>UYARI</Banner>
+          <Banner style={{ fontSize: 30 }} cursor={false}>UYARI</Banner>
           <Term style={{ fontSize: 16, lineHeight: 24, marginVertical: 12 }}>{text}</Term>
           <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
             <AmberButton label="anladım, devam" onPress={onAccept} />
@@ -264,6 +310,8 @@ const s = StyleSheet.create({
   term: { fontFamily: fonts.mono, fontSize: 14, lineHeight: 21, color: cellar.amber },
   dimText: { color: cellar.amberDecayed },
   banner: { fontFamily: fonts.terminal, fontSize: 64, lineHeight: 64, color: cellar.amber, letterSpacing: 4 },
+  // Fosfor parlaması yalnızca büyük başlıklarda; gövde metninde netliği bozardı.
+  glow: { textShadowColor: 'rgba(255, 176, 0, 0.45)', textShadowRadius: 10, textShadowOffset: { width: 0, height: 0 } },
   bar: { width: 70, height: 6, borderWidth: 1, borderColor: cellar.amberDim },
   barFill: { height: '100%' },
   button: {

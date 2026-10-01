@@ -599,7 +599,7 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
 - **Doğrulama:**
   - Her düğümdeki `/verify` zinciri baştan yeniden hesaplar; ilk bozuk seq'i ve nedenini döner.
   - API'deki `/ledger/verify` üç düğümü toplar ve durumu üçe ayırır: **bütünlük bozuk** (hash tutmuyor), **geride** (kısa ama önek aynı), **tutarsız** (aynı seq'te farklı hash).
-- **İstemci:** Meydan'da her içeriğin altında kısaltılmış hash (mühür) gösterilir. "Defteri doğrula" ekranı üç düğümün durumunu gösterir ve hash ile kayıt görüntüler.
+- **İstemci:** Meydan'da her içeriğin altında kısaltılmış hash (mühür) gösterilir. "Defteri doğrula" ekranı üç düğümün durumunu gösterir ve hash ile kayıt görüntüler. `GET /ledger/recent?limit=N` (en çok 20) defterin ucunu (son kayıt numarası ve mührü) ve son kayıtları türlerinin okunur adlarıyla döner (`services/ledger.RECORD_LABELS`); ön sayfanın künye kulağı, "Defterden" kutusu ve alt bilgi künyesi bunu okur. Uç yalnızca okur, gönderim kuyruğunu boşaltmaz.
 - **Geliştirme aracı:** `docker compose exec ledger-2 python -m ledger.tamper --seq N` bir düğümün kaydını bozar. Yalnızca doğrulamanın bozulmayı yakaladığını göstermek içindir.
 
 ## 12. Zaman ve geliştirme CLI'ı
@@ -642,11 +642,18 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
 
 - **Renkler:** kırık beyaz kâğıt zemin (#F4EFE4, hafif doku), mürekkep (#1B1A17), tek vurgu mühür bordosu (#7A1E2B).
 - **Yazı:** metin ve başlıklarda Newsreader; hash ve sayılarda IBM Plex Mono.
+- **Estetik:** gazete yaprağı. Kâğıt dokusu, mürekkep, tek vurgu bordo; ince ve çift çizgiler, sütun çizgileri. Süsler bu dilin içinde kalır (2026-10-01):
+  - **Simge:** bordo, çift halkalı ıslak mühür; ortada Newsreader "M", halkada "MEŞVERET · RESMÎ KAYIT · OYLAMAYLA YÖNETİLİR". Uygulama simgesi, Android uyarlanabilir simgesi, açılış ekranı ve arayüzdeki küçük mühür (`seal-mark.png`) aynı çizimden üretilir: `client/scripts/make-icons.py`. Sekme simgesi küçük boyutta okunmayan halka yazısı olmadan bordo disk ve "M"dir. Önceki simgeler Expo'nun varsayılanıydı.
+  - **Mühür (⌗):** kalın dış çerçeve ve ince iç çizgi; eğimi hash'ten çıkar (±1,8°), her mühür biraz farklı basılmış gibi durur ama hep aynı açıyla.
+  - **Büyük baş harf:** konu açılış metni, öneri metni ve kılavuzun girişinde ilk harf büyük ve bordo. React Native metni harfin etrafından akıtamadığı için harf satırın üstüne yükselir (gerçek "düşen" baş harf değil).
+  - **Yükleniyor:** dizgi provası gibi gri satırlar, hafif nabız; azaltılmış harekette sabit.
+  - **Alt bilgi künyesi:** küçük mühür, sayı numarası, defterin kayıt sayısı ve son mührü, dizgide kullanılan yazı tipleri.
+  - **"Defterden" kutusu:** son kayıtlar (numara, tür, zaman, mühür); ön sayfada yavaş şerit sütununda, Karar Saati'nde yan sütunda.
 - **Mesaj:** takma ad, zaman damgası, mühür gibi duran küçük mono defter hash'i.
 - **Sansür şeridi:** tam genişlikte siyah şerit, üzerinde mono yazıyla oylama numarası. Bordo #7A1E2B siyah üstünde 2,0:1 kontrast verdiği için şeritteki yazıda aynı tonun açık hâli (#D4576B, 5,4:1) kullanılır.
 - **Karar Saati:** büyük geri sayım; sonuç açıklamasında oylar sayılarak düşer.
 - **Profil:** resmî kayıt belgesi düzeni. Noktalı satırda değer sığmazsa telefonda etiket üstte, değer altta yığılır. Dar ekranda MÜŞAVİR mührü başlığın altında, sağda ve küçük durur.
-- **Başlık (künye):** tam gazete başlığı masaüstünde her sayfada, telefonda yalnızca Meydan ana sayfasında. Telefonda diğer sayfalarda ince, yapışkan bir çubuk durur: üstte küçük MEŞVERET ile zil, kullanıcı adı ve çıkış; altta beş bölümün tamamı. Menü telefonda satıra yayılır, 320 px'te son bölüm alt satıra kırılır. İlk sürüm menüyü yatay kaydırıyordu; 375 px'te iç sayfalarda yalnızca Meydan ve Karar Saati görünüyor, Havale, Yönetmelik ve Defter ekran dışında kalıyordu (2026-09-30). Tarih ana sayfanın başlığındadır.
+- **Başlık (künye):** tam gazete başlığı yalnızca ön sayfada (Meydan). 900 px ve üstünde başlığın iki yanında kulaklar durur: solda Karar Saati'ne kalan süre (pencere açıkken kapanışa kalan, bordo), sağda defterin kayıt sayısı ve son mührü. İç sayfalarda 560 px ve üstünde ince künye: üstte sayı, bölüm adı ve tarih; altta küçük mühür, MEŞVERET, menü ve hesap (tablette mühür gizlenir, başlık küçülür). Gazetelerde iç sayfalar da ince başlık taşır; önceki sürümde her sayfada 200 px'lik tam başlık vardı. Telefonda diğer sayfalarda ince, yapışkan bir çubuk durur: üstte küçük MEŞVERET ile zil, kullanıcı adı ve çıkış; altta beş bölümün tamamı. Menü telefonda satıra yayılır, 320 px'te son bölüm alt satıra kırılır. İlk sürüm menüyü yatay kaydırıyordu; 375 px'te iç sayfalarda yalnızca Meydan ve Karar Saati görünüyor, Havale, Yönetmelik ve Defter ekran dışında kalıyordu (2026-09-30). Tarih ana sayfanın başlığındadır.
 - **Zil:** kullanıcı adının solunda, View'larla çizilmiş (kilit işareti gibi); okunmamış bildirim varsa bordo rozet. Bildirimler sayfasındayken zil bordodur.
 - **Kılavuz:** gazetenin eki gibi ("Ek · Yurttaşın el kitabı"): dört mekanizma Roma rakamlarıyla, bölümler § numaralı, şekiller çerçeveli ve "Şekil N" başlıklı. Şekiller Meydan'ın kâğıt, mürekkep ve bordosunu kullanır; Mahzen şekli siyah zemin ve amberle çizilir, ifşa anında kâğıda döner. Metindeki yönetmelik değerleri mono ve bordodur. Telefonda 320 px'e kadar şekiller taşmaz: mutlak konumlu çizimler yüzdeyle, altlarındaki satırlar akışlı düzenle yerleşir.
 - **Takma adlar** hiçbir yerde büyük harfe çevrilmez; Türkçe büyük harf "baris"i "BARİS" yapar, kimliği değiştirir. Büyük harfli bir etiketin içinde geçen takma ad dönüşümden ayrılır (`Nick`).
@@ -670,7 +677,8 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
   - Kurallar `client/scripts/check-decay.mjs` ile denetlenir (`scripts/test.sh` çalıştırır).
   - Kontrast 4,5:1'in altına inmez. Bozulan metnin erişilebilir etiketi özgün metni taşır. Yanında bir ömür çubuğu vardır.
 - **CRT:** hafif tarama çizgileri; tek katman, kapatılabilir, tercih saklanır. Her üç satırdan biri %14 kararır. Oranlar o satırda da AA kalır: çürümüş amber 4,7:1, sönük amber 3,2:1, tam amber 8,4:1. İlk sürümde karartma %39'du; çürümüş amber 2,5:1'e, sönük amber 1,8:1'e iniyordu (tasarım denetimi, 2026-09-28).
-- **Giriş:** ekran kararma geçişi ve uyarı.
+- **Giriş:** ekran kararma geçişi ve uyarı; ardından terminal açılışı: "mahzen'e bağlanılıyor…", yaşayan başlık sayısı, Gölge kimliği, içerik kuralı ve silme oylaması olmadığı, "hazır" satırları sırayla düşer, sonra liste görünür. Uygulama açıkken bir kez oynar; azaltılmış harekette oynamaz.
+- **İmleç ve parlama:** MAHZEN başlığında yanıp sönen blok imleç (▌) ve hafif fosfor parlaması (text-shadow). Parlama yalnızca büyük başlıkta; gövde metninde netliği bozardı.
 
 ### 13.3 İfşa geçişi
 
@@ -881,6 +889,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Havale kabulü (bekleyen havale ağırlığa sayılmaz ve oy verende kalır; pencereden hemen önce verilen kabulsüz havale gizli oyu açığa çıkarmaz; ret, kabul süresi, iade ve pencere kilidi; "havale kabul etmiyorum"; zincirin ek onay istememesi; eskisinin yenisi kabul edilene kadar kalması; yenilemenin yeniden kabul istememesi; kabul anında R4; Hâtif) | `tests/integration/test_delegation_acceptance.py`, `test_seed.py::test_seed_delegations_start_accepted_with_one_pending_and_one_rejected` |
 | Zamanlayıcı kilidi ve işlerin idempotentliği (her iş ikinci kez çalışınca yazmaz; aynı aralığa ikinci tick boş; iki süreç aynı anda tick ederken her iş bir kez; komut kilidi tutarken arka plan adımı atlar; advance-time aradaki işleri kendisi işler) | `tests/integration/test_scheduler_lock.py` |
 | Demo modu (adımın baştan kurulması ve donmuş saat, `next`'in yalnızca geçişi uygulaması, 10a'daki bozulmanın 10b'de geri alınması, aynı adımın iki kurulumunda aynı defter, geliştirme uç noktalarının yalnızca `ENV=dev`'de olması) | `tests/integration/test_demo.py`; iki uçtan uca çalıştırmanın karşılaştırması `scripts/demo-kaydi.mjs` (DEMO.md **Ölçüm**) |
+| Defterin son kayıtları (`/ledger/recent`: en yenisi önce, okunur tür adı, uç mühür, sınır 20) | `tests/integration/test_ledger_api.py::test_recent_records_newest_first_with_labels` |
 | Toplu defter eklemesi (zincir tek tek eklemeyle aynı, azalan zaman damgası hiçbir kaydı eklemez, geride kalan takipçi toplu çoğaltmada yetişir) | `ledger/tests/test_replication.py` |
 | Mahzen çürümesi (en fazla %10; ilk %55'te bozulma yok; yalnızca blok glifler; çürüme arttıkça bozulanlar yalnızca çoğalır; deterministik) | `client/scripts/check-decay.mjs` |
 | Sahip hesabı (takma adla büyük/küçük harf duyarsız ve e-postayla giriş) | `test_seed.py::test_owner_account_logs_in_with_nickname_or_email` |

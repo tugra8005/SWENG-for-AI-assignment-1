@@ -18,7 +18,7 @@ import {
   WindowFigure,
 } from '@/components/guide/figures-meydan';
 import { CellarFigure, LedgerFigure, RaidFigure } from '@/components/guide/figures-guard';
-import { Anchor, Body, Columns, Kicker, Page, Rule, useScrollTo } from '@/components/paper';
+import { Anchor, Body, Columns, InitialText, Kicker, Page, Rule, useScrollTo } from '@/components/paper';
 import { RevealTally } from '@/components/reveal-tally';
 import { describeArticleValue } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -399,10 +399,10 @@ export default function Guide() {
     <Page>
       <Kicker style={{ color: paper.seal }}>Ek · Yurttaşın el kitabı</Kicker>
       <Text style={st.title}>Meşveret nasıl işler?</Text>
-      <Text style={st.lede}>
-        Meşveret moderatörü olmayan bir forumdur. Konuyu da, kuralı da, silinecek mesajı da üyeler oylar;
-        her karar değiştirilemez bir deftere yazılır.
-      </Text>
+      <InitialText
+        style={st.lede}
+        text="Meşveret moderatörü olmayan bir forumdur. Konuyu da, kuralı da, silinecek mesajı da üyeler oylar; her karar değiştirilemez bir deftere yazılır."
+      />
       <P>
         Çoğunluk oyu tek başına tehlikelidir: kalabalık olan, azınlığın kaynağına karar verebilir, kuralları
         kendi lehine değiştirebilir, beğenmediği görüşü silebilir. Meşveret çoğunluk tiranlığını ortadan

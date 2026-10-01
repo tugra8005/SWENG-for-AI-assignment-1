@@ -126,7 +126,9 @@ const ACTS = {
     async (p) => {
       await click(p, '[ evet ]', true);
       await p.getByText('ifşa edildi').first().waitFor({ timeout: 30000 });
-      await p.waitForTimeout(1500);
+      // Geçiş (~1,5 sn) bitsin; ardından ifşa edilmiş sayfanın alt bilgi künyesi yüklensin.
+      await p.waitForTimeout(2500);
+      await p.getByText('son mühür').first().waitFor({ timeout: 15000 });
     },
   ],
   '10a': [async (p) => {
@@ -143,6 +145,9 @@ const ACTS = {
 
 /** Sayfada görünen, rakam içeren bütün dizgiler (geliştirme menüsü dahil). */
 async function numbers(page) {
+  // Alt bilgi künyesi ve künye kulağı ayrı istekle gelir; sayılar istekler durulunca okunur,
+  // yoksa iki çalıştırma yalnızca yanıtın geç gelmesi yüzünden ayrışır.
+  await page.waitForLoadState('networkidle', { timeout: 4000 }).catch(() => undefined);
   const text = await page.evaluate(() => document.body.innerText);
   return text.match(/[^\s]*\d[^\s]*/g) ?? [];
 }

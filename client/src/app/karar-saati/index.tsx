@@ -19,6 +19,7 @@ import {
   Tag,
   useWide,
 } from '@/components/paper';
+import { LedgerFeed } from '@/components/ledger-feed';
 import { maturityLine, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { useClock } from '@/lib/clock';
@@ -271,6 +272,7 @@ export default function DecisionHour() {
             <>
               {clock}
               {history}
+              <LedgerFeed limit={5} />
             </>
           }
         />

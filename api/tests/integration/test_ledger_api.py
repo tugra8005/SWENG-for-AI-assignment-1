@@ -32,3 +32,17 @@ def test_pending_records_are_sent_when_leader_returns(ctx, ledger, client):
     assert any(r["payload"].get("metin") == "Lider yokken yazıldı." for r in ledger.records)
     seqs = [r["seq"] for r in ledger.records]
     assert seqs == sorted(seqs)
+
+
+def test_recent_records_newest_first_with_labels(ctx, client):
+    a = make_user(ctx, "ayse")
+    topic = open_topic(ctx, a)
+    post(ctx, a, topic, "Bir.")
+    post(ctx, a, topic, "İki.")
+    body = client.get("/ledger/recent?limit=2").json()
+    assert body["seq"] >= 3 and len(body["hash"]) == 64
+    first, second = body["records"]
+    assert first["seq"] == body["seq"] and second["seq"] == body["seq"] - 1
+    assert first["hash"] == body["hash"]
+    assert (first["type"], first["label"]) == ("MESAJ", "Tartışma mesajı")
+    assert client.get("/ledger/recent?limit=500").json()["records"][-1]["seq"] == max(1, body["seq"] - 19)

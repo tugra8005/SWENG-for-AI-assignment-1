@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { api } from '@/api/client';
@@ -10,10 +10,12 @@ import {
   Banner,
   CellarPage,
   cellarStyles,
+  Cursor,
   DecayText,
   LifeBar,
   Term,
   TermDim,
+  useBoot,
   WarningModal,
 } from '@/components/cellar';
 import { Columns, useWide } from '@/components/paper';
@@ -65,6 +67,21 @@ export default function CellarIndex() {
   const entry = useApi<any>(me ? '/cellar/entry' : null);
   const list = useApi<any>(me && entry.data && !entry.data.needs_warning ? '/cellar/threads' : null, 15_000);
   const wide = useWide();
+  const data = list.data;
+  const bootLines = useMemo(
+    () =>
+      data
+        ? [
+            "> mahzen'e bağlanılıyor…",
+            `> yaşayan başlık: ${data.threads.length} / ${data.capacity}`,
+            '> kimlik: her başlıkta ayrı bir gölge; başlıklar arasında eşleşmez',
+            '> içerik kuralı yok · silme oylaması yok · alttaki başlık çürür',
+            '> hazır',
+          ]
+        : null,
+    [data],
+  );
+  const boot = useBoot(bootLines);
 
   if (ready && !me) {
     return (
@@ -125,8 +142,18 @@ export default function CellarIndex() {
         <TermDim>anonim · geçici</TermDim>
       )}
       <View style={cellarStyles.rule} />
-      {/* Geniş ekranda başlıklar solda; kurallar ve yeni başlık formu sağda, amber sütun çizgisiyle. */}
-      {wide ? (
+      {/* Girişte terminal açılışı; ardından liste. Geniş ekranda başlıklar solda, kurallar ve yeni
+          başlık formu sağda, amber sütun çizgisiyle. */}
+      {!boot.done ? (
+        <View style={{ gap: 4, paddingVertical: 8 }} accessibilityLiveRegion="polite">
+          {boot.shown.map((line, i) => (
+            <Term key={i}>
+              {line}
+              {i === boot.shown.length - 1 ? <Cursor /> : null}
+            </Term>
+          ))}
+        </View>
+      ) : wide ? (
         <Columns
           ruleColor={cellar.amberDim}
           sideWidth={360}

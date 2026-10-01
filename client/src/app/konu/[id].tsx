@@ -11,6 +11,7 @@ import {
   Columns,
   ErrorNotice,
   Field,
+  InitialText,
   Kicker,
   Loading,
   Muted,
@@ -306,7 +307,7 @@ export default function TopicPage() {
       ))}
       {t.opening ? (
         <View>
-          <Text style={st.opening}>{t.opening.text}</Text>
+          <InitialText text={t.opening.text} style={st.opening} />
           <View style={st.actions}>
             <Seal hash={t.opening.ledger_hash} label="açılış" />
             {t.opening.edited_at ? (
@@ -458,7 +459,7 @@ const st = StyleSheet.create({
   h1: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, color: paper.ink },
   crumbs: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 6 },
   crumb: { fontFamily: fonts.monoMedium, fontSize: 12, color: paper.inkSoft, letterSpacing: 0.6 },
-  opening: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 30, color: paper.ink, marginBottom: 10 },
+  opening: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 30, color: paper.ink, marginBottom: 10, paddingTop: 10 },
   actions: { flexDirection: 'row', gap: 14, alignItems: 'center', flexWrap: 'wrap' },
   msg: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: paper.hairline },
   msgHead: { flexDirection: 'row', gap: 10, alignItems: 'baseline', flexWrap: 'wrap', marginBottom: 4 },

@@ -121,6 +121,14 @@ class FakeLedgerClient:
     def get(self, url: str, path: str) -> Any:
         if path == "/verify":
             return {"ok": True, "length": len(self.records), "reason": None}
+        if path == "/tip":
+            last = self.records[-1] if self.records else None
+            return {"seq": last["seq"] if last else 0, "hash": last["hash"] if last else "0" * 64,
+                    "ts": last["ts"] if last else None, "node_id": "memory"}
+        if path.startswith("/records?"):
+            q = dict(part.split("=") for part in path.split("?", 1)[1].split("&"))
+            start, limit = int(q.get("from_seq", 1)), int(q.get("limit", 100))
+            return self.records[start - 1: start - 1 + limit]
         if path.startswith("/records/last-of-type/"):
             type_ = path.rsplit("/", 1)[1]
             return next((r for r in reversed(self.records) if r["type"] == type_), None)
@@ -306,6 +314,64 @@ def records_of_type(client: LedgerClient, type_: str) -> list[dict] | None:
             return client.get(url, f"/records/of-type/{type_}") or []
         except Exception as exc:  # noqa: BLE001
             log.info("%s kayıtları okunamadı (%s): %s", type_, url, exc)
+    return None
+
+
+# Kayıt türlerinin okunur adları (Meydan'daki "Defterden" kutusu, künye).
+RECORD_LABELS = {
+    "MESAJ": "Tartışma mesajı",
+    "SURUM_EKLENDI": "Mesaj sürümü",
+    "ONERI_ACILDI": "Öneri açıldı",
+    "ONERI_YAVAS_SERIDE": "Öneri yavaş şeride geçti",
+    "ONERI_SONUCU": "Öneri sonuçlandı",
+    "KONU_KABUL": "Konu kabul edildi",
+    "KONU_YENIDEN_ACILDI": "Konu yeniden açıldı",
+    "ICERIK_SILINDI": "İçerik silindi",
+    "KAPANIS_METNI": "Kapanış metni",
+    "KARAR": "Karar",
+    "SERH": "Şerh",
+    "PAY_DEGISTI": "Pay değişti",
+    "OTURUM_ACILDI": "Karar Saati açıldı",
+    "OTURUM_KAPANDI": "Karar Saati kapandı",
+    "OY_MUHUR": "Oy mühürlendi",
+    "OY_ACILDI": "Oy açıldı",
+    "OYLAMA_SONUCU": "Oylama sonucu",
+    "YONETMELIK_DEGISTI": "Yönetmelik değişti",
+    "YONETMELIK_DURUMU": "Yönetmeliğin hâli",
+    "OYLAMASIZ_DEGISIKLIK": "Oylamasız değişiklik",
+    "OYLAMASIZ_DEGISIKLIK_GERI_ALINDI": "Oylamasız değişiklik geri alındı",
+    "HAVALE_BEKLIYOR": "Havale istendi",
+    "HAVALE_KABUL": "Havale kabul edildi",
+    "HAVALE_RED": "Havale reddedildi",
+    "HAVALE_IADE": "Havale iade edildi",
+    "HAVALE_GERI_ALINDI": "Havale geri alındı",
+    "HAVALE_YENILENDI": "Havale yenilendi",
+    "HAVALE_SURESI_DOLDU": "Havale süresi doldu",
+    "MAHZEN_IFSA": "Mahzen başlığı ifşa edildi",
+}
+
+
+def record_label(type_: str) -> str:
+    return RECORD_LABELS.get(type_, type_.replace("_", " ").capitalize())
+
+
+def recent(client: LedgerClient, limit: int = 5) -> dict | None:
+    """Defterin ucu ve son ``limit`` kayıt, en yenisi önce. Hiçbir düğüme ulaşılamazsa ``None``."""
+    for url in client.node_urls():
+        try:
+            tip = client.get(url, "/tip")
+            seq = tip["seq"]
+            start = max(1, seq - limit + 1)
+            rows = client.get(url, f"/records?from_seq={start}&limit={limit}") if seq else []
+        except Exception as exc:  # noqa: BLE001
+            log.info("defterin ucu okunamadı (%s): %s", url, exc)
+            continue
+        return {
+            "seq": seq,
+            "hash": tip["hash"] if seq else None,
+            "records": [{"seq": r["seq"], "type": r["type"], "label": record_label(r["type"]),
+                         "ts": r["ts"], "hash": r["hash"]} for r in reversed(rows)],
+        }
     return None
 
 

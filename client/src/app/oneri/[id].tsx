@@ -12,6 +12,7 @@ import {
   ErrorNotice,
   Field,
   InfoNotice,
+  InitialText,
   Kicker,
   Loading,
   Mono,
@@ -211,7 +212,7 @@ export default function ProposalPage() {
   );
   const content = (
     <>
-      {p.body ? <Body style={{ fontSize: 19, lineHeight: 28 }}>{p.body}</Body> : null}
+      {p.body ? <InitialText text={p.body} style={st.body} /> : null}
 
       {p.type === 'DUZENLEME' && p.diff ? (
         <Section title="Önerilen değişiklik">
@@ -464,6 +465,7 @@ export default function ProposalPage() {
 }
 
 const st = StyleSheet.create({
+  body: { fontFamily: fonts.serif, fontSize: 19, lineHeight: 28, color: paper.ink, paddingTop: 8 },
   row: { flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 },
   h1: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, color: paper.ink },
   link: { fontFamily: fonts.serif, fontSize: 16, color: paper.seal },

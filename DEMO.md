@@ -1,6 +1,6 @@
 # Meşveret — sınıf gösterimi
 
-Ölçülen süre 2 dakika 24 saniyedir: 10 adım (10. adım iki parçalı). Hedef yaklaşık 2 dakikaydı, 4 dakikaya kadar uzayabilirdi. Süre bu sınırın altında kaldığı için 1. ve 2. adım birleştirilmedi, 9. ve 10. adım kısaltılmadı. Süreler, `scripts/demo-kaydi.mjs` ile yapılan iki ölçüm çalıştırmasından gelir (aşağıda **Ölçüm**). Canlı demo çökerse yedek video oynatılır: [`docs/demo.mp4`](docs/demo.mp4). Video canlı anlatımın hızındadır; her adım konuşma notunu okuyacak kadar ekranda kalır, üstünden konuşulabilir.
+Ölçülen süre 2 dakika 26 saniyedir: 10 adım (10. adım iki parçalı). Hedef yaklaşık 2 dakikaydı, 4 dakikaya kadar uzayabilirdi. Süre bu sınırın altında kaldığı için 1. ve 2. adım birleştirilmedi, 9. ve 10. adım kısaltılmadı. Süreler, `scripts/demo-kaydi.mjs` ile yapılan iki ölçüm çalıştırmasından gelir (aşağıda **Ölçüm**). Canlı demo çökerse yedek video oynatılır: [`docs/demo.mp4`](docs/demo.mp4). Video canlı anlatımın hızındadır; her adım konuşma notunu okuyacak kadar ekranda kalır, üstünden konuşulabilir.
 
 ## Hazırlık (derse girmeden)
 
@@ -108,7 +108,7 @@ Geçiş: saat bir gün ilerler, №20 itirazsız kabul edilir.
 > **Konuşma:** Çoğunluk eşiği kendi lehine düşürerek kazanamaz; yarıya indiren öneri açılışta reddedilir. Şerh hakkını kaldırmak da öyle: yedi madde oylamanın dışında.
 
 ### Adım 9 · Mahzen
-**Süre:** 21 sn · **Soru:** açıklar: anonimlik ile hesap verebilirlik
+**Süre:** 23 sn · **Soru:** açıklar: anonimlik ile hesap verebilirlik
 
 1. Menü → **1) ayse → /mahzen**: kararma ve uyarı → **anladım, devam**; alt sıralar çürüyor.
 2. Menü → **2) ayse → /mahzen/92**: şiir başlığı; sona ve yanıtlara kaydırın.
@@ -163,21 +163,21 @@ DESIGN.md §15'teki bilinçli açıklardan en olası beşi:
 ## Ölçüm
 
 <!-- ölçüm: scripts/demo-kaydi.mjs --md ile güncellenir -->
-İki çalıştırma (A: 2026-10-01 14:33 UTC, B: 2026-10-01 14:36 UTC), 1440 × 900 Chromium, Docker yığını. *Süre* adımın ekranda kaldığı toplam süredir: `demo next` komutu, sayfaların menüden açılması, tıklamalar, canlandırmalar ve konuşma notunun okunma süresine (dakikada 132 kelime) tamamlayan bekleme. *İşlem* bunlardan yalnızca komut, sayfa ve tıklama kısmıdır; canlıda konuşma bununla üst üste biner.
+İki çalıştırma (A: 2026-10-01 15:24 UTC, B: 2026-10-01 15:27 UTC), 1440 × 900 Chromium, Docker yığını. *Süre* adımın ekranda kaldığı toplam süredir: `demo next` komutu, sayfaların menüden açılması, tıklamalar, canlandırmalar ve konuşma notunun okunma süresine (dakikada 132 kelime) tamamlayan bekleme. *İşlem* bunlardan yalnızca komut, sayfa ve tıklama kısmıdır; canlıda konuşma bununla üst üste biner.
 
 | Adım | A (sn) | B (sn) | İşlem A / B (sn) | Konuşma (sn) | Ekrandaki sayılar | A = B |
 |---|---|---|---|---|---|---|
-| 1 · Kayıt ve profil | 11,0 | 11,0 | 5,2 / 5,2 | 10,9 | 33 | ✓ |
-| 2 · Öneri ve sessiz onay | 12,7 | 12,7 | 3,0 / 3,0 | 10,9 | 19 | ✓ |
-| 3 · İstanbul vakası: R2 daraltma | 12,1 | 12,1 | 4,6 / 4,6 | 10,0 | 34 | ✓ |
-| 4 · Eşzamanlı çoğunluk | 10,0 | 10,0 | 5,5 / 5,4 | 8,2 | 34 | ✓ |
-| 5 · Havale ve Karar Saati | 21,0 | 21,0 | 13,9 / 13,9 | 17,3 | 307 | ✓ |
-| 6 · Kapanış ve Şerh | 12,2 | 12,3 | 7,5 / 7,7 | 10,5 | 72 | ✓ |
-| 7 · Silme | 12,3 | 12,2 | 5,7 / 5,5 | 10,5 | 46 | ✓ |
-| 8 · Değiştirilemez maddeler | 10,9 | 10,8 | 4,9 / 4,9 | 9,1 | 33 | ✓ |
-| 9 · Mahzen | 20,8 | 20,9 | 14,7 / 14,6 | 17,7 | 615 | ✓ |
-| 10a · Operatörün sessiz değişikliği | 9,8 | 9,9 | 3,3 / 3,4 | 8,2 | 16 | ✓ |
-| 10b · Karar Saati açılışında geri alınır | 11,6 | 11,5 | 5,8 / 5,7 | 9,5 | 22 | ✓ |
-| **Toplam** | **144,4** | **144,5** | | | | ✓ |
+| 1 · Kayıt ve profil | 11,0 | 11,0 | 5,1 / 5,1 | 10,9 | 39 | ✓ |
+| 2 · Öneri ve sessiz onay | 12,7 | 12,7 | 3,0 / 3,0 | 10,9 | 22 | ✓ |
+| 3 · İstanbul vakası: R2 daraltma | 12,1 | 12,1 | 4,5 / 4,6 | 10,0 | 40 | ✓ |
+| 4 · Eşzamanlı çoğunluk | 9,9 | 9,9 | 5,4 / 5,4 | 8,2 | 37 | ✓ |
+| 5 · Havale ve Karar Saati | 21,0 | 21,0 | 13,7 / 13,7 | 17,3 | 316 | ✓ |
+| 6 · Kapanış ve Şerh | 12,2 | 12,3 | 7,4 / 7,4 | 10,5 | 75 | ✓ |
+| 7 · Silme | 12,3 | 12,3 | 5,6 / 5,6 | 10,5 | 52 | ✓ |
+| 8 · Değiştirilemez maddeler | 10,7 | 10,9 | 4,7 / 4,9 | 9,1 | 39 | ✓ |
+| 9 · Mahzen | 22,8 | 22,9 | 17,7 / 17,8 | 17,7 | 618 | ✓ |
+| 10a · Operatörün sessiz değişikliği | 10,0 | 10,0 | 3,3 / 3,3 | 8,2 | 19 | ✓ |
+| 10b · Karar Saati açılışında geri alınır | 11,6 | 11,7 | 5,6 / 5,7 | 9,5 | 25 | ✓ |
+| **Toplam** | **146,2** | **146,6** | | | | ✓ |
 
 Defter: A 647 kayıt, B 647 kayıt; hash zinciri birebir aynı.

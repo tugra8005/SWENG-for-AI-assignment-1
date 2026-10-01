@@ -1,19 +1,19 @@
 {
  "label": "B",
- "started": "2026-10-01T14:36:50.470Z",
+ "started": "2026-10-01T15:27:30.787Z",
  "steps": [
   {
    "key": "1",
    "title": "Kayıt ve profil",
    "cli_ms": 0,
-   "mech_ms": 5159,
+   "mech_ms": 5066,
    "speak_ms": 10909,
-   "total_ms": 10962,
+   "total_ms": 10961,
    "screens": [
     {
      "user": "aylin",
      "path": "/profil/aylin",
-     "mech_ms": 3955,
+     "mech_ms": 3867,
      "numbers": [
       "637",
       "29",
@@ -39,13 +39,16 @@
       "6",
       "2025",
       "14",
+      "637",
+      "640",
+      "3d4611ff",
       "1"
      ]
     },
     {
      "user": "ceren",
      "path": "/profil/aylin",
-     "mech_ms": 1204,
+     "mech_ms": 1199,
      "numbers": [
       "637",
       "29",
@@ -54,6 +57,9 @@
       "F3AA5622",
       "6",
       "2025",
+      "637",
+      "640",
+      "3d4611ff",
       "1"
      ]
     }
@@ -62,15 +68,15 @@
   {
    "key": "2",
    "title": "Öneri ve sessiz onay",
-   "cli_ms": 1755,
-   "mech_ms": 2996,
+   "cli_ms": 1764,
+   "mech_ms": 3015,
    "speak_ms": 10909,
-   "total_ms": 12679,
+   "total_ms": 12690,
    "screens": [
     {
      "user": "aylin",
      "path": "/oneri/20",
-     "mech_ms": 1241,
+     "mech_ms": 1251,
      "numbers": [
       "637",
       "29",
@@ -90,6 +96,9 @@
       "0/3",
       "R1–R8",
       "04e2e353",
+      "637",
+      "640",
+      "3d4611ff",
       "2"
      ]
     }
@@ -98,15 +107,15 @@
   {
    "key": "3",
    "title": "İstanbul vakası: R2 daraltma",
-   "cli_ms": 2064,
-   "mech_ms": 4569,
+   "cli_ms": 2092,
+   "mech_ms": 4627,
    "speak_ms": 10000,
-   "total_ms": 12090,
+   "total_ms": 12118,
    "screens": [
     {
      "user": "aylin",
      "path": "/konu/10",
-     "mech_ms": 1258,
+     "mech_ms": 1284,
      "numbers": [
       "637",
       "29",
@@ -124,13 +133,16 @@
       "(%20)",
       "fc380293",
       "0",
+      "637",
+      "642",
+      "18bdaaaa",
       "3"
      ]
     },
     {
      "user": "aylin",
      "path": "/oneri/20",
-     "mech_ms": 1247,
+     "mech_ms": 1251,
      "numbers": [
       "638",
       "30",
@@ -148,6 +160,9 @@
       "20.000)",
       "R1–R8",
       "04e2e353",
+      "638",
+      "642",
+      "18bdaaaa",
       "3"
      ]
     }
@@ -156,15 +171,15 @@
   {
    "key": "4",
    "title": "Eşzamanlı çoğunluk",
-   "cli_ms": 1768,
-   "mech_ms": 5405,
+   "cli_ms": 1751,
+   "mech_ms": 5399,
    "speak_ms": 8182,
-   "total_ms": 9964,
+   "total_ms": 9948,
    "screens": [
     {
      "user": "ayse",
      "path": "/oneri/17",
-     "mech_ms": 3637,
+     "mech_ms": 3648,
      "numbers": [
       "638",
       "30",
@@ -199,6 +214,9 @@
       "45,8",
       "10).",
       "97374b24",
+      "638",
+      "642",
+      "18bdaaaa",
       "4"
      ]
     }
@@ -207,15 +225,15 @@
   {
    "key": "5",
    "title": "Havale ve Karar Saati",
-   "cli_ms": 1785,
-   "mech_ms": 13905,
+   "cli_ms": 1811,
+   "mech_ms": 13682,
    "speak_ms": 17273,
-   "total_ms": 21003,
+   "total_ms": 20996,
    "screens": [
     {
      "user": "aylin",
      "path": "/havale",
-     "mech_ms": 3653,
+     "mech_ms": 3459,
      "numbers": [
       "638",
       "30",
@@ -233,13 +251,16 @@
       "27",
       "2026",
       "(R4);",
+      "638",
+      "642",
+      "18bdaaaa",
       "5"
      ]
     },
     {
      "user": "ceren",
      "path": "/karar-saati/1?izle=9",
-     "mech_ms": 6471,
+     "mech_ms": 6449,
      "numbers": [
       "638",
       "30",
@@ -522,13 +543,16 @@
       "20",
       "×1",
       "№18",
+      "638",
+      "642",
+      "18bdaaaa",
       "5"
      ]
     },
     {
      "user": "aylin",
      "path": "/bildirimler",
-     "mech_ms": 1996,
+     "mech_ms": 1963,
      "numbers": [
       "638",
       "30",
@@ -537,6 +561,9 @@
       "11:00",
       "#1",
       "№9",
+      "638",
+      "642",
+      "18bdaaaa",
       "5"
      ]
     }
@@ -545,15 +572,15 @@
   {
    "key": "6",
    "title": "Kapanış ve Şerh",
-   "cli_ms": 1860,
-   "mech_ms": 7653,
+   "cli_ms": 1778,
+   "mech_ms": 7359,
    "speak_ms": 10455,
-   "total_ms": 12344,
+   "total_ms": 12252,
    "screens": [
     {
      "user": "zeynep",
      "path": "/konu/7",
-     "mech_ms": 5793,
+     "mech_ms": 5581,
      "numbers": [
       "638",
       "30",
@@ -626,6 +653,9 @@
       "30.09.2026",
       "10:00",
       "28.12.2026'dan",
+      "638",
+      "642",
+      "18bdaaaa",
       "6"
      ]
     }
@@ -634,15 +664,15 @@
   {
    "key": "7",
    "title": "Silme",
-   "cli_ms": 1726,
-   "mech_ms": 5517,
+   "cli_ms": 1789,
+   "mech_ms": 5611,
    "speak_ms": 10455,
-   "total_ms": 12201,
+   "total_ms": 12265,
    "screens": [
     {
      "user": "hale",
      "path": "/konu/6",
-     "mech_ms": 1560,
+     "mech_ms": 1533,
      "numbers": [
       "638",
       "30",
@@ -672,13 +702,16 @@
       "b8453d44",
       "#12",
       "2e626f0e",
+      "638",
+      "643",
+      "8703306b",
       "7"
      ]
     },
     {
      "user": "emre",
      "path": "/oneri/yeni?type=SILME&message=33",
-     "mech_ms": 2231,
+     "mech_ms": 2289,
      "numbers": [
       "638",
       "30",
@@ -696,6 +729,9 @@
       "IK-3",
       "R7",
       "R1–R8",
+      "638",
+      "643",
+      "8703306b",
       "7"
      ]
     }
@@ -704,15 +740,15 @@
   {
    "key": "8",
    "title": "Değiştirilemez maddeler",
-   "cli_ms": 1745,
-   "mech_ms": 4853,
+   "cli_ms": 1801,
+   "mech_ms": 4873,
    "speak_ms": 9091,
-   "total_ms": 10845,
+   "total_ms": 10904,
    "screens": [
     {
      "user": "aylin",
      "path": "/oneri/yeni?type=YONETMELIK&article=yonetmelik_esigi",
-     "mech_ms": 1689,
+     "mech_ms": 1651,
      "numbers": [
       "638",
       "30",
@@ -734,13 +770,16 @@
       "3/4.",
       "(D7).",
       "R1–R8",
+      "638",
+      "643",
+      "8703306b",
       "8"
      ]
     },
     {
      "user": "aylin",
      "path": "/oneri/yeni?type=YONETMELIK&action=kaldir&article=D3",
-     "mech_ms": 1419,
+     "mech_ms": 1421,
      "numbers": [
       "638",
       "30",
@@ -753,6 +792,9 @@
       "D3",
       "(D7).",
       "R1–R8",
+      "638",
+      "643",
+      "8703306b",
       "8"
      ]
     }
@@ -761,15 +803,15 @@
   {
    "key": "9",
    "title": "Mahzen",
-   "cli_ms": 1760,
-   "mech_ms": 14600,
+   "cli_ms": 1783,
+   "mech_ms": 17790,
    "speak_ms": 17727,
-   "total_ms": 20907,
+   "total_ms": 22869,
    "screens": [
     {
      "user": "ayse",
      "path": "/mahzen",
-     "mech_ms": 4494,
+     "mech_ms": 6639,
      "numbers": [
       "100",
       "300",
@@ -1331,7 +1373,7 @@
     {
      "user": "ayse",
      "path": "/mahzen/92",
-     "mech_ms": 6093,
+     "mech_ms": 6110,
      "numbers": [
       "No.92",
       "6",
@@ -1374,7 +1416,7 @@
     {
      "user": "ayse",
      "path": "/mahzen/91",
-     "mech_ms": 2253,
+     "mech_ms": 3258,
      "numbers": [
       "638",
       "30",
@@ -1399,6 +1441,9 @@
       "29.09.2026",
       "04:00",
       "№22",
+      "638",
+      "644",
+      "5a981512",
       "9"
      ]
     }
@@ -1407,15 +1452,15 @@
   {
    "key": "10a",
    "title": "Operatörün sessiz değişikliği",
-   "cli_ms": 1741,
-   "mech_ms": 3390,
+   "cli_ms": 1800,
+   "mech_ms": 3300,
    "speak_ms": 8182,
-   "total_ms": 9933,
+   "total_ms": 9990,
    "screens": [
     {
      "user": "aylin",
      "path": "/defter",
-     "mech_ms": 1649,
+     "mech_ms": 1500,
      "numbers": [
       "638",
       "30",
@@ -1432,6 +1477,9 @@
       "ledger-3:8100",
       "644",
       "6",
+      "638",
+      "644",
+      "5a981512",
       "10a"
      ]
     }
@@ -1440,15 +1488,15 @@
   {
    "key": "10b",
    "title": "Karar Saati açılışında geri alınır",
-   "cli_ms": 1989,
-   "mech_ms": 5731,
+   "cli_ms": 2098,
+   "mech_ms": 5688,
    "speak_ms": 9545,
-   "total_ms": 11544,
+   "total_ms": 11650,
    "screens": [
     {
      "user": "aylin",
      "path": "/defter",
-     "mech_ms": 3742,
+     "mech_ms": 3590,
      "numbers": [
       "638",
       "30",
@@ -1471,6 +1519,9 @@
       "ledger-3:8100",
       "647",
       "6",
+      "638",
+      "647",
+      "20247217",
       "10b"
      ]
     }
@@ -2129,5 +2180,5 @@
    "20247217cb2bcfcb8788b1f2e155c21b5facc5b3c890b8a8e3791a6e3de70d76"
   ]
  },
- "total_ms": 144472
+ "total_ms": 146643
 }

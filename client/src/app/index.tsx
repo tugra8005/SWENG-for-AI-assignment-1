@@ -17,6 +17,7 @@ import {
   useWide,
 } from '@/components/paper';
 import { DelegationNotices } from '@/components/delegation-expiry';
+import { LedgerFeed } from '@/components/ledger-feed';
 import { EmptyLine, ProposalRow, type ProposalSummary } from '@/components/proposal-row';
 import { ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
@@ -151,7 +152,10 @@ export default function Home() {
         {me ? <DelegationNotices /> : null}
         <Grid min={300} ruled>
           {fastSection}
-          {slowSection}
+          <>
+            {slowSection}
+            <LedgerFeed />
+          </>
           {areasSection}
         </Grid>
         <Section title="Konular" aside={<Kicker>son kabul edilenler</Kicker>}>
@@ -182,6 +186,7 @@ export default function Home() {
           <Section title="Konular">{topicRows}</Section>
         </View>
       </View>
+      <LedgerFeed limit={5} />
     </Page>
   );
 }

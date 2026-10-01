@@ -5,8 +5,8 @@
 import { Link, router, usePathname } from 'expo-router';
 import { Children, createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -24,8 +24,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiError } from '@/api/client';
 import { useAuth } from '@/lib/auth';
 import { useClock, useTick } from '@/lib/clock';
-import { fmtCountdown, fmtLong, shortHash } from '@/lib/format';
+import { fmtCountdown, fmtLong, fmtWeekdayTime, shortHash } from '@/lib/format';
+import { useAnimatedValue, useReducedMotion } from '@/lib/motion';
 import { useNotifications } from '@/lib/notifications';
+import { useApi } from '@/lib/useApi';
 import { fonts, layout, paper } from '@/theme/tokens';
 
 const grain = require('@/assets/images/paper-grain.png');
@@ -189,11 +191,87 @@ function Account({ small }: { small?: boolean }) {
   );
 }
 
+/** Bölüm adı: iç sayfaların ince künyesinde ve künye satırında. */
+function sectionOf(path: string): string {
+  const map: [string, string][] = [
+    ['/karar-saati', 'Karar Saati'],
+    ['/havale', 'Havale'],
+    ['/yonetmelik', 'Yönetmelik'],
+    ['/defter', 'Defter'],
+    ['/profil', 'Profil'],
+    ['/bildirimler', 'Bildirimler'],
+    ['/nasil-isler', 'Kılavuz'],
+    ['/konu', 'Meydan · Konu'],
+    ['/oneri', 'Meydan · Öneri'],
+    ['/alan', 'Meydan · Alan'],
+    ['/mesaj', 'Meydan · Mesaj'],
+    ['/ifsa', 'Mahzen · İfşa'],
+    ['/giris', 'Kimlik'],
+    ['/kayit', 'Kimlik'],
+    ['/dogrula', 'Kimlik'],
+  ];
+  return map.find(([p]) => path.startsWith(p))?.[1] ?? 'Meydan';
+}
+
+const sealMark = require('@/assets/images/seal-mark.png');
+
+/** Defterin son kaydı (künye kulağı, alt bilgi). */
+type LedgerRecent = { seq: number; hash: string | null; records: { seq: number; type: string; label: string; ts: string; hash: string }[] };
+
+/** Gazetenin başlık kulakları: solda Karar Saati, sağda defterin son mührü. */
+function Ear({ side, children }: { side: 'left' | 'right'; children: ReactNode }) {
+  return <View style={[s.ear, side === 'right' && { alignItems: 'flex-end' }]}>{children}</View>;
+}
+
+function DecisionEar() {
+  const { status } = useClock();
+  const open = status?.open_session;
+  return (
+    <Ear side="left">
+      <Kicker style={open ? { color: paper.seal } : undefined}>{open ? 'Karar Saati açık' : "Karar Saati'ne"}</Kicker>
+      {status ? (
+        <Countdown target={open ? open.closes_at : status.next_scheduled_at} color={open ? paper.seal : paper.ink} />
+      ) : (
+        <Text style={s.earValue}>…</Text>
+      )}
+      <Text style={s.earNote}>{open ? 'pencerenin kapanmasına' : fmtWeekdayTime(status?.next_scheduled_at)}</Text>
+    </Ear>
+  );
+}
+
+function LedgerEar() {
+  const { data } = useApi<LedgerRecent>('/ledger/recent?limit=1', 30_000);
+  return (
+    <Ear side="right">
+      <Kicker>Defter</Kicker>
+      <Text style={s.earValue}>{data ? `${data.seq} kayıt` : '…'}</Text>
+      {data?.hash ? <Seal hash={data.hash} label="son" /> : null}
+    </Ear>
+  );
+}
+
 export function Masthead() {
   const { now } = useClock();
   const { width } = useWindowDimensions();
+  const path = usePathname();
   const narrow = width < 560;
   const today = new Date(now());
+  // Gazetelerde iç sayfalar ince başlık taşır; tam künye yalnızca ön sayfadadır.
+  if (!narrow && path !== '/') return <SlimMasthead today={today} path={path} />;
+  const ears = width >= 900;
+  const title = (
+    <Pressable
+      onPress={() => router.push('/')}
+      accessibilityRole="link"
+      accessibilityLabel="Meşveret ana sayfa"
+      style={{ alignItems: 'center', paddingVertical: narrow ? 4 : 8, flex: ears ? 1 : undefined }}
+    >
+      <Text style={[s.mastTitle, narrow && { fontSize: 40, lineHeight: 46, letterSpacing: 2 }]}>
+        MEŞVERET
+      </Text>
+      <Text style={s.mastSub}>Oylamayla yönetilen forum — her karar kayda geçer</Text>
+    </Pressable>
+  );
   return (
     <View style={{ marginBottom: 18 }}>
       <View style={s.mastTop}>
@@ -210,17 +288,15 @@ export function Masthead() {
         )}
       </View>
       <Rule double style={{ marginTop: 6 }} />
-      <Pressable
-        onPress={() => router.push('/')}
-        accessibilityRole="link"
-        accessibilityLabel="Meşveret ana sayfa"
-        style={{ alignItems: 'center', paddingVertical: narrow ? 4 : 8 }}
-      >
-        <Text style={[s.mastTitle, narrow && { fontSize: 40, lineHeight: 46, letterSpacing: 2 }]}>
-          MEŞVERET
-        </Text>
-        <Text style={s.mastSub}>Oylamayla yönetilen forum — her karar kayda geçer</Text>
-      </Pressable>
+      {ears ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <DecisionEar />
+          {title}
+          <LedgerEar />
+        </View>
+      ) : (
+        title
+      )}
       <Rule style={{ marginBottom: 0 }} />
       <View style={s.nav}>
         {narrow ? (
@@ -232,6 +308,40 @@ export function Masthead() {
             <Account />
           </>
         )}
+      </View>
+      <Rule double style={{ marginTop: 0 }} />
+    </View>
+  );
+}
+
+/** İç sayfaların ince künyesi (560 px ve üstü): künye satırı, mühür, MEŞVERET, menü ve hesap. */
+function SlimMasthead({ today, path }: { today: Date; path: string }) {
+  // Tablette (560–899 px) mühür süsü gizlenir, başlık küçülür: satır tek sıraya sığar.
+  const roomy = useWindowDimensions().width >= 900;
+  return (
+    <View style={{ marginBottom: 18 }}>
+      <View style={s.mastTop}>
+        <Kicker>
+          Sayı {issueNumber(today)} · {sectionOf(path)}
+        </Kicker>
+        <Kicker style={{ textAlign: 'right' }}>{fmtLong(today)}</Kicker>
+      </View>
+      <Rule double style={{ marginTop: 6, marginBottom: 0 }} />
+      <View style={[s.slim, !roomy && { gap: 14 }]}>
+        <Pressable
+          onPress={() => router.push('/')}
+          accessibilityRole="link"
+          accessibilityLabel="Meşveret ana sayfa"
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+        >
+          {roomy ? <Image source={sealMark} style={{ width: 30, height: 30 }} accessibilityIgnoresInvertColors /> : null}
+          <Text style={[s.slimTitle, !roomy && { fontSize: 21, letterSpacing: 1.5 }]}>MEŞVERET</Text>
+        </Pressable>
+        <View style={[s.slimNav, !roomy && { columnGap: 12 }]}>
+          <NavLinks />
+        </View>
+        <View style={{ flex: 1 }} />
+        <Account />
       </View>
       <Rule double style={{ marginTop: 0 }} />
     </View>
@@ -259,10 +369,18 @@ function CompactBar() {
 }
 
 export function Footer() {
+  const { now } = useClock();
+  const tip = useApi<LedgerRecent>('/ledger/recent?limit=1').data;
   return (
     <View style={{ marginTop: 48, alignItems: 'center', gap: 10 }}>
-      <Rule faint style={{ alignSelf: 'stretch' }} />
+      <Rule double style={{ alignSelf: 'stretch' }} />
+      <Image source={sealMark} style={{ width: 44, height: 44, opacity: 0.85 }} accessibilityIgnoresInvertColors />
       <Muted style={{ fontSize: 13 }}>Meşveret · kararlar ve silinen içerikler defterde kalır</Muted>
+      {/* Künye: gazetenin arka sayfasındaki yayın bilgisi. */}
+      <Text style={s.colophon}>
+        Sayı {issueNumber(new Date(now()))}
+        {tip ? ` · defter ${tip.seq} kayıt, son mühür ⌗ ${shortHash(tip.hash ?? '')}` : ''} · dizgi: Newsreader ve IBM Plex Mono
+      </Text>
       <Link href="/nasil-isler" style={s.guideLink}>
         Nasıl işler? Kılavuz →
       </Link>
@@ -378,12 +496,33 @@ export function Page({
   );
 }
 
+/** Yükleniyor: dizgi provası gibi gri satırlar, hafif nabız. Azaltılmış harekette sabit. */
 export function Loading() {
+  const reduced = useReducedMotion();
+  const pulse = useAnimatedValue(reduced ? 0.75 : 0.45);
+  useEffect(() => {
+    if (reduced) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.95, duration: 700, useNativeDriver: false }),
+        Animated.timing(pulse, { toValue: 0.45, duration: 700, useNativeDriver: false }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse, reduced]);
   return (
-    <View style={{ padding: 40, alignItems: 'center' }}>
-      <ActivityIndicator color={paper.seal} />
-      <Muted style={{ marginTop: 8 }}>Kayıtlar getiriliyor…</Muted>
-    </View>
+    <Animated.View
+      accessibilityRole="progressbar"
+      accessibilityLabel="Kayıtlar getiriliyor"
+      style={{ paddingVertical: 24, gap: 10, opacity: pulse }}
+    >
+      <View style={[s.proof, { width: '38%', height: 14, backgroundColor: paper.hairline }]} />
+      {['96%', '88%', '92%', '61%'].map((w, i) => (
+        <View key={i} style={[s.proof, { width: w as any }]} />
+      ))}
+      <Muted style={{ fontSize: 13, marginTop: 2 }}>dizgi provası · kayıtlar getiriliyor…</Muted>
+    </Animated.View>
   );
 }
 
@@ -415,9 +554,31 @@ export function PressLink({
   );
 }
 
+/** Büyük baş harf: paragrafın ilk harfi büyük ve bordo, satırın üstüne yükselir. React Native metni
+ * harfin etrafından akıtamadığı için gerçek "düşen" baş harf değildir. Harfle başlamayan metin olduğu
+ * gibi kalır. */
+export function InitialText({ text, style }: { text: string; style?: TextStyle | TextStyle[] }) {
+  const body = text.trimStart();
+  const first = body.charAt(0);
+  if (!/\p{L}/u.test(first)) return <Text style={style}>{text}</Text>;
+  return (
+    <Text style={style}>
+      <Text style={s.initial}>{first}</Text>
+      {body.slice(1)}
+    </Text>
+  );
+}
+
 // --- mühür ve sansür şeridi ------------------------------------------------------------------------
 
 /** Defter hash'i: mühür gibi durur, dokununca defter kaydını açar. */
+/** Mührün eğimi hash'ten çıkar: her mühür biraz farklı basılmış gibi durur, ama hep aynı açıyla. */
+function sealTilt(hash?: string | null): string {
+  if (!hash) return '0deg';
+  const n = parseInt(hash.slice(-2), 16);
+  return `${((n % 7) - 3) * 0.6}deg`;
+}
+
 export function Seal({ hash, label }: { hash?: string | null; label?: string }) {
   const pending = !hash;
   return (
@@ -426,11 +587,19 @@ export function Seal({ hash, label }: { hash?: string | null; label?: string }) 
       onPress={() => hash && router.push({ pathname: '/defter', params: { h: hash } })}
       accessibilityRole="link"
       accessibilityLabel={pending ? 'Defter kaydı bekleniyor' : `Defter kaydı ${shortHash(hash)}`}
-      style={({ pressed }) => [s.seal, pending && { opacity: 0.5 }, pressed && { backgroundColor: paper.sealWash }]}
+      style={({ pressed, hovered }: any) => [
+        s.seal,
+        { transform: [{ rotate: sealTilt(hash) }] },
+        pending && { opacity: 0.5, borderStyle: 'dashed' },
+        (pressed || hovered) && { backgroundColor: paper.sealWash },
+      ]}
     >
-      <Text style={s.sealText}>
-        {label ? `${label} ` : ''}⌗ {pending ? 'mühürleniyor' : shortHash(hash)}
-      </Text>
+      {/* Islak mühür: dış çerçeve kalın, içte ince ikinci çizgi. */}
+      <View style={s.sealInner}>
+        <Text style={s.sealText}>
+          {label ? `${label} ` : ''}⌗ {pending ? 'mühürleniyor' : shortHash(hash)}
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -935,6 +1104,12 @@ const s = StyleSheet.create({
   },
   rule: { height: 1, backgroundColor: paper.rule },
   mastTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' },
+  ear: { width: 190, minHeight: 82, justifyContent: 'center', borderWidth: 1, borderColor: paper.ink, paddingHorizontal: 10, paddingVertical: 8, gap: 3, backgroundColor: paper.sheet },
+  earValue: { fontFamily: fonts.monoBold, fontSize: 15, color: paper.ink },
+  earNote: { fontFamily: fonts.serifItalic, fontSize: 12, color: paper.inkSoft },
+  slim: { flexDirection: 'row', alignItems: 'center', gap: 22, paddingVertical: 8, flexWrap: 'wrap' },
+  slimTitle: { fontFamily: fonts.serifDisplay, fontSize: 26, lineHeight: 30, letterSpacing: 2.5, color: paper.ink },
+  slimNav: { flexDirection: 'row', alignItems: 'center', columnGap: 18, rowGap: 6, flexWrap: 'wrap' },
   mastTitle: {
     fontFamily: fonts.serifDisplay,
     fontSize: 64,
@@ -998,13 +1173,15 @@ const s = StyleSheet.create({
   },
   seal: {
     alignSelf: 'flex-start',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: paper.seal,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    transform: [{ rotate: '-0.6deg' }],
+    padding: 1.5,
   },
-  sealText: { fontFamily: fonts.mono, fontSize: 11, color: paper.seal, letterSpacing: 0.5 },
+  sealText: { fontFamily: fonts.monoMedium, fontSize: 11, color: paper.seal, letterSpacing: 0.6 },
+  sealInner: { borderWidth: 0.75, borderColor: paper.seal, paddingHorizontal: 5, paddingVertical: 1 },
+  proof: { height: 9, backgroundColor: paper.bgDeep },
+  initial: { fontFamily: fonts.serifDisplay, fontSize: 46, color: paper.seal },
+  colophon: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.6, color: paper.muted, textAlign: 'center', paddingHorizontal: 12 },
   strip: {
     backgroundColor: paper.strip,
     paddingVertical: 10,
