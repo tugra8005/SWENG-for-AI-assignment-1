@@ -7,6 +7,7 @@ import {
   Body,
   Button,
   ChoiceChip,
+  Columns,
   ErrorNotice,
   Field,
   H1,
@@ -14,8 +15,9 @@ import {
   Kicker,
   Muted,
   Page,
-  Rule,
+  PageHead,
   Section,
+  useWide,
 } from '@/components/paper';
 import { AreaGroups } from '@/components/area-groups';
 import { DelegationNotices, daysLeftLabel, renewDelegation } from '@/components/delegation-expiry';
@@ -28,6 +30,7 @@ export default function Delegations() {
   const { me } = useAuth();
   const params = useLocalSearchParams<{ target?: string }>();
   const mine = useApi<any>(me ? '/delegations' : null);
+  const wide = useWide();
   const areas = useApi<any[]>('/areas');
   const [target, setTarget] = useState(params.target ?? '');
   const [area, setArea] = useState<string>('');
@@ -83,36 +86,8 @@ export default function Delegations() {
     }
   };
 
-  return (
-    <Page>
-      <Kicker>Oy hakkının devri</Kicker>
-      <H1>Havale</H1>
-      <Muted>
-        Oyunuzu genel olarak ya da bir alan için güvendiğiniz birine devredebilirsiniz. Alan havalesi o
-        alanda genel havaleyi ezer; alt alanlar üst alanın havalesini miras alır. Zincir son kişiye kadar
-        akar. Havale ettiğiniz alanda kendiniz oy kullanamazsınız. Her havale kabul edildiği ya da
-        yenilendiği andan {d?.havale_suresi_gun ?? 180} gün sonra kendiliğinden sona erer ve oy size döner
-        (havale_suresi); süreyi dilediğiniz an baştan başlatabilirsiniz.
-      </Muted>
-      <Muted style={{ marginTop: 6 }}>
-        Havale, alan kişi kabul edince yürürlüğe girer: temsilcinin oyu açıktır, bu yüzden kimse onayı
-        olmadan temsilci yapılamaz. Kabul edilene kadar oyunuz sizde kalır; {d?.kabul_suresi_gun ?? 7} gün
-        içinde kabul edilmezse havale düşer (havale_kabul_suresi). Alan kişi kabul ettiği havaleyi
-        istediği zaman iade edebilir.
-      </Muted>
-      <Rule double />
-      {d ? <DelegationNotices data={d} onChanged={mine.reload} /> : null}
-      {d?.refuses ? (
-        <InfoNotice>Havale kabul etmiyorsunuz; size yeni havale verilemez. Profilinizden değiştirebilirsiniz.</InfoNotice>
-      ) : null}
-      {d?.locked ? (
-        <InfoNotice>
-          <Text style={{ fontFamily: fonts.serifBold, color: paper.seal }}>
-            Karar Saati penceresi açık: havale grafı bu oturum için kilitli.
-          </Text>
-        </InfoNotice>
-      ) : null}
-
+  const lists = (
+    <>
       <Section title="Verdiğiniz havaleler">
         {d?.given.map((g: any) => (
           <View key={g.area_id ?? 'genel'} style={st.row}>
@@ -175,7 +150,10 @@ export default function Delegations() {
         ))}
         {d && d.received.length === 0 ? <Muted>Size doğrudan havale veren yok.</Muted> : null}
       </Section>
-
+    </>
+  );
+  const newDelegation = (
+    <>
       <Section title="Yeni havale">
         <Field label="Takma ad" value={target} onChangeText={setTarget} autoCapitalize="none" />
         <View style={{ marginBottom: 14, gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel="Alan">
@@ -193,6 +171,46 @@ export default function Delegations() {
           Döngü oluşturacak havale reddedilir (R4); mirasla alt alanlarda oluşan döngüler de denetlenir.
         </Muted>
       </Section>
+    </>
+  );
+
+  return (
+    <Page>
+      <PageHead kicker="Oy hakkının devri" title="Havale">
+        <Muted>
+          Oyunuzu genel olarak ya da bir alan için güvendiğiniz birine devredebilirsiniz. Alan havalesi o
+          alanda genel havaleyi ezer; alt alanlar üst alanın havalesini miras alır. Zincir son kişiye kadar
+          akar. Havale ettiğiniz alanda kendiniz oy kullanamazsınız. Her havale kabul edildiği ya da
+          yenilendiği andan {d?.havale_suresi_gun ?? 180} gün sonra kendiliğinden sona erer ve oy size döner
+          (havale_suresi); süreyi dilediğiniz an baştan başlatabilirsiniz.
+        </Muted>
+        <Muted style={{ marginTop: 6 }}>
+          Havale, alan kişi kabul edince yürürlüğe girer: temsilcinin oyu açıktır, bu yüzden kimse onayı
+          olmadan temsilci yapılamaz. Kabul edilene kadar oyunuz sizde kalır; {d?.kabul_suresi_gun ?? 7} gün
+          içinde kabul edilmezse havale düşer (havale_kabul_suresi). Alan kişi kabul ettiği havaleyi
+          istediği zaman iade edebilir.
+        </Muted>
+      </PageHead>
+      {d ? <DelegationNotices data={d} onChanged={mine.reload} /> : null}
+      {d?.refuses ? (
+        <InfoNotice>Havale kabul etmiyorsunuz; size yeni havale verilemez. Profilinizden değiştirebilirsiniz.</InfoNotice>
+      ) : null}
+      {d?.locked ? (
+        <InfoNotice>
+          <Text style={{ fontFamily: fonts.serifBold, color: paper.seal }}>
+            Karar Saati penceresi açık: havale grafı bu oturum için kilitli.
+          </Text>
+        </InfoNotice>
+      ) : null}
+      {/* Geniş ekranda havaleler ana sütunda, yeni havale formu yan sütunda. */}
+      {wide ? (
+        <Columns sideWidth={400} main={lists} side={newDelegation} />
+      ) : (
+        <>
+          {lists}
+          {newDelegation}
+        </>
+      )}
     </Page>
   );
 }

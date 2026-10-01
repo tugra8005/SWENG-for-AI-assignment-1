@@ -5,18 +5,19 @@ import { api } from '@/api/client';
 import {
   Body,
   Button,
+  Columns,
   Countdown,
   ErrorNotice,
-  H1,
   InfoNotice,
   Kicker,
   Mono,
   Muted,
   Page,
+  PageHead,
   PressLink,
-  Rule,
   Section,
   Tag,
+  useWide,
 } from '@/components/paper';
 import { maturityLine, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
@@ -181,18 +182,10 @@ export default function DecisionHour() {
   const ballot = useApi<any>(me && status?.open_session ? '/decision-hour/ballot' : null);
   const sessions = useApi<any[]>('/decision-hour/sessions', 20_000);
   const open = status?.open_session;
+  const wide = useWide();
 
-  return (
-    <Page>
-      <Kicker>Planlı oylama oturumu</Kicker>
-      <H1>Karar Saati</H1>
-      <Muted>
-        Oturum haftada bir açılır ({fmtWeekdayTime(status?.next_scheduled_at)},{' '}
-        {status?.window_minutes ?? '…'} dakika; yönetmelikteki karar_saati maddesi). Açılış anında seçmen
-        listesi ve havale grafı kilitlenir; oylar pencere boyunca mühürlüdür, kapanışta tek tek açılır.
-      </Muted>
-      <Rule double />
-
+  const clock = (
+    <>
       <View style={st.clock}>
         <Kicker style={open ? { color: paper.seal } : undefined}>
           {open ? `Oturum #${open.id} · pencerenin kapanmasına` : 'Bir sonraki oturuma'}
@@ -200,7 +193,10 @@ export default function DecisionHour() {
         <Countdown target={open ? open.closes_at : status?.next_scheduled_at ?? null} big />
         <Muted>{fmtDateTime(open ? open.closes_at : status?.next_scheduled_at)}</Muted>
       </View>
-
+    </>
+  );
+  const ballotOrQueue = (
+    <>
       {open ? (
         <Section title="Oy pusulası" aside={<Kicker>{open.item_count} öneri</Kicker>}>
           {!me ? <InfoNotice>Oy vermek için giriş yapın.</InfoNotice> : null}
@@ -239,7 +235,10 @@ export default function DecisionHour() {
           {status && status.queued.length === 0 ? <Muted>Kuyruk boş.</Muted> : null}
         </Section>
       )}
-
+    </>
+  );
+  const history = (
+    <>
       <Section title="Geçmiş oturumlar">
         {(sessions.data ?? []).map((s) => (
           <PressLink key={s.id} href={`/karar-saati/${s.id}`} style={st.queued}>
@@ -252,6 +251,36 @@ export default function DecisionHour() {
         ))}
         {sessions.data?.length === 0 ? <Muted>Henüz oturum yok.</Muted> : null}
       </Section>
+    </>
+  );
+
+  return (
+    <Page>
+      <PageHead kicker="Planlı oylama oturumu" title="Karar Saati">
+        <Muted>
+          Oturum haftada bir açılır ({fmtWeekdayTime(status?.next_scheduled_at)},{' '}
+          {status?.window_minutes ?? '…'} dakika; yönetmelikteki karar_saati maddesi). Açılış anında seçmen
+          listesi ve havale grafı kilitlenir; oylar pencere boyunca mühürlüdür, kapanışta tek tek açılır.
+        </Muted>
+      </PageHead>
+      {wide ? (
+        <Columns
+          sideWidth={420}
+          main={ballotOrQueue}
+          side={
+            <>
+              {clock}
+              {history}
+            </>
+          }
+        />
+      ) : (
+        <>
+          {clock}
+          {ballotOrQueue}
+          {history}
+        </>
+      )}
     </Page>
   );
 }

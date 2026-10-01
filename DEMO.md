@@ -52,7 +52,7 @@ Her adımda kumanda adımın başlığını, sorusunu ve hangi kullanıcıyla ha
 > **Konuşma:** Herkes takma adla görünür; ad, adres ve doğum tarihini yalnızca sahibi görür. Oy hakkını belirleyen kapsamlar seçilmez, türetilir: şehir adresten, yaş grubu doğum tarihinden.
 
 ### Adım 2 · Öneri ve sessiz onay
-**Süre:** 12 sn · **Soru:** ölçek: her şey oylanırsa kimse oy vermez
+**Süre:** 13 sn · **Soru:** ölçek: her şey oylanırsa kimse oy vermez
 
 1. Menü → **1) aylin → /oneri/20**: *Sessiz onay* bölümü, geri sayım ve **İtiraz et**.
 
@@ -163,21 +163,21 @@ DESIGN.md §15'teki bilinçli açıklardan en olası beşi:
 ## Ölçüm
 
 <!-- ölçüm: scripts/demo-kaydi.mjs --md ile güncellenir -->
-İki çalıştırma (A: 2026-09-30 08:20 UTC, B: 2026-09-30 08:23 UTC), 1440 × 900 Chromium, Docker yığını. *Süre* adımın ekranda kaldığı toplam süredir: `demo next` komutu, sayfaların menüden açılması, tıklamalar, canlandırmalar ve konuşma notunun okunma süresine (dakikada 132 kelime) tamamlayan bekleme. *İşlem* bunlardan yalnızca komut, sayfa ve tıklama kısmıdır; canlıda konuşma bununla üst üste biner.
+İki çalıştırma (A: 2026-10-01 14:33 UTC, B: 2026-10-01 14:36 UTC), 1440 × 900 Chromium, Docker yığını. *Süre* adımın ekranda kaldığı toplam süredir: `demo next` komutu, sayfaların menüden açılması, tıklamalar, canlandırmalar ve konuşma notunun okunma süresine (dakikada 132 kelime) tamamlayan bekleme. *İşlem* bunlardan yalnızca komut, sayfa ve tıklama kısmıdır; canlıda konuşma bununla üst üste biner.
 
 | Adım | A (sn) | B (sn) | İşlem A / B (sn) | Konuşma (sn) | Ekrandaki sayılar | A = B |
 |---|---|---|---|---|---|---|
-| 1 · Kayıt ve profil | 10,9 | 10,9 | 5,3 / 5,3 | 10,9 | 33 | ✓ |
-| 2 · Öneri ve sessiz onay | 12,4 | 12,5 | 2,7 / 2,8 | 10,9 | 19 | ✓ |
-| 3 · İstanbul vakası: R2 daraltma | 11,6 | 11,7 | 4,1 / 4,2 | 10,0 | 34 | ✓ |
-| 4 · Eşzamanlı çoğunluk | 9,7 | 10,0 | 5,3 / 5,6 | 8,2 | 34 | ✓ |
-| 5 · Havale ve Karar Saati | 21,0 | 21,0 | 14,0 / 14,0 | 17,3 | 307 | ✓ |
-| 6 · Kapanış ve Şerh | 12,3 | 12,3 | 7,5 / 7,5 | 10,5 | 72 | ✓ |
-| 7 · Silme | 12,3 | 12,3 | 5,8 / 5,8 | 10,5 | 46 | ✓ |
-| 8 · Değiştirilemez maddeler | 10,7 | 10,9 | 4,7 / 4,9 | 9,1 | 33 | ✓ |
-| 9 · Mahzen | 20,9 | 21,1 | 14,6 / 14,8 | 17,7 | 615 | ✓ |
-| 10a · Operatörün sessiz değişikliği | 9,9 | 9,8 | 3,4 / 3,3 | 8,2 | 16 | ✓ |
-| 10b · Karar Saati açılışında geri alınır | 11,6 | 11,6 | 5,8 / 5,9 | 9,5 | 22 | ✓ |
-| **Toplam** | **143,5** | **144,2** | | | | ✓ |
+| 1 · Kayıt ve profil | 11,0 | 11,0 | 5,2 / 5,2 | 10,9 | 33 | ✓ |
+| 2 · Öneri ve sessiz onay | 12,7 | 12,7 | 3,0 / 3,0 | 10,9 | 19 | ✓ |
+| 3 · İstanbul vakası: R2 daraltma | 12,1 | 12,1 | 4,6 / 4,6 | 10,0 | 34 | ✓ |
+| 4 · Eşzamanlı çoğunluk | 10,0 | 10,0 | 5,5 / 5,4 | 8,2 | 34 | ✓ |
+| 5 · Havale ve Karar Saati | 21,0 | 21,0 | 13,9 / 13,9 | 17,3 | 307 | ✓ |
+| 6 · Kapanış ve Şerh | 12,2 | 12,3 | 7,5 / 7,7 | 10,5 | 72 | ✓ |
+| 7 · Silme | 12,3 | 12,2 | 5,7 / 5,5 | 10,5 | 46 | ✓ |
+| 8 · Değiştirilemez maddeler | 10,9 | 10,8 | 4,9 / 4,9 | 9,1 | 33 | ✓ |
+| 9 · Mahzen | 20,8 | 20,9 | 14,7 / 14,6 | 17,7 | 615 | ✓ |
+| 10a · Operatörün sessiz değişikliği | 9,8 | 9,9 | 3,3 / 3,4 | 8,2 | 16 | ✓ |
+| 10b · Karar Saati açılışında geri alınır | 11,6 | 11,5 | 5,8 / 5,7 | 9,5 | 22 | ✓ |
+| **Toplam** | **144,4** | **144,5** | | | | ✓ |
 
 Defter: A 647 kayıt, B 647 kayıt; hash zinciri birebir aynı.

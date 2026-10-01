@@ -17,7 +17,7 @@ import {
   Term,
   TermDim,
 } from '@/components/cellar';
-import { Page } from '@/components/paper';
+import { Columns, Page, useWide } from '@/components/paper';
 import { RevealTransition } from '@/components/reveal-transition';
 import { RevealedThread } from '@/components/revealed-thread';
 import { useAuth } from '@/lib/auth';
@@ -103,6 +103,7 @@ export default function Thread() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { me } = useAuth();
   const thread = useApi<any>(me ? `/cellar/threads/${id}` : null, 5000);
+  const wide = useWide();
   const [text, setText] = useState('');
   const [ack, setAck] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -133,7 +134,7 @@ export default function Thread() {
       return <RevealTransition t={t} onDone={markSeen} />;
     }
     return (
-      <Page>
+      <Page reading>
         <RevealedThread t={t} />
       </Page>
     );
@@ -151,18 +152,8 @@ export default function Thread() {
     }
   };
 
-  return (
-    <CellarPage>
-      <Pressable onPress={() => router.push('/mahzen')} accessibilityRole="link">
-        <TermDim style={{ fontSize: 12 }}>&lt; mahzen</TermDim>
-      </Pressable>
-      <DecayText text={t.title} decay={decay} seed={t.id} style={st.title} />
-      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <TermDim style={{ fontSize: 12 }}>No.{t.id} · {t.reply_count} yanıt · sıra {t.rank != null ? t.rank + 1 : '—'}</TermDim>
-        {t.lifetime != null ? <LifeBar lifetime={t.lifetime} /> : null}
-        {t.bump_locked ? <TermDim style={{ fontSize: 12 }}>yükselme sınırında</TermDim> : null}
-      </View>
-      <View style={cellarStyles.rule} />
+  const posts = (
+    <>
       {t.posts.map((p: any, i: number) => (
         <View key={p.no} style={st.post} nativeID={`p${p.no}`}>
           <View style={st.head}>
@@ -189,7 +180,10 @@ export default function Thread() {
           <PostText text={p.text} decay={decay} seed={p.no * 3 + i} />
         </View>
       ))}
-      <View style={cellarStyles.rule} />
+    </>
+  );
+  const respond = (
+    <>
       <VotePanel t={t} onChanged={thread.reload} />
       <View style={{ marginTop: 16 }}>
         <AmberField label="yanıt" value={text} onChangeText={setText} multiline />
@@ -207,6 +201,31 @@ export default function Thread() {
           />
         </View>
       </View>
+    </>
+  );
+
+  return (
+    <CellarPage>
+      <Pressable onPress={() => router.push('/mahzen')} accessibilityRole="link">
+        <TermDim style={{ fontSize: 12 }}>&lt; mahzen</TermDim>
+      </Pressable>
+      <DecayText text={t.title} decay={decay} seed={t.id} style={st.title} />
+      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <TermDim style={{ fontSize: 12 }}>No.{t.id} · {t.reply_count} yanıt · sıra {t.rank != null ? t.rank + 1 : '—'}</TermDim>
+        {t.lifetime != null ? <LifeBar lifetime={t.lifetime} /> : null}
+        {t.bump_locked ? <TermDim style={{ fontSize: 12 }}>yükselme sınırında</TermDim> : null}
+      </View>
+      <View style={cellarStyles.rule} />
+      {/* Geniş ekranda mesajlar solda; ifşa oylaması ve yanıt formu sağda, kaydırırken yerinde durur. */}
+      {wide ? (
+        <Columns ruleColor={cellar.amberDim} sideWidth={380} stickySide main={posts} side={respond} />
+      ) : (
+        <>
+          {posts}
+          <View style={cellarStyles.rule} />
+          {respond}
+        </>
+      )}
     </CellarPage>
   );
 }

@@ -29,7 +29,7 @@ export default function NewProposal() {
   const type = params.type ?? 'KONU';
 
   return (
-    <Page>
+    <Page reading>
       <Kicker>İlan taslağı</Kicker>
       <H1>
         {params.reopen

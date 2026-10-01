@@ -8,7 +8,7 @@ export default function Revealed() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const t = useApi<any>(`/cellar/revealed/${id}`);
   return (
-    <Page>
+    <Page reading>
       {t.data ? <RevealedThread t={t.data} /> : t.error ? <ErrorNotice error={t.error} /> : <Loading />}
     </Page>
   );

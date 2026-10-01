@@ -8,6 +8,7 @@ import {
   Button,
   CensorStrip,
   Choice,
+  Columns,
   ErrorNotice,
   Field,
   Kicker,
@@ -20,6 +21,7 @@ import {
   Seal,
   Section,
   Tag,
+  useWide,
   type DeletionBasis,
 } from '@/components/paper';
 import { maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
@@ -240,6 +242,7 @@ export default function TopicPage() {
   const { id, reply } = useLocalSearchParams<{ id: string; reply?: string }>();
   const { me } = useAuth();
   const topic = useApi<any>(`/topics/${id}`);
+  const wide = useWide();
   const [text, setText] = useState('');
   const [error, setError] = useState<unknown>(null);
   const t = topic.data;
@@ -275,8 +278,8 @@ export default function TopicPage() {
     }
   };
 
-  return (
-    <Page>
+  const header = (
+    <>
       <View style={st.crumbs}>
         <Link href={`/alan/${t.area_id}`} style={st.crumb}>§ {t.area_name}</Link>
         {t.parent ? (
@@ -294,10 +297,13 @@ export default function TopicPage() {
         {t.author} önerdi · {fmtDateTime(t.proposed_at)} · kabul: {fmtDateTime(t.created_at)}
       </Muted>
       <Rule double />
+    </>
+  );
+  const opening = (
+    <>
       {t.narrowings?.map((n: any, i: number) => (
         <NarrowingBox key={i} message={n.message} share={n.share} total={n.total} />
       ))}
-
       {t.opening ? (
         <View>
           <Text style={st.opening}>{t.opening.text}</Text>
@@ -320,9 +326,11 @@ export default function TopicPage() {
           </View>
         </View>
       ) : null}
-
-      {t.decision ? <Decision d={t.decision} onChanged={topic.reload} /> : null}
-
+    </>
+  );
+  const decision = t.decision ? <Decision d={t.decision} onChanged={topic.reload} /> : null;
+  const actions = (
+    <>
       {me ? (
         <View style={[st.actions, { marginTop: 18 }]}>
           {t.status === 'OPEN' ? (
@@ -351,7 +359,6 @@ export default function TopicPage() {
           </MoreActions>
         </View>
       ) : null}
-
       {t.proposals.length ? (
         <Section title="Bu konudaki açık öneriler">
           {t.proposals.map((p: any) => (
@@ -367,7 +374,6 @@ export default function TopicPage() {
           ))}
         </Section>
       ) : null}
-
       {t.subtopics.length ? (
         <Section title="Alt konular">
           {t.subtopics.map((s: any) =>
@@ -382,7 +388,10 @@ export default function TopicPage() {
           )}
         </Section>
       ) : null}
-
+    </>
+  );
+  const discussion = (
+    <>
       <Section title="Tartışma" aside={<Kicker>{t.messages.length} mesaj · oylamasız</Kicker>}>
         {t.messages.map((m: Msg) => (
           <Message key={m.id} m={m} topic={t} onChanged={topic.reload} />
@@ -407,6 +416,40 @@ export default function TopicPage() {
         {t.status !== 'OPEN' ? <Muted style={{ marginTop: 12 }}>Konu karara bağlandı; tartışma salt okunur.</Muted> : null}
         {!me ? <Muted style={{ marginTop: 12 }}>Yazmak için giriş yapın.</Muted> : null}
       </Section>
+    </>
+  );
+
+  // Geniş ekran: tartışma ana sütunda; Karar, Şerhler, eylemler ve ilgili öneriler yan sütunda.
+  if (wide) {
+    return (
+      <Page>
+        {header}
+        <Columns
+          sideWidth={380}
+          main={
+            <>
+              {opening}
+              {discussion}
+            </>
+          }
+          side={
+            <>
+              {decision}
+              {actions}
+            </>
+          }
+        />
+      </Page>
+    );
+  }
+
+  return (
+    <Page>
+      {header}
+      {opening}
+      {decision}
+      {actions}
+      {discussion}
     </Page>
   );
 }

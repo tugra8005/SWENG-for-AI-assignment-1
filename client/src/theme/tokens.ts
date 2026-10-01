@@ -46,6 +46,13 @@ export const fonts = {
 };
 
 export const layout = {
+  /** Okuma sütunu: telefon, tablet ve uzun metin sayfaları. */
   maxWidth: 780,
+  /** Geniş ekranda (≥ wideMin) sayfa sütunu: gazete sayfası gibi sütunlara bölünür. */
+  wideMaxWidth: 1240,
+  wideMin: 1024,
   gutter: 16,
+  wideGutter: 32,
+  /** Sütunlar arası boşluk; ortasında ince sütun çizgisi durur. */
+  columnGap: 28,
 };

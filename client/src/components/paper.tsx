@@ -3,7 +3,7 @@
  * Kâğıt zemin, mürekkep, tek vurgu mühür bordosu; serif metin, mono hash ve sayılar.
  */
 import { Link, router, usePathname } from 'expo-router';
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Children, createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -299,11 +299,23 @@ export type PageReveal = {
   chrome: Animated.AnimatedInterpolation<number>;
 };
 
-export function Page({ children, bare, reveal }: { children: ReactNode; bare?: boolean; reveal?: PageReveal }) {
+export function Page({
+  children,
+  bare,
+  reveal,
+  reading,
+}: {
+  children: ReactNode;
+  bare?: boolean;
+  reveal?: PageReveal;
+  /** Uzun metin ya da form: geniş ekranda da okuma sütununda kalır (başlık geniş durur). */
+  reading?: boolean;
+}) {
   const path = usePathname();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const compact = !bare && width < 560 && path !== '/';
+  const wide = width >= layout.wideMin;
   const scrollRef = useRef<ScrollView>(null);
   const columnRef = useRef<View>(null);
   const anchors = useRef(new Map<string, View>());
@@ -338,17 +350,22 @@ export function Page({ children, bare, reveal }: { children: ReactNode; bare?: b
       ) : null}
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[s.scroll, compact && { paddingTop: 14 }, { paddingBottom: 40 + insets.bottom }]}
+        contentContainerStyle={[
+          s.scroll,
+          wide && { paddingHorizontal: layout.wideGutter },
+          compact && { paddingTop: 14 },
+          { paddingBottom: 40 + insets.bottom },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         <ScrollCtx.Provider value={scrollApi}>
-          <View ref={columnRef} style={s.column}>
+          <View ref={columnRef} style={[s.column, wide && { maxWidth: layout.wideMaxWidth }]}>
             {!bare && !compact && (
               <Animated.View style={chrome}>
                 <Masthead />
               </Animated.View>
             )}
-            {children}
+            {wide && reading ? <View style={s.reading}>{children}</View> : children}
             {!bare && (
               <Animated.View style={chrome}>
                 <Footer />
@@ -747,6 +764,147 @@ export function Section({ title, aside, children }: { title: string; aside?: Rea
   );
 }
 
+// --- geniş ekran düzeni ---------------------------------------------------------------------------
+//
+// Telefon (< 560 px) ve tablet tek sütundur. Geniş ekranda (≥ layout.wideMin) sayfa gazete sayfası gibi
+// sütunlara bölünür: ana sütun, ince sütun çizgisiyle ayrılmış yan sütun, eşit sütunlu ızgaralar.
+// Bileşenler yalnızca geniş ekranda çağrılır; dar ekranda sayfa kendi tek sütunlu sırasını çizer.
+
+export function useWide(): boolean {
+  const { width } = useWindowDimensions();
+  return width >= layout.wideMin;
+}
+
+/** Web'de kaydırırken üstte kalır (yan sütun, içindekiler). */
+const stickyTop = Platform.OS === 'web' ? ({ position: 'sticky', top: 12 } as any) : null;
+
+/** Ana sütun ve sütun çizgisiyle ayrılmış yan sütun. */
+export function Columns({
+  main,
+  side,
+  sideWidth = 340,
+  sideLeft,
+  stickySide,
+  ruleColor = paper.hairline,
+}: {
+  main: ReactNode;
+  side: ReactNode;
+  sideWidth?: number;
+  sideLeft?: boolean;
+  stickySide?: boolean;
+  /** Mahzen'de sütun çizgisi amberdir. */
+  ruleColor?: string;
+}) {
+  const gap = layout.columnGap;
+  const rail = (
+    <View
+      style={[
+        { width: sideWidth },
+        sideLeft
+          ? { paddingRight: gap, borderRightWidth: 1, borderRightColor: ruleColor }
+          : { paddingLeft: gap, borderLeftWidth: 1, borderLeftColor: ruleColor },
+      ]}
+    >
+      <View style={stickySide ? stickyTop : null}>{side}</View>
+    </View>
+  );
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
+      {sideLeft ? rail : null}
+      <View style={[{ flex: 1, minWidth: 0 }, sideLeft ? { paddingLeft: gap } : { paddingRight: gap }]}>{main}</View>
+      {sideLeft ? null : rail}
+    </View>
+  );
+}
+
+/** Eşit iki sütun; arada sütun çizgisi. */
+export function Split({ left, right }: { left: ReactNode; right: ReactNode }) {
+  const gap = layout.columnGap;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
+      <View style={{ flex: 1, minWidth: 0, paddingRight: gap }}>{left}</View>
+      <View style={{ flex: 1, minWidth: 0, paddingLeft: gap, borderLeftWidth: 1, borderLeftColor: paper.hairline }}>
+        {right}
+      </View>
+    </View>
+  );
+}
+
+/** Eşit sütunlu ızgara: sütun sayısı genişlikten çıkar (her sütun en az ``min``). Dar alanda tek sütun.
+ * ``ruled``: sütunlar arasında gazete sütun çizgisi. */
+export function Grid({
+  min = 300,
+  gap = layout.columnGap,
+  rowGap = gap,
+  ruled,
+  children,
+}: {
+  min?: number;
+  gap?: number;
+  rowGap?: number;
+  ruled?: boolean;
+  children: ReactNode;
+}) {
+  const [w, setW] = useState(0);
+  const cols = w ? Math.max(1, Math.floor((w + gap) / (min + gap))) : 1;
+  const items = Children.toArray(children);
+  const cell = (i: number): ViewStyle => {
+    if (cols === 1) return { width: '100%' };
+    if (!ruled) return { width: (w - gap * (cols - 1)) / cols };
+    const col = i % cols;
+    return {
+      width: w / cols,
+      paddingLeft: col ? gap / 2 : 0,
+      paddingRight: col < cols - 1 ? gap / 2 : 0,
+      borderLeftWidth: col ? 1 : 0,
+      borderLeftColor: paper.hairline,
+    };
+  };
+  return (
+    <View
+      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: ruled ? 0 : gap, rowGap }}
+    >
+      {items.map((child, i) => (
+        <View key={i} style={cell(i)}>
+          {child}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Sayfa başlığı: geniş ekranda başlık solda, açıklama sağda (gazete başlığı ve spotu); dar ekranda alt alta. */
+export function PageHead({ kicker, title, children }: { kicker: ReactNode; title: string; children?: ReactNode }) {
+  const wide = useWide();
+  const head = (
+    <View style={wide ? { width: '36%', paddingRight: layout.columnGap } : undefined}>
+      <Kicker>{kicker}</Kicker>
+      <H1>{title}</H1>
+    </View>
+  );
+  if (!wide) {
+    return (
+      <View>
+        {head}
+        {children}
+        <Rule double />
+      </View>
+    );
+  }
+  return (
+    <View>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+        {head}
+        <View style={{ flex: 1, gap: 6, paddingLeft: layout.columnGap, borderLeftWidth: 1, borderLeftColor: paper.hairline }}>
+          {children}
+        </View>
+      </View>
+      <Rule double />
+    </View>
+  );
+}
+
 export const paperStyles = StyleSheet.create({
   card: {
     borderWidth: 1,
@@ -761,6 +919,7 @@ const s = StyleSheet.create({
   page: { flex: 1, backgroundColor: paper.bg },
   scroll: { paddingHorizontal: layout.gutter, paddingTop: 18, paddingBottom: 40 },
   column: { width: '100%', maxWidth: layout.maxWidth, alignSelf: 'center' },
+  reading: { width: '100%', maxWidth: layout.maxWidth, alignSelf: 'center' },
   display: { fontFamily: fonts.serifDisplay, fontSize: 40, lineHeight: 44, color: paper.ink },
   h1: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, color: paper.ink },
   h2: { fontFamily: fonts.serifBold, fontSize: 21, lineHeight: 26, color: paper.ink },

@@ -7,6 +7,7 @@ import {
   Button,
   CensorStrip,
   ErrorNotice,
+  Grid,
   H1,
   Kicker,
   Loading,
@@ -73,16 +74,19 @@ export default function AreaPage() {
         </Section>
       ) : null}
       <Section title="Konular (alt alanlar dahil)">
-        {(topics.data ?? []).map((t) =>
-          t.deleted_by_proposal_id ? (
-            <CensorStrip key={t.id} proposalId={t.deleted_by_proposal_id} basis={t.deletion_basis} />
-          ) : (
-            <PressLink key={t.id} href={`/konu/${t.id}`} style={st.row}>
-              <ProposalTitle title={t.title} effective={t.effective_title} style={st.name} />
-              <Muted style={{ fontSize: 13 }}>{t.area_name} · {t.message_count} mesaj · sahibi {t.owner_scope}</Muted>
-            </PressLink>
-          ),
-        )}
+        {/* Geniş ekranda konular ızgarada; dar ekranda tek sütun. */}
+        <Grid min={340} rowGap={0}>
+          {(topics.data ?? []).map((t) =>
+            t.deleted_by_proposal_id ? (
+              <CensorStrip key={t.id} proposalId={t.deleted_by_proposal_id} basis={t.deletion_basis} />
+            ) : (
+              <PressLink key={t.id} href={`/konu/${t.id}`} style={st.row}>
+                <ProposalTitle title={t.title} effective={t.effective_title} style={st.name} />
+                <Muted style={{ fontSize: 13 }}>{t.area_name} · {t.message_count} mesaj · sahibi {t.owner_scope}</Muted>
+              </PressLink>
+            ),
+          )}
+        </Grid>
         {topics.data?.length === 0 ? <Muted>Bu alanda henüz kabul edilmiş konu yok.</Muted> : null}
       </Section>
       {me ? (

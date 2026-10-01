@@ -17,6 +17,7 @@ import {
   Nick,
   Page,
   Rule,
+  useWide,
 } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
@@ -77,7 +78,7 @@ function reasonLabel(m: any, memberSince: string): string {
   return REASON[m.reason] ?? m.reason;
 }
 
-function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
+function Private({ p, onChanged, part }: { p: any; onChanged: () => void; part?: 'identity' | 'activity' }) {
   const areas = useApi<any[]>('/areas');
   const [addr, setAddr] = useState({ city: p.address.city ?? '', district: p.address.district ?? '', address_line: p.address.address_line ?? '' });
   const [editing, setEditing] = useState(false);
@@ -104,9 +105,8 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
     }
   };
 
-  return (
-    <View style={st.private}>
-      <Kicker style={{ color: paper.seal }}>Yalnızca size görünür</Kicker>
+  const delegations = (
+    <>
       <Kicker style={{ marginTop: 6 }}>Verdiğiniz havaleler (kalan süre)</Kicker>
       {p.delegations_given.length ? (
         p.delegations_given.map((g: any) => (
@@ -144,7 +144,10 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
           onları Havale sayfasında reddedebilir ya da iade edebilirsiniz.
         </Muted>
       </View>
-      <Rule faint />
+    </>
+  );
+  const identity = (
+    <>
       <Line label="Ad soyad">{p.full_name}</Line>
       <Line label="E-posta">{p.email}</Line>
       <Line label="Doğum tarihi">{fmtDate(p.birth_date)}</Line>
@@ -180,10 +183,16 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
           <Button label="Adres değiştir" variant="quiet" onPress={() => setEditing(true)} />
         </View>
       )}
-
+    </>
+  );
+  const votes = (
+    <>
       <Kicker style={{ marginTop: 6 }}>Oylarım</Kicker>
       <MyVotes />
-      <Rule faint />
+    </>
+  );
+  const memberships = (
+    <>
       <Kicker>Kapsam üyelikleri ve oy hakkı</Kicker>
       {p.memberships.map((m: any) => (
         <Line key={m.scope_id} label={m.name}>
@@ -193,8 +202,10 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
           </Value>
         </Line>
       ))}
-
-      <Rule faint />
+    </>
+  );
+  const interestList = (
+    <>
       <Kicker style={{ marginBottom: 6 }}>İlgi alanları (katılımdan 14 gün sonra oy hakkı)</Kicker>
       <AreaGroups
         areas={areas.data ?? []}
@@ -211,6 +222,44 @@ function Private({ p, onChanged }: { p: any; onChanged: () => void }) {
           );
         }}
       />
+    </>
+  );
+
+  // Geniş ekranda kimlik bilgileri belgede, kayıtlar (havale, oy, üyelik, ilgi) yanındaki belgede durur.
+  if (part === 'identity') {
+    return (
+      <View style={st.private}>
+        <Kicker style={{ color: paper.seal }}>Yalnızca size görünür</Kicker>
+        {identity}
+        <ErrorNotice error={error} />
+      </View>
+    );
+  }
+  if (part === 'activity') {
+    return (
+      <View style={{ gap: 2 }}>
+        {delegations}
+        <Rule faint />
+        {votes}
+        <Rule faint />
+        {memberships}
+        <Rule faint />
+        {interestList}
+        <ErrorNotice error={error} />
+      </View>
+    );
+  }
+  return (
+    <View style={st.private}>
+      <Kicker style={{ color: paper.seal }}>Yalnızca size görünür</Kicker>
+      {delegations}
+      <Rule faint />
+      {identity}
+      {votes}
+      <Rule faint />
+      {memberships}
+      <Rule faint />
+      {interestList}
       <ErrorNotice error={error} />
     </View>
   );
@@ -230,6 +279,7 @@ export default function Profile() {
   const { nick } = useLocalSearchParams<{ nick: string }>();
   const { width } = useWindowDimensions();
   const narrow = width < 560;
+  const wide = useWide();
   const { me } = useAuth();
   const isSelf = me?.nickname.toLocaleLowerCase('tr-TR') === String(nick).toLocaleLowerCase('tr-TR');
   const pub = useApi<any>(`/users/${encodeURIComponent(String(nick))}`);
@@ -238,53 +288,80 @@ export default function Profile() {
 
   if (!p) return <Page>{pub.error ? <ErrorNotice error={pub.error} /> : <Loading />}</Page>;
 
-  return (
-    <Page>
-      {isSelf ? <DelegationNotices data={p} onChanged={own.reload} /> : null}
-      <View style={st.doc}>
-        <View style={st.docInner}>
-          <Text style={st.docHead}>MEŞVERET</Text>
-          <Text style={st.docTitle}>Yurttaş Kayıt Belgesi</Text>
-          {p.counselor_areas.length && narrow ? <CounselorStamp small /> : null}
-          <Rule double />
-          <Line label="Belge no">{`⌗ ${p.id.slice(0, 8).toUpperCase()}`}</Line>
-          <Line label="Takma ad">
-            <Value style={{ fontFamily: fonts.serifBold, fontSize: 20, lineHeight: 26 }}>{p.nickname}</Value>
+  const doc = (part?: 'identity') => (
+    <View style={st.doc}>
+      <View style={st.docInner}>
+        <Text style={st.docHead}>MEŞVERET</Text>
+        <Text style={st.docTitle}>Yurttaş Kayıt Belgesi</Text>
+        {p.counselor_areas.length && narrow ? <CounselorStamp small /> : null}
+        <Rule double />
+        <Line label="Belge no">{`⌗ ${p.id.slice(0, 8).toUpperCase()}`}</Line>
+        <Line label="Takma ad">
+          <Value style={{ fontFamily: fonts.serifBold, fontSize: 20, lineHeight: 26 }}>{p.nickname}</Value>
+        </Line>
+        <Line label="Roller">{p.roles.join(' · ')}</Line>
+        <Line label="Kayıt tarihi">{fmtDate(p.member_since)}</Line>
+        {p.counselor_areas.length ? (
+          <Line label="Müşavir olduğu alanlar">
+            {p.counselor_areas.map((c: any) => `${c.name} (${c.count})`).join(', ')}
           </Line>
-          <Line label="Roller">{p.roles.join(' · ')}</Line>
-          <Line label="Kayıt tarihi">{fmtDate(p.member_since)}</Line>
-          {p.counselor_areas.length ? (
-            <Line label="Müşavir olduğu alanlar">
-              {p.counselor_areas.map((c: any) => `${c.name} (${c.count})`).join(', ')}
-            </Line>
-          ) : null}
-          <Line label="Aldığı havaleler">
-            {p.delegations_received.length
-              ? p.delegations_received.map((d: any) => `${d.name}: ${d.count}`).join(' · ')
-              : 'yok'}
-          </Line>
-          {p.counselor_areas.length && !narrow ? <CounselorStamp /> : null}
-          {isSelf ? <Private p={p} onChanged={own.reload} /> : null}
-          {me && !isSelf && p.roles[0] !== undefined ? (
-            <View style={{ marginTop: 16 }}>
-              <Button
-                label="Bu yurttaşa havale et"
-                variant="secondary"
-                disabled={p.refuses_delegations}
-                onPress={() => router.push({ pathname: '/havale', params: { target: p.nickname } })}
-              />
-              {p.refuses_delegations ? (
-                <Muted style={{ fontSize: 13, marginTop: 4 }}>Bu yurttaş havale kabul etmiyor.</Muted>
-              ) : (
-                <Muted style={{ fontSize: 13, marginTop: 4 }}>Havale, bu yurttaş kabul edince yürürlüğe girer.</Muted>
-              )}
-            </View>
-          ) : null}
-          <Muted style={{ marginTop: 16, fontSize: 12 }}>
-            Ad soyad, adres ve doğum tarihi yalnızca belge sahibine gösterilir.
-          </Muted>
-        </View>
+        ) : null}
+        <Line label="Aldığı havaleler">
+          {p.delegations_received.length
+            ? p.delegations_received.map((d: any) => `${d.name}: ${d.count}`).join(' · ')
+            : 'yok'}
+        </Line>
+        {p.counselor_areas.length && !narrow ? <CounselorStamp /> : null}
+        {isSelf ? <Private p={p} onChanged={own.reload} part={part} /> : null}
+        {me && !isSelf && p.roles[0] !== undefined ? (
+          <View style={{ marginTop: 16 }}>
+            <Button
+              label="Bu yurttaşa havale et"
+              variant="secondary"
+              disabled={p.refuses_delegations}
+              onPress={() => router.push({ pathname: '/havale', params: { target: p.nickname } })}
+            />
+            {p.refuses_delegations ? (
+              <Muted style={{ fontSize: 13, marginTop: 4 }}>Bu yurttaş havale kabul etmiyor.</Muted>
+            ) : (
+              <Muted style={{ fontSize: 13, marginTop: 4 }}>Havale, bu yurttaş kabul edince yürürlüğe girer.</Muted>
+            )}
+          </View>
+        ) : null}
+        <Muted style={{ marginTop: 16, fontSize: 12 }}>
+          Ad soyad, adres ve doğum tarihi yalnızca belge sahibine gösterilir.
+        </Muted>
       </View>
+    </View>
+  );
+  const notices = isSelf ? <DelegationNotices data={p} onChanged={own.reload} /> : null;
+
+  // Geniş ekranda kendi profiline bakan kişi iki belge görür: solda kimlik belgesi, sağda yalnızca
+  // ona görünen kayıtlar. Başkasının profili okuma sütununda tek belgedir.
+  if (wide && isSelf) {
+    return (
+      <Page>
+        {notices}
+        <View style={{ flexDirection: 'row', gap: 28, alignItems: 'flex-start' }}>
+          <View style={{ flex: 1 }}>{doc('identity')}</View>
+          <View style={[st.doc, { flex: 1 }]}>
+            <View style={st.docInner}>
+              <Text style={st.docHead}>MEŞVERET</Text>
+              <Text style={st.docTitle}>Kişisel Kayıtlar</Text>
+              <Kicker style={{ color: paper.seal, textAlign: 'center' }}>yalnızca size görünür</Kicker>
+              <Rule double />
+              <Private p={p} onChanged={own.reload} part="activity" />
+            </View>
+          </View>
+        </View>
+      </Page>
+    );
+  }
+
+  return (
+    <Page reading={wide}>
+      {notices}
+      {doc()}
     </Page>
   );
 }

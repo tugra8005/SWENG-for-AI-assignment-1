@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Body, H1, InfoNotice, Kicker, Loading, Muted, Page, Rule } from '@/components/paper';
+import { Body, Grid, H1, InfoNotice, Kicker, Loading, Muted, Page, PageHead } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { fmtDateTime } from '@/lib/format';
 import { useNotifications } from '@/lib/notifications';
@@ -48,40 +48,41 @@ export default function Notifications() {
   const items = list.data?.items ?? [];
   return (
     <Page>
-      <Kicker>Size gelen sonuçlar</Kicker>
-      <H1>Bildirimler</H1>
-      <Muted>
-        Oy verdiğiniz ya da oyunuzun havaleyle kullanıldığı önerilerin sonuçları her Karar Saati
-        kapanınca burada görünür; açtığınız önerilerin sessiz onay ve itiraz sonuçları da. Bildirimler
-        yalnızca size görünür ve deftere yazılmaz.
-      </Muted>
-      <Rule />
+      <PageHead kicker="Size gelen sonuçlar" title="Bildirimler">
+        <Muted>
+          Oy verdiğiniz ya da oyunuzun havaleyle kullanıldığı önerilerin sonuçları her Karar Saati
+          kapanınca burada görünür; açtığınız önerilerin sessiz onay ve itiraz sonuçları da. Bildirimler
+          yalnızca size görünür ve deftere yazılmaz.
+        </Muted>
+      </PageHead>
       {list.loading && !list.data ? <Loading /> : null}
       {list.data && items.length === 0 ? (
         <Body style={{ color: paper.inkSoft }}>
           Henüz bildiriminiz yok. İlk sonuçlar oy verdiğiniz ilk Karar Saati kapanınca gelir.
         </Body>
       ) : null}
-      {items.map((n) => (
-        <View key={n.id} style={[st.item, !n.read && st.unread]}>
-          <View style={st.head}>
-            {!n.read ? <Kicker style={{ color: paper.seal }}>yeni</Kicker> : null}
-            <Kicker>{fmtDateTime(n.created_at)}</Kicker>
-          </View>
-          <Text style={st.title}>{n.title}</Text>
-          {n.lines.map((line, i) => (
-            <View key={i} style={st.line}>
-              <Text style={st.bullet}>·</Text>
-              <Body style={st.lineText}>{line}</Body>
+      <Grid min={480} rowGap={0}>
+        {items.map((n) => (
+          <View key={n.id} style={[st.item, !n.read && st.unread]}>
+            <View style={st.head}>
+              {!n.read ? <Kicker style={{ color: paper.seal }}>yeni</Kicker> : null}
+              <Kicker>{fmtDateTime(n.created_at)}</Kicker>
             </View>
-          ))}
-          {n.link ? (
-            <Link href={n.link as any} style={st.link}>
-              {LINK_LABEL[n.kind] ?? 'Aç →'}
-            </Link>
-          ) : null}
-        </View>
-      ))}
+            <Text style={st.title}>{n.title}</Text>
+            {n.lines.map((line, i) => (
+              <View key={i} style={st.line}>
+                <Text style={st.bullet}>·</Text>
+                <Body style={st.lineText}>{line}</Body>
+              </View>
+            ))}
+            {n.link ? (
+              <Link href={n.link as any} style={st.link}>
+                {LINK_LABEL[n.kind] ?? 'Aç →'}
+              </Link>
+            ) : null}
+          </View>
+        ))}
+      </Grid>
     </Page>
   );
 }

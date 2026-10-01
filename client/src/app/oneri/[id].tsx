@@ -7,6 +7,7 @@ import { DiffText } from '@/components/diff';
 import {
   Body,
   Button,
+  Columns,
   Countdown,
   ErrorNotice,
   Field,
@@ -21,6 +22,7 @@ import {
   Seal,
   Section,
   Tag,
+  useWide,
 } from '@/components/paper';
 import { ProposalForm } from '@/components/proposal-form';
 import { maturityDetail, maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
@@ -136,6 +138,7 @@ export default function ProposalPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { me } = useAuth();
   const res = useApi<any>(`/proposals/${id}`);
+  const wide = useWide();
   const [error, setError] = useState<unknown>(null);
   const p = res.data;
 
@@ -154,8 +157,8 @@ export default function ProposalPage() {
   const isDraft = p.status === 'DRAFT';
   const lane = p.lane === 'FAST' ? 'Hızlı şerit' : 'Yavaş şerit';
 
-  return (
-    <Page>
+  const header = (
+    <>
       <Kicker>
         Öneri №{p.id} · {TYPE_LABELS[p.type]} · {lane}
       </Kicker>
@@ -170,11 +173,13 @@ export default function ProposalPage() {
         </Muted>
       </View>
       <Rule double />
-
+    </>
+  );
+  const lead = (
+    <>
       {p.narrowings?.map((n: any, i: number) => (
         <NarrowingBox key={i} message={n.message} share={n.share} total={n.total} />
       ))}
-
       {p.payload?.cellar_thread_id ? (
         <InfoNotice>
           <Body>
@@ -185,225 +190,275 @@ export default function ProposalPage() {
           </Body>
         </InfoNotice>
       ) : null}
-
-      {isDraft ? (
-        me?.nickname === p.proposer ? (
-          <Section title="Taslağı tamamla">
-            <Muted>Alanı, seçmen kapsamını ve etkilenen kaynakları seçip gönderin; öneri normal akışa girer.</Muted>
-            <ProposalForm
-              ctx={{ type: 'KONU' }}
-              draftId={p.id}
-              initial={{ title: p.title, body: p.body }}
-              onDone={() => res.reload()}
-            />
-          </Section>
-        ) : (
-          <InfoNotice>Bu taslağı yalnızca sahibi gönderebilir.</InfoNotice>
-        )
+    </>
+  );
+  const draft = (
+    <>
+      me?.nickname === p.proposer ? (
+        <Section title="Taslağı tamamla">
+          <Muted>Alanı, seçmen kapsamını ve etkilenen kaynakları seçip gönderin; öneri normal akışa girer.</Muted>
+          <ProposalForm
+            ctx={{ type: 'KONU' }}
+            draftId={p.id}
+            initial={{ title: p.title, body: p.body }}
+            onDone={() => res.reload()}
+          />
+        </Section>
       ) : (
-        <View>
-          {p.body ? <Body style={{ fontSize: 19, lineHeight: 28 }}>{p.body}</Body> : null}
+        <InfoNotice>Bu taslağı yalnızca sahibi gönderebilir.</InfoNotice>
+      )
+    </>
+  );
+  const content = (
+    <>
+      {p.body ? <Body style={{ fontSize: 19, lineHeight: 28 }}>{p.body}</Body> : null}
 
-          {p.type === 'DUZENLEME' && p.diff ? (
-            <Section title="Önerilen değişiklik">
-              <DiffText chunks={p.diff} />
-            </Section>
+      {p.type === 'DUZENLEME' && p.diff ? (
+        <Section title="Önerilen değişiklik">
+          <DiffText chunks={p.diff} />
+        </Section>
+      ) : null}
+
+      {p.type === 'SILME' && p.target_preview ? (
+        <Section title="Silinmesi önerilen içerik">
+          <View style={st.quote}>
+            <Body style={{ fontFamily: fonts.serifItalic }}>
+              {p.target_preview.text ?? p.target_preview.title}
+            </Body>
+          </View>
+          <Link href={`/konu/${p.payload.topic_id}`} style={st.link}>konuya git →</Link>
+        </Section>
+      ) : null}
+
+      {p.type === 'SILME' ? (
+        <Section title="Silme gerekçesi" aside={<Kicker>{p.own ? 'yazarın isteği' : 'içerik kuralı'}</Kicker>}>
+          {p.own ? (
+            <Body>Yazar kendi mesajının silinmesini istiyor; gerekçe gerekmez.</Body>
           ) : null}
-
-          {p.type === 'SILME' && p.target_preview ? (
-            <Section title="Silinmesi önerilen içerik">
-              <View style={st.quote}>
-                <Body style={{ fontFamily: fonts.serifItalic }}>
-                  {p.target_preview.text ?? p.target_preview.title}
-                </Body>
-              </View>
-              <Link href={`/konu/${p.payload.topic_id}`} style={st.link}>konuya git →</Link>
-            </Section>
-          ) : null}
-
-          {p.type === 'SILME' ? (
-            <Section title="Silme gerekçesi" aside={<Kicker>{p.own ? 'yazarın isteği' : 'içerik kuralı'}</Kicker>}>
-              {p.own ? (
-                <Body>Yazar kendi mesajının silinmesini istiyor; gerekçe gerekmez.</Body>
-              ) : null}
-              {p.content_rules?.map((r: any) => (
-                <Body key={r.code}>
-                  <Text style={{ fontFamily: fonts.monoBold, color: paper.seal }}>{r.code}</Text> {r.title}
-                </Body>
-              ))}
-              {p.excerpt ? (
-                <View style={st.quote}>
-                  <Kicker>Kuralı ihlal ettiği belirtilen kısım</Kicker>
-                  <Body style={{ fontFamily: fonts.serifItalic }}>«{p.excerpt}»</Body>
-                </View>
-              ) : null}
-              {p.threshold ? (
-                <Muted>
-                  Eşik: {p.threshold.key} {p.threshold.karsilastirma === '>' ? '>' : '≥'} {p.threshold.oran}{' '}
-                  (kullanılan oylar içinde{p.own ? '; yazarın kendi mesajı basit çoğunlukla oylanır' : ''}).
-                </Muted>
-              ) : null}
-            </Section>
-          ) : null}
-
-          {p.type === 'YONETMELIK' && p.payload.action === 'ekle' ? (
-            <Section title={`Yeni içerik kuralı: ${p.payload.article_key}`}>
-              <Body style={{ fontFamily: fonts.serifBold }}>{p.payload.new_value.baslik}</Body>
-              <Body>{p.payload.new_value.metin}</Body>
-              <Muted>Hâtif&apos;in anahtar kelimeleri: {p.payload.new_value.anahtar_kelimeler.join(', ')}</Muted>
-            </Section>
-          ) : p.type === 'YONETMELIK' && p.payload.action === 'kaldir' ? (
-            <Section title={`Kaldırılması önerilen kural: ${p.payload.article_key}`}>
-              <Body style={{ fontFamily: fonts.serifBold }}>{p.payload.old_value.baslik}</Body>
-              <Body>{p.payload.old_value.metin}</Body>
-              <Muted>Kabul edilirse bu kurala dayanan silme önerileri açılamaz; kodu bir daha kullanılmaz.</Muted>
-            </Section>
-          ) : p.type === 'YONETMELIK' ? (
-            <Section
-              title={`Madde: ${p.article?.title ?? p.payload.article_key}`}
-              aside={<Text style={st.articleKey}>{p.payload.article_key}</Text>}
-            >
-              <Body>
-                <Text style={{ color: paper.inkSoft }}>
-                  {describeArticleValue(p.article?.kind ?? '', p.payload.old_value)}
-                </Text>
-                {'  →  '}
-                <Text style={{ fontFamily: fonts.serifBold, color: paper.seal }}>
-                  {describeArticleValue(p.article?.kind ?? '', p.payload.new_value)}
-                </Text>
-              </Body>
-            </Section>
-          ) : null}
-
-          {p.type === 'KAPANIS' && p.texts ? (
-            <Section title="Karar metinleri" aside={<Kicker>onay oylaması</Kicker>}>
-              {p.texts.map((t: any) => (
-                <View key={t.id} style={st.text}>
-                  <Kicker>Metin #{t.id} · <Nick>{t.author}</Nick></Kicker>
-                  <Body>{t.text}</Body>
-                  <Seal hash={t.ledger_hash} />
-                </View>
-              ))}
-              {p.status === 'RIVAL_PERIOD' ? (
-                <View style={{ marginTop: 10, gap: 4 }}>
-                  <Kicker>Rakip metin süresinin bitmesine</Kicker>
-                  <Countdown target={p.deadline_at} />
-                </View>
-              ) : null}
-              {p.viewer?.can_add_rival ? <Rival id={p.id} onDone={res.reload} /> : null}
-              {p.decision_id ? (
-                <Link href={`/konu/${p.payload.topic_id}`} style={[st.link, { marginTop: 8 }]}>
-                  Karar ve şerhler →
-                </Link>
-              ) : null}
-            </Section>
-          ) : null}
-
-          {p.share_effect?.map((e: any) => (
-            <Section key={e.resource_id} title={`Pay etkisi · ${e.name}`} aside={<Kicker>ortalama {e.average_pct}</Kicker>}>
-              {e.rows.map((r: any) => (
-                <View key={r.scope_id} style={st.shareRow}>
-                  <Text style={st.shareScope}>{r.name}</Text>
-                  <Text style={st.shareNums}>
-                    {fmtNumber(r.old)} → {fmtNumber(r.new)}
-                  </Text>
-                  <Text style={[st.shareNums, r.disproportionate && { color: paper.seal, fontFamily: fonts.monoBold }]}>
-                    {r.change_pct}
-                    {r.disproportionate ? ' · orantısız' : ''}
-                  </Text>
-                </View>
-              ))}
-              {p.concurrent_scopes?.length ? (
-                <Muted style={{ marginTop: 6 }}>
-                  Orantısız etkilenen: {p.concurrent_scopes.map((c: any) => c.name).join(', ')}. Karar Saati&apos;nde bu
-                  kapsamların seçmenleri ayrıca oylar; öneri her oylamada gerekli çoğunluğu almalı (eşzamanlı çoğunluk).
-                  Veto yalnızca kapsamın kendi payı üzerindedir.
-                </Muted>
-              ) : (
-                <Muted style={{ marginTop: 6 }}>
-                  Orantısız etkilenen kapsam yok (eşik {e.threshold_pp} yüzde puanı); tek oylama.
-                </Muted>
-              )}
-            </Section>
+          {p.content_rules?.map((r: any) => (
+            <Body key={r.code}>
+              <Text style={{ fontFamily: fonts.monoBold, color: paper.seal }}>{r.code}</Text> {r.title}
+            </Body>
           ))}
-
-          {p.resources?.length ? (
-            <Section title="Etkilenen kaynaklar">
-              {p.resources.map((r: any) => (
-                <Body key={r.id}>
-                  · {r.name}
-                  {r.narrowed ? (
-                    <Text style={{ color: paper.seal }}>
-                      {` — yalnızca ${r.narrowed.scope} payı`}
-                      {r.narrowed.total ? ` (${fmtNumber(r.narrowed.share)} / ${fmtNumber(r.narrowed.total)})` : ''}
-                    </Text>
-                  ) : null}
-                </Body>
-              ))}
-            </Section>
-          ) : null}
-
-          {p.status === 'SILENT' ? (
-            <Section title="Sessiz onay" aside={<Countdown target={p.deadline_at} />}>
-              <Body style={{ marginBottom: 8 }}>
-                Süre dolduğunda itiraz eşiği aşılmamışsa öneri kabul edilir. Eşik aşılırsa bir sonraki
-                Karar Saati&apos;nde oylanır.
-              </Body>
-              <ObjectionMeter count={p.objections.count} threshold={p.objections.threshold} />
-              <ErrorNotice error={error} />
-              {me && !p.viewer?.has_objected ? (
-                <View style={{ marginTop: 12 }}>
-                  <Button
-                    label="İtiraz et"
-                    variant="secondary"
-                    onPress={object}
-                    disabled={p.viewer?.has_vote_right === false}
-                  />
-                  {p.viewer?.has_vote_right === false ? <Muted>{p.viewer.vote_right_reason}</Muted> : null}
-                </View>
-              ) : null}
-              {p.viewer?.has_objected ? <Muted style={{ marginTop: 8 }}>İtirazınız kaydedildi.</Muted> : null}
-            </Section>
-          ) : null}
-
-          {p.maturity && !p.maturity.mature ? (
-            <View style={st.maturing}>
-              <Kicker style={{ color: paper.seal }}>Olgunlaşma</Kicker>
-              <Text style={st.maturingText}>{maturityLine(p.maturity)}</Text>
-              <Muted>{maturityDetail(p.maturity)}</Muted>
+          {p.excerpt ? (
+            <View style={st.quote}>
+              <Kicker>Kuralı ihlal ettiği belirtilen kısım</Kicker>
+              <Body style={{ fontFamily: fonts.serifItalic }}>«{p.excerpt}»</Body>
             </View>
-          ) : p.status === 'QUEUED' ? (
-            <InfoNotice>
-              Bu öneri {p.maturity ? `${fmtSession(p.maturity.first_session_at)} ` : 'bir sonraki '}
-              Karar Saati&apos;nde oylanacak.
-            </InfoNotice>
           ) : null}
-          {p.status === 'VOTING' ? (
-            <InfoNotice>
-              <Body>Karar Saati penceresi açık. </Body>
-              <Button label="Oy pusulası →" small onPress={() => router.push('/karar-saati')} />
-            </InfoNotice>
+          {p.threshold ? (
+            <Muted>
+              Eşik: {p.threshold.key} {p.threshold.karsilastirma === '>' ? '>' : '≥'} {p.threshold.oran}{' '}
+              (kullanılan oylar içinde{p.own ? '; yazarın kendi mesajı basit çoğunlukla oylanır' : ''}).
+            </Muted>
           ) : null}
-          {p.outcome_note && !p.result ? <InfoNotice>{p.outcome_note}</InfoNotice> : null}
-          {p.topic_id ? (
-            <InfoNotice>
-              <Body>
-                Öneri kabul edildi ve konu oldu.{' '}
-                <Link href={`/konu/${p.topic_id}`} style={{ color: paper.seal }}>
-                  Konuya git →
-                </Link>
-              </Body>
-            </InfoNotice>
+        </Section>
+      ) : null}
+
+      {p.type === 'YONETMELIK' && p.payload.action === 'ekle' ? (
+        <Section title={`Yeni içerik kuralı: ${p.payload.article_key}`}>
+          <Body style={{ fontFamily: fonts.serifBold }}>{p.payload.new_value.baslik}</Body>
+          <Body>{p.payload.new_value.metin}</Body>
+          <Muted>Hâtif&apos;in anahtar kelimeleri: {p.payload.new_value.anahtar_kelimeler.join(', ')}</Muted>
+        </Section>
+      ) : p.type === 'YONETMELIK' && p.payload.action === 'kaldir' ? (
+        <Section title={`Kaldırılması önerilen kural: ${p.payload.article_key}`}>
+          <Body style={{ fontFamily: fonts.serifBold }}>{p.payload.old_value.baslik}</Body>
+          <Body>{p.payload.old_value.metin}</Body>
+          <Muted>Kabul edilirse bu kurala dayanan silme önerileri açılamaz; kodu bir daha kullanılmaz.</Muted>
+        </Section>
+      ) : p.type === 'YONETMELIK' ? (
+        <Section
+          title={`Madde: ${p.article?.title ?? p.payload.article_key}`}
+          aside={<Text style={st.articleKey}>{p.payload.article_key}</Text>}
+        >
+          <Body>
+            <Text style={{ color: paper.inkSoft }}>
+              {describeArticleValue(p.article?.kind ?? '', p.payload.old_value)}
+            </Text>
+            {'  →  '}
+            <Text style={{ fontFamily: fonts.serifBold, color: paper.seal }}>
+              {describeArticleValue(p.article?.kind ?? '', p.payload.new_value)}
+            </Text>
+          </Body>
+        </Section>
+      ) : null}
+
+      {p.type === 'KAPANIS' && p.texts ? (
+        <Section title="Karar metinleri" aside={<Kicker>onay oylaması</Kicker>}>
+          {p.texts.map((t: any) => (
+            <View key={t.id} style={st.text}>
+              <Kicker>Metin #{t.id} · <Nick>{t.author}</Nick></Kicker>
+              <Body>{t.text}</Body>
+              <Seal hash={t.ledger_hash} />
+            </View>
+          ))}
+          {p.status === 'RIVAL_PERIOD' ? (
+            <View style={{ marginTop: 10, gap: 4 }}>
+              <Kicker>Rakip metin süresinin bitmesine</Kicker>
+              <Countdown target={p.deadline_at} />
+            </View>
           ) : null}
-          <Result p={p} />
+          {p.viewer?.can_add_rival ? <Rival id={p.id} onDone={res.reload} /> : null}
+          {p.decision_id ? (
+            <Link href={`/konu/${p.payload.topic_id}`} style={[st.link, { marginTop: 8 }]}>
+              Karar ve şerhler →
+            </Link>
+          ) : null}
+        </Section>
+      ) : null}
+
+      {p.share_effect?.map((e: any) => (
+        <Section key={e.resource_id} title={`Pay etkisi · ${e.name}`} aside={<Kicker>ortalama {e.average_pct}</Kicker>}>
+          {e.rows.map((r: any) => (
+            <View key={r.scope_id} style={st.shareRow}>
+              <Text style={st.shareScope}>{r.name}</Text>
+              <Text style={st.shareNums}>
+                {fmtNumber(r.old)} → {fmtNumber(r.new)}
+              </Text>
+              <Text style={[st.shareNums, r.disproportionate && { color: paper.seal, fontFamily: fonts.monoBold }]}>
+                {r.change_pct}
+                {r.disproportionate ? ' · orantısız' : ''}
+              </Text>
+            </View>
+          ))}
+          {p.concurrent_scopes?.length ? (
+            <Muted style={{ marginTop: 6 }}>
+              Orantısız etkilenen: {p.concurrent_scopes.map((c: any) => c.name).join(', ')}. Karar Saati&apos;nde bu
+              kapsamların seçmenleri ayrıca oylar; öneri her oylamada gerekli çoğunluğu almalı (eşzamanlı çoğunluk).
+              Veto yalnızca kapsamın kendi payı üzerindedir.
+            </Muted>
+          ) : (
+            <Muted style={{ marginTop: 6 }}>
+              Orantısız etkilenen kapsam yok (eşik {e.threshold_pp} yüzde puanı); tek oylama.
+            </Muted>
+          )}
+        </Section>
+      ))}
+
+      {p.resources?.length ? (
+        <Section title="Etkilenen kaynaklar">
+          {p.resources.map((r: any) => (
+            <Body key={r.id}>
+              · {r.name}
+              {r.narrowed ? (
+                <Text style={{ color: paper.seal }}>
+                  {` — yalnızca ${r.narrowed.scope} payı`}
+                  {r.narrowed.total ? ` (${fmtNumber(r.narrowed.share)} / ${fmtNumber(r.narrowed.total)})` : ''}
+                </Text>
+              ) : null}
+            </Body>
+          ))}
+        </Section>
+      ) : null}
+    </>
+  );
+  const status = (
+    <>
+      {p.status === 'SILENT' ? (
+        <Section title="Sessiz onay" aside={<Countdown target={p.deadline_at} />}>
+          <Body style={{ marginBottom: 8 }}>
+            Süre dolduğunda itiraz eşiği aşılmamışsa öneri kabul edilir. Eşik aşılırsa bir sonraki
+            Karar Saati&apos;nde oylanır.
+          </Body>
+          <ObjectionMeter count={p.objections.count} threshold={p.objections.threshold} />
+          <ErrorNotice error={error} />
+          {me && !p.viewer?.has_objected ? (
+            <View style={{ marginTop: 12 }}>
+              <Button
+                label="İtiraz et"
+                variant="secondary"
+                onPress={object}
+                disabled={p.viewer?.has_vote_right === false}
+              />
+              {p.viewer?.has_vote_right === false ? <Muted>{p.viewer.vote_right_reason}</Muted> : null}
+            </View>
+          ) : null}
+          {p.viewer?.has_objected ? <Muted style={{ marginTop: 8 }}>İtirazınız kaydedildi.</Muted> : null}
+        </Section>
+      ) : null}
+
+      {p.maturity && !p.maturity.mature ? (
+        <View style={st.maturing}>
+          <Kicker style={{ color: paper.seal }}>Olgunlaşma</Kicker>
+          <Text style={st.maturingText}>{maturityLine(p.maturity)}</Text>
+          <Muted>{maturityDetail(p.maturity)}</Muted>
         </View>
-      )}
-
+      ) : p.status === 'QUEUED' ? (
+        <InfoNotice>
+          Bu öneri {p.maturity ? `${fmtSession(p.maturity.first_session_at)} ` : 'bir sonraki '}
+          Karar Saati&apos;nde oylanacak.
+        </InfoNotice>
+      ) : null}
+      {p.status === 'VOTING' ? (
+        <InfoNotice>
+          <Body>Karar Saati penceresi açık. </Body>
+          <Button label="Oy pusulası →" small onPress={() => router.push('/karar-saati')} />
+        </InfoNotice>
+      ) : null}
+      {p.outcome_note && !p.result ? <InfoNotice>{p.outcome_note}</InfoNotice> : null}
+      {p.topic_id ? (
+        <InfoNotice>
+          <Body>
+            Öneri kabul edildi ve konu oldu.{' '}
+            <Link href={`/konu/${p.topic_id}`} style={{ color: paper.seal }}>
+              Konuya git →
+            </Link>
+          </Body>
+        </InfoNotice>
+      ) : null}
+    </>
+  );
+  const result = <Result p={p} />;
+  const footer = (
+    <>
       {p.oracle_comment ? <OracleOpinion text={p.oracle_comment} current={p.oracle_current} /> : null}
-
       <View style={[st.row, { marginTop: 16 }]}>
         <Seal hash={p.ledger_hash} label="ilan" />
       </View>
+    </>
+  );
+
+  // Geniş ekran: önerinin kendisi ana sütunda; durumu (sessiz onay, itiraz, olgunlaşma), Hâtif ve
+  // mühür yan sütunda.
+  if (wide) {
+    return (
+      <Page>
+        {header}
+        <Columns
+          sideWidth={380}
+          main={
+            <>
+              {lead}
+              {isDraft ? draft : content}
+              {isDraft ? null : result}
+            </>
+          }
+          side={
+            <>
+              {isDraft ? null : status}
+              {footer}
+            </>
+          }
+        />
+      </Page>
+    );
+  }
+
+  return (
+    <Page>
+      {header}
+      {lead}
+      {isDraft ? (
+        draft
+      ) : (
+        <View>
+          {content}
+          {status}
+          {result}
+        </View>
+      )}
+      {footer}
     </Page>
   );
 }

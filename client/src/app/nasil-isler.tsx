@@ -18,11 +18,11 @@ import {
   WindowFigure,
 } from '@/components/guide/figures-meydan';
 import { CellarFigure, LedgerFigure, RaidFigure } from '@/components/guide/figures-guard';
-import { Anchor, Body, Kicker, Page, Rule, useScrollTo } from '@/components/paper';
+import { Anchor, Body, Columns, Kicker, Page, Rule, useScrollTo } from '@/components/paper';
 import { RevealTally } from '@/components/reveal-tally';
 import { describeArticleValue } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
-import { fonts, paper } from '@/theme/tokens';
+import { fonts, layout, paper } from '@/theme/tokens';
 
 const SECTIONS: [string, string][] = [
   ['modlar', 'İki mod: Meydan ve Mahzen'],
@@ -162,48 +162,20 @@ export default function Guide() {
   const r = useReg();
   const { width } = useWindowDimensions();
   const wide = width >= 640;
-
-  return (
-    <Page>
-      <Kicker style={{ color: paper.seal }}>Ek · Yurttaşın el kitabı</Kicker>
-      <Text style={st.title}>Meşveret nasıl işler?</Text>
-      <Text style={st.lede}>
-        Meşveret moderatörü olmayan bir forumdur. Konuyu da, kuralı da, silinecek mesajı da üyeler oylar;
-        her karar değiştirilemez bir deftere yazılır.
-      </Text>
-      <P>
-        Çoğunluk oyu tek başına tehlikelidir: kalabalık olan, azınlığın kaynağına karar verebilir, kuralları
-        kendi lehine değiştirebilir, beğenmediği görüşü silebilir. Meşveret çoğunluk tiranlığını ortadan
-        kaldırmaz; onu dört mekanizmayla sınırlar.
-      </P>
-
-      <View style={[st.claims, wide && { flexDirection: 'row', flexWrap: 'wrap' }]}>
-        {MECHANISMS.map(([roman, name, text, target]) => (
-          <Jump key={roman} to={target} style={[st.claim, wide && { width: '50%' }]}>
-            <Text style={st.roman}>{roman}</Text>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={st.claimName}>{name}</Text>
-              <Text style={st.claimText}>{text}</Text>
-              <Text style={st.claimLink}>§ {num(target)} →</Text>
-            </View>
-          </Jump>
-        ))}
-      </View>
-      <P>
-        Hepsi herkesin doğrulayabileceği bir deftere yazılır (§ {num('defter')}). Yanında kuralların bilerek
-        işlemediği bir yer de vardır: Mahzen (§ {num('mahzen')}).
-      </P>
-
-      <View style={st.toc}>
-        <Kicker>İçindekiler</Kicker>
-        {SECTIONS.map(([id, title], i) => (
-          <Jump key={id} to={id} style={st.tocRow}>
-            <Text style={st.tocNo}>§ {i + 1}</Text>
-            <Text style={st.tocTitle}>{title}</Text>
-          </Jump>
-        ))}
-      </View>
-
+  const desktop = width >= layout.wideMin;
+  const toc = (
+    <View style={[st.toc, desktop && { marginTop: 34 }]}>
+      <Kicker>İçindekiler</Kicker>
+      {SECTIONS.map(([id, title], i) => (
+        <Jump key={id} to={id} style={st.tocRow}>
+          <Text style={st.tocNo}>§ {i + 1}</Text>
+          <Text style={st.tocTitle}>{title}</Text>
+        </Jump>
+      ))}
+    </View>
+  );
+  const sections = (
+    <>
       <Section id="modlar">
         <P>
           <Text style={st.b}>Meydan</Text> açık, kimlikli ve kalıcıdır. Herkes takma adıyla yazar, her karar
@@ -420,6 +392,49 @@ export default function Guide() {
           ))}
         </View>
       </Section>
+    </>
+  );
+
+  return (
+    <Page>
+      <Kicker style={{ color: paper.seal }}>Ek · Yurttaşın el kitabı</Kicker>
+      <Text style={st.title}>Meşveret nasıl işler?</Text>
+      <Text style={st.lede}>
+        Meşveret moderatörü olmayan bir forumdur. Konuyu da, kuralı da, silinecek mesajı da üyeler oylar;
+        her karar değiştirilemez bir deftere yazılır.
+      </Text>
+      <P>
+        Çoğunluk oyu tek başına tehlikelidir: kalabalık olan, azınlığın kaynağına karar verebilir, kuralları
+        kendi lehine değiştirebilir, beğenmediği görüşü silebilir. Meşveret çoğunluk tiranlığını ortadan
+        kaldırmaz; onu dört mekanizmayla sınırlar.
+      </P>
+
+      <View style={[st.claims, wide && { flexDirection: 'row', flexWrap: 'wrap' }]}>
+        {MECHANISMS.map(([roman, name, text, target]) => (
+          <Jump key={roman} to={target} style={[st.claim, wide && { width: desktop ? '25%' : '50%' }]}>
+            <Text style={st.roman}>{roman}</Text>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={st.claimName}>{name}</Text>
+              <Text style={st.claimText}>{text}</Text>
+              <Text style={st.claimLink}>§ {num(target)} →</Text>
+            </View>
+          </Jump>
+        ))}
+      </View>
+      <P>
+        Hepsi herkesin doğrulayabileceği bir deftere yazılır (§ {num('defter')}). Yanında kuralların bilerek
+        işlemediği bir yer de vardır: Mahzen (§ {num('mahzen')}).
+      </P>
+
+      {/* Geniş ekranda içindekiler solda yapışık sütunda durur; bölümler sağda akar. */}
+      {desktop ? (
+        <Columns sideLeft stickySide sideWidth={250} side={toc} main={sections} />
+      ) : (
+        <>
+          {toc}
+          {sections}
+        </>
+      )}
     </Page>
   );
 }

@@ -6,6 +6,7 @@ import {
   Button,
   CensorStrip,
   Countdown,
+  Grid,
   Kicker,
   Loading,
   Mono,
@@ -13,6 +14,7 @@ import {
   Page,
   PressLink,
   Section,
+  useWide,
 } from '@/components/paper';
 import { DelegationNotices } from '@/components/delegation-expiry';
 import { EmptyLine, ProposalRow, type ProposalSummary } from '@/components/proposal-row';
@@ -80,11 +82,86 @@ function AreaTree({ areas }: { areas: Area[] }) {
 
 export default function Home() {
   const { me } = useAuth();
+  const wide = useWide();
   const proposals = useApi<ProposalSummary[]>('/proposals?state=open', 30_000);
   const areas = useApi<Area[]>('/areas');
   const topics = useApi<any[]>('/topics');
   const fast = (proposals.data ?? []).filter((p) => p.status === 'SILENT');
   const slow = (proposals.data ?? []).filter((p) => p.status !== 'SILENT');
+
+  const introText = (
+    <Body style={{ fontFamily: fonts.serifItalic, color: paper.inkSoft }}>
+      Herkes konu önerebilir. Öneriler sessiz onayla ya da Karar Saati&apos;nde oylanarak kabul
+      edilir; her karar deftere mühürlenir.{' '}
+      <Link href="/nasil-isler" style={{ color: paper.seal, fontFamily: fonts.serifMedium, textDecorationLine: 'underline' }}>
+        Nasıl işler?
+      </Link>
+    </Body>
+  );
+  const cta = me ? (
+    <Button label="Konu öner" onPress={() => router.push('/oneri/yeni?type=KONU')} />
+  ) : (
+    <Button label="Giriş yap" variant="secondary" onPress={() => router.push('/giris')} />
+  );
+  const fastSection = (
+    <Section title="İtiraza açık öneriler" aside={<Kicker>hızlı şerit · sessiz onay</Kicker>}>
+      {proposals.loading ? <Loading /> : null}
+      {fast.map((p) => <ProposalRow key={p.id} p={p} sectionStatus="SILENT" />)}
+      {!proposals.loading && fast.length === 0 ? <EmptyLine>itiraza açık öneri yok</EmptyLine> : null}
+    </Section>
+  );
+  const slowSection = (
+    <Section title="Karar Saati kuyruğu" aside={<Kicker>yavaş şerit</Kicker>}>
+      {slow.map((p) => <ProposalRow key={p.id} p={p} sectionStatus="QUEUED" />)}
+      {!proposals.loading && slow.length === 0 ? <EmptyLine>kuyrukta öneri yok</EmptyLine> : null}
+    </Section>
+  );
+  const areasSection = (
+    <Section title="Alanlar">{areas.data ? <AreaTree areas={areas.data} /> : <Loading />}</Section>
+  );
+  const topicRows = (topics.data ?? []).slice(0, 12).map((t) =>
+    t.deleted_by_proposal_id ? (
+      <CensorStrip key={t.id} proposalId={t.deleted_by_proposal_id} basis={t.deletion_basis} />
+    ) : (
+      <PressLink key={t.id} href={`/konu/${t.id}`} style={st.topicRow}>
+        <ProposalTitle title={t.title} effective={t.effective_title} style={st.topicTitle} />
+        <Muted style={{ fontSize: 14 }}>
+          {t.area_name} · {t.message_count} mesaj
+          {t.status === 'CLOSED' ? ' · karara bağlandı' : ''}
+        </Muted>
+      </PressLink>
+    ),
+  );
+
+  // Geniş ekran: gazetenin ön sayfası. Üstte Karar Saati ve davet; altında üç sütun (hızlı şerit,
+  // yavaş şerit, alanlar) ve konular ızgarası.
+  if (wide) {
+    return (
+      <Page>
+        <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
+          <View style={{ flex: 1.7 }}>
+            <DecisionHourBand />
+          </View>
+          <View style={st.invite}>
+            <Kicker>Meydan</Kicker>
+            {introText}
+            <View style={{ alignSelf: 'flex-start' }}>{cta}</View>
+          </View>
+        </View>
+        {me ? <DelegationNotices /> : null}
+        <Grid min={300} ruled>
+          {fastSection}
+          {slowSection}
+          {areasSection}
+        </Grid>
+        <Section title="Konular" aside={<Kicker>son kabul edilenler</Kicker>}>
+          <Grid min={300} rowGap={0}>
+            {topicRows}
+          </Grid>
+        </Section>
+      </Page>
+    );
+  }
 
   return (
     <Page>
@@ -92,53 +169,17 @@ export default function Home() {
       {me ? <DelegationNotices /> : null}
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, gap: 12, flexWrap: 'wrap' }}>
-        <Body style={{ flex: 1, minWidth: 240, fontFamily: fonts.serifItalic, color: paper.inkSoft }}>
-          Herkes konu önerebilir. Öneriler sessiz onayla ya da Karar Saati&apos;nde oylanarak kabul
-          edilir; her karar deftere mühürlenir.{' '}
-          <Link href="/nasil-isler" style={{ color: paper.seal, fontFamily: fonts.serifMedium, textDecorationLine: 'underline' }}>
-            Nasıl işler?
-          </Link>
-        </Body>
-        {me ? (
-          <Button label="Konu öner" onPress={() => router.push('/oneri/yeni?type=KONU')} />
-        ) : (
-          <Button label="Giriş yap" variant="secondary" onPress={() => router.push('/giris')} />
-        )}
+        <View style={{ flex: 1, minWidth: 240 }}>{introText}</View>
+        {cta}
       </View>
 
-      <Section title="İtiraza açık öneriler" aside={<Kicker>hızlı şerit · sessiz onay</Kicker>}>
-        {proposals.loading ? <Loading /> : null}
-        {fast.map((p) => <ProposalRow key={p.id} p={p} sectionStatus="SILENT" />)}
-        {!proposals.loading && fast.length === 0 ? <EmptyLine>itiraza açık öneri yok</EmptyLine> : null}
-      </Section>
-
-      <Section title="Karar Saati kuyruğu" aside={<Kicker>yavaş şerit</Kicker>}>
-        {slow.map((p) => <ProposalRow key={p.id} p={p} sectionStatus="QUEUED" />)}
-        {!proposals.loading && slow.length === 0 ? <EmptyLine>kuyrukta öneri yok</EmptyLine> : null}
-      </Section>
+      {fastSection}
+      {slowSection}
 
       <View style={st.columns}>
-        <View style={{ flex: 1, minWidth: 260 }}>
-          <Section title="Alanlar">
-            {areas.data ? <AreaTree areas={areas.data} /> : <Loading />}
-          </Section>
-        </View>
+        <View style={{ flex: 1, minWidth: 260 }}>{areasSection}</View>
         <View style={{ flex: 1.3, minWidth: 280 }}>
-          <Section title="Konular">
-            {(topics.data ?? []).slice(0, 12).map((t) =>
-              t.deleted_by_proposal_id ? (
-                <CensorStrip key={t.id} proposalId={t.deleted_by_proposal_id} basis={t.deletion_basis} />
-              ) : (
-                <PressLink key={t.id} href={`/konu/${t.id}`} style={st.topicRow}>
-                  <ProposalTitle title={t.title} effective={t.effective_title} style={st.topicTitle} />
-                  <Muted style={{ fontSize: 14 }}>
-                    {t.area_name} · {t.message_count} mesaj
-                    {t.status === 'CLOSED' ? ' · karara bağlandı' : ''}
-                  </Muted>
-                </PressLink>
-              ),
-            )}
-          </Section>
+          <Section title="Konular">{topicRows}</Section>
         </View>
       </View>
     </Page>
@@ -160,6 +201,15 @@ const st = StyleSheet.create({
   bandButton: { borderWidth: 1.5, borderColor: paper.ink, paddingVertical: 10, paddingHorizontal: 14 },
   bandButtonText: { fontFamily: fonts.monoBold, fontSize: 12, letterSpacing: 1.4, color: paper.ink },
   columns: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 28 },
+  invite: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 10,
+    marginLeft: 28,
+    paddingLeft: 28,
+    borderLeftWidth: 1,
+    borderLeftColor: paper.hairline,
+  },
   areaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

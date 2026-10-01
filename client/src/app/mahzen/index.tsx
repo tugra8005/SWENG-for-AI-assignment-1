@@ -16,6 +16,7 @@ import {
   TermDim,
   WarningModal,
 } from '@/components/cellar';
+import { Columns, useWide } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { fmtDateTime } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -63,6 +64,7 @@ export default function CellarIndex() {
   const { me, ready, refresh } = useAuth();
   const entry = useApi<any>(me ? '/cellar/entry' : null);
   const list = useApi<any>(me && entry.data && !entry.data.needs_warning ? '/cellar/threads' : null, 15_000);
+  const wide = useWide();
 
   if (ready && !me) {
     return (
@@ -76,28 +78,8 @@ export default function CellarIndex() {
     );
   }
 
-  return (
-    <CellarPage>
-      <WarningModal
-        visible={!!entry.data?.needs_warning}
-        text={`Mahzen anonim ve geçicidir; başlıklar alta düştükçe kalıcı olarak silinir. ${entry.data?.warning ?? ''}`}
-        onAccept={async () => {
-          await api('/cellar/entry/ack', { method: 'POST' });
-          await refresh();
-          entry.reload();
-        }}
-        onCancel={() => router.replace('/')}
-      />
-      <Banner>MAHZEN</Banner>
-      {/* Değerler yüklenmeden (uyarı penceresinin arkasında) "kapasite … başlık" gösterilmez. */}
-      {list.data ? (
-        <TermDim>anonim · geçici · kapasite {list.data.capacity} başlık · yükselme sınırı {list.data.bump_limit} yanıt</TermDim>
-      ) : (
-        <TermDim>anonim · geçici</TermDim>
-      )}
-      <View style={cellarStyles.rule} />
-      <NewThread onCreated={(id) => router.push(`/mahzen/${id}`)} />
-      <View style={cellarStyles.rule} />
+  const threads = (
+    <>
       {list.data?.threads.map((t: any) => {
         const decay = 1 - t.lifetime;
         return (
@@ -120,6 +102,54 @@ export default function CellarIndex() {
           </Pressable>
         );
       })}
+    </>
+  );
+
+  return (
+    <CellarPage>
+      <WarningModal
+        visible={!!entry.data?.needs_warning}
+        text={`Mahzen anonim ve geçicidir; başlıklar alta düştükçe kalıcı olarak silinir. ${entry.data?.warning ?? ''}`}
+        onAccept={async () => {
+          await api('/cellar/entry/ack', { method: 'POST' });
+          await refresh();
+          entry.reload();
+        }}
+        onCancel={() => router.replace('/')}
+      />
+      <Banner>MAHZEN</Banner>
+      {/* Değerler yüklenmeden (uyarı penceresinin arkasında) "kapasite … başlık" gösterilmez. */}
+      {list.data ? (
+        <TermDim>anonim · geçici · kapasite {list.data.capacity} başlık · yükselme sınırı {list.data.bump_limit} yanıt</TermDim>
+      ) : (
+        <TermDim>anonim · geçici</TermDim>
+      )}
+      <View style={cellarStyles.rule} />
+      {/* Geniş ekranda başlıklar solda; kurallar ve yeni başlık formu sağda, amber sütun çizgisiyle. */}
+      {wide ? (
+        <Columns
+          ruleColor={cellar.amberDim}
+          sideWidth={360}
+          stickySide
+          main={threads}
+          side={
+            <View style={{ gap: 10 }}>
+              <TermDim>
+                Başlıklar sıralarına göre yaşlanır: alt sıralar soluklaşır, son çeyrekte bozulur, kapasite dolunca
+                en alttaki kalıcı olarak silinir. İçerik kuralı ve silme oylaması yoktur. Yazanların yarısından
+                fazlası EVET derse başlık ifşa edilir.
+              </TermDim>
+              <NewThread onCreated={(id) => router.push(`/mahzen/${id}`)} />
+            </View>
+          }
+        />
+      ) : (
+        <>
+          <NewThread onCreated={(id) => router.push(`/mahzen/${id}`)} />
+          <View style={cellarStyles.rule} />
+          {threads}
+        </>
+      )}
     </CellarPage>
   );
 }

@@ -8,12 +8,14 @@ import {
   Button,
   ErrorNotice,
   Field,
-  H1,
   Kicker,
   Muted,
   Page,
+  PageHead,
   Rule,
   Section,
+  Split,
+  useWide,
 } from '@/components/paper';
 import { describeArticleValue, fmtDateTime, shortHash } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
@@ -141,6 +143,7 @@ export default function Ledger() {
   const [error, setError] = useState<unknown>(null);
   const looked = useApi<any>(params.h ? `/ledger/records/${encodeURIComponent(params.h.trim())}` : null);
   const rec = looked.data;
+  const wide = useWide();
 
   const runVerify = async () => {
     setError(null);
@@ -151,16 +154,8 @@ export default function Ledger() {
     }
   };
 
-  return (
-    <Page>
-      <Kicker>Sadece eklenebilir · hash zincirli · üç düğüm</Kicker>
-      <H1>Defter</H1>
-      <Muted>
-        Her kayıt bir öncekinin hash&apos;ine bağlıdır: hash = sha256(prev_hash ‖ payload_hash ‖ ts ‖ type).
-        Oylamayla silinen içerik de defterde kalır.
-      </Muted>
-      <Rule double />
-
+  const verifySection = (
+    <>
       <Section title="Defteri doğrula">
         <Body style={{ marginBottom: 10 }}>
           Üç düğümün zincirleri baştan yeniden hesaplanır ve birbiriyle karşılaştırılır. Çalışan kodun
@@ -189,7 +184,10 @@ export default function Ledger() {
           </View>
         ) : null}
       </Section>
-
+    </>
+  );
+  const lookupSection = (
+    <>
       <Section title="Kaydı görüntüle">
         <Field
           label="Hash (en az 6 karakter)"
@@ -202,6 +200,25 @@ export default function Ledger() {
         <ErrorNotice error={error ?? looked.error} />
         {rec ? <LedgerRecord rec={rec} /> : null}
       </Section>
+    </>
+  );
+
+  return (
+    <Page>
+      <PageHead kicker="Sadece eklenebilir · hash zincirli · üç düğüm" title="Defter">
+        <Muted>
+          Her kayıt bir öncekinin hash&apos;ine bağlıdır: hash = sha256(prev_hash ‖ payload_hash ‖ ts ‖ type).
+          Oylamayla silinen içerik de defterde kalır.
+        </Muted>
+      </PageHead>
+      {wide ? (
+        <Split left={verifySection} right={lookupSection} />
+      ) : (
+        <>
+          {verifySection}
+          {lookupSection}
+        </>
+      )}
     </Page>
   );
 }

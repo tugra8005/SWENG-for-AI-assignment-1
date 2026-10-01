@@ -19,6 +19,7 @@ import {
   TextInput,
   type TextInputProps,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -216,6 +217,7 @@ export function CellarPage({ children }: { children: ReactNode }) {
   const fade = useAnimatedValue(reduced ? 0 : 1);
   const { on, toggle } = useCrt();
   const insets = useSafeAreaInsets();
+  const wide = useWindowDimensions().width >= layout.wideMin;
   useEffect(() => {
     if (reduced) return;
     Animated.timing(fade, { toValue: 0, duration: 900, useNativeDriver: false }).start();
@@ -225,10 +227,14 @@ export function CellarPage({ children }: { children: ReactNode }) {
       {/* Siyah zeminde durum çubuğu simgeleri açık renk olsun. */}
       <StatusBar style="light" />
       <ScrollView
-        contentContainerStyle={[s.scroll, { paddingBottom: 48 + insets.bottom }]}
+        contentContainerStyle={[
+          s.scroll,
+          wide && { paddingHorizontal: layout.wideGutter },
+          { paddingBottom: 48 + insets.bottom },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={s.column}>
+        <View style={[s.column, wide && { maxWidth: layout.wideMaxWidth }]}>
           <View style={s.topbar}>
             <Pressable onPress={() => router.push('/')} accessibilityRole="link">
               <Text style={[s.term, s.dimText, { fontSize: 12 }]}>&lt; meydan</Text>

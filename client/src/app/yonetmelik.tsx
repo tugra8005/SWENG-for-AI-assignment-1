@@ -4,15 +4,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   Anchor,
   Button,
-  H1,
+  Columns,
+  Grid,
   Kicker,
   LockIcon,
   Loading,
   Muted,
   Page,
+  PageHead,
   Rule,
   Section,
   useScrollTo,
+  useWide,
 } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
 import { describeArticleValue, fmtDate, fmtNumber } from '@/lib/format';
@@ -46,13 +49,13 @@ const GROUPS = ['Oylama eşikleri', 'Süreler', 'Havale', 'Mahzen', 'Baskın tes
 const anchorId = (name: string) => `yonetmelik-${name.toLocaleLowerCase('tr-TR').replace(/\s+/g, '-')}`;
 
 /** Sayfa başındaki küçük içindekiler. */
-function Contents() {
+function Contents({ vertical }: { vertical?: boolean }) {
   const scrollTo = useScrollTo();
   const entries = ['Değiştirilemez Maddeler', 'İçerik kuralları', ...GROUPS];
   return (
-    <View style={st.toc} role="navigation" aria-label="İçindekiler">
+    <View style={[st.toc, vertical && { marginTop: 22 }]} role="navigation" aria-label="İçindekiler">
       <Kicker>İçindekiler</Kicker>
-      <View style={st.tocList}>
+      <View style={vertical ? { gap: 8, marginTop: 4 } : st.tocList}>
         {entries.map((e, i) => (
           <Pressable key={e} onPress={() => scrollTo(anchorId(e))} accessibilityRole="link" hitSlop={4}>
             {({ hovered }: any) => (
@@ -169,22 +172,13 @@ function Constitution({ items, ranged }: { items: any[]; ranged: any[] }) {
 
 export default function Regulation() {
   const list = useApi<any[]>('/regulation');
+  const wide = useWide();
   const constitution = (list.data ?? []).filter((a) => a.unchangeable);
   const params = (list.data ?? []).filter((a) => a.kind !== 'icerik_kurali' && !a.unchangeable);
   const rules = (list.data ?? []).filter((a) => a.kind === 'icerik_kurali' && !a.removed);
   const removed = (list.data ?? []).filter((a) => a.kind === 'icerik_kurali' && a.removed);
-  return (
-    <Page>
-      <Kicker>Yönetmelik = veri</Kicker>
-      <H1>Yönetmelik</H1>
-      <Muted>
-        Tüm eşikler ve süreler bu maddelerde durur; kod hiçbir eşiği sabit yazmaz. Değiştirilemez maddeler
-        dışında her madde Genel kapsamda, Karar Saati&apos;nde yonetmelik_esigi ile değişir — bu maddenin
-        kendisi de. Her sayısal parametre değiştirilemez izinli aralığının içinde kalır.
-      </Muted>
-      <Rule double />
-      {!list.data ? <Loading /> : null}
-      {list.data ? <Contents /> : null}
+  const body = (
+    <>
       {list.data ? (
         <Anchor id={anchorId('Değiştirilemez Maddeler')}>
           <Constitution items={constitution} ranged={(list.data ?? []).filter((a) => a.range)} />
@@ -232,13 +226,37 @@ export default function Regulation() {
         ? GROUPS.map((g) => (
             <Anchor key={g} id={anchorId(g)}>
               <Section title={g}>
-                {params.filter((a) => (a.group ?? 'Süreler') === g).map((a) => (
-                  <Parameter key={a.key} a={a} />
-                ))}
+                <Grid min={400} rowGap={0}>
+                  {params.filter((a) => (a.group ?? 'Süreler') === g).map((a) => (
+                    <Parameter key={a.key} a={a} />
+                  ))}
+                </Grid>
               </Section>
             </Anchor>
           ))
         : null}
+    </>
+  );
+
+  return (
+    <Page>
+      <PageHead kicker="Yönetmelik = veri" title="Yönetmelik">
+        <Muted>
+          Tüm eşikler ve süreler bu maddelerde durur; kod hiçbir eşiği sabit yazmaz. Değiştirilemez maddeler
+          dışında her madde Genel kapsamda, Karar Saati&apos;nde yonetmelik_esigi ile değişir — bu maddenin
+          kendisi de. Her sayısal parametre değiştirilemez izinli aralığının içinde kalır.
+        </Muted>
+      </PageHead>
+      {!list.data ? <Loading /> : null}
+      {/* Geniş ekranda içindekiler solda yapışık sütunda; parametreler iki sütunlu ızgarada. */}
+      {list.data && wide ? (
+        <Columns sideLeft stickySide sideWidth={240} side={<Contents vertical />} main={body} />
+      ) : (
+        <>
+          {list.data ? <Contents /> : null}
+          {body}
+        </>
+      )}
     </Page>
   );
 }

@@ -66,7 +66,7 @@ export function RevealTransition({ t: thread, onDone }: { t: any; onDone: () => 
   const strike = t.interpolate({ inputRange: [0.35, 0.6], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
 
   return (
-    <Page reveal={reveal}>
+    <Page reveal={reveal} reading>
       <View accessibilityLiveRegion="polite">
         <Animated.View style={{ opacity: paperOpacity }}>
           <RevealedThread t={thread} progress={{ typing, strike }} />

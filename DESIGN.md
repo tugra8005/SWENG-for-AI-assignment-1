@@ -685,6 +685,19 @@ Geçiş, ifşadan sonra başlığı ilk açan herkeste bir kez oynar. Sahne sayf
 
 ### 13.4 Genel
 
+**Geniş ekran (≥ 1024 px).** Telefon ve tablette sayfa 780 px'lik tek sütundur. Geniş ekranda sayfa sütunu 1240 px'e açılır ve gazete sayfası gibi bölünür; ince sütun çizgileri (Mahzen'de amber) sütunları ayırır. Önceki sürümde her sayfa 780 px'te kalıyordu; 1440 px'lik ekranın yaklaşık %45'i boştu (2026-10-01).
+
+- Meydan: üstte Karar Saati bandı ve davet; altında üç sütun (hızlı şerit, yavaş şerit, alanlar) ve konular ızgarası.
+- Konu: tartışma ana sütunda; Karar, Şerhler, eylemler, ilgili öneriler ve alt konular yan sütunda.
+- Öneri: içerik, pay etkisi ve sonuç ana sütunda; durum (sessiz onay, itiraz, olgunlaşma), Hâtif görüşü ve mühür yan sütunda.
+- Karar Saati: pusula ya da kuyruk ana sütunda, geri sayım ve geçmiş oturumlar yanda; sonuç sayfasında öneriler iki sütunlu ızgarada.
+- Profil (kendi): solda kimlik belgesi, sağda "Kişisel Kayıtlar" (havaleler, oylarım, kapsam üyelikleri, ilgi alanları). Başkasının profili okuma sütununda tek belge.
+- Yönetmelik ve kılavuz: içindekiler solda, kaydırırken yerinde duran sütunda; yönetmelik parametreleri iki sütunlu ızgarada.
+- Defter: doğrulama ve kayıt görüntüleme yan yana. Havale: havaleler ana sütunda, yeni havale formu yanda.
+- Mahzen: liste solda, kurallar ve yeni başlık formu sağda; başlıkta mesajlar solda, ifşa oylaması ve yanıt formu sağda, kaydırırken yerinde.
+- Sayfa başlıkları (`PageHead`): başlık solda, açıklama sağda.
+- Form ve uzun metin sayfaları (öneri formu, mesaj sürümleri, ifşa edilmiş başlık, başkasının profili) okuma sütununda kalır; künye geniştir.
+
 Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oyların düşmesi, mühür, ifşa geçişi) `prefers-reduced-motion` açıkken kapanır; web'de `matchMedia`, Android'de sistem ayarı `AccessibilityInfo.isReduceMotionEnabled` ile okunur. Bu durumda son hâl anında gösterilir. Büyük harf dönüşümünün Türkçe kurallarla (i → İ) yapılması için web'de sayfa dili `tr` olarak ayarlanır. Seçim ve aç/kapa durumları `aria-checked`, pasif düğmeler `aria-disabled`, form alanları etiketleriyle (`aria-label`) duyurulur; react-native-web 0.21 eski `accessibilityState` nesnesini DOM'a aktarmadığı için `aria-*` özellikleri kullanılır (React Native'de de geçerlidir). Sayılar Türkçe yazılır: ondalık virgül ("%61,5"), yüzde işareti sayının önünde ve eksi işareti onun da önünde ("-%50,0"), sayıya göre ek ("#7'ye", "#19'a", "29.12.2026'dan"). Bütün yüzde biçimlendirmesi tek yardımcıdan geçer: sunucuda `domain/text.percent_tr`, istemcide `lib/format.ts`.
 
 ## 14. Belgede cevabı olmayan noktalar ve verilen kararlar
@@ -828,6 +841,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 - Expo SDK 57, expo-router (`client/src/app/` altındaki her dosya bir ekran), TypeScript. Web ve Android aynı kod tabanıdır.
 - `src/components/paper.tsx` Meydan bileşenlerini (gazete başlığı, mühür, sansür şeridi, düğme, form alanları, geri sayım), `src/components/cellar.tsx` Mahzen bileşenlerini (CRT katmanı, çürüyen metin, ömür çubuğu, uyarı) içerir.
 - `src/lib/clock.tsx` istemciyi sunucunun sahte saatine eşitler; tüm geri sayımlar bu saate göre işler.
+- Geniş ekran düzeni `paper.tsx`'tedir (§13.4): `useWide` (≥ `layout.wideMin`), `Columns` (ana ve yan sütun, isteğe bağlı yapışık), `Split` (eşit iki sütun), `Grid` (sütun sayısı genişlikten; isteğe bağlı sütun çizgisi), `PageHead`. Bileşenler yalnızca geniş ekranda çağrılır; dar ekranda sayfa kendi tek sütunlu sırasını çizer, böylece telefon düzeni değişmez. `Page reading` geniş ekranda da okuma sütununda kalır.
 - `src/lib/notifications.tsx` zildeki okunmamış sayısını tutar (30 sn'de bir ve sayfa değişiminde okur); başlık ve `/bildirimler` sayfası aynı sayıyı paylaşır.
 - `src/components/reveal-tally.tsx` Karar Saati sonuç açıklamasını, `src/components/reveal-transition.tsx` ifşa geçişini oynatır.
 - `src/components/proposal-title.tsx` daralan önerinin talep/etki başlığını, pay çubuğunu ve olgunlaşma satırını üretir; öneri sayfası, kartlar, konu sayfası ve Karar Saati ekranları bunu kullanır.

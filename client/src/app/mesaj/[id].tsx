@@ -22,7 +22,7 @@ export default function History() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const h = useApi<any>(`/messages/${id}/history`);
   return (
-    <Page>
+    <Page reading>
       <Kicker>Mesaj #{id} · sürüm geçmişi</Kicker>
       <H1>Sürümler</H1>
       {h.data ? (
