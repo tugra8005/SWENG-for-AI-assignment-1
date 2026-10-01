@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mesveret.context import Ctx
 from mesveret.db.models import User
@@ -12,6 +12,7 @@ router = APIRouter(tags=["konular"])
 class MessageIn(BaseModel):
     text: str
     reply_to: int | None = None
+    media_ids: list[str] = Field(default_factory=list)
 
 
 class EditIn(BaseModel):
@@ -32,7 +33,8 @@ def topic(topic_id: int, ctx: Ctx = Depends(get_ctx),
 @router.post("/topics/{topic_id}/messages", status_code=status.HTTP_201_CREATED)
 def post_message(topic_id: int, body: MessageIn, ctx: Ctx = Depends(get_ctx),
                  user: User = Depends(current_user)) -> dict:
-    msg = topics.post_message(ctx, user, topic_id, body.text, body.reply_to)
+    msg = topics.post_message(ctx, user, topic_id, body.text, body.reply_to,
+                              media_ids=body.media_ids)
     return {"id": msg.id}
 
 

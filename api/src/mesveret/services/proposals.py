@@ -17,6 +17,7 @@ from mesveret.context import Ctx
 from mesveret.db.models import (
     ClosureText,
     Decision,
+    Media,
     Message,
     Objection,
     Proposal,
@@ -53,7 +54,7 @@ from mesveret.domain.shares import ShareImpact, impact_lines, pct, share_impact
 from mesveret.domain.text import normalize
 from mesveret.domain.types import ProposalStatus, ProposalType, initial_lane
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
-from mesveret.services import ledger, notifications, ontology, regulation, topics
+from mesveret.services import ledger, media, notifications, ontology, regulation, topics
 from mesveret.services.profile import nickname_map
 
 MAX_TITLE = 200
@@ -83,6 +84,8 @@ class ProposalInput:
     article_action: str = "degistir"
     # Bölünebilir kaynak: {kaynak: {kapsam: yeni_pay}} (R2'nin ters yönü)
     share_effect: dict[str, dict[str, Any]] | None = None
+    # KONU/ALT_KONU: önceden yüklenmiş kapak görseli (kabul edilince konunun kapağı olur)
+    cover_media_id: str | None = None
 
 
 @dataclass
@@ -489,8 +492,17 @@ def _finish_opening(ctx: Ctx, p: Proposal, report: RuleReport) -> None:
         }, ref=ct)
 
 
+def _cover(ctx: Ctx, user: User, inp: ProposalInput, t: ProposalType) -> list[Media]:
+    if not inp.cover_media_id:
+        return []
+    if t not in (ProposalType.KONU, ProposalType.ALT_KONU) or inp.reopens_topic_id is not None:
+        raise DomainError("Kapak görseli yalnızca yeni konu önerisine eklenir.")
+    return media.check_attachable(ctx, user.id, [inp.cover_media_id], limit=1)
+
+
 def open_proposal(ctx: Ctx, user: User, inp: ProposalInput) -> Proposal:
     prep = _prepare(ctx, user, inp)
+    cover = _cover(ctx, user, inp, prep.type)
     report = run_rules(ctx, draft_of(ctx, prep, user.id))
     if not report.ok:
         _raise_violations(report)
@@ -502,6 +514,7 @@ def open_proposal(ctx: Ctx, user: User, inp: ProposalInput) -> Proposal:
     )
     ctx.db.add(p)
     _finish_opening(ctx, p, report)
+    media.attach(ctx, cover, "oneri", p.id)
     ctx.commit()
     return p
 
@@ -528,6 +541,7 @@ def submit_draft(ctx: Ctx, user: User, proposal_id: int, inp: ProposalInput) -> 
         type="KONU", title=inp.title or p.title, body=inp.body or p.body, area_id=inp.area_id,
         scope_id=inp.scope_id, resource_ids=inp.resource_ids,
     ))
+    cover = _cover(ctx, user, inp, ProposalType.KONU)
     report = run_rules(ctx, draft_of(ctx, prep, user.id), exclude_id=p.id)
     if not report.ok:
         _raise_violations(report)
@@ -536,6 +550,7 @@ def submit_draft(ctx: Ctx, user: User, proposal_id: int, inp: ProposalInput) -> 
     p.payload = {**p.payload, **prep.payload}
     p.created_at = ctx.now
     _finish_opening(ctx, p, report)
+    media.attach(ctx, cover, "oneri", p.id)
     ctx.commit()
     return p
 
@@ -923,6 +938,8 @@ def proposal_view(ctx: Ctx, p: Proposal, viewer: User | None) -> dict:
                          for ct in texts]
         d = ctx.db.execute(select(Decision).where(Decision.proposal_id == p.id)).scalar_one_or_none()
         body["decision_id"] = d.id if d else None
+    if p.type in ("KONU", "ALT_KONU"):
+        body["cover"] = media.cover(ctx, p.id)
     if p.type in ("KONU", "ALT_KONU") and p.status == "ACCEPTED":
         body["topic_id"] = ctx.db.execute(
             select(Topic.id).where(Topic.accepted_proposal_id == p.id)

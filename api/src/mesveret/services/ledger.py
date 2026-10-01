@@ -348,6 +348,7 @@ RECORD_LABELS = {
     "HAVALE_YENILENDI": "Havale yenilendi",
     "HAVALE_SURESI_DOLDU": "Havale süresi doldu",
     "MAHZEN_IFSA": "Mahzen başlığı ifşa edildi",
+    "GORSEL_EKLENDI": "Görsel eklendi",
 }
 
 

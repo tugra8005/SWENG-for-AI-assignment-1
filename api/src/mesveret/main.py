@@ -15,6 +15,7 @@ from mesveret.routers import (
     cellar,
     decision_hour,
     health,
+    media,
     notifications,
     ontology,
     proposals,
@@ -97,7 +98,7 @@ def create_app(
         )
 
     for module in (health, auth, users, ontology, topics, proposals, decision_hour, cellar,
-                   notifications, ledger_router):
+                   notifications, media, ledger_router):
         app.include_router(module.router)
     if settings.is_dev:
         # Hesap değiştirici ve demo adımı: üretimde bu uç noktalar hiç yoktur.

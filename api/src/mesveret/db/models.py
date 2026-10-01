@@ -15,12 +15,13 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, deferred, mapped_column
 
 from mesveret.db.base import Base
 
@@ -143,6 +144,34 @@ class MessageVersion(Base):
     editor_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     via_proposal_id: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(TS)
+    ledger_hash: Mapped[str | None] = mapped_column(String(64))
+
+
+class Media(Base):
+    """Görsel: yeniden kodlanmış özgün (EXIF'siz JPEG) ve gazete baskısı (yarım ton PNG).
+
+    Yüklenen görsel önce sahibine bağlı, eksiz durur; mesaja ya da öneriye eklenince
+    (``attached_kind``/``attached_id``) yayımlanır ve deftere yazılır. Bağlandığı içerik oylamayla
+    silinirse görsel de gizlenir (410).
+    """
+
+    __tablename__ = "media"
+
+    id: Mapped[str] = mapped_column(String(16), primary_key=True)
+    owner_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    alt: Mapped[str] = mapped_column(String(300))
+    # Arşiv görseli: eser, sanatçı, tarih, lisans; kaynak bağlantısı.
+    credit: Mapped[str | None] = mapped_column(String(300))
+    source_url: Mapped[str | None] = mapped_column(String(500))
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    original: Mapped[bytes] = deferred(mapped_column(LargeBinary))
+    print_png: Mapped[bytes] = deferred(mapped_column(LargeBinary))
+    created_at: Mapped[datetime] = mapped_column(TS)
+    attached_kind: Mapped[str | None] = mapped_column(String(16))  # mesaj | oneri
+    attached_id: Mapped[int | None] = mapped_column(Integer)
+    position: Mapped[int] = mapped_column(Integer, default=0)
     ledger_hash: Mapped[str | None] = mapped_column(String(64))
 
 

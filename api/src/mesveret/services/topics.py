@@ -18,7 +18,7 @@ from mesveret.db.models import (
 from mesveret.domain.cellar import cellar_thread_refs
 from mesveret.domain.diff import word_diff
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
-from mesveret.services import interactions, ledger, ontology
+from mesveret.services import interactions, ledger, media, ontology
 from mesveret.services.profile import nickname_map
 
 MAX_MESSAGE = 10_000
@@ -118,11 +118,13 @@ def create_message(
 
 
 def post_message(
-    ctx: Ctx, user: User, topic_id: int, text: str, reply_to: int | None = None
+    ctx: Ctx, user: User, topic_id: int, text: str, reply_to: int | None = None,
+    *, media_ids: list[str] | None = None,
 ) -> Message:
     topic = get_topic(ctx, topic_id)
     ensure_writable(topic)
     text = check_square_text(text)
+    pictures = media.check_attachable(ctx, user.id, media_ids)
     replied_author = None
     if reply_to is not None:
         target = ctx.db.get(Message, reply_to)
@@ -136,6 +138,7 @@ def post_message(
         .where(Message.topic_id == topic.id).group_by(Message.author_id)
     ).all())
     msg, _ = create_message(ctx, topic, user.id, text, reply_to=reply_to)
+    media.attach(ctx, pictures, "mesaj", msg.id)
     if user.id not in firsts:
         interactions.on_first_participation(ctx, user.id, firsts)
     if replied_author:
@@ -187,7 +190,8 @@ def message_history(ctx: Ctx, message_id: int) -> dict:
             "versions": out}
 
 
-def _message_view(ctx: Ctx, msg: Message, names: dict[str, str]) -> dict:
+def _message_view(ctx: Ctx, msg: Message, names: dict[str, str],
+                  pictures: dict[int, list[dict]] | None = None) -> dict:
     v = current_version(ctx, msg)
     if msg.deleted_by_proposal_id is not None:
         # İçerik gizlenir; mühür (defter hash'i) kalır: silme gizlemedir, kayıttan kaldırmaz.
@@ -203,6 +207,7 @@ def _message_view(ctx: Ctx, msg: Message, names: dict[str, str]) -> dict:
         "version": v.version_no,
         "reply_to": msg.reply_to_id,
         "ledger_hash": v.ledger_hash,
+        "media": (pictures or {}).get(msg.id, []),
     }
 
 
@@ -239,6 +244,8 @@ def topic_summary(ctx: Ctx, topic: Topic) -> dict:
         "status": topic.status, "owner_scope": ontology.scope_label(ctx, topic.owner_scope_id),
         "proposed_at": accepted.created_at if accepted else topic.created_at,
         "created_at": topic.created_at, "message_count": count,
+        # KONU önerisiyle gelen kapak görseli: kabul edilince konunun da kapağıdır.
+        "cover": media.cover(ctx, accepted.id) if accepted else None,
     }
 
 
@@ -259,6 +266,7 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
         select(Message).where(Message.topic_id == topic.id).order_by(Message.created_at, Message.id)
     ).scalars().all()
     names = nickname_map(ctx, [m.author_id for m in messages] + [topic.author_id])
+    pictures = media.attached(ctx, "mesaj", [m.id for m in messages])
     opening = next((m for m in messages if m.is_opening), None)
     decision = ctx.db.execute(
         select(Decision).where(Decision.topic_id == topic.id).order_by(Decision.id.desc())
@@ -322,8 +330,8 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
     body = topic_summary(ctx, topic)
     body.update({
         "author": names.get(topic.author_id),
-        "opening": _message_view(ctx, opening, names) if opening else None,
-        "messages": [_with_pending(_message_view(ctx, m, names), pending.get(m.id))
+        "opening": _message_view(ctx, opening, names, pictures) if opening else None,
+        "messages": [_with_pending(_message_view(ctx, m, names, pictures), pending.get(m.id))
                      for m in messages if not m.is_opening],
         "pending_deletion": pending.get(None),
         "decision": decision_view,
