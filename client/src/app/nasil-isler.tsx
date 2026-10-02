@@ -52,7 +52,7 @@ const SAMPLE_TALLY = {
   flagged_reasons: [],
   threshold: { key: 'basit_cogunluk', oran: '1/2', karsilastirma: '>' },
   note: '8/13 ağırlıklı EVET (%61,5); eşik basit_cogunluk > 1/2.',
-  oracle: { choice: 'EVET', reason: 'R1–R8 geçti; etiketler uyumlu.' },
+  oracle: { choice: 'EVET', reason: 'R1–R9 geçti; etiketler uyumlu.' },
   votes: [
     { ballot_id: 1, open: true, voter: 'Hâtif', choice: 'EVET', weight: 1 },
     { ballot_id: 2, open: false, pseudonym: 'dc230069', choice: 'EVET', weight: 1 },
@@ -199,7 +199,7 @@ export default function Guide() {
       <Section id="oneri">
         <P>
           Meydan&apos;da her değişiklik bir öneridir: yeni konu, alt konu, düzenleme, silme, yönetmelik değişikliği,
-          konunun kapanışı. Öneri açılırken kurallar (R1–R8) denetler; ihlal varsa öneri hiç açılmaz ve gerekçesi
+          konunun kapanışı. Öneri açılırken kurallar (R1–R9) denetler; ihlal varsa öneri hiç açılmaz ve gerekçesi
           yazılır. Hâtif her öneriye bir etiket yorumu bırakır (§ {num('hatif')}).
         </P>
         <P>

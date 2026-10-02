@@ -1,7 +1,7 @@
 """Hâtif: kural tabanlı sembolik bilirkişi.
 
 Gerçek bir yapay zekâ çağrısı yoktur. Hâtif her yeni öneriye bir etiket önerisi yorumu
-bırakır ve Karar Saati'nde deterministik oy verir: R1–R8 ve H1–H4 geçerse EVET.
+bırakır ve Karar Saati'nde deterministik oy verir: R1–R9 ve H1–H4 geçerse EVET.
 
 - H1 alan: metindeki kelimeler alanların anahtar kelimeleriyle eşlenir.
 - H2 kaynak: metinde adı geçen ama ETKILER olarak etiketlenmemiş kaynak.
@@ -160,7 +160,7 @@ def oracle_comment(report: RuleReport, findings: Sequence[Finding], onto: Ontolo
                    content: ContentCheck | None = None, extra: Sequence[str] = ()) -> str:
     lines: list[str] = []
     if report.ok:
-        lines.append("Denetimler: R1–R8 geçti.")
+        lines.append("Denetimler: R1–R9 geçti.")
     else:
         lines.append("Denetimler: " + "; ".join(f"{v.rule} — {v.message}" for v in report.violations))
     for n in report.narrowings:

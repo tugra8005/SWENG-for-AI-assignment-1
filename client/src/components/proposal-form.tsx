@@ -532,7 +532,7 @@ export function ProposalForm({
       <ErrorNotice error={error} />
       <Button label={draftId ? 'Taslağı öneri olarak gönder' : 'Öneriyi aç'} onPress={submit} />
       <Muted style={{ marginTop: 10, fontSize: 13 }}>
-        Öneri açılırken R1–R8 denetimleri çalışır; ihlal varsa gerekçesiyle reddedilir.
+        Öneri açılırken R1–R9 denetimleri çalışır; ihlal varsa gerekçesiyle reddedilir.
       </Muted>
     </View>
   );

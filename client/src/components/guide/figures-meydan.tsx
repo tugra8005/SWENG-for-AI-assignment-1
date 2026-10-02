@@ -426,7 +426,7 @@ export function RegulationFigure({ no }: { no: number }) {
 // --- 6. Hâtif --------------------------------------------------------------------------------------
 
 const CHECKS: [string, string, number, boolean][] = [
-  ['R1–R8 · açılış kuralları', 'geçti', 0.12, true],
+  ['R1–R9 · açılış kuralları', 'geçti', 0.12, true],
   ["H1 · alan: 'belgesel' ×2", 'uyuşmuyor', 0.28, false],
   ['H2 · etiketlenmemiş kaynak', 'yok', 0.42, true],
   ['H3 · şehir', 'uyumlu', 0.52, true],

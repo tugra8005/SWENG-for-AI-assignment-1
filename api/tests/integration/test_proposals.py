@@ -26,7 +26,7 @@ def test_topic_proposal_opens_in_fast_lane_with_oracle_comment(ctx, ledger):
     p = proposals.open_proposal(ctx, u, konu_input())
     assert p.status == "SILENT" and p.lane == "FAST"
     assert p.deadline_at == ctx.now + timedelta(hours=24)
-    assert "Denetimler: R1–R8 geçti." in p.oracle_comment
+    assert "Denetimler: R1–R9 geçti." in p.oracle_comment
     assert ledger.of_type("ONERI_ACILDI")[0]["payload"]["baslik"] == "Film günleri"
     assert p.ledger_hash == ledger.of_type("ONERI_ACILDI")[0]["hash"]
 
