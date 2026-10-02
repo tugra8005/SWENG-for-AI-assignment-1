@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Meşveret — Baskın Tespitinin CRISP-DM Analizi</title>
+<style>
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/400Regular/Newsreader_400Regular.ttf'); font-weight: 400; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/400Regular_Italic/Newsreader_400Regular_Italic.ttf'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/600SemiBold/Newsreader_600SemiBold.ttf'); font-weight: 600; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/800ExtraBold/Newsreader_800ExtraBold.ttf'); font-weight: 800; }
+@font-face { font-family: 'Plex Mono'; src: url('../../client/node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf'); font-weight: 400; }
+@font-face { font-family: 'Plex Mono'; src: url('../../client/node_modules/@expo-google-fonts/ibm-plex-mono/500Medium/IBMPlexMono_500Medium.ttf'); font-weight: 500; }
+
+@page { size: A4; margin: 17mm 17mm 18mm 17mm; }
+:root { --ink: #1B1A17; --soft: #4A463E; --muted: #6B6558; --hair: #CFC6B3; --seal: #7A1E2B; --wash: #F4EFE4; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: 'Newsreader', serif; font-size: 10.6pt; line-height: 1.42; color: var(--ink); background: #fff; }
+p { margin: 0 0 6pt; }
+h1, h2, h3 { font-family: 'Newsreader', serif; color: var(--ink); }
+h2 { font-weight: 800; font-size: 17pt; margin: 0 0 4pt; padding-top: 2pt; border-bottom: 2.2pt double var(--ink); padding-bottom: 3pt; break-after: avoid; }
+h2 .no { font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 10pt; color: var(--seal); margin-right: 6pt; vertical-align: 3pt; }
+h3 { font-weight: 600; font-size: 12pt; margin: 10pt 0 3pt; break-after: avoid; }
+.lead { font-size: 11.6pt; line-height: 1.4; margin: 6pt 0 8pt; }
+.kicker { font-family: 'Plex Mono', monospace; font-size: 7.6pt; letter-spacing: 0.9pt; text-transform: uppercase; color: var(--muted); }
+section { margin-bottom: 14pt; }
+.newpage { break-before: page; }
+ul, ol { margin: 0 0 7pt; padding-left: 15pt; }
+li { margin-bottom: 2pt; }
+b, strong { font-weight: 600; }
+code, .mono { font-family: 'Plex Mono', monospace; font-size: 8.6pt; }
+table { width: 100%; border-collapse: collapse; margin: 4pt 0 9pt; font-size: 9.2pt; line-height: 1.3; break-inside: auto; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th { font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 7.4pt; letter-spacing: 0.5pt; text-transform: uppercase; text-align: left; color: var(--soft); border-bottom: 1pt solid var(--ink); padding: 3pt 5pt 3pt 0; vertical-align: bottom; }
+td { border-bottom: 0.5pt solid var(--hair); padding: 3.5pt 5pt 3.5pt 0; vertical-align: top; }
+td.k { font-family: 'Plex Mono', monospace; font-size: 8.2pt; white-space: nowrap; color: var(--seal); }
+td.c { text-align: center; }
+.yes { color: #2F4A2A; font-weight: 600; }
+.no-x { color: var(--seal); font-weight: 600; }
+figure { margin: 8pt 0 10pt; break-inside: avoid; }
+figure img { display: block; width: 100%; border: 0.6pt solid var(--ink); }
+figure.narrow img { width: 72%; margin: 0 auto; }
+figure.half img { width: 58%; margin: 0 auto; }
+figcaption { font-size: 8.8pt; line-height: 1.35; color: var(--soft); margin-top: 4pt; font-style: italic; }
+figcaption b { font-style: normal; font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 7.8pt; color: var(--seal); letter-spacing: 0.4pt; margin-right: 3pt; }
+.side { display: flex; gap: 12pt; align-items: flex-start; break-inside: avoid; }
+.side > div { flex: 1; }
+.side figure { flex: 0 0 34%; margin-top: 2pt; }
+.box { border: 0.8pt solid var(--ink); background: #FAF7F0; padding: 6pt 9pt; margin: 6pt 0 10pt; break-inside: avoid; }
+.box .kicker { color: var(--seal); display: block; margin-bottom: 2pt; }
+.box p:last-child { margin-bottom: 0; }
+svg { display: block; width: 100%; height: auto; margin: 4pt 0 2pt; }
+svg text { font-family: 'Newsreader', serif; }
+svg .m { font-family: 'Plex Mono', monospace; }
+
+/* kapak */
+.cover { height: 258mm; display: flex; flex-direction: column; break-after: page; }
+.cover .top { display: flex; justify-content: space-between; font-family: 'Plex Mono', monospace; font-size: 8pt; letter-spacing: 1pt; color: var(--soft); border-bottom: 2.4pt double var(--ink); padding-bottom: 4pt; }
+.cover .mast { text-align: center; margin-top: 34mm; }
+.cover .mast img { width: 30mm; }
+.cover .mast .name { font-weight: 800; font-size: 52pt; letter-spacing: 6pt; line-height: 1; margin-top: 6mm; }
+.cover .mast .tag { font-style: italic; color: var(--soft); font-size: 12pt; margin-top: 3mm; }
+.cover .title { text-align: center; margin-top: 22mm; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); padding: 7mm 0; }
+.cover .title .t { font-weight: 800; font-size: 25pt; line-height: 1.15; }
+.cover .title .s { font-size: 12pt; color: var(--soft); margin-top: 3mm; line-height: 1.4; }
+.cover .meta { margin-top: auto; display: flex; justify-content: space-between; font-size: 10.5pt; border-top: 2.4pt double var(--ink); padding-top: 4mm; }
+.cover .meta .kicker { display: block; margin-bottom: 1mm; }
+.toc { columns: 2; column-gap: 14mm; font-size: 10pt; margin-top: 4pt; }
+.toc div { break-inside: avoid; padding: 1.5pt 0; border-bottom: 0.4pt dotted var(--hair); }
+.toc span { font-family: 'Plex Mono', monospace; font-size: 8pt; color: var(--seal); display: inline-block; width: 18pt; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); margin: 8pt 0 10pt; }
+.stats div { padding: 5pt 6pt; border-left: 0.5pt solid var(--hair); }
+.stats div:first-child { border-left: 0; padding-left: 0; }
+.stats .n { font-weight: 800; font-size: 18pt; line-height: 1.05; }
+.stats .l { font-size: 8.4pt; color: var(--soft); line-height: 1.25; }
+</style>
+</head>
+<body>
+
+<div class="cover" style="height:auto; break-after: auto">
+  <div class="top"><span>RESMÎ KAYIT · ANALİZ</span><span>2 EKİM 2026</span></div>
+  <div style="display:flex; align-items:center; gap:14pt; margin-top:10mm">
+    <img src="../rapor/gorseller/muhur.png" alt="Meşveret mührü" style="width:22mm">
+    <div>
+      <div class="kicker">Meşveret · veri madenciliği süreci</div>
+      <div style="font-weight:800; font-size:24pt; line-height:1.1">Baskın Tespitinin CRISP-DM Analizi</div>
+      <div style="color:var(--soft); font-size:11pt; margin-top:2mm">Yeni hesaplarla oylamanın ele geçirilmesini tespit eden bileşenin altı aşamada incelenmesi ve tohum verisiyle ölçülmesi</div>
+    </div>
+  </div>
+  <div class="meta" style="margin-top:8mm">
+    <div><span class="kicker">Hazırlayan</span>Alparslan Tuğra Şahin</div>
+    <div><span class="kicker">Ders</span>Yazılım Mühendisliğine Giriş</div>
+    <div style="text-align:right"><span class="kicker">Ölçüm</span>Karar Saati #1, 29 Eylül 2026</div>
+  </div>
+</div>
+
+<section style="margin-top:10pt">
+<h2><span class="no">0</span>Özet</h2>
+<p class="lead">CRISP-DM (Cross-Industry Standard Process for Data Mining), bir veri problemini altı aşamada ele alan standart süreçtir: iş anlayışı, veri anlayışı, veri hazırlama, modelleme, değerlendirme ve yayılım. Meşveret'te veriden karar üreten bileşen baskın tespitidir. Bu analiz onu bu altı aşamadan geçirir.</p>
+<div class="stats">
+  <div><div class="n">45</div><div class="l">Karar Saati #1'de Genel kapsamın seçmeni</div></div>
+  <div><div class="n">5 / 5</div><div class="l">gerçek baskıncının işaretlenen sayısı; yanlış işaret 0</div></div>
+  <div><div class="n">432 / 576</div><div class="l">eşik birleşiminde kusursuz sonuç; kaçırmaların hepsi küme eşiği 6'da</div></div>
+  <div><div class="n">4 / 5</div><div class="l">yapay senaryoda bilinen bir zayıflık doğrulandı</div></div>
+</div>
+<p>Sonuç: kural tabanlı tespit, tohumdaki baskın biçimini (art arda açılmış, birbirine yanıt veren hesaplar) her makul eşikte yakalıyor. Ancak tohumda baskıncı olmayan yeni üye bulunmadığı için yanlış işaret oranı gerçek veriyle ölçülemedi. Yapay senaryolar, aynı gün katılan gerçek bir grubun baskın sanıldığını ve zamana yayılan, etkileşimsiz ya da bölünmüş baskınların kaçtığını gösterdi. Bu sınırlar tasarım belgesinde bilinçli açık olarak zaten yazılıydı; ölçüm onları sayıyla doğruladı.</p>
+<svg viewBox="0 0 760 170" role="img" aria-label="CRISP-DM aşamaları">
+  <defs><marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
+  <g fill="none" stroke="#1B1A17" stroke-width="1.1">
+    <rect x="10" y="20" width="110" height="52" rx="4"/>
+    <rect x="137" y="20" width="110" height="52" rx="4"/>
+    <rect x="264" y="20" width="110" height="52" rx="4"/>
+    <rect x="391" y="20" width="110" height="52" rx="4"/>
+    <rect x="518" y="20" width="110" height="52" rx="4"/>
+    <rect x="645" y="20" width="105" height="52" rx="4" fill="#F4EFE4"/>
+    <path d="M120 46H135" marker-end="url(#c)"/><path d="M247 46H262" marker-end="url(#c)"/>
+    <path d="M374 46H389" marker-end="url(#c)"/><path d="M501 46H516" marker-end="url(#c)"/>
+    <path d="M628 46H643" marker-end="url(#c)"/>
+    <path d="M573 72V112H65V74" marker-end="url(#c)" stroke-dasharray="3 3"/>
+    <path d="M446 72V96H319V74" marker-end="url(#c)" stroke-dasharray="3 3"/>
+  </g>
+  <text x="65" y="43" text-anchor="middle" font-size="12" font-weight="600">1. İş anlayışı</text>
+  <text x="65" y="60" text-anchor="middle" font-size="9.5" fill="#4A463E">baskını önle</text>
+  <text x="192" y="43" text-anchor="middle" font-size="12" font-weight="600">2. Veri anlayışı</text>
+  <text x="192" y="60" text-anchor="middle" font-size="9.5" fill="#4A463E">katılım, etkileşim</text>
+  <text x="319" y="43" text-anchor="middle" font-size="12" font-weight="600">3. Hazırlama</text>
+  <text x="319" y="60" text-anchor="middle" font-size="9.5" fill="#4A463E">aday, kenar</text>
+  <text x="446" y="43" text-anchor="middle" font-size="12" font-weight="600">4. Modelleme</text>
+  <text x="446" y="60" text-anchor="middle" font-size="9.5" fill="#4A463E">bileşen + eşik</text>
+  <text x="573" y="43" text-anchor="middle" font-size="12" font-weight="600">5. Değerlendirme</text>
+  <text x="573" y="60" text-anchor="middle" font-size="9.5" fill="#4A463E">tohum + senaryo</text>
+  <text x="697" y="43" text-anchor="middle" font-size="12" font-weight="600">6. Yayılım</text>
+  <text x="697" y="60" text-anchor="middle" font-size="9.5" fill="#4A463E">Karar Saati</text>
+  <text x="330" y="128" font-size="9.5" fill="#6B6558">değerlendirme iş hedefini karşılamazsa başa dönülür</text>
+  <text x="330" y="92" font-size="9.5" fill="#6B6558">model veriyi yeniden şekillendirir</text>
+  <text x="10" y="160" font-size="10" fill="#4A463E">Aşamalar sırayla ama döngü hâlinde yürür: geri dönüş okları süreç modelinin parçasıdır.</text>
+</svg>
+</section>
+
+<section>
+<h2><span class="no">1</span>İş anlayışı</h2>
+<p class="lead">Amaç, kısa sürede açılmış ve birbirine bağlı hesaplarla bir oylamanın ele geçirilmesini, gerçek kimlik doğrulaması olmadan, oylama açılmadan önce tespit etmektir.</p>
+<ul>
+  <li><b>Sorun:</b> Meşveret'te oy hakkı e-posta doğrulamasıyla doğar ve kayıtta seçilen şehirde oy hakkı hemen başlar. Bir kişi ya da küçük bir grup, Karar Saati'nden önce hesap açıp birbirini destekleyerek bir oylamayı çevirebilir. Gerçek çözüm e-Devlet gibi bir kimlik doğrulamasıdır ve ödevin kapsamı dışındadır.</li>
+  <li><b>Paydaşlar:</b> oylamaya katılan yurttaşlar (sonucun meşruluğu), işaretlenen hesaplar (gerekçe hakkı), yönetmeliği oylayan topluluk (eşikler).</li>
+  <li><b>Başarı ölçütleri:</b> (1) tohumdaki baskın senaryosu yakalanmalı; (2) köklü üyeler işaretlenmemeli; (3) her işaretin okunabilir bir gerekçesi olmalı; (4) işaret içerik silmemeli, yalnızca o oylamada paydadan çıkarmalı; (5) eşikler oylanabilir olmalı.</li>
+  <li><b>Kısıtlar:</b> etiketli eğitim verisi yok; karar her denetçinin yeniden hesaplayabileceği kadar deterministik olmalı; Karar Saati açılışında saniyeler içinde çalışmalı.</li>
+</ul>
+<p>Veri madenciliği hedefi bu ölçütlerden çıkar: oylama anındaki seçmenler arasında yeni ve yoğun bağlantılı kümeleri bulan, açıklanabilir bir sınıflandırma.</p>
+</section>
+
+<section>
+<h2><span class="no">2</span>Veri anlayışı</h2>
+<p class="lead">Kullanılan iki veri vardır: her seçmenin kapsama katılım anı ve kullanıcılar arasındaki ETKİLEŞİM ağırlıkları. Karar Saati #1'in açılış anında (29 Eylül 2026, 10:00 İstanbul) Genel kapsamın 45 seçmeni vardı.</p>
+<table>
+<thead><tr><th>Sinyal</th><th>Nereden gelir</th><th>Ağırlık</th></tr></thead>
+<tbody>
+<tr><td>Yanıt</td><td>Bir mesajın başka birinin mesajına yanıt olması</td><td>1 (yanıt verenden yanıtlanana)</td></tr>
+<tr><td>Havale</td><td>Oy hakkının birine devredilmesi</td><td>2</td></tr>
+<tr><td>Yakın kayıt</td><td>İki hesabın 60 dakika içinde açılması</td><td>1 (iki yönde)</td></tr>
+<tr><td>Ortak başlık</td><td>Aynı başlığa 30 dakika içinde ilk kez katılmak</td><td>0,5 (iki yönde)</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th>Ölçüm (Karar Saati #1 açılışı)</th><th>Değer</th></tr></thead>
+<tbody>
+<tr><td>Genel kapsamda oy hakkı olan seçmen</td><td>45</td></tr>
+<tr><td>Seçmenler arasındaki yönlü etkileşim kenarı</td><td>92</td></tr>
+<tr><td>Yönsüz çift (iki yön toplanınca)</td><td>55</td></tr>
+<tr><td>Çift ağırlıklarının dağılımı</td><td>1,0: 24 çift · 2,0: 19 · 3,0: 8 · 4,0: 4</td></tr>
+<tr><td>Üyelik yaşı (gün)</td><td>en küçük 0,2 · medyan 364 · en büyük 7.300</td></tr>
+<tr><td>Son 7 günde katılan (aday)</td><td>5: mavi_kus, sari_kedi, yesil_at, mor_balik, turuncu_ari</td></tr>
+<tr><td>Adaylar arasındaki çift ve ağırlıkları</td><td>10 çift (olası çiftlerin tamamı) · ağırlıklar 3 ya da 4</td></tr>
+<tr><td>Adayların katılım yayılımı</td><td>32 dakika (4,5 ile 5,0 saat önce)</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><b>Veri kalitesi:</b> sinyaller niyetin değil davranışın vekilidir. Yanıt ağırlığı bir tartışmayla bir ittifakı ayırmaz. Yakın kayıt sinyali, aynı derste birlikte kaydolan gerçek öğrencileri de birbirine bağlar.</li>
+  <li><b>Etiket:</b> gerçek kullanımda hangi hesabın baskıncı olduğu bilinmez. Tohumda bilinir: <code>seed.RAIDERS</code> listesindeki 5 hesap. Değerlendirme bu etiketi kullanır.</li>
+  <li><b>Önemli bulgu:</b> tohumda son 7 günde katılan ve baskıncı olmayan hiçbir üye yoktur. Bu yüzden gerçek veride yanlış işaret çıkma olanağı yoktu; bu soru yapay senaryolarla sınanmıştır (§5).</li>
+</ul>
+</section>
+
+<section>
+<h2><span class="no">3</span>Veri hazırlama</h2>
+<p class="lead">Ham etkileşim grafı üç adımda kümelemeye hazır hâle gelir. Hazırlama, Karar Saati açılışının anlık görüntüsüyle yapılır: o andan sonraki etkileşimler hesaba girmez.</p>
+<ol>
+  <li><b>Aday seçimi:</b> katılım anı oylama anından en çok <code>baskin_yeni_uye_suresi</code> (7 gün) önce olan seçmenler. Köklü üyeler baştan dışarıda kalır; bu, yanlış işareti sınırlayan ilk kararımızdır.</li>
+  <li><b>Yön birleştirme:</b> A→B ve B→A ağırlıkları toplanıp tek yönsüz kenara çevrilir. Karşılıklı etkileşim tek yönlüden ağır basar.</li>
+  <li><b>Kenar eşiği:</b> toplam ağırlığı <code>baskin_min_agirlik</code> (1) ve üstü olan çiftler kenar olur. Tek bir ortak başlık (0,5) tek başına iki kişiyi bağlamaz.</li>
+</ol>
+<p>Her kümenin üç özniteliği hesaplanır: büyüklük (hesap sayısı), yoğunluk (içerideki kenar / olası kenar) ve katılım yayılımı (en erken ile en geç katılım arasındaki süre).</p>
+</section>
+
+<section>
+<h2><span class="no">4</span>Modelleme</h2>
+<p class="lead">Model kural tabanlıdır: aday grafının bağlı bileşenleri bulunur ve üç eşiği birlikte geçen bileşenler işaretlenir. Makine öğrenmesi bilinçli olarak kullanılmadı.</p>
+<table>
+<thead><tr><th>Eşik (yönetmelik maddesi)</th><th>Varsayılan</th><th>İzinli aralık</th><th>Anlamı</th></tr></thead>
+<tbody>
+<tr><td class="k">baskin_yeni_uye_suresi</td><td>7 gün</td><td>1 – 30 gün</td><td>Aday sayılacak yenilik</td></tr>
+<tr><td class="k">baskin_min_agirlik</td><td>1</td><td>0,5 – 10</td><td>Kenar sayılacak en düşük etkileşim</td></tr>
+<tr><td class="k">baskin_min_kume</td><td>4 hesap</td><td>3 – 20</td><td>İşaretlenecek en küçük küme</td></tr>
+<tr><td class="k">baskin_yogunluk_esigi</td><td>≥ 1/2</td><td>≥ 1/3 – ≥ 1</td><td>Kümenin ne kadar sıkı bağlı olduğu</td></tr>
+<tr><td class="k">baskin_katilim_araligi</td><td>24 saat</td><td>1 saat – 7 gün</td><td>Katılımların ne kadar dar bir zamana sığdığı</td></tr>
+</tbody>
+</table>
+<div class="box"><span class="kicker">Neden makine öğrenmesi değil</span>
+<p>Etiketli veri yok; bir sınıflandırıcıyı eğitecek gerçek baskın örneği bulunmuyor. Bir yurttaşın oyunu sayım dışı bırakan karar, kişinin okuyabileceği bir gerekçe ister: "5 hesaplık yeni ve yoğun bağlantılı küme (yoğunluk %100, katılım yayılımı 0,5 saat)". Eşikler topluluğun oylayabileceği sayılardır; bir modelin ağırlıkları oylanamaz. Sonuç deterministiktir: herkes aynı veriyle aynı kararı yeniden hesaplayabilir.</p></div>
+</section>
+
+<section>
+<h2><span class="no">5</span>Değerlendirme</h2>
+<p class="lead">Tohumdaki gerçek veriyle tespit kusursuz sonuç verdi: 5 baskıncının 5'i işaretlendi, 40 seçmenin hiçbiri yanlış işaretlenmedi. Bu sonuç güçlü bir genelleme değildir, çünkü veride baskıncı olmayan yeni üye yoktu.</p>
+<h3>Tohum verisi, varsayılan eşikler</h3>
+<table>
+<thead><tr><th></th><th>İşaretlendi</th><th>İşaretlenmedi</th></tr></thead>
+<tbody>
+<tr><td><b>Gerçek baskıncı</b></td><td class="yes">5 (doğru işaret)</td><td>0 (kaçan)</td></tr>
+<tr><td><b>Baskıncı değil</b></td><td>0 (yanlış işaret)</td><td class="yes">40 (doğru temiz)</td></tr>
+</tbody>
+</table>
+<p>Bulunan küme: 5 hesap, yoğunluk 1 (10 çiftin 10'u bağlı), katılım yayılımı 32 dakika. Karar Saati #1'in sonuç ekranında iki oylamada da "5 hesabın oyu baskın şüphesiyle sayılmadı" satırı görünür; hesaplar adıyla listelenmez.</p>
+<h3>Eşik taraması (576 birleşim)</h3>
+<p>Beş eşik birlikte tarandı: küme 3, 4, 5, 6; yoğunluk 1/3, 1/2, 2/3, 1; kenar ağırlığı 0,5, 1, 2, 3; yenilik 1, 7, 30 gün; yayılım 1, 24, 168 saat.</p>
+<table>
+<thead><tr><th>Sonuç</th><th>Birleşim</th><th>Açıklama</th></tr></thead>
+<tbody>
+<tr><td>Kusursuz (5 doğru, 0 yanlış)</td><td>432</td><td>Küme eşiği 3, 4 ya da 5 olan her birleşim</td></tr>
+<tr><td>Baskıncıların tamamı kaçtı</td><td>144</td><td>Küme eşiği 6: baskın 5 kişilik olduğu için küme sayılmadı</td></tr>
+<tr><td>Yanlış işaret</td><td>0</td><td>Adayların hepsi baskıncı olduğu için yanlış işaret mümkün değildi</td></tr>
+</tbody>
+</table>
+<p>Yorum: baskıncılar kayıtları 60 dakika içinde olduğu için birbirine iki yönde bağlı (ağırlık 2) ve ilk mesaja yanıt verdikleri için ek bağlı. Bu yüzden yoğunluk, ağırlık, yenilik ve yayılım eşiklerinin hiçbiri sonucu değiştirmedi; yalnızca küme büyüklüğü belirleyiciydi. Model, tohumdaki biçime karşı sağlam ama bu biçim kolay bir örnektir.</p>
+<h3>Yapay senaryolar (varsayılan eşikler, 30 köklü üye)</h3>
+<table>
+<thead><tr><th>Senaryo</th><th>Gerçek</th><th>Sonuç</th><th>Ne gösterir</th></tr></thead>
+<tbody>
+<tr><td>Tohumdaki biçim: 5 hesap 8 dakika arayla açılır, ilk mesaja yanıt verir</td><td>Baskın</td><td class="yes">5/5 yakalandı</td><td>Gerçek veri sonucuyla aynı</td></tr>
+<tr><td>Gerçek bir sınıf: 6 öğrenci aynı öğleden sonra kaydolur, birbirine yanıt verir</td><td>Baskın değil</td><td class="no-x">6 yanlış işaret</td><td>Yapı niyeti ayırmaz (bilinçli açık 8)</td></tr>
+<tr><td>Sabırlı baskın: 5 hesap ikişer gün arayla, 10 güne yayılır</td><td>Baskın</td><td class="no-x">5 kaçtı</td><td>Yayılım ve yenilik pencereleri aşılınca görünmez</td></tr>
+<tr><td>Sessiz baskın: 5 hesap 2 saat arayla açılır, hiç etkileşmez, yalnızca oy verir</td><td>Baskın</td><td class="no-x">5 kaçtı</td><td>Etkileşim yoksa kenar yok</td></tr>
+<tr><td>Bölünmüş baskın: 4 hesap ikişerli iki kümeye ayrılır</td><td>Baskın</td><td class="no-x">4 kaçtı</td><td>Küme eşiğinin altına bölünerek kaçılır</td></tr>
+</tbody>
+</table>
+<h3>İş hedefleriyle karşılaştırma</h3>
+<table>
+<thead><tr><th>Başarı ölçütü</th><th>Durum</th></tr></thead>
+<tbody>
+<tr><td>Tohumdaki baskın yakalanmalı</td><td class="yes">Karşılandı (5/5)</td></tr>
+<tr><td>Köklü üyeler işaretlenmemeli</td><td class="yes">Karşılandı: aday penceresi köklü üyeleri baştan dışlar</td></tr>
+<tr><td>Her işaretin gerekçesi olmalı</td><td class="yes">Karşılandı: gerekçe büyüklük, yoğunluk ve yayılımı yazar</td></tr>
+<tr><td>İşaret içerik silmemeli</td><td class="yes">Karşılandı: yalnızca o oylamada paydadan çıkarır</td></tr>
+<tr><td>Yeni gerçek kullanıcılar işaretlenmemeli</td><td class="no-x">Karşılanmadı: aynı gün katılan gerçek grup işaretlenir</td></tr>
+<tr><td>Dikkatli bir baskıncı yakalanmalı</td><td class="no-x">Karşılanmadı: zamana yayılan, sessiz ya da bölünen baskın kaçar</td></tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2><span class="no">6</span>Yayılım</h2>
+<p class="lead">Tespit iki yerde çalışır: her Karar Saati açılışında her oylamanın seçmen anlık görüntüsünde ve Mahzen'deki "öneriye dönüştür" oylamasının seçmen listesinde.</p>
+<div class="side">
+<div>
+<ul>
+  <li><b>Etki:</b> işaretlenen hesaplar o oylamanın paydasından çıkar; onlara verilen havaleler çekimser sayılır. İçerikleri silinmez, sonraki oylamalarda yeniden değerlendirilirler.</li>
+  <li><b>Şeffaflık:</b> kişi kendi oylama sayfasında gerekçeyi görür. Sonuç ekranında yalnızca sayı ve gerekçe görünür, adlar listelenmez. Sayılar deftere OYLAMA_SONUCU kaydıyla yazılır.</li>
+  <li><b>Yönetişim:</b> beş eşik yönetmelik maddesidir; topluluk onları 2/3 ile, izinli aralıklar içinde değiştirir. Model güncellemesi bir oylamadır.</li>
+  <li><b>İzleme:</b> her oturumda işaretlenen sayısı defterde durur; ani artış ya da hiç işaret olmaması incelenebilir.</li>
+  <li><b>Test:</b> tespitin birim testleri (<code>tests/domain/test_raid.py</code>) ve tohum senaryosu (7. senaryo) sürekli çalışır. Bu analizin betiği <code>docs/crisp/analiz.py</code>, sonuçları <code>docs/crisp/sonuclar.json</code> dosyasındadır.</li>
+</ul>
+</div>
+<figure style="flex: 0 0 42%">
+<img src="../rapor/gorseller/karar-saati-sonuc.png" alt="Karar Saati #1 sonuçları">
+<figcaption><b>Şekil 1.</b> Karar Saati #1: iki oylamada da "5 hesabın oyu baskın şüphesiyle sayılmadı" ve gerekçe satırı.</figcaption>
+</figure>
+</div>
+<h3>Bir sonraki döngü için öneriler</h3>
+<p>Değerlendirme iki iş hedefinin karşılanmadığını gösterdi. CRISP-DM'de bu, iş anlayışına geri dönmek demektir. Önerilenler henüz uygulanmamıştır.</p>
+<ol>
+  <li><b>İtiraz yoluyla etiket toplamak:</b> işaretlenen hesabın itiraz edebilmesi ve topluluğun kararı, ileride gerçek etiketli veri üretir.</li>
+  <li><b>Birikimi izlemek:</b> sabırlı baskın için yenilik penceresinin yerine hesapların zaman içinde aynı yönde oy verme örüntüsüne bakmak (oy gizliliğiyle çelişmeden, yalnızca açık temsilci oyları üzerinden).</li>
+  <li><b>Sessiz baskın için oylama anı:</b> etkileşimsiz ama aynı dakikalarda ilk kez oy veren yeni hesapları ayrı bir sinyal olarak eklemek.</li>
+  <li><b>Gerçek grupları ayırmak:</b> gerçek kimlik doğrulaması olmadan yapısal olarak mümkün değil; bilinçli açık olarak kalır. Gerekçe gösterme ve içerik silmeme, yanlış işaretin zararını sınırlar.</li>
+</ol>
+</section>
+
+</body>
+</html>

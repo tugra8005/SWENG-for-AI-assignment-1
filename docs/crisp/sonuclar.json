@@ -1,0 +1,242 @@
+{
+ "veri": {
+  "an": "2026-09-29T07:00:00+00:00",
+  "secmen": 45,
+  "yonlu_kenar": 92,
+  "yonsuz_cift": 55,
+  "agirlik_dagilimi": {
+   "1.0": 24,
+   "2.0": 19,
+   "3.0": 8,
+   "4.0": 4
+  },
+  "aday_7_gun": 5,
+  "adaylar": [
+   {
+    "takma_ad": "turuncu_ari",
+    "katilim_saat_once": 4.5,
+    "baskinci": true
+   },
+   {
+    "takma_ad": "mor_balik",
+    "katilim_saat_once": 4.6,
+    "baskinci": true
+   },
+   {
+    "takma_ad": "yesil_at",
+    "katilim_saat_once": 4.7,
+    "baskinci": true
+   },
+   {
+    "takma_ad": "sari_kedi",
+    "katilim_saat_once": 4.9,
+    "baskinci": true
+   },
+   {
+    "takma_ad": "mavi_kus",
+    "katilim_saat_once": 5.0,
+    "baskinci": true
+   }
+  ],
+  "aday_kenar": 10,
+  "aday_kenar_agirliklari": [
+   3.0,
+   3.0,
+   3.0,
+   3.0,
+   3.0,
+   3.0,
+   4.0,
+   4.0,
+   4.0,
+   4.0
+  ],
+  "uyelik_yasi_gun": {
+   "en_kucuk": 0.2,
+   "medyan": 364.0,
+   "en_buyuk": 7300.0
+  },
+  "gercek_baskinci": [
+   "mavi_kus",
+   "mor_balik",
+   "sari_kedi",
+   "turuncu_ari",
+   "yesil_at"
+  ]
+ },
+ "temel": {
+  "esikler": {
+   "baskin_yeni_uye_suresi": {
+    "gun": 7
+   },
+   "baskin_katilim_araligi": {
+    "saat": 24
+   },
+   "baskin_min_kume": {
+    "deger": 4
+   },
+   "baskin_yogunluk_esigi": {
+    "oran": "1/2",
+    "karsilastirma": ">="
+   },
+   "baskin_min_agirlik": {
+    "deger": 1
+   }
+  },
+  "kumeler": [
+   {
+    "uyeler": [
+     "mavi_kus",
+     "mor_balik",
+     "sari_kedi",
+     "turuncu_ari",
+     "yesil_at"
+    ],
+    "yogunluk": "1",
+    "yayilim_dk": 32,
+    "gerekce": "5 hesaplık yeni ve yoğun bağlantılı küme (yoğunluk %100, katılım yayılımı 0,5 saat): baskın şüphesi."
+   }
+  ],
+  "skor": {
+   "dogru_isaret": 5,
+   "yanlis_isaret": 0,
+   "kacan": 0,
+   "dogru_temiz": 40
+  }
+ },
+ "tarama": {
+  "birlesim": 576,
+  "kusursuz": 432,
+  "kacan_var": 144,
+  "yanlis_isaret_var": 0,
+  "kacanlarin_kume_esigi": {
+   "6": 144
+  },
+  "kacanlarin_agirlik_esigi": {
+   "0.5": 36,
+   "1": 36,
+   "2": 36,
+   "3": 36
+  },
+  "en_cok_yanlis_isaret": 0,
+  "tek_degisken": {
+   "kume": {
+    "3": {
+     "dogru_isaret": 5,
+     "yanlis_isaret": 0,
+     "kacan": 0,
+     "dogru_temiz": 40
+    },
+    "4": {
+     "dogru_isaret": 5,
+     "yanlis_isaret": 0,
+     "kacan": 0,
+     "dogru_temiz": 40
+    },
+    "5": {
+     "dogru_isaret": 5,
+     "yanlis_isaret": 0,
+     "kacan": 0,
+     "dogru_temiz": 40
+    },
+    "6": {
+     "dogru_isaret": 0,
+     "yanlis_isaret": 0,
+     "kacan": 5,
+     "dogru_temiz": 40
+    }
+   },
+   "agirlik": {
+    "0.5": {
+     "dogru_isaret": 5,
+     "yanlis_isaret": 0,
+     "kacan": 0,
+     "dogru_temiz": 40
+    },
+    "1": {
+     "dogru_isaret": 5,
+     "yanlis_isaret": 0,
+     "kacan": 0,
+     "dogru_temiz": 40
+    },
+    "2": {
+     "dogru_isaret": 5,
+     "yanlis_isaret": 0,
+     "kacan": 0,
+     "dogru_temiz": 40
+    },
+    "3": {
+     "dogru_isaret": 5,
+     "yanlis_isaret": 0,
+     "kacan": 0,
+     "dogru_temiz": 40
+    }
+   }
+  }
+ },
+ "senaryolar": [
+  {
+   "senaryo": "Sınıf (gerçek kullanıcılar, aynı gün)",
+   "isaretlenen": [
+    "ogr0",
+    "ogr1",
+    "ogr2",
+    "ogr3",
+    "ogr4",
+    "ogr5"
+   ],
+   "skor": {
+    "dogru_isaret": 0,
+    "yanlis_isaret": 6,
+    "kacan": 0,
+    "dogru_temiz": 30
+   }
+  },
+  {
+   "senaryo": "Sabırlı baskın (10 güne yayılmış)",
+   "isaretlenen": [],
+   "skor": {
+    "dogru_isaret": 0,
+    "yanlis_isaret": 0,
+    "kacan": 5,
+    "dogru_temiz": 30
+   }
+  },
+  {
+   "senaryo": "Sessiz baskın (etkileşimsiz)",
+   "isaretlenen": [],
+   "skor": {
+    "dogru_isaret": 0,
+    "yanlis_isaret": 0,
+    "kacan": 5,
+    "dogru_temiz": 30
+   }
+  },
+  {
+   "senaryo": "Tohumdaki biçim (art arda kayıt + yanıt)",
+   "isaretlenen": [
+    "bas0",
+    "bas1",
+    "bas2",
+    "bas3",
+    "bas4"
+   ],
+   "skor": {
+    "dogru_isaret": 5,
+    "yanlis_isaret": 0,
+    "kacan": 0,
+    "dogru_temiz": 30
+   }
+  },
+  {
+   "senaryo": "Bölünmüş baskın (2+2)",
+   "isaretlenen": [],
+   "skor": {
+    "dogru_isaret": 0,
+    "yanlis_isaret": 0,
+    "kacan": 4,
+    "dogru_temiz": 30
+   }
+  }
+ ]
+}
