@@ -37,12 +37,20 @@ function QuickLoginInner() {
   const [available, setAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
+    // API o an kapalıysa (yeniden başlatılıyor) düğme kaybolmasın: 4 sn arayla yeniden sorulur.
+    // Üretim API'si 404 döner (/_dev yok); o zaman düğme hiç görünmez ve sormak da biter.
     let alive = true;
-    api('/_dev/demo')
-      .then(() => alive && setAvailable(true))
-      .catch(() => undefined); // üretim API'si: /_dev yok, düğme görünmez
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = () =>
+      api('/_dev/demo')
+        .then(() => alive && setAvailable(true))
+        .catch((e) => {
+          if (alive && e?.status !== 404) timer = setTimeout(check, 4000);
+        });
+    check();
     return () => {
       alive = false;
+      if (timer) clearTimeout(timer);
     };
   }, []);
   if (!available) return null;

@@ -1,11 +1,13 @@
 """Site içi bildirimler: kişinin oy verdiği ya da açtığı önerilerin sonucu.
 
-Bildirimler yalnızca sitedeki zilde görünür; e-posta ya da push yoktur. Üç tür:
+Bildirimler yalnızca sitedeki zilde görünür; e-posta ya da push yoktur. Dört tür:
 
 - ``KARAR_SAATI``: oturum kapanınca, oturumda oy veren (doğrudan ya da havaleyle) ya da önerisi
   oylanan her yurttaşa tek bildirim; her öneri için sonuç ve kişinin oyu.
 - ``SESSIZ_ONAY``: hızlı şeritteki öneri itiraz eşiği aşılmadan süresini doldurunca öneri sahibine.
 - ``YAVAS_SERIT``: itiraz eşiği aşılıp öneri Karar Saati kuyruğuna geçince öneri sahibine.
+- ``DILEKCE``: dilekçe kuruma iletilince öneri sahibine; kurumun yanıtı işlenince öneri sahibine
+  ve konunun katılımcılarına (yanıtı işleyen hariç).
 
 Gizli oy yalnızca sahibine gösterilir. Havaleyle kullanılan oyda temsilcinin oyu zaten açıktır.
 Bildirimler deftere yazılmaz: kişiye özeldir ve karar kaydı değildir.
@@ -20,7 +22,18 @@ from typing import Any
 from sqlalchemy import func, select, update
 
 from mesveret.context import Ctx
-from mesveret.db.models import Ballot, DecisionSession, Notification, Proposal, SessionItem, User
+from mesveret.db.models import (
+    Ballot,
+    DecisionSession,
+    Message,
+    Notification,
+    Petition,
+    PetitionReply,
+    Proposal,
+    SessionItem,
+    Topic,
+    User,
+)
 from mesveret.services import ontology
 from mesveret.services.oracle import ORACLE_ID
 from mesveret.services.profile import nickname_map
@@ -118,6 +131,33 @@ def moved_to_slow_lane(ctx: Ctx, p: Proposal, count: int, threshold: int) -> Non
     line = (f"{_label(p)}: itiraz eşiği aşıldı ({count}/{threshold}); öneri Karar Saati'nde "
             "oylanacak.")
     _add(ctx, p.proposer_id, "YAVAS_SERIT", "Önerinize itiraz edildi", [line], f"/oneri/{p.id}")
+    ctx.db.flush()
+
+
+def petition_sent(ctx: Ctx, pet: Petition, proposer_id: str) -> None:
+    to = ", ".join(r["name"] for r in pet.recipients)
+    what = "Kararınız" if pet.kind == "KARAR" else "Dilekçeniz"
+    _add(ctx, proposer_id, "DILEKCE", f"{what} iletildi",
+         [f"{pet.number} · {pet.subject}", f"Alıcı: {to}. Yasal yanıt süresi 30 gün."],
+         f"/dilekce/{pet.id}")
+    ctx.db.flush()
+
+
+def petition_replied(ctx: Ctx, pet: Petition, reply: PetitionReply, institution: str,
+                     entered_by: str) -> None:
+    topic = ctx.db.get(Topic, pet.topic_id)
+    proposal = ctx.db.get(Proposal, pet.proposal_id)
+    people = set(ctx.db.execute(select(Message.author_id).where(
+        Message.topic_id == pet.topic_id)).scalars())
+    if topic is not None:
+        people.add(topic.author_id)
+    if proposal is not None:
+        people.add(proposal.proposer_id)
+    people.discard(entered_by)
+    excerpt = reply.text if len(reply.text) <= 160 else reply.text[:157].rstrip() + "…"
+    for uid in sorted(people):
+        _add(ctx, uid, "DILEKCE", f"{institution} yanıt verdi",
+             [f"{pet.number} · {pet.subject}", excerpt], f"/dilekce/{pet.id}")
     ctx.db.flush()
 
 

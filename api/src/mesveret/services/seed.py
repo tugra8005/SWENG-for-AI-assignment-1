@@ -38,7 +38,15 @@ from sqlalchemy import select
 
 from mesveret import clock
 from mesveret.context import Ctx
-from mesveret.db.models import CellarPost, DevVotePlan, Proposal, SchedulerState, Topic, User
+from mesveret.db.models import (
+    CellarPost,
+    DevVotePlan,
+    Petition,
+    Proposal,
+    SchedulerState,
+    Topic,
+    User,
+)
 from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.scopes import ScopeSubtype
 from mesveret.services import (
@@ -47,6 +55,7 @@ from mesveret.services import (
     delegation,
     ontology,
     oracle,
+    petitions,
     proposals,
     scheduler,
     topics,
@@ -437,10 +446,10 @@ def _user(c: Ctx, w: World, nickname: str, full_name: str, city: str, birth: dat
 
 
 def _topic(w: World, key: str, author: str, title: str, body: str, area: str, scope: str,
-           when: datetime, parent: str | None = None) -> None:
+           when: datetime, parent: str | None = None, addressee: str | None = "takvim") -> None:
     def open_(c: Ctx) -> None:
         inp = ProposalInput(type="ALT_KONU" if parent else "KONU", title=title, body=body,
-                            area_id=area, scope_id=scope,
+                            area_id=area, scope_id=scope, addressee=addressee,
                             parent_topic_id=w.ids[parent] if parent else None)
         w.ids[f"p:{key}"] = proposals.open_proposal(c, w.users[author], inp).id
 
@@ -464,6 +473,14 @@ def _msg(w: World, key: str, who: str, topic_key: str, text: str, when: datetime
         w.ids[key] = msg.id
 
     w.at(when, run)
+
+
+def _reply(c: Ctx, w: World, topic_key: str, who: str, recipient: str, text: str,
+           reference: str) -> None:
+    pet = c.db.execute(select(Petition).where(Petition.topic_id == w.ids[topic_key])
+                       .order_by(Petition.id)).scalars().first()
+    petitions.add_reply(c, w.users[who], pet.id, recipient_id=recipient, text=text,
+                        replied_on=c.now.astimezone(petitions.TZ).date(), reference=reference)
 
 
 def _queued_by_objection(w: World, key: str, author: str, inp: ProposalInput, opened: datetime,
@@ -594,10 +611,15 @@ def _background(w: World) -> None:
          _t(days=21, hours=-6))
     _topic(w, "belgesel-ayi", "nazli", "Belgesel ayı",
            "Kasım ayını belgesellere ayıralım; her hafta bir belgesel.", "belgesel",
-           "ilgi:sinema", _t(days=20), parent="film")
+           "ilgi:sinema", _t(days=20), parent="film", addressee=None)
     _topic(w, "pazar", "emre", "İstanbul semt pazarları",
            "Semt pazarlarının saatleri mahalleye göre ayarlansın.", "kent", "sehir:istanbul",
-           _t(days=19))
+           _t(days=19), addressee="belediye:istanbul")
+    # Dilekçenin bütün döngüsü: konu kabul edilince İBB'ye gitti; yanıtını konuyu açan işledi.
+    w.at(_t(days=9), lambda c: _reply(c, w, "pazar", "emre", "belediye:istanbul", (
+        "Semt pazarlarının kuruluş ve kapanış saatleri ilçe belediyeleriyle birlikte yeniden "
+        "değerlendirilecektir. Mahalle muhtarlıklarından gelen görüşler toplanarak Kasım ayı "
+        "Meclis gündemine alınması planlanmaktadır."), "E-34990417-120.01-2219"))
     _msg(w, "m_belgesel1", "nazli", "belgesel-ayi",
          "İlk hafta için doğa belgeseli yerine bir şehir belgeseli öneriyorum.",
          _t(days=18, hours=14))
@@ -620,7 +642,8 @@ def _background(w: World) -> None:
 def _scenario_deletion(w: World) -> None:
     """4. Silme: iki gerekçeli silme (IK-2 %60 → ret, IK-1 %67 → kabul) ve kendi mesajını silme."""
     _topic(w, "bisiklet", "hale", "Bisiklet yolları",
-           "Ana caddelere korunaklı bisiklet yolu yapılsın.", "bisiklet", "genel", _t(days=16))
+           "Ana caddelere korunaklı bisiklet yolu yapılsın.", "bisiklet", "genel", _t(days=16),
+           addressee="belediyeler")
     _msg(w, "m_bis1", "ceren", "bisiklet", "Önce okul çevrelerinden başlayalım.", _t(days=14))
     _msg(w, "troll", "kaba_kul", "bisiklet",
          "Bu konuyu açanların hepsi cahil; bisikletliler trafiğin baş belası.", _t(days=13))
@@ -651,7 +674,8 @@ def _scenario_deletion(w: World) -> None:
 def _scenario_closure(w: World) -> None:
     """5. Kapanış."""
     _topic(w, "parklar", "zeynep", "Parkların kapanış saati",
-           "Mahalle parkları gece kaçta kapanmalı?", "parklar", "genel", _t(days=12))
+           "Mahalle parkları gece kaçta kapanmalı?", "parklar", "genel", _t(days=12),
+           addressee="belediyeler")
     _msg(w, "m_park1", "burak", "parklar", "22:00 hem güvenli hem yeterli.", _t(days=10))
     _msg(w, "m_park2", "ilker", "parklar", "Yazın gece yarısına kadar açık kalmalı.",
          _t(days=10, hours=-3))
@@ -686,7 +710,7 @@ def _scenarios_voting(w: World) -> None:
     _queued_by_objection(w, "metro", "umut", ProposalInput(
         type="KONU", title="Gece metro seferleri",
         body="Metro hafta sonları gece de çalışsın; sefer aralıkları 20 dakika olsun.",
-        area_id="ulasim", scope_id="genel",
+        area_id="ulasim", scope_id="genel", addressee="bakanlik:ulastirma",
     ), _t(days=8, hours=8), ["vedat", "yasemin", "cansu"])
     w.at(_t(days=8), lambda c: w.ids.__setitem__("yonetmelik_60", proposals.open_proposal(
         c, w.users["dogan"], ProposalInput(
@@ -701,12 +725,12 @@ def _scenarios_voting(w: World) -> None:
     _queued_by_objection(w, "baskin", "emre", ProposalInput(
         type="KONU", title="Parklar sabaha kadar açık kalsın",
         body="Mahalle parkları gece kapanmasın; parklar sabaha kadar açık kalsın.",
-        area_id="parklar", scope_id="genel",
+        area_id="parklar", scope_id="genel", addressee="belediyeler",
     ), _t(days=7, hours=18), ["fatih", "gulsen", "harun"])
     _queued_by_objection(w, "hatif", "ipek", ProposalInput(
         type="KONU", title="Belgesel film gösterimleri",
         body="Her ay bir belgesel izleyip ardından belgesel üzerine konuşalım.",
-        area_id="edebiyat", scope_id="genel",
+        area_id="edebiyat", scope_id="genel", addressee="takvim",
     ), _t(days=7, hours=12), ["kerem", "melis", "nevzat"])
     # 10. Eşzamanlı çoğunluk: orantısız etkilenen İstanbul ayrıca oylar; eşit kesinti tek oylama.
     w.at(_t(days=7, hours=10), lambda c: w.ids.__setitem__("pay_yarisi", proposals.open_proposal(
@@ -714,13 +738,13 @@ def _scenarios_voting(w: World) -> None:
             type="KONU", title="İstanbul payının yarısı Ankara'ya",
             body="Ankara'daki etkinlikler daha kalabalık; etkinlik bütçesinde İstanbul payının "
                  "yarısı Ankara'ya aktarılsın.",
-            area_id="kent", scope_id="genel", resource_ids=["butce"],
+            area_id="kent", scope_id="genel", resource_ids=["butce"], addressee="takvim",
             share_effect={"butce": {"sehir:istanbul": 2000, "sehir:ankara": 8000}},
         )).id))
     _queued_by_objection(w, "kesinti", "dogan", ProposalInput(
         type="KONU", title="Tüm şehirlerin payında %10 kesinti",
         body="Etkinlik bütçesinde her şehrin payı %10 azaltılsın; artan kısım yedekte kalsın.",
-        area_id="kent", scope_id="genel", resource_ids=["butce"],
+        area_id="kent", scope_id="genel", resource_ids=["butce"], addressee="takvim",
         share_effect={"butce": {"sehir:istanbul": 3600, "sehir:ankara": 5400,
                                 "sehir:izmir": 4500, "sehir:bursa": 4500}},
     ), _t(days=7, hours=6), ["okan", "pinar", "rana"])
@@ -729,7 +753,7 @@ def _scenarios_voting(w: World) -> None:
     _queued_by_objection(w, "artis", "ece", ProposalInput(
         type="KONU", title="Tüm şehirlerin payında %5 artış",
         body="Etkinlik bütçesinde her şehrin payı %5 artsın; yedekteki kısım kullanılsın.",
-        area_id="kent", scope_id="genel", resource_ids=["butce"],
+        area_id="kent", scope_id="genel", resource_ids=["butce"], addressee="takvim",
         share_effect={"butce": {"sehir:istanbul": 4200, "sehir:ankara": 6300,
                                 "sehir:izmir": 5250, "sehir:bursa": 5250}},
     ), _t(days=7, hours=5), ["tolga", "umut", "yasemin"])
@@ -819,6 +843,7 @@ def _scenario_istanbul(w: World) -> None:
             type="KONU", title="Etkinlik bütçesinin tamamı İstanbul'a",
             body="İstanbul'daki etkinlikler için tüm bütçe kullanılsın.",
             area_id="kent", scope_id="sehir:istanbul", resource_ids=["butce"],
+            addressee="takvim",
         )).id))
 
 

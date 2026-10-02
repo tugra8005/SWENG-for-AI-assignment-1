@@ -26,6 +26,7 @@ import {
   useWide,
 } from '@/components/paper';
 import { PrintImage } from '@/components/media';
+import { AddresseeLine } from '@/components/petition';
 import { ProposalForm } from '@/components/proposal-form';
 import { maturityDetail, maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
@@ -174,6 +175,7 @@ export default function ProposalPage() {
           {p.area_name ? ` · ${p.area_name}` : ''}
         </Muted>
       </View>
+      {p.addressee?.kind !== 'IC' ? <AddresseeLine a={p.addressee} /> : null}
       <Rule double />
     </>
   );

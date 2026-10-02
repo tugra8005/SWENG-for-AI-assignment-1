@@ -36,7 +36,7 @@ def open_topic(ctx: Ctx, user: User, title: str = "Film günleri", *, area: str 
                scope: str = "genel", body: str = "Her ay bir film izleyelim.") -> Topic:
     """Bir KONU önerisi açar ve sessiz onayla kabul ettirir; oluşan konuyu döner."""
     p = proposals.open_proposal(ctx, user, ProposalInput(
-        type="KONU", title=title, body=body, area_id=area, scope_id=scope,
+        type="KONU", addressee="takvim", title=title, body=body, area_id=area, scope_id=scope,
     ))
     proposals.accept(ctx.at(p.deadline_at), p)
     ctx.db.commit()

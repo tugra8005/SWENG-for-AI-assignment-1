@@ -36,7 +36,7 @@ def due_world(ctx):
     ctx.graph.set_delegation(a.id, b.id, None, ctx.now - 178 * DAY, ctx.now + 2 * DAY)
     request = delegation.request_delegation(ctx, c, "baris", "ulasim")
     silent = proposals.open_proposal(ctx, a, ProposalInput(
-        type="KONU", title="Kitap takası", body="Ayda bir kitap takası.", area_id="edebiyat",
+        type="KONU", addressee="takvim", title="Kitap takası", body="Ayda bir kitap takası.", area_id="edebiyat",
         scope_id="genel"))
     topic = open_topic(ctx, a, title="Park saatleri", area="kent")
     post(ctx, b, topic, "Bence 22:00.")

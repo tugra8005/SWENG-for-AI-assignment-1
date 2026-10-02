@@ -14,14 +14,14 @@ from typing import Any
 from sqlalchemy import func, select
 
 from mesveret.context import Ctx
-from mesveret.db.models import Media, Message, Topic, User
+from mesveret.db.models import Media, Message, Petition, PetitionReply, Topic, User
 from mesveret.domain import images
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
 from mesveret.services import ledger
 
 MAX_PER_ITEM = 4  # bir mesaja eklenebilecek görsel
 MAX_UNATTACHED = 12  # kişi başına yüklenmiş ama henüz eklenmemiş görsel
-KINDS = ("mesaj", "oneri")
+KINDS = ("mesaj", "oneri", "yanit")
 VARIANTS = {"baski": "image/png", "ozgun": "image/jpeg"}
 
 
@@ -146,6 +146,13 @@ def gone_reason(ctx: Ctx, m: Media) -> str | None:
         topic = ctx.db.execute(
             select(Topic).where(Topic.accepted_proposal_id == m.attached_id)
         ).scalar_one_or_none()
+        if topic is not None and topic.deleted_by_proposal_id is not None:
+            return (f"Bu görselin bulunduğu konu #{topic.deleted_by_proposal_id} numaralı "
+                    "oylamayla silindi.")
+    elif m.attached_kind == "yanit":
+        reply = ctx.db.get(PetitionReply, m.attached_id)
+        pet = ctx.db.get(Petition, reply.petition_id) if reply is not None else None
+        topic = ctx.db.get(Topic, pet.topic_id) if pet is not None else None
         if topic is not None and topic.deleted_by_proposal_id is not None:
             return (f"Bu görselin bulunduğu konu #{topic.deleted_by_proposal_id} numaralı "
                     "oylamayla silindi.")

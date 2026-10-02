@@ -201,7 +201,7 @@ def test_revealed_draft_enters_normal_flow_when_submitted(ctx):
     with pytest.raises(Forbidden):
         proposals.submit_draft(ctx, users[1], draft_id, ProposalInput(type="KONU"))
     p = proposals.submit_draft(ctx, users[0], draft_id, ProposalInput(
-        type="KONU", area_id="kultur", scope_id="genel",
+        type="KONU", addressee="takvim", area_id="kultur", scope_id="genel",
     ))
     assert p.status == "SILENT"
     assert p.payload["cellar_thread_id"] == t.id

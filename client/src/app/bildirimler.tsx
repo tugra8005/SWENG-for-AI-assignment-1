@@ -11,7 +11,7 @@ import { fonts, paper } from '@/theme/tokens';
 
 type Item = {
   id: number;
-  kind: 'KARAR_SAATI' | 'SESSIZ_ONAY' | 'YAVAS_SERIT';
+  kind: 'KARAR_SAATI' | 'SESSIZ_ONAY' | 'YAVAS_SERIT' | 'DILEKCE';
   title: string;
   lines: string[];
   link: string | null;
@@ -23,6 +23,7 @@ const LINK_LABEL: Record<Item['kind'], string> = {
   KARAR_SAATI: 'Oturumun sonuçları →',
   SESSIZ_ONAY: 'Öneriyi aç →',
   YAVAS_SERIT: 'Öneriyi aç →',
+  DILEKCE: 'Dilekçeyi aç →',
 };
 
 export default function Notifications() {

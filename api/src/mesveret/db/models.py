@@ -114,6 +114,8 @@ class Topic(Base):
     accepted_proposal_id: Mapped[int | None] = mapped_column(Integer)
     deleted_by_proposal_id: Mapped[int | None] = mapped_column(Integer)
     ledger_hash: Mapped[str | None] = mapped_column(String(64))
+    # Konunun iletildiği yer (``domain.addressees``): takvim ya da bir kurum.
+    addressee: Mapped[str | None] = mapped_column(String(64))
 
     @property
     def resource_id(self) -> str:
@@ -169,9 +171,57 @@ class Media(Base):
     original: Mapped[bytes] = deferred(mapped_column(LargeBinary))
     print_png: Mapped[bytes] = deferred(mapped_column(LargeBinary))
     created_at: Mapped[datetime] = mapped_column(TS)
-    attached_kind: Mapped[str | None] = mapped_column(String(16))  # mesaj | oneri
+    attached_kind: Mapped[str | None] = mapped_column(String(16))  # mesaj | oneri | yanit
     attached_id: Mapped[int | None] = mapped_column(Integer)
     position: Mapped[int] = mapped_column(Integer, default=0)
+    ledger_hash: Mapped[str | None] = mapped_column(String(64))
+
+
+class Petition(Base):
+    """Dilekçe: kuruma iletilen konu (TALEP) ya da kapanış Kararı (KARAR).
+
+    Kurum muhataplı konu kabul edilince talep, konu karara bağlanınca karar bildirimi gider.
+    İmza satırı gönderim anında sabitlenmez: Karar Saati sonucu (``basis``) okunarak gösterilir.
+    """
+
+    __tablename__ = "petitions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(8))  # TALEP | KARAR
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"), index=True)
+    proposal_id: Mapped[int] = mapped_column(ForeignKey("proposals.id"))
+    addressee: Mapped[str] = mapped_column(String(64))  # seçilen muhatap ("belediyeler" dahil)
+    recipients: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)  # [{id, name}]
+    subject: Mapped[str] = mapped_column(String(200))
+    text: Mapped[str] = mapped_column(Text)
+    # Dayanak: {"kind": "KARAR_SAATI", "session_id"} ya da {"kind": "SESSIZ_ONAY", "objections",
+    # "threshold"}
+    basis: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    sent_at: Mapped[datetime] = mapped_column(TS)
+    ledger_hash: Mapped[str | None] = mapped_column(String(64))
+
+    @property
+    def number(self) -> str:
+        return f"MŞV-{self.sent_at.year}-{self.id:04d}"
+
+
+class PetitionReply(Base):
+    """Kurumun yanıtı: konunun bir katılımcısı yanıt yazısını işler (metin, tarih, taranmış belge).
+
+    Defter yanıtı kimin işlediğini kaydeder; yanıtın kurumdan geldiğini doğrulamaz.
+    """
+
+    __tablename__ = "petition_replies"
+    __table_args__ = (UniqueConstraint("petition_id", "recipient_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    petition_id: Mapped[int] = mapped_column(ForeignKey("petitions.id"), index=True)
+    recipient_id: Mapped[str] = mapped_column(String(64))
+    text: Mapped[str] = mapped_column(Text)
+    reference: Mapped[str | None] = mapped_column(String(80))  # kurumun yazısının sayısı
+    replied_on: Mapped[date] = mapped_column(Date)  # yazının tarihi
+    entered_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    entered_at: Mapped[datetime] = mapped_column(TS)
     ledger_hash: Mapped[str | None] = mapped_column(String(64))
 
 

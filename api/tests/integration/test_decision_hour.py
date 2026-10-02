@@ -29,7 +29,7 @@ def queued_regulation(ctx, user, key="red_bekleme", value=None):
 def queued_konu(ctx, user, title="Metro gece de çalışsın", area="ulasim", scope="genel",
                 body="Metro gece seferleri.", matured=True):
     p = proposals.open_proposal(ctx, user, ProposalInput(
-        type="KONU", title=title, body=body, area_id=area, scope_id=scope,
+        type="KONU", addressee="takvim", title=title, body=body, area_id=area, scope_id=scope,
     ))
     p.status, p.lane, p.queued_at = "QUEUED", "SLOW", ctx.now
     ctx.db.commit()
@@ -514,7 +514,7 @@ def _budget_world(ctx):
     delegate(ctx, i3, "aylin", None)  # İstanbul dışına giden havale
     ctx.commit()
     p = mature(ctx, proposals.open_proposal(ctx, a, ProposalInput(
-        type="KONU", title="İstanbul payının yarısı Ankara'ya",
+        type="KONU", addressee="takvim", title="İstanbul payının yarısı Ankara'ya",
         body="Etkinlik bütçesinde İstanbul payının yarısı Ankara'ya aktarılsın.", area_id="kent",
         scope_id="genel", resource_ids=["butce"], share_effect=HALF_TO_ANKARA,
     )))

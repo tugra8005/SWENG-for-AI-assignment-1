@@ -26,6 +26,7 @@ import {
   type DeletionBasis,
 } from '@/components/paper';
 import { ImageAttach, PictureSet, PrintImage, type MediaItem } from '@/components/media';
+import { AddresseeLine, PetitionBox } from '@/components/petition';
 import { maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { fmtDateAblative, fmtDateTime, fmtDayMonth, STATUS_LABELS, TYPE_LABELS, withDative } from '@/lib/format';
@@ -304,6 +305,7 @@ export default function TopicPage() {
       <Muted>
         {t.author} önerdi · {fmtDateTime(t.proposed_at)} · kabul: {fmtDateTime(t.created_at)}
       </Muted>
+      <AddresseeLine a={t.addressee} note={false} />
       <Rule double />
     </>
   );
@@ -342,7 +344,12 @@ export default function TopicPage() {
       ) : null}
     </>
   );
-  const decision = t.decision ? <Decision d={t.decision} onChanged={topic.reload} /> : null;
+  const decision = (
+    <>
+      {t.decision ? <Decision d={t.decision} onChanged={topic.reload} /> : null}
+      <PetitionBox items={t.petitions} />
+    </>
+  );
   const actions = (
     <>
       {me ? (

@@ -1,4 +1,4 @@
-"""Denetim kuralları R1, R2, R3, R5, R6, R7, R8 (R4 havalede: ``domain.delegation``).
+"""Denetim kuralları R1, R2, R3, R5, R6, R7, R8, R9 (R4 havalede: ``domain.delegation``).
 
 Her öneri açılırken çalışır; ihlaller Türkçe gerekçeyle döner. Hâtif oylama anında
 aynı kuralları yeniden çalıştırır.
@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from mesveret.domain import addressees
 from mesveret.domain.ontology import OntologyView, ResourceInfo, ResourceKind, ScopeInfo
 from mesveret.domain.regulation import Regulation, range_violations
 from mesveret.domain.scopes import GENERAL_SCOPE_ID, ScopeSubtype
@@ -44,6 +45,8 @@ class ProposalDraft:
     article_key: str | None = None
     article_action: str | None = None
     new_value: Mapping | None = None
+    # KONU/ALT_KONU: önerinin iletileceği yer (``domain.addressees``); R9 denetler.
+    addressee: str | None = None
 
 
 @dataclass(frozen=True)
@@ -298,6 +301,25 @@ def _check_r8(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
         ))
 
 
+def _check_r9(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
+    """Muhatap: konu önerisi bir yere iletilmek için açılır; kapsam yalnızca yetki alanındaki
+    muhataba yazar (R2'nin muhatap karşılığı)."""
+    if d.type not in (ProposalType.KONU, ProposalType.ALT_KONU):
+        return
+    if not d.addressee:
+        report.violations.append(Violation(
+            "R9", "Muhatap seçilmeli: konu önerisi bir yere iletilmek için açılır (Meşveret "
+                  "Takvimi ya da bir kurum)."))
+        return
+    a = addressees.lookup(d.addressee, c.onto.city_scopes())
+    if a is None:
+        report.violations.append(Violation("R9", f"Muhatap bulunamadı: {d.addressee}."))
+        return
+    scope = c.onto.scope(d.scope_id)
+    if scope is not None and (reason := addressees.jurisdiction_refusal(scope, a)):
+        report.violations.append(Violation("R9", reason))
+
+
 def _check_area(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
     needs_area = d.type in (ProposalType.KONU, ProposalType.ALT_KONU)
     if needs_area and (d.area_id is None or c.onto.area(d.area_id) is None):
@@ -313,4 +335,5 @@ def check_proposal(d: ProposalDraft, c: RuleContext) -> RuleReport:
     _check_r6(c, report)
     _check_r7(d, c, report)
     _check_r8(d, c, report)
+    _check_r9(d, c, report)
     return report

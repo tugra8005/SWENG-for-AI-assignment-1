@@ -16,7 +16,7 @@ RAISE = {"sehir:istanbul": 4200, "sehir:ankara": 3150, "sehir:izmir": 2100}  # h
 
 def _budget(ctx, user, title, effect, *, queued=True):
     p = proposals.open_proposal(ctx, user, ProposalInput(
-        type="KONU", title=title, body="Etkinlik bütçesinin payları değişsin.", area_id="kent",
+        type="KONU", addressee="takvim", title=title, body="Etkinlik bütçesinin payları değişsin.", area_id="kent",
         scope_id="genel", resource_ids=["butce"], share_effect={"butce": effect},
     ))
     if queued:

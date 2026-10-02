@@ -55,7 +55,7 @@ def test_concurrent_sub_vote_decides_openness_separately(ctx):
     ctx.commit()
     p = mature(ctx, proposals.open_proposal(
         ctx, ank, ProposalInput(
-            type="KONU", title="İstanbul payının yarısı Ankara'ya", body="Pay aktarılsın.",
+            type="KONU", addressee="takvim", title="İstanbul payının yarısı Ankara'ya", body="Pay aktarılsın.",
             area_id="kent", scope_id="genel", resource_ids=["butce"],
             share_effect={"butce": {"sehir:istanbul": 2000, "sehir:ankara": 5000}},
         )))

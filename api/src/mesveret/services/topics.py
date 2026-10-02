@@ -233,7 +233,7 @@ def topic_summary(ctx: Ctx, topic: Topic) -> dict:
             Message.topic_id == topic.id, Message.is_opening.is_(False)
         )
     ).scalar_one()
-    from mesveret.services import proposals  # proposals bu modülü içe aktarır
+    from mesveret.services import petitions, proposals  # ikisi de bu modülü içe aktarır
 
     accepted = ctx.db.get(Proposal, topic.accepted_proposal_id) if topic.accepted_proposal_id else None
     return {
@@ -246,6 +246,7 @@ def topic_summary(ctx: Ctx, topic: Topic) -> dict:
         "created_at": topic.created_at, "message_count": count,
         # KONU önerisiyle gelen kapak görseli: kabul edilince konunun da kapağıdır.
         "cover": media.cover(ctx, accepted.id) if accepted else None,
+        "addressee": petitions.addressee_view(ctx, topic.addressee),
     }
 
 
@@ -257,7 +258,7 @@ def list_topics(ctx: Ctx, area_id: str | None = None) -> list[dict]:
 
 
 def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
-    from mesveret.services import decision_hour, proposals  # ikisi de bu modülü içe aktarır
+    from mesveret.services import decision_hour, petitions, proposals  # bu modülü içe aktarırlar
 
     topic = get_topic(ctx, topic_id)
     if topic.deleted_by_proposal_id is not None:
@@ -335,6 +336,7 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
                      for m in messages if not m.is_opening],
         "pending_deletion": pending.get(None),
         "decision": decision_view,
+        "petitions": petitions.for_topic(ctx, topic.id),
         "narrowings": narrowings,
         "subtopics": [topic_summary(ctx, t) for t in subtopics],
         "proposals": related,

@@ -122,7 +122,7 @@ def test_topic_proposal_cover_becomes_topic_cover_and_dies_with_topic(ctx, clien
     a, b = make_user(ctx, "ayse"), make_user(ctx, "bora")
     pic = _upload(client, ctx, a, alt="Eski bir sinema salonunun girişi").json()
     r = client.post("/proposals", headers=headers_for(ctx, a), json={
-        "type": "KONU", "title": "Mahalle sineması", "body": "Ayda bir gösterim.",
+        "type": "KONU", "addressee": "takvim", "title": "Mahalle sineması", "body": "Ayda bir gösterim.",
         "area_id": "sinema", "scope_id": "genel", "cover_media_id": pic["id"],
     })
     assert r.status_code == 201, r.text

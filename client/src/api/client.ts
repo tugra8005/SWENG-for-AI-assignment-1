@@ -1,6 +1,28 @@
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+
 /** Meşveret API istemcisi. Hata gövdesi: { detail, violations }. */
 
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '');
+const LOCAL = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+
+/**
+ * API adresi. ``EXPO_PUBLIC_API_URL`` bilgisayarın kendisini gösteriyorsa (localhost) ve uygulama
+ * başka bir makineden açılmışsa (telefonun tarayıcısı ya da Expo Go, aynı Wi-Fi), adres o makinenin
+ * adresine çevrilir: telefonda "localhost" telefonun kendisidir, API'ye ulaşılamaz, giriş yapılamaz.
+ * Emülatör ``adb reverse`` ile 127.0.0.1 kullanır; ona dokunulmaz.
+ */
+function resolveApiUrl(): string {
+  const base = new URL(process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000');
+  if (LOCAL.has(base.hostname)) {
+    let host: string | undefined;
+    if (Platform.OS === 'web' && typeof window !== 'undefined') host = window.location.hostname;
+    else host = Constants.expoConfig?.hostUri?.split(':')[0];
+    if (host && !LOCAL.has(host)) base.hostname = host;
+  }
+  return base.toString().replace(/\/$/, '');
+}
+
+export const API_URL = resolveApiUrl();
 
 export type Violation = { rule: string; message: string };
 

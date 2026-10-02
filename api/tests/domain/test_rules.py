@@ -23,6 +23,7 @@ def konu(**kw) -> ProposalDraft:
     base = {
         "type": ProposalType.KONU, "proposer_id": "u1", "scope_id": "genel",
         "area_id": "sinema", "resource_ids": (), "title": "Film günleri", "body": "",
+        "addressee": "takvim",
     }
     base.update(kw)
     return ProposalDraft(**base)

@@ -12,7 +12,7 @@ from tests.integration.world import make_user
 
 
 def konu_input(**kw) -> ProposalInput:
-    base = {"type": "KONU", "title": "Film günleri", "body": "Her ay bir film.",
+    base = {"type": "KONU", "addressee": "takvim", "title": "Film günleri", "body": "Her ay bir film.",
             "area_id": "sinema", "scope_id": "genel"}
     base.update(kw)
     return ProposalInput(**base)
@@ -34,7 +34,7 @@ def test_topic_proposal_opens_in_fast_lane_with_oracle_comment(ctx, ledger):
 def test_rule_violation_rejects_with_turkish_reasons(client, ctx):
     u = make_user(ctx, "ayse", city="İstanbul")
     r = client.post("/proposals", headers=headers_for(ctx, u), json={
-        "type": "KONU", "title": "Salon İstanbul'a", "body": "Salonu İstanbul kullansın.",
+        "type": "KONU", "addressee": "takvim", "title": "Salon İstanbul'a", "body": "Salonu İstanbul kullansın.",
         "area_id": "kent", "scope_id": "sehir:istanbul", "resource_ids": ["salon"],
     })
     assert r.status_code == 422
@@ -47,7 +47,7 @@ def test_rule_violation_rejects_with_turkish_reasons(client, ctx):
 def test_istanbul_budget_proposal_is_narrowed_to_its_share(client, ctx):
     u = make_user(ctx, "ayse", city="İstanbul")
     r = client.post("/proposals", headers=headers_for(ctx, u), json={
-        "type": "KONU", "title": "Etkinlik bütçesinin tamamı İstanbul'a",
+        "type": "KONU", "addressee": "takvim", "title": "Etkinlik bütçesinin tamamı İstanbul'a",
         "body": "Bütçenin tamamı İstanbul etkinliklerine.", "area_id": "kent",
         "scope_id": "sehir:istanbul", "resource_ids": ["butce"],
     })
@@ -383,7 +383,8 @@ def test_content_rule_can_be_removed_and_its_code_is_never_reused(ctx, client, l
         type="YONETMELIK", article_action="kaldir", article_key="IK-3", body="Gereksiz.",
     ))
     assert p.payload == {"article_key": "IK-3", "action": "kaldir",
-                         "old_value": ctx.reg.raw("IK-3"), "new_value": None}
+                         "old_value": ctx.reg.raw("IK-3"), "new_value": None,
+                         "addressee": "mesveret"}
     assert p.title == "Yönetmelik: IK-3 kaldırılsın (Başkasının kişisel bilgilerini ifşa etme)"
     proposals.accept(ctx, p)
     ctx.commit()
@@ -526,10 +527,10 @@ def test_closed_topic_is_read_only_and_reopens_after_waiting_period(ctx):
         post(ctx, b, topic, "Geç kaldım.")
     with pytest.raises(DomainError):
         proposals.open_proposal(ctx.at(ctx.now + timedelta(days=30)), a, ProposalInput(
-            type="KONU", reopens_topic_id=topic.id, body="Yeniden konuşalım.",
+            type="KONU", addressee="takvim", reopens_topic_id=topic.id, body="Yeniden konuşalım.",
         ))
     p2 = proposals.open_proposal(ctx.at(ctx.now + timedelta(days=91)), a, ProposalInput(
-        type="KONU", reopens_topic_id=topic.id, body="Yeniden konuşalım.",
+        type="KONU", addressee="takvim", reopens_topic_id=topic.id, body="Yeniden konuşalım.",
     ))
     proposals.accept(ctx.at(ctx.now + timedelta(days=92)), p2)
     ctx.db.refresh(topic)
@@ -542,7 +543,7 @@ def test_closed_topic_is_read_only_and_reopens_after_waiting_period(ctx):
 def test_api_objection_and_listing(client, ctx):
     a, b = make_user(ctx, "ayse"), make_user(ctx, "bora")
     r = client.post("/proposals", headers=headers_for(ctx, a), json={
-        "type": "KONU", "title": "Metro saatleri", "body": "Metro gece de çalışsın.",
+        "type": "KONU", "addressee": "takvim", "title": "Metro saatleri", "body": "Metro gece de çalışsın.",
         "area_id": "ulasim", "scope_id": "genel",
     })
     pid = r.json()["id"]
@@ -563,7 +564,7 @@ EQUAL_CUT = {"butce": {"sehir:istanbul": 3600, "sehir:ankara": 2700, "sehir:izmi
 
 
 def budget_input(effect, title="İstanbul payının yarısı Ankara'ya"):
-    return ProposalInput(type="KONU", title=title, body="Etkinlik bütçesi yeniden dağıtılsın.",
+    return ProposalInput(type="KONU", addressee="takvim", title=title, body="Etkinlik bütçesi yeniden dağıtılsın.",
                          area_id="kent", scope_id="genel", resource_ids=["butce"],
                          share_effect=effect)
 
@@ -571,7 +572,7 @@ def budget_input(effect, title="İstanbul payının yarısı Ankara'ya"):
 def test_general_budget_proposal_must_declare_structured_effect(ctx, client):
     a = make_user(ctx, "aylin", city="Ankara")
     r = client.post("/proposals", headers=headers_for(ctx, a), json={
-        "type": "KONU", "title": "İstanbul payının yarısı Ankara'ya",
+        "type": "KONU", "addressee": "takvim", "title": "İstanbul payının yarısı Ankara'ya",
         "body": "İstanbul payının yarısı Ankara'ya aktarılsın.", "area_id": "kent",
         "scope_id": "genel", "resource_ids": ["butce"],
     })

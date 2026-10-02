@@ -31,6 +31,7 @@ class ProposalIn(BaseModel):
     article_action: str = "degistir"
     share_effect: dict[str, dict[str, Any]] | None = None
     cover_media_id: str | None = None
+    addressee: str | None = None
 
 
 class RivalIn(BaseModel):

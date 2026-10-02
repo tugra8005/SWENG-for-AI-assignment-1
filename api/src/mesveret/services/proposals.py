@@ -54,10 +54,19 @@ from mesveret.domain.shares import ShareImpact, impact_lines, pct, share_impact
 from mesveret.domain.text import normalize
 from mesveret.domain.types import ProposalStatus, ProposalType, initial_lane
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
-from mesveret.services import ledger, media, notifications, ontology, regulation, topics
+from mesveret.services import (
+    ledger,
+    media,
+    notifications,
+    ontology,
+    petitions,
+    regulation,
+    topics,
+)
 from mesveret.services.profile import nickname_map
 
 MAX_TITLE = 200
+INTERNAL = "mesveret"  # yönetmelik, silme, düzenleme: Meşveret'in iç düzeni
 MAX_BODY = 20_000
 OPEN_STATUSES = ("SILENT", "RIVAL_PERIOD", "QUEUED", "VOTING")
 
@@ -86,6 +95,8 @@ class ProposalInput:
     share_effect: dict[str, dict[str, Any]] | None = None
     # KONU/ALT_KONU: önceden yüklenmiş kapak görseli (kabul edilince konunun kapağı olur)
     cover_media_id: str | None = None
+    # KONU/ALT_KONU: önerinin iletileceği yer (R9); ALT_KONU verilmezse üst konununkini alır.
+    addressee: str | None = None
 
 
 @dataclass
@@ -173,7 +184,8 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
             t, _title(inp.title or f"Yeniden açma: {topic.title}"),
             _body(inp.body, label="Gerekçe"), topic.area_id,
             inp.scope_id or topic.owner_scope_id, [topic.resource_id],
-            f"YENIDEN_ACMA:{topic.id}", {"topic_id": topic.id, "reopen": True},
+            f"YENIDEN_ACMA:{topic.id}",
+            {"topic_id": topic.id, "reopen": True, "addressee": topic.addressee},
         )
 
     if t in (ProposalType.KONU, ProposalType.ALT_KONU):
@@ -193,13 +205,16 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
                 if (r := ctx.graph.resource(rid)) is not None and r.divisible
             }
         parent_rid = None
+        addressee = inp.addressee
         if t is ProposalType.ALT_KONU:
             parent = _live_topic(ctx, inp.parent_topic_id)
             payload["parent_topic_id"] = parent.id
             parent_rid = parent.resource_id
             key = f"ALT_KONU:{parent.id}:{normalize(title)}"
+            addressee = addressee or parent.addressee
         else:
             key = f"KONU:{inp.area_id}:{normalize(title)}"
+        payload["addressee"] = addressee
         return Prepared(
             t, title, _body(inp.body, label="Açılış metni"), inp.area_id, inp.scope_id,
             _resource_labels(ctx, inp.resource_ids), key, payload, parent_rid,
@@ -223,7 +238,7 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
             topic.area_id, inp.scope_id or topic.owner_scope_id, [topic.resource_id],
             f"ICERIK:mesaj:{msg.id}",
             {"topic_id": topic.id, "message_id": msg.id, "base_version": current.version_no,
-             "new_text": new_text, "opening": msg.is_opening},
+             "new_text": new_text, "opening": msg.is_opening, "addressee": INTERNAL},
         )
 
     if t is ProposalType.SILME:
@@ -251,11 +266,13 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
             t, _title(inp.title or default_title), _body(inp.body, required=False),
             topic.area_id, inp.scope_id or topic.owner_scope_id, [topic.resource_id], key,
             {"topic_id": topic.id, **target, "rules": rules, "excerpt": inp.excerpt.strip(),
-             "own": own},
+             "own": own, "addressee": INTERNAL},
         )
 
     if t is ProposalType.YONETMELIK:
-        return _prepare_regulation(ctx, inp)
+        prep = _prepare_regulation(ctx, inp)
+        prep.payload["addressee"] = INTERNAL
+        return prep
 
     # KAPANIS
     topic = _live_topic(ctx, inp.target_topic_id)
@@ -274,7 +291,7 @@ def _prepare(ctx: Ctx, user: User, inp: ProposalInput) -> Prepared:
     return Prepared(
         t, _title(inp.title or f"Kapanış: {topic.title}"), _body(inp.body, label="Karar metni"),
         topic.area_id, inp.scope_id or topic.owner_scope_id, [topic.resource_id],
-        f"KAPANIS:{topic.id}", {"topic_id": topic.id},
+        f"KAPANIS:{topic.id}", {"topic_id": topic.id, "addressee": topic.addressee},
     )
 
 
@@ -380,6 +397,7 @@ def draft_of(ctx: Ctx, p: Proposal | Prepared, proposer_id: str) -> ProposalDraf
         article_key=p.payload.get("article_key") if str(p.type) == "YONETMELIK" else None,
         article_action=p.payload.get("action") if str(p.type) == "YONETMELIK" else None,
         new_value=p.payload.get("new_value") if str(p.type) == "YONETMELIK" else None,
+        addressee=p.payload.get("addressee"),
     )
 
 
@@ -539,7 +557,7 @@ def submit_draft(ctx: Ctx, user: User, proposal_id: int, inp: ProposalInput) -> 
         raise Forbidden("Taslağı yalnızca sahibi gönderebilir.")
     prep = _prepare(ctx, user, ProposalInput(
         type="KONU", title=inp.title or p.title, body=inp.body or p.body, area_id=inp.area_id,
-        scope_id=inp.scope_id, resource_ids=inp.resource_ids,
+        scope_id=inp.scope_id, resource_ids=inp.resource_ids, addressee=inp.addressee,
     ))
     cover = _cover(ctx, user, inp, ProposalType.KONU)
     report = run_rules(ctx, draft_of(ctx, prep, user.id), exclude_id=p.id)
@@ -661,6 +679,7 @@ def _new_topic(ctx: Ctx, p: Proposal, parent_id: int | None) -> Topic:
     topic = Topic(
         title=p.title, area_id=p.area_id, parent_id=parent_id, owner_scope_id=p.scope_id,
         author_id=p.proposer_id, status="OPEN", created_at=ctx.now, accepted_proposal_id=p.id,
+        addressee=p.payload.get("addressee"),
     )
     ctx.db.add(topic)
     ctx.db.flush()
@@ -685,8 +704,10 @@ def _apply(ctx: Ctx, p: Proposal, winner_text_id: int | None) -> None:
         topic.status, topic.reopened_at = "OPEN", ctx.now
         ledger.enqueue(ctx, "KONU_YENIDEN_ACILDI", {"konu": topic.id, "oneri": p.id})
     elif t in (ProposalType.KONU, ProposalType.ALT_KONU):
-        _new_topic(ctx, p, p.payload.get("parent_topic_id"))
+        topic = _new_topic(ctx, p, p.payload.get("parent_topic_id"))
         _apply_share_effect(ctx, p)
+        # Kurum muhataplı konu: kabul edilen talep kuruma dilekçe olarak gider.
+        petitions.send(ctx, topic, p, "TALEP", p.body)
     elif t is ProposalType.DUZENLEME:
         msg = topics.get_message(ctx, p.payload["message_id"])
         topics.add_version(ctx, msg, p.payload["new_text"], p.proposer_id, via_proposal_id=p.id)
@@ -723,6 +744,8 @@ def _apply(ctx: Ctx, p: Proposal, winner_text_id: int | None) -> None:
         ledger.enqueue(ctx, "KARAR", {
             "karar": d.id, "konu": topic.id, "oneri": p.id, "metin": d.text,
         }, ref=d)
+        # Kurum muhataplı konunun Kararı aynı kuruma karar bildirimi olarak iletilir.
+        petitions.send(ctx, topic, p, "KARAR", d.text)
 
 
 def share_conflicts(ctx: Ctx, p: Proposal) -> list[dict]:
@@ -856,6 +879,7 @@ def summary(ctx: Ctx, p: Proposal, names: dict[str, str]) -> dict:
         "scope_id": p.scope_id, "area_id": p.area_id, "area_name": ontology.area_name(ctx, p.area_id)
         if p.area_id else None, "created_at": p.created_at, "deadline_at": p.deadline_at,
         "decided_at": p.decided_at,
+        "addressee": petitions.addressee_view(ctx, p.payload.get("addressee")),
     }
 
 

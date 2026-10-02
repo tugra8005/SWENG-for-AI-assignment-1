@@ -48,7 +48,7 @@ def test_fast_lane_fall_starts_the_clock_at_the_fall(ctx):
     a = make_user(ctx, "aylin", city="İstanbul")
     objectors = [make_user(ctx, f"itiraz{i}", city="İstanbul") for i in range(3)]
     p = proposals.open_proposal(ctx, a, ProposalInput(
-        type="KONU", title="Kadıköy çarşısı", body="Çarşı pazar günü de açık olsun.",
+        type="KONU", addressee="takvim", title="Kadıköy çarşısı", body="Çarşı pazar günü de açık olsun.",
         area_id="kent", scope_id="sehir:istanbul",
     ))
     fall = T0 + timedelta(hours=20)
@@ -70,7 +70,7 @@ def test_fast_lane_fall_starts_the_clock_at_the_fall(ctx):
 def test_interest_scope_of_non_leaf_area_is_wide(ctx):
     a = make_user(ctx, "aylin", interests=("sinema",))
     p = proposals.open_proposal(ctx, a, ProposalInput(
-        type="KONU", title="Sinema kulübü", body="Haftalık gösterim.", area_id="sinema",
+        type="KONU", addressee="takvim", title="Sinema kulübü", body="Haftalık gösterim.", area_id="sinema",
         scope_id="ilgi:sinema",
     ))
     p.status, p.lane, p.queued_at = "QUEUED", "SLOW", ctx.now

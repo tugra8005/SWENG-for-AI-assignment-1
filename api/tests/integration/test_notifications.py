@@ -89,17 +89,23 @@ def test_notifications_api_lists_and_marks_read(seeded, client):  # noqa: F811
     h = headers_for(ctx, user(ctx, "umut"))
     assert client.get("/notifications").status_code == 401
     body = client.get("/notifications", headers=h).json()
-    assert body["unread"] == 2  # itiraz (tohum) + Karar Saati
-    assert [i["kind"] for i in body["items"]] == ["KARAR_SAATI", "YAVAS_SERIT"]  # en yenisi önce
+    assert body["unread"] == 3  # itiraz (tohum) + metro dilekçesi + Karar Saati
+    # En yenisi önce; metro kabul edilince Ulaştırma Bakanlığı'na dilekçe gitti.
+    assert [i["kind"] for i in body["items"]] == ["KARAR_SAATI", "DILEKCE", "YAVAS_SERIT"]
+    sent = body["items"][1]
+    assert sent["title"] == "Dilekçeniz iletildi"
+    assert sent["lines"][1] == ("Alıcı: T.C. Ulaştırma ve Altyapı Bakanlığı. Yasal yanıt süresi "
+                                "30 gün.")
     assert not any(i["read"] for i in body["items"])
 
-    first = body["items"][1]["id"]
+    first = body["items"][2]["id"]
     assert client.post("/notifications/read", json={"ids": [first]}, headers=h).json() == {"marked": 1}
-    assert client.get("/notifications/unread", headers=h).json() == {"unread": 1}
-    assert client.post("/notifications/read", json={}, headers=h).json() == {"marked": 1}
+    assert client.get("/notifications/unread", headers=h).json() == {"unread": 2}
+    assert client.post("/notifications/read", json={}, headers=h).json() == {"marked": 2}
     assert client.get("/notifications/unread", headers=h).json() == {"unread": 0}
 
     # Başkasının bildirimi işaretlenemez.
     other = headers_for(ctx, user(ctx, "ceren"))
     assert client.post("/notifications/read", json={"ids": [first]}, headers=other).json() == {"marked": 0}
-    assert notifications.unread_count(ctx, user(ctx, "ceren")) == 1
+    # ceren: Karar Saati + semt pazarı konusuna yazdığı için İBB'nin yanıtı (tohum)
+    assert notifications.unread_count(ctx, user(ctx, "ceren")) == 2

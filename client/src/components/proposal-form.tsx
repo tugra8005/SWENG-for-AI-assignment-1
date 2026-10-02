@@ -205,6 +205,8 @@ export function ProposalForm({
   const [excerpt, setExcerpt] = useState('');
   // Yeni konunun kapak görseli: kabul edilince konunun ve haberin görseli olur.
   const [cover, setCover] = useState<MediaItem[]>([]);
+  // Muhatap (R9): kapsam seçilince sunucu her muhatabın bu kapsama açık olup olmadığını söyler.
+  const [addressee, setAddressee] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
 
   const currentText = history.data?.versions?.at(-1)?.text ?? '';
@@ -215,6 +217,9 @@ export function ProposalForm({
   const article = regulation.data?.find((a) => a.key === articleKey);
   const regAction = type === 'YONETMELIK' ? (ctx.action ?? 'degistir') : null;
   const needsLabels = (type === 'KONU' && !ctx.reopen) || type === 'ALT_KONU';
+  const addressees = useApi<any[]>(needsLabels ? `/addressees${scope ? `?scope_id=${scope}` : ''}` : null);
+  const chosenAddressee = (addressees.data ?? []).find((a) => a.id === addressee);
+  const inherited = type === 'ALT_KONU' ? topic.data?.addressee : null;
   // Sahip kapsamın oyladığı bölünebilir kaynaklar: etkiyi kapsam başına bildirmek zorunlu (R2).
   const splitResources = (resources.data ?? []).filter(
     (r) => picked.includes(r.id) && r.divisible && scope === r.owner_scope_id,
@@ -239,6 +244,7 @@ export function ProposalForm({
     const payload: Record<string, unknown> = { type, title, body };
     if (needsLabels) Object.assign(payload, { area_id: area, scope_id: scope, resource_ids: picked });
     if (needsLabels && cover.length) payload.cover_media_id = cover[0].id;
+    if (needsLabels && addressee) payload.addressee = addressee;
     if (needsLabels && splitResources.length) {
       payload.share_effect = Object.fromEntries(
         splitResources.map((r) => [
@@ -448,6 +454,28 @@ export function ProposalForm({
             }))}
             onChange={setScope}
           />
+          <Choice
+            label="Kime iletilecek? (muhatap)"
+            value={addressee}
+            options={(addressees.data ?? []).map((a) => ({
+              value: a.id,
+              label: a.name,
+              note: !a.allowed ? 'bu kapsam yazamaz' : a.kind === 'TAKVIM' ? 'etkinlik' : 'dilekçe',
+              disabled: !a.allowed,
+            }))}
+            onChange={setAddressee}
+          />
+          <Muted style={{ marginTop: -6, marginBottom: 14, fontSize: 14 }}>
+            {chosenAddressee && !chosenAddressee.allowed
+              ? chosenAddressee.refusal
+              : chosenAddressee?.kind === 'KURUM'
+                ? `Kabul edilirse ${chosenAddressee.name} adresine dilekçe olarak gider; konu karara bağlanınca Karar da iletilir. Yanıt süresi 30 gündür (3071 sayılı Kanun).`
+                : chosenAddressee?.kind === 'TAKVIM'
+                  ? 'Kabul edilirse Meşveret Takvimi’ne yazılır.'
+                  : inherited
+                    ? `Seçmezseniz üst konunun muhatabı kullanılır: ${inherited.name}.`
+                    : 'Her konu bir yere iletilmek için açılır: takvime ya da bir kuruma. Kapsam yalnızca yetki alanındaki kuruma yazar (R9).'}
+          </Muted>
           <Chips
             label="Etkilenen kaynaklar (isteğe bağlı)"
             options={(resources.data ?? [])

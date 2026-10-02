@@ -51,7 +51,7 @@ def test_scenario_1_istanbul(seeded):
     assert proposals.effective_title(p) == "Etkinlik bütçesinin İstanbul payı"
     with pytest.raises(DomainError) as err:
         proposals.open_proposal(ctx, user(ctx, "ayse"), ProposalInput(
-            type="KONU", title="Toplantı salonu yalnızca İstanbul'a",
+            type="KONU", addressee="takvim", title="Toplantı salonu yalnızca İstanbul'a",
             body="Salon İstanbul'un olsun.", area_id="kent", scope_id="sehir:istanbul",
             resource_ids=["salon"],
         ))
