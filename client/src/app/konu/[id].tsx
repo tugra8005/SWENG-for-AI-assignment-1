@@ -25,6 +25,7 @@ import {
   useWide,
   type DeletionBasis,
 } from '@/components/paper';
+import { ImageAttach, PictureSet, PrintImage, type MediaItem } from '@/components/media';
 import { maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
 import { fmtDateAblative, fmtDateTime, fmtDayMonth, STATUS_LABELS, TYPE_LABELS, withDative } from '@/lib/format';
@@ -43,6 +44,7 @@ type Msg = {
   deleted_by_proposal_id?: number;
   deletion_basis?: DeletionBasis | null;
   pending_deletion?: Pending | null;
+  media?: MediaItem[];
 };
 
 type Pending = { proposal_id: number; decides_at: string | null };
@@ -125,7 +127,10 @@ function Message({ m, topic, onChanged }: { m: Msg; topic: any; onChanged: () =>
           </View>
         </View>
       ) : (
-        <Body>{m.text}</Body>
+        <>
+          <Body>{m.text}</Body>
+          <PictureSet items={m.media} />
+        </>
       )}
       <View style={[st.actions, { marginTop: 8 }]}>
         <Seal hash={m.ledger_hash} />
@@ -245,6 +250,7 @@ export default function TopicPage() {
   const topic = useApi<any>(`/topics/${id}`);
   const wide = useWide();
   const [text, setText] = useState('');
+  const [pics, setPics] = useState<MediaItem[]>([]);
   const [error, setError] = useState<unknown>(null);
   const t = topic.data;
 
@@ -269,9 +275,10 @@ export default function TopicPage() {
     try {
       await api(`/topics/${t.id}/messages`, {
         method: 'POST',
-        body: { text, reply_to: reply ? Number(reply) : null },
+        body: { text, reply_to: reply ? Number(reply) : null, media_ids: pics.map((x) => x.id) },
       });
       setText('');
+      setPics([]);
       router.setParams({ reply: undefined });
       topic.reload();
     } catch (e) {
@@ -302,12 +309,18 @@ export default function TopicPage() {
   );
   const opening = (
     <>
+      {t.cover ? (
+        <View style={{ marginTop: 14, marginBottom: 6 }}>
+          <PrintImage m={t.cover} maxHeight={420} />
+        </View>
+      ) : null}
       {t.narrowings?.map((n: any, i: number) => (
         <NarrowingBox key={i} message={n.message} share={n.share} total={n.total} />
       ))}
       {t.opening ? (
         <View>
           <InitialText text={t.opening.text} style={st.opening} />
+          <PictureSet items={t.opening.media} />
           <View style={st.actions}>
             <Seal hash={t.opening.ledger_hash} label="açılış" />
             {t.opening.edited_at ? (
@@ -407,6 +420,7 @@ export default function TopicPage() {
               multiline
               hint="Mesajlar oylamasız yazılır; kendi mesajınızı sonradan düzenleyebilirsiniz, geçmiş herkese açık kalır."
             />
+            <ImageAttach value={pics} onChange={setPics} />
             <ErrorNotice error={error} />
             <View style={st.actions}>
               <Button label="Gönder" onPress={post} disabled={!text.trim()} />

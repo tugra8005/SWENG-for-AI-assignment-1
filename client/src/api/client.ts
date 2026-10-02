@@ -73,14 +73,16 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   }
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+  // FormData (görsel yükleme): sınır (boundary) içeren Content-Type'ı fetch kendisi yazar.
+  const form = typeof FormData !== 'undefined' && opts.body instanceof FormData;
+  if (opts.body !== undefined && !form) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
   let res: Response;
   try {
     res = await fetch(url.toString(), {
       method: opts.method ?? 'GET',
       headers,
-      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      body: form ? (opts.body as FormData) : opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     });
   } catch {
     throw new ApiError(0, `Sunucuya ulaşılamadı (${API_URL}).`);
@@ -97,4 +99,31 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
     throw new ApiError(res.status, describeValidation(data?.detail), data?.violations ?? []);
   }
   return data as T;
+}
+
+/** Görselin adresi: ``baski`` yarım ton (sitede gösterilen), ``ozgun`` EXIF'siz renkli fotoğraf. */
+export function mediaUrl(id: string, variant: 'baski' | 'ozgun' = 'baski'): string {
+  return `${API_URL}/media/${id}/${variant}`;
+}
+
+export type MediaItem = {
+  id: string;
+  alt: string;
+  width: number;
+  height: number;
+  credit?: string | null;
+  source_url?: string | null;
+  ledger_hash?: string | null;
+};
+
+/** Seçilen dosya: web'de ``file`` (File), telefonda ``uri`` + ad + tür. */
+export type PickedFile = { uri: string; name: string; type: string; file?: Blob };
+
+export async function uploadImage(picked: PickedFile, alt: string): Promise<MediaItem> {
+  const form = new FormData();
+  if (picked.file) form.append('file', picked.file, picked.name);
+  // React Native'in FormData'sı dosyayı {uri, name, type} nesnesiyle alır.
+  else form.append('file', { uri: picked.uri, name: picked.name, type: picked.type } as any);
+  form.append('alt', alt);
+  return api<MediaItem>('/media', { method: 'POST', body: form });
 }

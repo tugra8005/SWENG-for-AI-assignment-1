@@ -25,6 +25,7 @@ import {
   Tag,
   useWide,
 } from '@/components/paper';
+import { PrintImage } from '@/components/media';
 import { ProposalForm } from '@/components/proposal-form';
 import { maturityDetail, maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
@@ -212,6 +213,11 @@ export default function ProposalPage() {
   );
   const content = (
     <>
+      {p.cover ? (
+        <View style={{ marginTop: 10, marginBottom: 6 }}>
+          <PrintImage m={p.cover} maxHeight={380} />
+        </View>
+      ) : null}
       {p.body ? <InitialText text={p.body} style={st.body} /> : null}
 
       {p.type === 'DUZENLEME' && p.diff ? (

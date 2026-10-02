@@ -14,6 +14,7 @@ import {
   Muted,
   Rule,
 } from '@/components/paper';
+import { ImageAttach, type MediaItem } from '@/components/media';
 import { useAuth } from '@/lib/auth';
 import { describeArticleValue, fmtPercent1 } from '@/lib/format';
 import { shareImpact, toRows } from '@/lib/shares';
@@ -202,6 +203,8 @@ export function ProposalForm({
   // Bölünebilir kaynağın yapılandırılmış etkisi: {kaynak: {kapsam: yeni_pay (metin)}}
   const [effect, setEffect] = useState<Record<string, Record<string, string>>>({});
   const [excerpt, setExcerpt] = useState('');
+  // Yeni konunun kapak görseli: kabul edilince konunun ve haberin görseli olur.
+  const [cover, setCover] = useState<MediaItem[]>([]);
   const [error, setError] = useState<unknown>(null);
 
   const currentText = history.data?.versions?.at(-1)?.text ?? '';
@@ -235,6 +238,7 @@ export function ProposalForm({
     setError(null);
     const payload: Record<string, unknown> = { type, title, body };
     if (needsLabels) Object.assign(payload, { area_id: area, scope_id: scope, resource_ids: picked });
+    if (needsLabels && cover.length) payload.cover_media_id = cover[0].id;
     if (needsLabels && splitResources.length) {
       payload.share_effect = Object.fromEntries(
         splitResources.map((r) => [
@@ -419,6 +423,13 @@ export function ProposalForm({
         onChangeText={setBody}
         multiline
       />
+
+      {needsLabels ? (
+        <View>
+          <Kicker style={{ marginBottom: 6 }}>Kapak görseli (isteğe bağlı)</Kicker>
+          <ImageAttach value={cover} onChange={setCover} max={1} label="Kapak görseli seç" />
+        </View>
+      ) : null}
 
       {needsLabels ? (
         <View>
