@@ -51,11 +51,12 @@ flowchart LR
 
 ### 2.1 Katmanlar (api)
 
-- `domain/` — saf fonksiyonlar: havale çözümleme, döngü kontrolü, ağırlık ve sayım, R1–R8, Hâtif etiket denetimi, baskın tespiti, başlık kimliği, diff. Veritabanı bilmez; testlerin büyük kısmı burada.
+- `domain/` — saf fonksiyonlar: havale çözümleme, döngü kontrolü, ağırlık ve sayım, R1–R9 (denetim zinciri), önerinin yaşam döngüsü (durum sınıfları), muhataplar, Hâtif etiket denetimi, baskın tespiti, başlık kimliği, görsel işleme (yarım ton), diff. Veritabanı bilmez; testlerin büyük kısmı burada.
 - `graph/` — Neo4j erişimi. `OntologyView` protokolünün Neo4j uygulaması (Cypher).
 - `db/` — SQLAlchemy 2 modelleri.
 - `services/` — iş akışları; domain fonksiyonlarını veri katmanlarıyla birleştirir.
 - `routers/` — HTTP uç noktaları.
+- `evaluation/` — baskın tespitinin değerlendirme düzeneği (§9.1); üretim kodunu çağırır, üretim onu çağırmaz.
 
 `OntologyView` protokolünün bir bellek içi, bir de Neo4j uygulaması vardır. İkisi aynı sözleşme testlerinden geçer. Böylece kurallar Docker olmadan test edilir, Cypher sorguları da aynı beklentilere karşı doğrulanır.
 
@@ -66,6 +67,32 @@ flowchart LR
 - Deftere gidecek kayıt, aynı PostgreSQL işlemi içinde `ledger_outbox` tablosuna yazılır. İstek sonunda lidere senkron gönderilir; başarısız olursa arka planda sırayla yeniden denenir. Defterdeki sıra böylece PostgreSQL'deki sırayla aynı kalır.
 - Gönderim topludur: bekleyen kayıtlar sırayla, 200'lük parçalar hâlinde lidere tek istekte gider (`/append-batch`). Lider parçayı zincire bağlayıp tek SQLite işleminde yazar ve takipçilere tek istekte çoğaltır (`/replicate-batch`). Zaman damgası azalırsa parçanın hiçbir kaydı eklenmez. Kayıt başına ayrı istek, 250 oyluk bir Karar Saati açılışını 15 sn sürdürüyordu; toplu gönderimle 2,7 sn sürüyor. Zincir, kayıtları tek tek eklemekle aynıdır (`ledger/tests/test_replication.py::test_batch_is_the_same_chain_as_single_appends`).
 - Neo4j yazımı PostgreSQL commit'inden sonra başarısız olursa iki depo ayrışabilir. Ödev ölçeğinde bu kabul edilmiştir. `meşveret-dev seed --reset` her şeyi yeniden kurar.
+
+
+### 2.3 Tasarım desenleri
+
+Desenler bir amaç değil, araçtır: aşağıdakiler kodda gerçek bir sorunu çözdüğü yerde kullanıldı. Her satırda sorun, desen ve bedeli var. Desenlerin çoğu SOLID'in somut hâlidir: Strategy ve Registry Açık/Kapalı ile Bağımlılığın Tersine Çevrilmesi'ni, Facade Tek Sorumluluk'u, protokollerle tanımlanan depolar Arayüz Ayrımı ile Bağımlılığın Tersine Çevrilmesi'ni uygular.
+
+| Desen | Nerede | Çözdüğü sorun | Bedeli |
+|---|---|---|---|
+| **Strategy + Registry + Factory Method** | `services/proposal_kinds.py`: her öneri türü bir sınıf (`TopicKind`, `DeletionKind`…), `@KINDS.register`, `kind_for(p)` | Öneri motorunda türe göre beş ayrı `if/elif` zinciri vardı (hazırlık, uygulama, eşik, kurala giden alanlar, görünüm). Yeni tür her zinciri değiştirmeyi gerektiriyordu | Bir türün davranışı tek dosyada ama birkaç metoda dağılmış; akışı izlemek için sınıfa bakmak gerekir |
+| **Template Method** | `ProposalKind`'ın kancaları (`after_open`, `view`, `draft_fields`); `proposals.open_proposal` sabit iskelet: hazırlık → kapak → kural zinciri → açılış kaydı → türün kancası | Açılış sırası her türde aynı, birkaç adım türe özgü | Kalıtım; kanca çağrılmazsa sessizce boş kalır |
+| **State** | `domain/lifecycle.py`: her durum bir sınıf (`Silent`, `Queued`, `Voting`, `Accepted`…); geçersiz geçiş durumun kendi Türkçe gerekçesiyle reddedilir | `p.status == "SILENT"` gibi denetimler servislere dağılmıştı; karara bağlanmış bir öneriyi ikinci kez kabul etmek etkilerini ikinci kez uygulardı | Durumlar saf sınıflar; veritabanındaki alan hâlâ metin, eşlemesi `state_of` |
+| **Chain of Responsibility** | `domain/rules.py`: R1–R9 birer halka (`Rule.handle`), `proposal_chain()` | Kurallar sırayla çağrılan fonksiyonlardı ve her biri kendi tür denetimini yapıyordu | Zincir kesilmez (kişi bütün gerekçeleri görsün diye); halkalar arası bağımlılık yok, sıra yalnızca okunuş için |
+| **Observer** | `services/events.py`: `TopicAccepted`, `DecisionMade`, `SessionClosed`… olayları; aboneler `petitions`, `calendar`, `notifications` | Öneri motoru dilekçe ve bildirim modüllerini doğrudan çağırıyordu (döngüsel içe aktarma ve gizli bağımlılık); takvimi eklemek motoru değiştirmeyi gerektirecekti | Aboneler aynı işlemde ve eşzamanlı çalışır; bir abonenin hatası kararın tamamını geri alır. Defter bilerek abone değildir: zincir sırası işlem sırasıyla aynı kalmalı |
+| **Strategy** | `services/decision_hour.py`: `YesNoBallot` (eşikli, eşzamanlı çoğunluklu) ve `ApprovalBallot` (kapanış) | Karar Saati'nde beş yerde `p.type == "KAPANIS"` dalı vardı | Oylama biçimi öneri türünden seçilir (`ProposalKind.ballot`) |
+| **Command** | `services/jobs.py`: her zamanlanmış iş bir nesne (`EndSilentPeriod`, `CloseDecisionHour`…); `SOURCES` vadesi gelenleri üretir; `scheduler` yalnızca çağırıcı | Zamanlayıcı işleri adsız lambda'lardı; ne yapacakları ancak çalıştırınca görülüyordu | Her iş idempotent olmalı (durumu denetler); iki süreç aynı işi seçse de sonuç tektir |
+| **Facade** | `services/proposals.py` öneri motorunun tek kapısı; routers'lar yalnızca servisleri bilir | Türler, durumlar, kurallar ve olaylar arkada; çağıran tek modül bilir | Facade büyüyebilir; türe özgü ayrıntı bu yüzden ona girmez |
+| **Repository** | `OntologyView` protokolü (bellek içi ve Neo4j), `LedgerClient` (HTTP ve sahte), `evaluation/repository.py` (dosya, üretim, canlı, bellek içi) | Kurallar ve değerlendirme verinin nereden geldiğini bilmez; testler Docker'sız çalışır | Sözleşme testleri iki uygulamayı aynı beklentiyle sınar (`graph_contract.py`) |
+| **Adapter** | `graph/neo4j_store.py` Neo4j sürücüsünü `OntologyView`'a, `HttpLedgerClient` HTTP API'sini `LedgerClient`'a uyarlar | Dış kütüphanenin arayüzü kuralların beklediği arayüz değil | Cypher sorguları bellek içi uygulamayla aynı davranmak zorunda |
+| **Memento** | Karar Saati açılışındaki anlık görüntü (`DecisionSession.regulation`, `SessionItem.eligible/resolved`), `regulation.restore_voted_state` | Pencere boyunca yönetmelik, seçmenler ve havaleler değişmemeli; oylamasız değişiklik son oylanmış hâle döndürülmeli | Anlık görüntü JSONB'dir; şema değişirse eski oturumlar eski biçimde okunur |
+| **Observer (gözlemci)**, **Registry + Factory**, **Repository**, **Facade**, **Pipeline** | `evaluation/`: tespitçiler YAML'dan seçilir, öznitelik çıkarımı öğrenen tespitçinin içindedir (eğitim–sunum farkı yok), sonuçlar konsola ve JSON'a yazılır | Ödevdeki "duygu analizi servisini yeniden tasarlayın" gereksinimlerinin bu projedeki karşılığı (§9.1) | Yalnızca değerlendirme içindir; üretim yolu değişmedi |
+| **Singleton (Pythonik)** | `config.get_settings` (`lru_cache`) | Ayarlar bir kez okunur | Gizli global durum riskine karşı servisler ayarları `Ctx` ile alır (bağımlılık enjeksiyonu) |
+| **Composite** | Alan ağacı ve kapsamların `ALT_KUMESI` hiyerarşisi | Parça–bütün ilişkisi ontolojide | — |
+
+**Bilerek uygulanmayanlar.** Görsel işleme (`domain/images.py`) tek bir hattır (çöz, düzelt, küçült, yarım ton); Composite'e çevirmek tek gerçeklemesi olan bir soyutlama (erken soyutlama) olurdu. Builder gerekmedi: `ProposalInput` varsayılanlı bir dataclass'tır. Abstract Factory gerekmedi: graf ve defter istemcisi bağımsız seçilir (yerel modda bellek içi graf ile gerçek defter birlikte çalışır), "aile" tutarlılığı aranmaz. Visitor gerekmedi.
+
+**Düzeltilen anti-desenler.** Öneri motoru tek dosyada 1000 satırlık bir "her şeyi bilen modül"dü (tür dalları, durum denetimleri, dilekçe ve bildirim çağrıları). Durum adları metin sabitleri olarak dağılmıştı; şimdi bekleyen ve karara bağlanmış durum kümeleri `lifecycle`'dan gelir. Dilekçe ve bildirim modülleri birbirini fonksiyon içinden içe aktarıyordu (döngüsel bağımlılık); olaylarla kalktı. Kullanılmayan parametreli yardımcılar silindi.
 
 ## 3. Veri yerleşimi
 
@@ -278,7 +305,7 @@ Değiştirilemezlik bir yazılım kuralıdır (§15, 30. madde): sunucuyu işlet
 
 ## 6. Denetim kuralları
 
-Her öneri açılırken kurallar çalışır. İhlal varsa öneri kaydedilmez ve Türkçe gerekçe döner. Kurallar saf fonksiyonlardır, `OntologyView` üzerinden çalışır.
+Her öneri açılırken kurallar çalışır. İhlal varsa öneri kaydedilmez ve Türkçe gerekçe döner. Kurallar saf fonksiyonlardır, `OntologyView` üzerinden çalışır. Her kural bir denetim zincirinin halkasıdır (§2.3): halka yalnızca kendi türlerini denetler ve öneriyi bir sonrakine iletir; zincir ihlalde kesilmez, kişi bütün gerekçeleri tek seferde görür.
 
 | Kural | İçerik | Gerekçe |
 |---|---|---|
@@ -289,6 +316,7 @@ Her öneri açılırken kurallar çalışır. İhlal varsa öneri kaydedilmez ve
 | **R5** | Oy hakkı = kapsam üyeliği + ilgili bekleme süresinin dolmuş olması. Öneri sahibi de seçmen kapsamında oy hakkına sahip olmalı | Bir gruba, o grubun parçası olmayan biri öneri getiremez; yeni katılanlar hemen karar veremez |
 | **R6** | Aynı hedefe oylamayla reddedilmiş öneri `red_bekleme` süresince yeniden açılamaz | Aynı öneriyi üst üste açarak yıpratmayı önler |
 | **R7** | Başkasının içeriğini silme önerisi en az bir içerik kuralına (IK-1…) dayanmalı ve kuralı ihlal eden kısmı hedef metinden aynen alıntılamalı. Alıntı hedefin güncel metninde bütün kelimelerle, art arda geçmeli (büyük/küçük harf ve noktalama farkı yok sayılır). Yazarın kendi mesajı için gerekçe gerekmez; konu silme hiçbir zaman "kendi" sayılmaz | Silme istisnadır; gerekçesiz silme, çoğunluğun beğenmediği görüşü gizlemesinin yoludur (§7.4) |
+| **R9** | KONU ve ALT_KONU bir muhataba iletilir (§7.11). Kapsam yalnızca yetki alanındaki muhataba yazar: şehir kapsamı kendi belediyesine ya da takvime; Genel bütün belediyelere, bakanlıklara ya da takvime; ilgi ve yaş kapsamları takvime ya da bakanlıklara. İç düzen (`mesveret`) konuya muhatap olamaz | R2'nin muhatap karşılığı: İstanbul'un çoğunluğu Ankara Belediyesi'ne Meşveret adına dilekçe yazamaz |
 | **R8** | Değiştirilemez bir maddeyi (D1–D7) etkileyen ya da bir sayısal parametreyi değiştirilemez izinli aralığının (§5.2) dışına çıkaran YONETMELIK önerisi açılışta reddedilir ("Bu madde değiştirilemez") | Tamamen oylanabilir bir sistemde azınlık güvencesi yalnızca daha yüksek bir çıtadır; taban için bir şeyin oylamanın dışında kalması gerekir (§5.1) |
 
 **red_bekleme hedef anahtarı:** KONU → (alan, normalize başlık); ALT_KONU → (üst konu, normalize başlık); DUZENLEME ve SILME → içerik; YONETMELIK → madde; KAPANIS → konu. Yalnızca oylamayla reddedilen öneriler sayılır; açılışta denetimden dönenler kayda girmez.
@@ -308,7 +336,7 @@ Hâtif her yeni öneriye bir "etiket önerisi" yorumu bırakır. Denetim kural t
 - **H3 — Şehir:** metin tek bir şehrin adını geçiriyor, seçmen kapsamı ise başka bir şehrin kapsamıysa uyuşmazlık sayılır.
 - **H4 — İçerik kuralı (yalnızca SILME):** dayanılan her içerik kuralının anahtar kelimelerinden en az biri, ihlal edildiği söylenen alıntıda geçmeli. Karşılığı olmayan kural varsa HAYIR. Hâtif hangi kelimeyi bulduğunu ya da bulamadığını yorumuna yazar: "İçerik kuralı IK-2 (Hakaret ve tehdit): belirtilen kısımda karşılığı var ('cahil')." Kendi mesajının silinmesinde bu denetim yapılmaz.
 
-**Hâtif'in oyu:** oylama anında R1–R8 yeniden çalışır ve H1–H4 değerlendirilir. Hepsi geçerse EVET, biri bile geçmezse HAYIR. R1–R8'i ihlal eden öneriler açılışta zaten reddedildiği için, H1–H4 olmasa Hâtif pratikte her öneriye EVET derdi. R7 oylama anında hedefin güncel metniyle yeniden çalışır: yazar ihlal eden kısmı oylamadan önce düzeltirse alıntı artık metinde geçmez ve Hâtif HAYIR der.
+**Hâtif'in oyu:** oylama anında R1–R9 yeniden çalışır ve H1–H4 değerlendirilir. Hepsi geçerse EVET, biri bile geçmezse HAYIR. R1–R9'u ihlal eden öneriler açılışta zaten reddedildiği için, H1–H4 olmasa Hâtif pratikte her öneriye EVET derdi. R7 oylama anında hedefin güncel metniyle yeniden çalışır: yazar ihlal eden kısmı oylamadan önce düzeltirse alıntı artık metinde geçmez ve Hâtif HAYIR der.
 
 ## 7. Öneri yaşam döngüsü
 
@@ -325,7 +353,11 @@ stateDiagram-v2
   QUEUED --> VOTING: Karar Saati penceresi açıldı ve öneri olgunlaştı
   VOTING --> ACCEPTED
   VOTING --> REJECTED
+  VOTING --> CONFLICT: kabul oyu, pay hedefi geçersiz (§7.8)
+  SILENT --> CONFLICT
 ```
+
+Her durum `domain/lifecycle.py`'de bir sınıftır (§2.3). Karara bağlanmış öneri (`ACCEPTED`, `REJECTED`, `CONFLICT`) hiçbir geçişi kabul etmez; ikinci bir kabul "Öneri zaten karara bağlandı" gerekçesiyle reddedilir, etkiler iki kez uygulanmaz. Öneri sahibi kendi önerisine itiraz edemez.
 
 ### 7.1 Hızlı şerit (sessiz onay)
 
@@ -468,6 +500,35 @@ Ayrıntılar:
 - Havale uyarıları (bekleyen havale, süresi dolan havale) zile değil sayfa başındaki şeride düşer (§8); karar gerektirirler ve düğmeleri şeritte durur.
 - İstemci okunmamış sayısını 30 saniyede bir ve her sayfa değişiminde okur; rozet 9'dan sonra "9+" yazar. Bildirimler sayfası açılınca hepsi okundu sayılır; "yeni" işareti o görünümde kalır.
 
+
+### 7.11 Muhatap: kararlar dünyaya dokunur
+
+Her konu önerisi bir yere iletilmek için açılır (R9). Muhatap listesi koddadır (`domain/addressees.py`): Meşveret Takvimi (`takvim`), Meşveret'in iç düzeni (`mesveret`; yönetmelik, silme ve düzenleme kendiliğinden buraya gider), her şehir kapsamının belediyesi (30 büyükşehir "Büyükşehir Belediyesi", diğerleri "Belediyesi"), bütün belediyeler birden (`belediyeler`) ve üç bakanlık. ALT_KONU muhatap verilmezse üst konununkini alır; KAPANIS ve yeniden açma konununkini.
+
+Kararın sonuçları öneri motorunda değil, alan olaylarının abonelerindedir (§2.3, Observer): konu kabul edilince `TopicAccepted` yayımlanır; dilekçe modülü kurum muhataplı konuya dilekçe, takvim modülü etkinlikli konuya etkinlik üretir. Kapanışta `DecisionMade` Kararı aynı kuruma iletir.
+
+### 7.12 Dilekçe
+
+Kurum muhataplı konu kabul edilince kuruma talep dilekçesi (`TALEP`), konu karara bağlanınca karar bildirimi (`KARAR`) gider. Evrak numarası `MŞV-yıl-sıra`; alıcılar, metin ve dayanak (Karar Saati oturumu ya da sessiz onay: itiraz sayısı ve eşik) deftere `DILEKCE_ILETILDI` olarak yazılır. İmza satırı gönderimde sabitlenmez, Karar Saati sonucundan okunur. 3071 sayılı Dilekçe Hakkının Kullanılmasına Dair Kanun gereği yanıt süresi 30 gündür; süre hesaplanır (zamanlayıcı işi yok): yanıt yoksa ve süre geçtiyse alıcı "süresinde yanıt verilmedi" olur. Kurumun yanıtını konunun bir katılımcısı işler (yazı tarihi, sayısı, metni, isteğe bağlı taranmış görüntü); defter `DILEKCE_YANITI` ile işleyeni kaydeder. İletim sitede kayıttır: gerçek bir kuruma e-posta ya da e-Devlet başvurusu gönderilmez (§15, 37).
+
+### 7.13 Takvim ve etkinlik
+
+Takvime giden KONU/ALT_KONU önerisi isteğe bağlı bir etkinlik bildirir: başlangıç, süre (15 dakika – 12 saat) ve yer (ortak toplantı salonu, adres, çevrim içi). Başlangıç, önerinin karara bağlanabileceği en erken andan (sessiz onay süresi) sonra olmalıdır. Ortak salon bir kaynaktır (`salon`, sahibi Genel, bölünemez): salonlu öneri onu ETKILER etiketiyle taşır, bu yüzden R2 yalnızca Genel kapsamın salonlu etkinlik açmasına izin verir. Salonda saatleri kesişen planlı etkinlik varsa öneri açılışta reddedilir; kabul anında yeniden denetlenir. Kabulde başlangıç geçmişse ya da salon dolmuşsa etkinlik takvime yazılmaz ve öneri sahibine bildirim gider.
+
+Etkinliğin durumu saatten hesaplanır (yaklaşıyor, sürüyor, gerçekleşti). Başlayana kadar "Geliyorum" denebilir ve geri alınabilir. Bittikten sonra katılımını bildirenler kişi başına bir rapor yazar (metin, isteğe bağlı katılımcı sayısı, en çok dört fotoğraf); `ETKINLIK_PLANLANDI` ve `ETKINLIK_RAPORU` deftere yazılır. Takvim `.ics` (RFC 5545) olarak dışa aktarılır: tek etkinlik ya da yaklaşanların hepsi.
+
+### 7.14 Gazete ön sayfası
+
+Haberler yazılmaz, kararlardan hesaplanır (`services/news.py`): kabul edilen konu, Karar (Kurum muhataplıysa iletildiği), dilekçe, yanıt, yanıtsız kalan dilekçe, takvime eklenen ve gerçekleşen etkinlik, yönetmelik değişikliği, silme. Her haber türü bir üreticidir. Etkinlikli konu yalnızca "Takvime eklendi" olarak yazılır. Silinen konunun haberleri yayımlanmaz. Manşet son yedi günün görselli en yeni haberidir; yoksa en yeni haber.
+
+### 7.15 Görseller
+
+Görsel mesaja, konu önerisinin kapağına, dilekçe yanıtına (taranmış yazı) ve etkinlik raporuna eklenir. Yükleme iki adımlıdır: önce sahibine bağlı yüklenir, içerikle birlikte eklenince yayımlanır ve deftere `GORSEL_EKLENDI` olarak yazılır (özgün sürümün sha256'sı, alt metin). JPEG, PNG ve WebP; en çok 8 MB ve çözülmeden önce 40 megapiksel sınırı (sıkıştırma bombası). EXIF yönü uygulanır, saydamlık kâğıt rengine oturtulur, özgün sürüm en çok 1600 piksel JPEG olarak yeniden kodlanır ve EXIF (konum, cihaz) yazılmaz. Baskı sürümü 45° nokta ızgaralı, 16 tonlu yarım tondur (mürekkep #1B1A17, kâğıt #F4EFE4); aynı girdi aynı baytları üretir. Alt metin zorunludur (3–300 karakter). Bağlandığı içerik oylamayla silinirse görsel de gizlenir (410); defterdeki kaydı kalır. Mahzen'e görsel eklenmez.
+
+### 7.16 Arama
+
+Konu, öneri, tartışma mesajı, dilekçe ve etkinliklerde arar. PostgreSQL'in `lower` işlevi yerel ayara bağlıdır ve I/İ'yi Türkçe çevirmez; bu yüzden adaylar okunup Python'da Türkçe küçük harf kurallarıyla süzülür (her türde en yeni 2000 kayıt). Silinen içerik, Mahzen ve taslaklar aranmaz. Ölçek büyürse `unaccent` + Türkçe kurallı tam metin dizini gerekir (§15, 40).
+
 ## 8. Havale
 
 ### 8.1 Çözümleme
@@ -552,6 +613,13 @@ Havale onay gerektirir. Verilen havale BEKLİYOR durumunda başlar ve alan kişi
    - kenar yoğunluğu (kenar sayısı / olası kenar sayısı) en az `baskin_yogunluk_esigi`,
    - katılım anlarının yayılımı en fazla `baskin_katilim_araligi`.
 4. İşaretli hesaplar o oylamanın seçmen listesinden ve paydasından çıkar. Kendilerine gerekçesiyle gösterilir (pusulada ve "Oyumu doğrula"da). Sonuç ekranında ve defterde yalnızca sayıları ve gerekçe metni görünür, adları görünmez: yanlış pozitifler (§15, 8. madde) herkese teşhir edilmez. İçerikleri silinmez; başka oylamalarda yeniden değerlendirilirler.
+
+
+### 9.1 Ölçüm: temel çizgiler ve maliyet
+
+`api/src/mesveret/evaluation/` baskın tespitini etiketli senaryolarda ölçer. Gerçek veride baskın nadirdir ve etiketsizdir; senaryolar üretimdeki ETKILESIM sinyallerini (yakın kayıt, yanıt, ortak başlık) aynı ağırlıklarla üreten bir benzetimden gelir: eski üyeler, tek tük yeni gelenler, birlikte kaydolan gerçek bir grup (sınıf), bir duyurudan sonra iki güne yayılan katılım ve beş biçimde baskın (hızlı, sabırlı, sessiz, bölünmüş, kamufle). Eğitim/sınama ayrımı senaryo adının hash'iyle yapılır; sınama kümesi bir kez yazılıp sabitlenmiştir (`docs/degerlendirme/sinama_kumesi.json`).
+
+Temel çizgi merdiveni: rastgele, hiç kimse (çoğunluk sınıfı), son yedi günde katılan herkes (basit kural), üretimdeki küme kuralı (aynı fonksiyon, eşikler yapılandırmadan) ve hesap başına özniteliklerden hata maliyetiyle öğrenilen derinliği 2 karar ağacı. Sonuçlar ve yorumu raporun "Baskın tespiti: ölçüm" bölümündedir. Özet: küme kuralı hızlı baskınları yakalar, sabırlı ve sessiz baskınları hiç yakalamaz; benzetimde birlikte kaydolan gerçek grupların büyük kısmını da baskın sanır. Kuralın "hiç kimseyi işaretleme"den daha ucuz olması, yanlış işaretin bedelinin kaçan baskıncınınkine oranına ve gerçek grupların sıklığına bağlıdır.
 
 ## 10. Mahzen
 
@@ -713,7 +781,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Nokta | Karar |
 |---|---|
 | R2'de üst küme ya da ilgisiz kapsam | Red (kullanıcı kararı) |
-| Hâtif'in HAYIR ölçütü | R1–R8 + H1–H4 (kullanıcı kararı; R7 ve H4 silmenin sıkılaştırılmasıyla, R8 yönetmeliğin tabanıyla eklendi) |
+| Hâtif'in HAYIR ölçütü | R1–R9 + H1–H4 (kullanıcı kararı; R7 ve H4 silmenin sıkılaştırılmasıyla, R8 yönetmeliğin tabanıyla eklendi) |
 | Taban kuralının numarası | R8. İstekte R7 olarak geçiyordu, ama R7 silme gerekçesi kuralıdır; mevcut referanslar bozulmasın diye yeni kural R8 oldu |
 | Değiştirilemez maddenin değiştirilme önerisi | Kuyruğa girmez, açılışta reddedilir ("teklif edilemez"); kaldırma ve değer değiştirme aynı biçimde |
 | İzinli aralıklar | Parametre tanımının parçasıdır (`Article.allowed`), graf değeri değildir; çalışan kodla gelir ve yönetmelik hash'ine girer. Önceki iki taban maddesi aralıkların alt ucuna dönüştü. Oranlarda karşılaştırma katılıkla yapılır |
@@ -814,6 +882,12 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 34. **"Oyumu doğrula" bir makbuzdur.** Kişi takma kimliğini ve defterdeki kaydı gösterebilir; böylece oyunu bir başkasına kanıtlayabilir. Bu, baskı ve oy satın alma riskini açar: sandıktaki gizliliğin amacı seçmenin oyunu kanıtlayamamasıdır. Doğrulanabilirlik bilerek tercih edilmiştir.
 35. **Küçük seçmen kümelerinde ve oybirliğinde gizlilik fiilen bozulur.** 9 kişilik İstanbul oylamasında herkes EVET dediyse herkesin oyu bellidir. Toplamlar ve açık oylar birlikte, küçük kümelerde kalan birkaç gizli oyu tahmin ettirebilir. Eşzamanlı çoğunlukta aynı kişi Genel'de açık, alt kapsamda gizli olabilir; açık oyu gizli olanı tahmin ettirebilir.
 36. **Havale almak gizliliği kaybetmek demektir (kapatıldı, 2026-09-29).** Temsilci, oylamadaki ağırlığı 1'den büyükse gizli oy veremez. İlk sürümde havale alanın havaleyi geri çevirme olanağı yoktu. Bu, bir saldırıya da kapı açıyordu: Karar Saati açılmadan hemen önce birine havale vermek, onun gizli oyunu açığa çıkarmaya yetiyordu. Havale artık alan kişinin kabulüyle yürürlüğe girer; kişi reddedebilir, kabul ettiğini iade edebilir, "havale kabul etmiyorum" diyebilir (§8.7). Kalan tek bağ zincirdir: kabul ettiği havaleye sonradan akan havaleler ayrıca onay istemez. Bu, oyu zaten açık olan birinin yalnızca ağırlığını değiştirir.
+37. **Dilekçe yanıtı doğrulanmaz.** Kurumun yanıtını üye işler; defter kimin işlediğini ve ne yazdığını mühürler, yazının gerçekten kurumdan geldiğini kanıtlamaz. Dilekçe de gerçekte gönderilmez: sitede bir kayıttır. Gerçek iletim (KEP, e-Devlet) kapsam dışıdır.
+38. **Gerçek gruplar baskın sanılabilir; ölçüldü.** §9.1'deki benzetimde birlikte kaydolup birbirine yazan gerçek grupların büyük kısmı işaretlendi; sabırlı ve sessiz baskınlar hiç yakalanmadı. Kural yalnızca yapıya bakar; bu iki durum yapıda ayırt edilemez. Dışlama bir oturumluktur ve gerekçesi kişiye gösterilir.
+39. **Etkinlik, kabul anında geçmişte kalabilir.** İtirazla yavaş şeride geçen bir etkinlik önerisi Karar Saati'nde kabul edildiğinde tarihi geçmiş olabilir; konu açılır ama etkinlik takvime yazılmaz.
+40. **Arama ölçeklenmez.** Türkçe harf kuralları için adaylar Python'da süzülür ve her türde son 2000 kayıt taranır; daha eski içerik bulunmaz.
+41. **Haberler kalıptır.** Manşet ve spot kalıptan üretilir; "önemli" haberi seçen bir yargı yoktur, en yeni görselli haber manşet olur.
+
 
 ## 16. Hocanın gereksinimleri → karşılayan mekanizma
 
@@ -854,8 +928,10 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 - `src/components/reveal-tally.tsx` Karar Saati sonuç açıklamasını, `src/components/reveal-transition.tsx` ifşa geçişini oynatır.
 - `src/components/proposal-title.tsx` daralan önerinin talep/etki başlığını, pay çubuğunu ve olgunlaşma satırını üretir; öneri sayfası, kartlar, konu sayfası ve Karar Saati ekranları bunu kullanır.
 - `src/lib/birth-date.ts` kayıt formundaki doğum tarihi alanına yardım eder: yazarken noktaları ekler (tek haneli gün ya da aydan sonra nokta yazılırsa başına 0 koyar, "YYYY-AA-GG" yapıştırılırsa çevirir) ve tarihi hemen denetler (gün 01–31, ay 01–12, takvimde olmayan gün, 1900 öncesi, gelecek, 18 yaş). Yaşı sunucunun `age_on`'u gibi ve sunucunun sahte saatine göre hesaplar; 18 yaş altında 18 yaşın dolacağı günü söyler. Denetim yardımcıdır; kararı sunucu verir. Uyarı alanın altında `aria-live="polite"` ile okunur.
-- `src/app/nasil-isler.tsx` kılavuzdur: amaç, dört mekanizma, on dört bölüm, sözlük. Şekiller `src/components/guide/` altındadır; her biri tek bir `Animated.Value` (0 → 1, döngüde) üzerinden anahtar karelerle çizilir (`kit.tsx`: `useTimeline`, `Swap`, `Segment`). Azaltılmış harekette değer 1'de durur; son kare hikâyenin tamamını gösterir, altındaki açıklama da aynı şeyi söyler. Çizim ekran okuyucuya tek bir görsel olarak açıklamasıyla okunur. Karar Saati örneği uygulamanın kendi sayım bileşenidir (`RevealTally`). Metindeki süre ve eşikler `/regulation`'dan canlı okunur.
-- API adresi `EXPO_PUBLIC_API_URL` ile verilir.
+- `src/app/nasil-isler.tsx` kılavuzdur: amaç, dört mekanizma, kararların dünyadaki sonuçları, on dokuz bölüm, on dört şekil, sözlük. Şekiller `src/components/guide/` altındadır; her biri tek bir `Animated.Value` (0 → 1, döngüde) üzerinden anahtar karelerle çizilir (`kit.tsx`: `useTimeline`, `Swap`, `Segment`). Azaltılmış harekette değer 1'de durur; son kare hikâyenin tamamını gösterir, altındaki açıklama da aynı şeyi söyler. Çizim ekran okuyucuya tek bir görsel olarak açıklamasıyla okunur. Karar Saati örneği uygulamanın kendi sayım bileşenidir (`RevealTally`). Metindeki süre ve eşikler `/regulation`'dan canlı okunur.
+- Meydan'ın ön sayfası `GET /news`'ten çizilir (`src/components/news.tsx`: manşet, ikinci haberler, yaklaşan etkinlikler). Takvim `src/app/takvim.tsx` ve `src/app/etkinlik/[id].tsx`, etkinlik parçaları ve öneri formundaki etkinlik alanları `src/components/event.tsx`'tedir. Arama `src/app/ara.tsx` (başlıkta büyüteç; web'de "/" tuşu).
+- Kolaylıklar: öneri taslağı cihazda saklanır (`src/lib/draft.ts`, AsyncStorage; gönderilince silinir), bağlantı paylaşma (`src/components/share.tsx`: web'de panoya, telefonda paylaşım penceresi), dilekçe yazdırma (yalnızca yazı kâğıda çıkar), bildirimlerde göreli zaman, profilde açılan öneriler.
+- API adresi `EXPO_PUBLIC_API_URL` ile verilir. Adres `localhost` gösteriyor ama sayfa başka bir makineden açılmışsa (telefon, aynı ağ) istemci API'yi o makinede arar; Expo Go'da Expo'nun bağlandığı bilgisayarın adresini kullanır.
 
 ## 18. Testler (§12 gereksinimi → test dosyası)
 
@@ -864,7 +940,7 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Havale çözümleme ve miras | `api/tests/domain/test_delegation.py` |
 | Döngü kontrolü (miras üzerinden oluşanlar dahil) | `test_delegation.py`, `tests/integration/test_decision_hour.py::test_cycle_is_rejected_via_api` |
 | Oy ağırlığı hesabı, çekimser zincirler | `api/tests/domain/test_tally.py`, `test_decision_hour.py` |
-| R1–R8, otomatik daralma, üst küme reddi | `api/tests/domain/test_rules.py`, `tests/integration/test_proposals.py` |
+| R1–R9, otomatik daralma, üst küme reddi | `api/tests/domain/test_rules.py`, `tests/integration/test_proposals.py` |
 | 2/3 ve kendini koruma | `test_tally.py`, `test_decision_hour.py::test_regulation_change_needs_two_thirds`, `::test_threshold_article_protects_itself` |
 | Havale süresi (bitiş, madde değişikliğinin geriye işlememesi, yenileme ve kilit, zincirin kopması, pencere içinde dolan havale, zamanlayıcıdan önce okunan bitiş, uyarı penceresi (`havale_uyari_suresi`), Müşavir etiketinin düşmesi) | `tests/integration/test_delegation_expiry.py`, `test_seed.py::test_scenario_13_delegations_expire_after_181_days`, `graph_contract.py::test_delegation_expiry` (bellek içi ve Neo4j) |
 | Anlık görüntü ve kilit kuralları | `test_decision_hour.py::test_electorate_is_snapshotted_when_window_opens`, `::test_delegations_are_locked_while_window_is_open` |
@@ -896,6 +972,12 @@ Ekranlar 360 px genişlikte düzgün çalışır. Tüm animasyonlar (kararma, oy
 | Bildirimler (oy veren, havaleyle oyu kullanılan ve öneri sahibi oturum başına tek bildirim alır; eşzamanlı oylamada kapsam adı; Hâtif ve katılmayan almaz; itiraz ve sessiz onay öneri sahibine; API: liste, okunmamış sayısı, okundu işaretleme, başkasının bildirimi işaretlenemez) | `tests/integration/test_notifications.py` |
 | Doğum tarihi yardımcısı (yazarken nokta, geri silme, tek haneli gün ve ay, ISO yapıştırma; geçersiz gün ve ay, takvimde olmayan gün, gelecek, 18. doğum günü, 29 Şubat) | `client/scripts/check-birth-date.mjs` |
 | Tohumdaki Mahzen (şiir metni olduğu gibi, demo başlığının altında; tartışmaların `>>N` referansları; liste sırası açılış sırası) | `test_seed.py::test_cellar_poem_thread_second_after_demo`, `::test_cellar_discussions_replace_filler_replies` |
+| Öneri yaşam döngüsü (durum sınıfları, geçersiz geçişin gerekçesi), kayıt defteri, denetim zincirinin halkaları | `api/tests/domain/test_lifecycle.py`, `test_rules.py::test_rule_chain_reports_every_link_in_order` |
+| Muhatap ve R9 (kapsam–muhatap tablosu, belediye adları, alt konunun muhatabı devralması), dilekçe (talep, karar bildirimi, bütün belediyelere dağıtım, yanıt kuralları, 30 günlük süre, bildirimler) | `api/tests/domain/test_addressees.py`, `tests/integration/test_petitions.py` |
+| Görseller (biçim, boyut ve piksel sınırı, EXIF silme, yarım tonun deterministik olması, alt metin; ekleme, deftere yazım, silinen içeriğin görselinin 410 dönmesi, kapak) | `api/tests/domain/test_images.py`, `tests/integration/test_media.py` |
+| Takvim (etkinlikli konunun kabulü, salonun R2 ile Genel'e ait olması, çakışma reddi, sessiz onay süresi, Geliyorum, rapor kuralları ve fotoğraf, .ics, kabulde geçmiş tarih), gazete ve arama (tohumdaki haberler, Türkçe harf, silinen içerik) | `tests/integration/test_calendar.py` |
+| Değerlendirme düzeneği (metrikler dersteki örnekle, senaryo üretiminin kararlılığı, depolar, öznitelikler, tespitçi kayıt defteri ve üretimle aynı sonuç, karar ağacı, gözlemciler ve Facade) | `api/tests/domain/test_evaluation.py` |
+| Zamanlanmış işlerin komut nesneleri | `tests/integration/test_scheduler_lock.py::test_every_scheduled_job_is_idempotent` |
 | On bir demo senaryosunun sonuçları | `tests/integration/test_seed.py` |
 
 ## 19. Sözlük (Türkçe terim ↔ kod)
@@ -934,3 +1016,9 @@ Python tanımlayıcıları İngilizcedir. Belgede adı verilen ontoloji etiketle
 | Silme gerekçesi, alıntı | R7, `content_rules` / `excerpt` |
 | Olgunlaşma (dar / geniş / genel) | `maturation` (`MaturityClass`) |
 | Talep / etki başlığı | `title` / `effective_title` |
+| Muhatap (takvim, kurum, iç düzen) | `Addressee` (`TAKVIM`, `KURUM`, `IC`), `Topic.addressee`, R9 |
+| Dilekçe, talep, karar bildirimi, yanıt | `Petition` (`TALEP`, `KARAR`), `PetitionReply`, `DILEKCE_ILETILDI`, `DILEKCE_YANITI` |
+| Etkinlik, Geliyorum, etkinlik raporu | `CalendarEvent`, `EventAttendance`, `EventReport`, `ETKINLIK_PLANLANDI`, `ETKINLIK_RAPORU` |
+| Gazete, haber | `services/news.py`, `GET /news` |
+| Görsel, baskı (yarım ton), özgün | `Media`, `domain/images.halftone`, `baski` / `ozgun`, `GORSEL_EKLENDI` |
+| Öneri türü, yaşam döngüsü, alan olayı, zamanlanmış iş | `ProposalKind`, `domain/lifecycle.ProposalState`, `events.TopicAccepted`…, `jobs.Job` |
