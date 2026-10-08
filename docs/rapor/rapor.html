@@ -56,16 +56,28 @@ svg .m { font-family: 'Plex Mono', monospace; }
 
 /* kapak */
 .cover { height: 258mm; display: flex; flex-direction: column; break-after: page; }
-.cover .top { display: flex; justify-content: space-between; font-family: 'Plex Mono', monospace; font-size: 8pt; letter-spacing: 1pt; color: var(--soft); border-bottom: 2.4pt double var(--ink); padding-bottom: 4pt; }
-.cover .mast { text-align: center; margin-top: 12mm; }
-.cover .mast img { width: 24mm; }
-.cover .mast .name { font-weight: 800; font-size: 48pt; letter-spacing: 6pt; line-height: 1; margin-top: 5mm; }
+.cover .top { display: flex; justify-content: space-between; font-family: 'Plex Mono', monospace; font-size: 8.4pt; letter-spacing: 1.2pt; text-transform: uppercase; color: var(--ink); border-bottom: 2.4pt double var(--ink); padding-bottom: 4pt; }
+.cover .course { text-align: center; font-family: 'Plex Mono', monospace; font-size: 8pt; letter-spacing: 1pt; text-transform: uppercase; color: var(--soft); margin-top: 3mm; }
+.cover .mast { text-align: center; margin-top: 26mm; }
+.cover .mast img { width: 28mm; }
+.cover .mast .name { font-weight: 800; font-size: 50pt; letter-spacing: 6pt; line-height: 1; margin-top: 6mm; }
 .cover .mast .tag { font-style: italic; color: var(--soft); font-size: 12pt; margin-top: 3mm; }
-.cover .title { text-align: center; margin-top: 10mm; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); padding: 5mm 0; }
+.cover .title { text-align: center; margin-top: 18mm; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); padding: 7mm 0; }
 .cover .title .t { font-weight: 800; font-size: 25pt; line-height: 1.15; }
 .cover .title .s { font-size: 12pt; color: var(--soft); margin-top: 3mm; line-height: 1.4; }
+.cover .author { text-align: center; margin-top: 22mm; }
+.cover .author .kicker { display: block; margin-bottom: 2mm; }
+.cover .author .who { font-weight: 600; font-size: 19pt; line-height: 1.2; }
+.cover .author .no { font-family: 'Plex Mono', monospace; font-size: 10.5pt; margin-top: 2mm; color: var(--soft); }
 .cover .meta { margin-top: auto; display: flex; justify-content: space-between; font-size: 10.5pt; border-top: 2.4pt double var(--ink); padding-top: 4mm; }
+.cover .meta > div { flex: 1; }
 .cover .meta .kicker { display: block; margin-bottom: 1mm; }
+.tocpage { break-after: page; }
+.tocpage h2 { margin-bottom: 8pt; }
+.tocpage .toc { columns: 1; font-size: 11.5pt; margin-top: 6pt; }
+.tocpage .toc div { padding: 3pt 0; }
+.tocpage .toc span { width: 26pt; font-size: 9pt; }
+.tocpage .toc .part { margin-top: 10pt; }
 .toc { columns: 2; column-gap: 14mm; font-size: 9.6pt; margin-top: 3pt; }
 .toc div { break-inside: avoid; padding: 1.2pt 0; border-bottom: 0.4pt dotted var(--hair); }
 .toc span { font-family: 'Plex Mono', monospace; font-size: 8pt; color: var(--seal); display: inline-block; width: 18pt; }
@@ -122,7 +134,8 @@ ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
 <body>
 <!-- KAPAK -->
 <div class="cover">
-  <div class="top"><span>RESMÎ KAYIT · RAPOR</span><span>8 EKİM 2026</span></div>
+  <div class="top"><span>Ankara Üniversitesi</span><span>2026–2027 Güz Dönemi</span></div>
+  <div class="course">Yazılım Mühendisliğine Giriş · Dönem ödevi</div>
   <div class="mast">
     <img src="gorseller/muhur.png" alt="Meşveret mührü">
     <div class="name">MEŞVERET</div>
@@ -132,9 +145,22 @@ ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
     <div class="t">Analiz, Tasarım ve Politikalar Raporu</div>
     <div class="s">Problemin çerçevesi, yapay zekânın nerede gerektiği, ölçümler,<br>kodun tasarım desenleriyle yeniden düzenlenmesi ve sistemin kuralları</div>
   </div>
-  <div style="margin-top: 6mm">
-    <div class="kicker">İçindekiler</div>
-    <div class="toc">
+  <div class="author">
+    <span class="kicker">Hazırlayan</span>
+    <div class="who">Alparslan Tuğra ŞAHİN</div>
+    <div class="no">Öğrenci No: 24290636</div>
+  </div>
+  <div class="meta">
+    <div><span class="kicker">Ders</span>Yazılım Mühendisliğine Giriş</div>
+    <div style="text-align:center"><span class="kicker">Öğretim Üyesi</span>Doç. Dr. Savaş TAKAN</div>
+    <div style="text-align:right"><span class="kicker">Tarih</span>9 Ekim 2026</div>
+  </div>
+</div>
+
+<!-- İÇİNDEKİLER -->
+<div class="tocpage">
+  <h2>İçindekiler</h2>
+  <div class="toc">
 <div class="part"><span>I</span>Problem ve analiz</div>
 <div><span>1</span>Özet</div>
 <div><span>2</span>Problem çerçeveleme</div>
@@ -162,13 +188,8 @@ ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
 <div><span>21</span>Karşılaşılan sorunlar ve çözümleri</div>
 <div><span>22</span>Bilinçli açıklar</div>
 <div><span>23</span>Test ve doğrulama</div>
-<div><span>24</span>Kaynaklar</div>
-    </div>
-  </div>
-  <div class="meta">
-    <div><span class="kicker">Hazırlayan</span>Alparslan Tuğra Şahin</div>
-    <div><span class="kicker">Ders</span>Yazılım Mühendisliğine Giriş · dönem ödevi</div>
-    <div style="text-align:right"><span class="kicker">Tarih</span>8 Ekim 2026</div>
+<div><span>24</span>Yapay zekâ kullanım beyanı</div>
+<div><span>25</span>Kaynaklar</div>
   </div>
 </div>
 
@@ -182,7 +203,7 @@ ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
   <div><div class="n">5</div><div class="l">basamaklı temel çizgi merdiveniyle ölçülen baskın tespiti (§6)</div></div>
   <div><div class="n">485</div><div class="l">otomatik test: 231 birim, 29 defter, 225 entegrasyon; hepsi geçti (9 Ekim 2026)</div></div>
 </div>
-<p>Rapor dört bölümdür. <b>Birinci bölüm</b> problemi ders notlarındaki yöntemle çerçeveler: iş hedefinden karara ve göreve giden huni, problem kanvası, paydaşlar, kısıtlar ve ön-otopsi. Ardından her karar noktası için yapay zekânın gerekip gerekmediğini sorar, başarı metriklerini üç katmanda tanımlar ve veriden karar üreten tek bileşeni, baskın tespitini temel çizgilere karşı ölçer. <b>İkinci bölüm</b> kodun tasarım desenleriyle yeniden düzenlenmesini anlatır: bulunan anti-desenler, uygulanan desenler, uygulanmayanlar ve gerekçeleri. <b>Üçüncü bölüm</b> sistemin kurallarını, <b>dördüncü bölüm</b> karşılaşılan sorunları, bilinçli açıkları ve testleri içerir.</p>
+<p>Rapor dört bölümdür. <b>Birinci bölüm</b> problemi ders notlarındaki yöntemle çerçeveler: iş hedefinden karara ve göreve giden huni, problem kanvası, paydaşlar, kısıtlar ve ön-otopsi. Ardından her karar noktası için yapay zekânın gerekip gerekmediğini sorar, başarı metriklerini üç katmanda tanımlar ve veriden karar üreten tek bileşeni, baskın tespitini temel çizgilere karşı ölçer. <b>İkinci bölüm</b> kodun tasarım desenleriyle yeniden düzenlenmesini anlatır: bulunan anti-desenler, uygulanan desenler, uygulanmayanlar ve gerekçeleri. <b>Üçüncü bölüm</b> sistemin kurallarını, <b>dördüncü bölüm</b> karşılaşılan sorunları, bilinçli açıkları, testleri ve yapay zekâ kullanım beyanını içerir.</p>
 <p>Ekran görüntüleri çalışan sistemden, tohum verisiyle alınmıştır. Sistemin saati sahtedir: 29 Eylül 2026 Salı 10:00. Ölçümler ve tablolar ölçüm dosyalarından üretilir (<code>docs/degerlendirme/</code>); rapor <code>docs/rapor/olustur.py</code> ile yeniden oluşturulabilir. Ayrıntılı tasarım belgesi <code>DESIGN.md</code>, kurulum ve senaryolar <code>README.md</code> dosyasındadır.</p>
 </section>
 
@@ -1076,8 +1097,32 @@ class ClosureKind(ProposalKind):
 <p>Denenmeyenler: Android'de fotoğraf seçme ile yeni ekranlar (takvim, etkinlik, ön sayfa, arama). Sunum yığını bu sürümün tohumuyla yeniden kurulmadı; bu raporun yeni ekran görüntüleri ayrı bir önizleme yığınından alındı.</p>
 </section>
 
+<section id="beyan">
+<h2><span class="no">24</span>Yapay zekâ kullanım beyanı</h2>
+<p class="lead">Bu ödevde yapay zekâ destekli bir kodlama aracı kullanıldı: Claude Code (Anthropic; model Claude Opus 5.5). Ders notundaki ayrımla söylersek, yapay zekâ ürünün içinde değil, geliştirme sürecinde kullanıldı. Ürünün kendisinde öğrenen bir model yoktur; Hâtif kural tabanlıdır (§4).</p>
+<table>
+<thead><tr><th style="width:24%">İş</th><th>Kim yaptı</th></tr></thead>
+<tbody>
+<tr><td>Temel tasarım</td><td>Öğrenci. İki mod (Meydan ve Mahzen), öneri türleri, Karar Saati, havale, Hâtif ve temel kurallar öğrencinin tasarım belgesinden gelir.</td></tr>
+<tr><td>Belgedeki boşluklar</td><td>Yapay zekâ yorum önerdi; öğrenci onayladı ya da değiştirdi. Kararlar ve gerekçeleri tasarım belgesinde (DESIGN.md §14) listelidir. Bu sürümde öneri sahibinin kendi önerisine itiraz edememesi kuralını yapay zekâ koydu; öğrencinin onayına sunuldu.</td></tr>
+<tr><td>Yeni mekanizmalar</td><td>Öğrencinin isteği ya da onayıyla eklendi (ör. muhatap, dilekçe, takvim, gazete, görseller, kodun desenlerle yeniden düzenlenmesi). Ayrıntılı tasarımı yapay zekâ önerdi.</td></tr>
+<tr><td>Kod, testler, tohum verisi, belgeler</td><td>Yapay zekâ yazdı; öğrenci yönlendirdi, siteyi kullanıp bulduğu sorunları bildirdi. Tohumdaki farklı siyasi görüşlerden mesajlar ve takvim etkinlikleri öğrencinin isteğiyle eklendi; metinlerini yapay zekâ yazdı.</td></tr>
+<tr><td>Ölçüm, kullanım testi ve bu rapor</td><td>Benzetim, ölçüm betikleri, betikli kullanım testi ve rapor metni yapay zekâ tarafından yazıldı; kullanım testinin bulduğu sorunları da yapay zekâ düzeltti. Rapordaki sayılar elle yazılmadı; ölçüm dosyalarından bir betikle üretildi.</td></tr>
+</tbody>
+</table>
+<h3>Çıktılar nasıl doğrulandı</h3>
+<ul>
+  <li><b>Kod:</b> her değişiklikten sonra otomatik testler, tür denetimi ve lint çalıştırıldı (485 test). Yeniden düzenleme, öncesinde ve sonrasında aynı testlerden geçti.</li>
+  <li><b>Arayüz:</b> ekranlar tarayıcıda iki genişlikte açılıp görüntüleri incelendi; formlar uçtan uca dolduruldu.</li>
+  <li><b>Sayılar:</b> tablolar ve grafikler <code>docs/rapor/olustur.py</code> ile <code>docs/degerlendirme/</code> altındaki ölçüm dosyalarından üretilir. Sınama kümesi sabit bir dosyadır; sonuçlar yeniden çalıştırılabilir.</li>
+  <li><b>Kaynaklar:</b> kaynakçadaki kitap ve makaleler ders notlarında geçenlerdir; kanunun yayım bilgisi resmî mevzuat kaynağından denetlendi.</li>
+  <li><b>Bağımlılıklar:</b> sürümleri kilit dosyalarıyla sabitlendi.</li>
+</ul>
+<p>Kodun ve raporun bütün sorumluluğu öğrenciye aittir.</p>
+</section>
+
 <section id="kaynak">
-<h2><span class="no">24</span>Kaynaklar</h2>
+<h2><span class="no">25</span>Kaynaklar</h2>
 <ul class="refs">
   <li>Takan, S. (2026). <i>Yapay Zekâ Mühendisliğine Giriş</i>; <i>Temel Modelleri Anlamak</i>; <i>Problem Çerçeveleme</i> (Hafta 2). Yapay Zekâ Mühendisliği ve YZ Destekli Yazılım Geliştirme ders notları, Ankara Üniversitesi.</li>
   <li>Takan, S. (2026). <i>Yazılım Tasarım Desenleri: Yapay Zekâ ve Veri Mühendisliği Perspektifinden</i>. Ders notu, Ankara Üniversitesi.</li>

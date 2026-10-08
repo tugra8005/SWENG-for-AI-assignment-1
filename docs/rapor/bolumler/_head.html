@@ -56,16 +56,28 @@ svg .m { font-family: 'Plex Mono', monospace; }
 
 /* kapak */
 .cover { height: 258mm; display: flex; flex-direction: column; break-after: page; }
-.cover .top { display: flex; justify-content: space-between; font-family: 'Plex Mono', monospace; font-size: 8pt; letter-spacing: 1pt; color: var(--soft); border-bottom: 2.4pt double var(--ink); padding-bottom: 4pt; }
-.cover .mast { text-align: center; margin-top: 12mm; }
-.cover .mast img { width: 24mm; }
-.cover .mast .name { font-weight: 800; font-size: 48pt; letter-spacing: 6pt; line-height: 1; margin-top: 5mm; }
+.cover .top { display: flex; justify-content: space-between; font-family: 'Plex Mono', monospace; font-size: 8.4pt; letter-spacing: 1.2pt; text-transform: uppercase; color: var(--ink); border-bottom: 2.4pt double var(--ink); padding-bottom: 4pt; }
+.cover .course { text-align: center; font-family: 'Plex Mono', monospace; font-size: 8pt; letter-spacing: 1pt; text-transform: uppercase; color: var(--soft); margin-top: 3mm; }
+.cover .mast { text-align: center; margin-top: 26mm; }
+.cover .mast img { width: 28mm; }
+.cover .mast .name { font-weight: 800; font-size: 50pt; letter-spacing: 6pt; line-height: 1; margin-top: 6mm; }
 .cover .mast .tag { font-style: italic; color: var(--soft); font-size: 12pt; margin-top: 3mm; }
-.cover .title { text-align: center; margin-top: 10mm; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); padding: 5mm 0; }
+.cover .title { text-align: center; margin-top: 18mm; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); padding: 7mm 0; }
 .cover .title .t { font-weight: 800; font-size: 25pt; line-height: 1.15; }
 .cover .title .s { font-size: 12pt; color: var(--soft); margin-top: 3mm; line-height: 1.4; }
+.cover .author { text-align: center; margin-top: 22mm; }
+.cover .author .kicker { display: block; margin-bottom: 2mm; }
+.cover .author .who { font-weight: 600; font-size: 19pt; line-height: 1.2; }
+.cover .author .no { font-family: 'Plex Mono', monospace; font-size: 10.5pt; margin-top: 2mm; color: var(--soft); }
 .cover .meta { margin-top: auto; display: flex; justify-content: space-between; font-size: 10.5pt; border-top: 2.4pt double var(--ink); padding-top: 4mm; }
+.cover .meta > div { flex: 1; }
 .cover .meta .kicker { display: block; margin-bottom: 1mm; }
+.tocpage { break-after: page; }
+.tocpage h2 { margin-bottom: 8pt; }
+.tocpage .toc { columns: 1; font-size: 11.5pt; margin-top: 6pt; }
+.tocpage .toc div { padding: 3pt 0; }
+.tocpage .toc span { width: 26pt; font-size: 9pt; }
+.tocpage .toc .part { margin-top: 10pt; }
 .toc { columns: 2; column-gap: 14mm; font-size: 9.6pt; margin-top: 3pt; }
 .toc div { break-inside: avoid; padding: 1.2pt 0; border-bottom: 0.4pt dotted var(--hair); }
 .toc span { font-family: 'Plex Mono', monospace; font-size: 8pt; color: var(--seal); display: inline-block; width: 18pt; }
