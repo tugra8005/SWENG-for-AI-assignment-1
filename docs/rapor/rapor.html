@@ -180,7 +180,7 @@ ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
   <div><div class="n">9</div><div class="l">denetim kuralı (R1–R9), bir denetim zinciri olarak öneri açılırken çalışır</div></div>
   <div><div class="n">0</div><div class="l">öğrenen model: her karar noktası için "yapay zekâ gerekli mi?" sorusu yanıtlandı (§4)</div></div>
   <div><div class="n">5</div><div class="l">basamaklı temel çizgi merdiveniyle ölçülen baskın tespiti (§6)</div></div>
-  <div><div class="n">485</div><div class="l">otomatik test: 231 birim, 29 defter, 225 entegrasyon; hepsi geçti (8 Ekim 2026)</div></div>
+  <div><div class="n">485</div><div class="l">otomatik test: 231 birim, 29 defter, 225 entegrasyon; hepsi geçti (9 Ekim 2026)</div></div>
 </div>
 <p>Rapor dört bölümdür. <b>Birinci bölüm</b> problemi ders notlarındaki yöntemle çerçeveler: iş hedefinden karara ve göreve giden huni, problem kanvası, paydaşlar, kısıtlar ve ön-otopsi. Ardından her karar noktası için yapay zekânın gerekip gerekmediğini sorar, başarı metriklerini üç katmanda tanımlar ve veriden karar üreten tek bileşeni, baskın tespitini temel çizgilere karşı ölçer. <b>İkinci bölüm</b> kodun tasarım desenleriyle yeniden düzenlenmesini anlatır: bulunan anti-desenler, uygulanan desenler, uygulanmayanlar ve gerekçeleri. <b>Üçüncü bölüm</b> sistemin kurallarını, <b>dördüncü bölüm</b> karşılaşılan sorunları, bilinçli açıkları ve testleri içerir.</p>
 <p>Ekran görüntüleri çalışan sistemden, tohum verisiyle alınmıştır. Sistemin saati sahtedir: 29 Eylül 2026 Salı 10:00. Ölçümler ve tablolar ölçüm dosyalarından üretilir (<code>docs/degerlendirme/</code>); rapor <code>docs/rapor/olustur.py</code> ile yeniden oluşturulabilir. Ayrıntılı tasarım belgesi <code>DESIGN.md</code>, kurulum ve senaryolar <code>README.md</code> dosyasındadır.</p>
@@ -308,9 +308,9 @@ ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
 <thead><tr><th style="width:11%">Katman</th><th style="width:34%">Metrik</th><th style="width:22%">Tohumdaki değer</th><th>Koruyucu (guardrail)</th></tr></thead>
 <tbody>
 <tr><td class="k">İş</td><td>Kurum muhataplı dilekçelerin yanıt alma oranı</td><td>1 / 3 dilekçe (11 alıcıdan 1'i); ikisinin süresi dolmadı</td><td>Süresinde yanıt verilmeyen dilekçe gazetede haber olur</td></tr>
-<tr><td class="k">İş</td><td>Gerçekleşen etkinliklerin raporlanma oranı</td><td>1 / 1 geçmiş etkinlik raporlu (14 katılımcı)</td><td>Raporu yalnızca katılımını bildiren yazar</td></tr>
+<tr><td class="k">İş</td><td>Gerçekleşen etkinliklerin raporlanma oranı</td><td>4 / 5 geçmiş etkinlik raporlu; kısa film gecesinin raporu yazılmadı</td><td>Raporu yalnızca katılımını bildiren yazar</td></tr>
 <tr><td class="k">İş</td><td>Azınlık payını gasp eden önerinin uygulanmaması</td><td>№17 Genel'de kabul, İstanbul'da ret: uygulanmadı</td><td>Orantısızlık eşiği izinli aralıkta (5–30 puan)</td></tr>
-<tr><td class="k">Ürün</td><td>Sessiz onayla kabul edilen öneri payı</td><td>9 / 24 öneri</td><td>İtiraz eşiği en çok 20 itiraz ya da %20 (izinli aralık)</td></tr>
+<tr><td class="k">Ürün</td><td>Sessiz onayla kabul edilen öneri payı</td><td>20 / 35 öneri</td><td>İtiraz eşiği en çok 20 itiraz ya da %20 (izinli aralık)</td></tr>
 <tr><td class="k">Ürün</td><td>İtirazla yavaş şeride geçen öneri</td><td>5 öneri, 15 itiraz</td><td>Öneri sahibi kendi önerisine itiraz edemez</td></tr>
 <tr><td class="k">Model</td><td>Baskın tespitinde kesinlik ve duyarlılık</td><td>Canlı: 5/5 yakalandı, yanlış işaret 0. Benzetim: 0,26 / 0,32</td><td>Yanlış işaretlenen gerçek üye sayısı</td></tr>
 </tbody>
@@ -670,7 +670,7 @@ class ClosureKind(ProposalKind):
 <p>Seçmen kapsamı S, kaynağın sahibi O olsun. S = O ise öneri geçer. S, O'nun alt kümesiyse ve kaynak S'nin türüne göre bölünebiliyorsa öneri S'nin payına daraltılır; bölünemiyorsa reddedilir. S, O'nun alt kümesi değilse (üst küme ya da ilgisiz) reddedilir. İspat yükü karar verende: kapsam, kaynağa sahipliğini ontolojide göstermek zorundadır.</p>
 <figure data-fig="daralma">
 <img src="gorseller/istanbul-daralma.png" alt="İstanbul kapsamıyla açılan ve İstanbul payına daraltılan öneri">
-<figcaption><b>Şekil 1.</b> №22 önerisi. Talep "Etkinlik bütçesinin tamamı İstanbul'a" idi (üstte üstü çizili). İstanbul kapsamı yalnızca kendi payına karar verebildiği için oylanan şey "Etki: Etkinlik bütçesinin İstanbul payı" oldu. Bordo kutu payı gösterir (4.000 / 20.000 puan); Hâtif yorumunda daraltmanın gerekçesini yazar.</figcaption>
+<figcaption><b>Şekil 1.</b> №33 önerisi. Talep "Etkinlik bütçesinin tamamı İstanbul'a" idi (üstte üstü çizili). İstanbul kapsamı yalnızca kendi payına karar verebildiği için oylanan şey "Etki: Etkinlik bütçesinin İstanbul payı" oldu. Bordo kutu payı gösterir (4.000 / 20.000 puan); Hâtif yorumunda daraltmanın gerekçesini yazar.</figcaption>
 </figure>
 <h3>Muhatap: yetki alanı (R9)</h3>
 <p>Bir konu bir kuruma iletilecekse, kapsam yalnızca kendi yetki alanındaki kuruma yazabilir. Bir şehrin sakinleri başka bir şehrin belediyesine ya da bir bakanlığa topluluk adına yazamaz; ilgi grupları belediyeye yazamaz, çünkü bir şehrin sakini değildirler.</p>
@@ -899,7 +899,7 @@ class ClosureKind(ProposalKind):
 </figure>
 <figure data-fig="takvim">
 <img src="gorseller/takvim.png" alt="Meşveret Takvimi sayfası">
-<figcaption><b>Şekil 11.</b> Takvim: yaklaşan ve geçmiş etkinlikler ay başlıklarıyla. Sağda bütün takvime .ics aboneliği.</figcaption>
+<figcaption><b>Şekil 11.</b> Takvim, ay başlıklarıyla: solda Ekim–Aralık'taki sekiz yaklaşan etkinlik, sağda Eylül'ün son haftasında gerçekleşen beş etkinlik. Dördünün raporu var; kısa film gecesine dört kişi katılacağını bildirmişti, rapor yazan olmadı. Akşam pazarı denemesi İstanbul kapsamında, diğerleri Genel; salondaki etkinliklerin saatleri çakışmaz.</figcaption>
 </figure>
 <figure data-fig="etkinlik">
 <img src="gorseller/etkinlik.png" alt="Dekalog I gösterimi etkinlik sayfası">
@@ -910,7 +910,7 @@ class ClosureKind(ProposalKind):
 <div class="side">
 <figure data-fig="gazete" style="flex: 0 0 66%">
 <img src="gorseller/gazete.png" alt="Gazete ön sayfası geniş ekranda">
-<figcaption><b>Şekil 13.</b> Ön sayfa geniş ekranda. Manşet gerçekleşen Dekalog I gösterimi; altında takvime eklenen etkinlikler, İBB'nin yanıtı ve yeni konular.</figcaption>
+<figcaption><b>Şekil 13.</b> Ön sayfa geniş ekranda. Manşet en yeni haber: park temizliğinin raporu. Altında takvime eklenen etkinlikler; sağda Karar Saati'ne kalan süre ve yaklaşan etkinlikler.</figcaption>
 </figure>
 <figure data-fig="gazetetel">
 <img src="gorseller/gazete-telefon.png" alt="Gazete ön sayfası telefonda">
@@ -1025,9 +1025,15 @@ class ClosureKind(ProposalKind):
 <tr><td>Benzetim üreteci kamufle ve bölünmüş baskında bazı hesapların katılım anını geleceğe yazıyordu.</td><td>Kayma, kalan süreyle sınırlandı; üretecin testleri bunu yakalar.</td><td>§6</td></tr>
 <tr><td>Karar ağacı benzetimin bir izini öğrendi: gerçek yeni üyelerin yanıt sayısı dar bir aralıkta üretiliyordu.</td><td>Aralıklar genişletildi. Ağaç yine de canlı veride baskıncıları yakalayamadı; bu bir sonuç olarak rapora yazıldı.</td><td>§6</td></tr>
 <tr><td>Karar ağacının bölme araması karesel zamanlıydı; ölçüm yavaştı.</td><td>Değerler sıralanıp tek geçişte taranıyor.</td><td>evaluation/</td></tr>
+<tr><td>Geçmiş etkinlikte katılım hâlâ "7 kişi geliyor" diye yazıyordu.</td><td>Etkinlik başlayınca katılım kapanır ve satır "7 kişi Geliyorum dedi" olur.</td><td>§17</td></tr>
 <tr><td>Etkinlikli bir konu ön sayfada iki kez çıkıyordu (yeni konu ve takvim haberi).</td><td>Etkinlikli konu yalnızca etkinlik haberi olarak çıkar.</td><td>§17</td></tr>
 <tr><td>Tohum, etkinlik raporunu etkinlik bitmeden yazmaya çalışıyordu; kural raporu reddetti ve tohum yarıda kaldı.</td><td>Tohumdaki rapor zamanı etkinlik sonrasına alındı; kural değişmedi.</td><td>tohum</td></tr>
 <tr><td>Tohuma etkinlikler eklenince öneri numaraları kaydı; belgeler eski numaraları gösteriyordu.</td><td>README, sunum betiği ve kılavuz şekli yeni numaralara göre düzeltildi.</td><td>belgeler</td></tr>
+<tr><td colspan="3" class="sub">Kullanım testinde bulunanlar (9 Ekim)</td></tr>
+<tr><td>"Yanıtla"ya basınca bir şey olmuyor gibiydi: yazma alanı masaüstünde 3.200 piksel aşağıda kalıyordu.</td><td>Yanıt seçilince yazma alanı odaklanır ve görünür alana gelir.</td><td>konu sayfası</td></tr>
+<tr><td>İtiraz tek tıkla, onaysız deftere yazılıyordu; geri alınamıyor.</td><td>İtiraz önce ne olacağını söyler (defter, geri alınamaz, eşik) ve onay ister. Öneri sahibine düğme yerine "Kendi önerinize itiraz edemezsiniz" yazar.</td><td>§12</td></tr>
+<tr><td>Ziyaretçiye yaklaşan etkinlikte "rapor için giriş yapın", geçmiş etkinlikte "katılım için giriş yapın" deniyordu; giriş yapsa da yapamazdı.</td><td>Önce zamana bakılır: "rapor etkinlikten sonra", "katılım listesi kapandı"; giriş uyarısı en son.</td><td>takvim</td></tr>
+<tr><td>Takvim dosyasındaki (.ics) etkinlik bağlantısı API'nin adresine gidiyordu; takvim uygulamasından açılmıyordu.</td><td>Bağlantı sitenin adresine gider: tarayıcıda Referer'dan, abonelikte yapılandırmadan.</td><td>takvim</td></tr>
 <tr><td>Veritabanının küçük harf işlevi Türkçe I/İ'yi çevirmez; "İSTANBUL" araması "İstanbul"u bulmazdı.</td><td>Eşleme Türkçe harf kurallarıyla uygulamada yapılır.</td><td>§20</td></tr>
 </tbody>
 </table>
@@ -1055,7 +1061,7 @@ class ClosureKind(ProposalKind):
 
 <section id="test">
 <h2><span class="no">23</span>Test ve doğrulama</h2>
-<p class="lead">Kurallar ve akışlar otomatik testlerle, arayüz tarayıcıda betikle ve elle denendi. Son tam çalıştırma 8 Ekim 2026: 485 testin hepsi geçti, atlanan yok.</p>
+<p class="lead">Kurallar ve akışlar otomatik testlerle, arayüz tarayıcıda betikle ve elle denendi. Son tam çalıştırma 9 Ekim 2026: 485 testin hepsi geçti, atlanan yok.</p>
 <table>
 <thead><tr><th style="width:17%">Katman</th><th>Ne test edilir</th><th style="width:20%">Sonuç</th></tr></thead>
 <tbody>
@@ -1064,6 +1070,7 @@ class ClosureKind(ProposalKind):
 <tr><td>Defter (29)</td><td>Zincir bütünlüğü, bozulma tespiti, üç düğümde çoğaltma ve yetişme</td><td>Hepsi geçti</td></tr>
 <tr><td>İstemci</td><td>TypeScript tür denetimi, ESLint; Mahzen çürümesi ve doğum tarihi maskesi için iki denetim betiği</td><td>Temiz</td></tr>
 <tr><td>Arayüz</td><td>1440 px ve 375 px genişlikte takvim, etkinlik, ön sayfa, arama ve kılavuz; yatay taşma yok. Etkinlikli bir konu önerisi formdan uçtan uca açıldı.</td><td>Web'de denendi</td></tr>
+<tr><td>Kullanım testi</td><td>Farklı tohum hesaplarıyla, masaüstünde ve telefonda betikli akışlar: ziyaretçi olarak gezinme, takvimden "Geliyorum", geçmiş etkinliğe rapor, itiraz ve öneri sahibinin görünümü, mesaja yanıt, arama, salonu dolu saate etkinlik önerisi, bildirimler, profil, Mahzen girişi, .ics dosyası</td><td>Dört sorun bulundu ve düzeltildi (§21)</td></tr>
 </tbody>
 </table>
 <p>Denenmeyenler: Android'de fotoğraf seçme ile yeni ekranlar (takvim, etkinlik, ön sayfa, arama). Sunum yığını bu sürümün tohumuyla yeniden kurulmadı; bu raporun yeni ekran görüntüleri ayrı bir önizleme yığınından alındı.</p>
