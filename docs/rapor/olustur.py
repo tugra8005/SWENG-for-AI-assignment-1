@@ -220,11 +220,12 @@ def svg_merdiven() -> str:
         p, r = res[k]["kesinlik"], res[k]["duyarlilik"]
         parts.append(f'<text x="{left - 8}" y="{y + 14}" font-size="11.5" text-anchor="end">{NAMES[k]}</text>')
         parts.append(f'<rect x="{left}" y="{y + 2}" width="{max(1, scale * p):.1f}" height="9" fill="{INK}"/>')
-        parts.append(f'<rect x="{left}" y="{y + 13}" width="{max(1, scale * r):.1f}" height="9" fill="{SEAL}"/>')
-        parts.append(f'<text x="{left + scale * p + 4:.1f}" y="{y + 10}" font-size="8.5" class="m" fill="{SOFT}">{tr(p)}</text>')
-        parts.append(f'<text x="{left + scale * r + 4:.1f}" y="{y + 21}" font-size="8.5" class="m" fill="{SEAL}">{tr(r)}</text>')
+        # Siyah-beyaz baskıda da ayrılsın: kesinlik dolu, duyarlılık boş (çerçeveli) çubuk.
+        parts.append(f'<rect x="{left}" y="{y + 13.5}" width="{max(1, scale * r):.1f}" height="8" fill="#fff" stroke="{INK}" stroke-width="1"/>')
+        parts.append(f'<text x="{left + scale * p + 4:.1f}" y="{y + 10}" font-size="8.5" class="m" fill="{INK}">{tr(p)}</text>')
+        parts.append(f'<text x="{left + scale * r + 4:.1f}" y="{y + 21}" font-size="8.5" class="m" fill="{INK}">{tr(r)}</text>')
     parts.append(f'<rect x="{w - 210}" y="{h - 16}" width="9" height="9" fill="{INK}"/><text x="{w - 197}" y="{h - 8}" font-size="10">kesinlik</text>'
-                 f'<rect x="{w - 130}" y="{h - 16}" width="9" height="9" fill="{SEAL}"/><text x="{w - 117}" y="{h - 8}" font-size="10">duyarlılık</text>')
+                 f'<rect x="{w - 130}" y="{h - 15.5}" width="8" height="8" fill="#fff" stroke="{INK}" stroke-width="1"/><text x="{w - 117}" y="{h - 8}" font-size="10">duyarlılık</text>')
     parts.append("</svg>")
     return "".join(parts)
 
@@ -276,7 +277,7 @@ def svg_gecikme() -> str:
         parts.append(f'<text x="{left - 8}" y="{yy + 11}" font-size="10.5" text-anchor="end">{label}</text>')
         parts.append(f'<line x1="{left + scale * m["p50"]:.1f}" y1="{yy + 7}" x2="{left + scale * m["en_buyuk"]:.1f}" y2="{yy + 7}" stroke="{SOFT}" stroke-width="1"/>')
         parts.append(f'<rect x="{left + scale * m["p50"] - 2:.1f}" y="{yy + 1}" width="4" height="12" fill="{INK}"/>')
-        parts.append(f'<rect x="{left + scale * m["p99"] - 2:.1f}" y="{yy + 1}" width="4" height="12" fill="{SEAL}"/>')
+        parts.append(f'<rect x="{left + scale * m["p99"] - 2.5:.1f}" y="{yy + 1}" width="5" height="12" fill="#fff" stroke="{INK}" stroke-width="1.1"/>')
         parts.append(f'<circle cx="{left + scale * m["en_buyuk"]:.1f}" cy="{yy + 7}" r="2.6" fill="none" stroke="{SOFT}"/>')
     parts.append("</svg>")
     return "".join(parts)
