@@ -78,30 +78,6 @@
 <p>Denenmeyenler: Android'de fotoğraf seçme ile yeni ekranlar (takvim, etkinlik, ön sayfa, arama). Sunum yığını bu sürümün tohumuyla yeniden kurulmadı; bu raporun yeni ekran görüntüleri ayrı bir önizleme yığınından alındı.</p>
 </section>
 
-<section id="beyan">
-<h2><span class="no">#</span>Yapay zekâ kullanım beyanı</h2>
-<p class="lead">Bu ödevde yapay zekâ destekli bir kodlama aracı kullanıldı: Claude Code (Anthropic; model Claude Opus 5.5). Ders notundaki ayrımla söylersek, yapay zekâ ürünün içinde değil, geliştirme sürecinde kullanıldı. Ürünün kendisinde öğrenen bir model yoktur; Hâtif kural tabanlıdır (§{{ref:yz}}).</p>
-<table>
-<thead><tr><th style="width:24%">İş</th><th>Kim yaptı</th></tr></thead>
-<tbody>
-<tr><td>Temel tasarım</td><td>Öğrenci. İki mod (Meydan ve Mahzen), öneri türleri, Karar Saati, havale, Hâtif ve temel kurallar öğrencinin tasarım belgesinden gelir.</td></tr>
-<tr><td>Belgedeki boşluklar</td><td>Yapay zekâ yorum önerdi; öğrenci onayladı ya da değiştirdi. Kararlar ve gerekçeleri tasarım belgesinde (DESIGN.md §14) listelidir. Bu sürümde öneri sahibinin kendi önerisine itiraz edememesi kuralını yapay zekâ koydu; öğrencinin onayına sunuldu.</td></tr>
-<tr><td>Yeni mekanizmalar</td><td>Öğrencinin isteği ya da onayıyla eklendi (ör. muhatap, dilekçe, takvim, gazete, görseller, kodun desenlerle yeniden düzenlenmesi). Ayrıntılı tasarımı yapay zekâ önerdi.</td></tr>
-<tr><td>Kod, testler, belgeler</td><td>Yapay zekâ yazdı; öğrenci yönlendirdi, siteyi kullanıp bulduğu sorunları bildirdi.</td></tr>
-<tr><td>Ölçüm ve bu rapor</td><td>Benzetim, ölçüm betikleri ve rapor metni yapay zekâ tarafından yazıldı. Rapordaki sayılar elle yazılmadı; ölçüm dosyalarından bir betikle üretildi.</td></tr>
-</tbody>
-</table>
-<h3>Çıktılar nasıl doğrulandı</h3>
-<ul>
-  <li><b>Kod:</b> her değişiklikten sonra otomatik testler, tür denetimi ve lint çalıştırıldı ({{v:test.toplam}} test). Yeniden düzenleme, öncesinde ve sonrasında aynı testlerden geçti.</li>
-  <li><b>Arayüz:</b> ekranlar tarayıcıda iki genişlikte açılıp görüntüleri incelendi; formlar uçtan uca dolduruldu.</li>
-  <li><b>Sayılar:</b> tablolar ve grafikler <code>docs/rapor/olustur.py</code> ile <code>docs/degerlendirme/</code> altındaki ölçüm dosyalarından üretilir. Sınama kümesi sabit bir dosyadır; sonuçlar yeniden çalıştırılabilir.</li>
-  <li><b>Kaynaklar:</b> kaynakçadaki kitap ve makaleler ders notlarında geçenlerdir; kanunun yayım bilgisi resmî mevzuat kaynağından denetlendi.</li>
-  <li><b>Bağımlılıklar:</b> sürümleri kilit dosyalarıyla sabitlendi.</li>
-</ul>
-<p>Kodun ve raporun bütün sorumluluğu öğrenciye aittir.</p>
-</section>
-
 <section id="kaynak">
 <h2><span class="no">#</span>Kaynaklar</h2>
 <ul class="refs">

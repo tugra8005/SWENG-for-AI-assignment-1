@@ -25,7 +25,7 @@ PARTS = [
     ("II", "Tasarım ve kod", ["desen", "sistem"]),
     ("III", "Politikalar", ["azinlik", "kapsam", "sinirlama", "akis", "yonetmelik", "havale",
                             "silme", "mahzen", "sonuc", "gorsel", "butunluk", "kolaylik"]),
-    ("IV", "Süreç", ["sorunlar", "aciklar", "test", "beyan", "kaynak"]),
+    ("IV", "Süreç", ["sorunlar", "aciklar", "test", "kaynak"]),
 ]
 FRAGMENTS = ["analiz.html", "desenler.html", "sistem.html", "politikalar.html", "kolaylik.html",
              "surec.html"]

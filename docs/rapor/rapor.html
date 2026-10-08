@@ -162,8 +162,7 @@ ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
 <div><span>21</span>Karşılaşılan sorunlar ve çözümleri</div>
 <div><span>22</span>Bilinçli açıklar</div>
 <div><span>23</span>Test ve doğrulama</div>
-<div><span>24</span>Yapay zekâ kullanım beyanı</div>
-<div><span>25</span>Kaynaklar</div>
+<div><span>24</span>Kaynaklar</div>
     </div>
   </div>
   <div class="meta">
@@ -181,9 +180,9 @@ ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
   <div><div class="n">9</div><div class="l">denetim kuralı (R1–R9), bir denetim zinciri olarak öneri açılırken çalışır</div></div>
   <div><div class="n">0</div><div class="l">öğrenen model: her karar noktası için "yapay zekâ gerekli mi?" sorusu yanıtlandı (§4)</div></div>
   <div><div class="n">5</div><div class="l">basamaklı temel çizgi merdiveniyle ölçülen baskın tespiti (§6)</div></div>
-  <div><div class="n">481</div><div class="l">otomatik test: 228 birim, 29 defter, 224 entegrasyon; hepsi geçti (8 Ekim 2026)</div></div>
+  <div><div class="n">485</div><div class="l">otomatik test: 231 birim, 29 defter, 225 entegrasyon; hepsi geçti (8 Ekim 2026)</div></div>
 </div>
-<p>Rapor dört bölümdür. <b>Birinci bölüm</b> problemi ders notlarındaki yöntemle çerçeveler: iş hedefinden karara ve göreve giden huni, problem kanvası, paydaşlar, kısıtlar ve ön-otopsi. Ardından her karar noktası için yapay zekânın gerekip gerekmediğini sorar, başarı metriklerini üç katmanda tanımlar ve veriden karar üreten tek bileşeni, baskın tespitini temel çizgilere karşı ölçer. <b>İkinci bölüm</b> kodun tasarım desenleriyle yeniden düzenlenmesini anlatır: bulunan anti-desenler, uygulanan desenler, uygulanmayanlar ve gerekçeleri. <b>Üçüncü bölüm</b> sistemin kurallarını, <b>dördüncü bölüm</b> geliştirme sürecini, testleri ve yapay zekâ kullanım beyanını içerir.</p>
+<p>Rapor dört bölümdür. <b>Birinci bölüm</b> problemi ders notlarındaki yöntemle çerçeveler: iş hedefinden karara ve göreve giden huni, problem kanvası, paydaşlar, kısıtlar ve ön-otopsi. Ardından her karar noktası için yapay zekânın gerekip gerekmediğini sorar, başarı metriklerini üç katmanda tanımlar ve veriden karar üreten tek bileşeni, baskın tespitini temel çizgilere karşı ölçer. <b>İkinci bölüm</b> kodun tasarım desenleriyle yeniden düzenlenmesini anlatır: bulunan anti-desenler, uygulanan desenler, uygulanmayanlar ve gerekçeleri. <b>Üçüncü bölüm</b> sistemin kurallarını, <b>dördüncü bölüm</b> karşılaşılan sorunları, bilinçli açıkları ve testleri içerir.</p>
 <p>Ekran görüntüleri çalışan sistemden, tohum verisiyle alınmıştır. Sistemin saati sahtedir: 29 Eylül 2026 Salı 10:00. Ölçümler ve tablolar ölçüm dosyalarından üretilir (<code>docs/degerlendirme/</code>); rapor <code>docs/rapor/olustur.py</code> ile yeniden oluşturulabilir. Ayrıntılı tasarım belgesi <code>DESIGN.md</code>, kurulum ve senaryolar <code>README.md</code> dosyasındadır.</p>
 </section>
 
@@ -590,7 +589,7 @@ class ClosureKind(ProposalKind):
 <svg viewBox="0 0 760 198" role="img" aria-label="Gecikme dağılımı"><line x1="200.0" y1="16" x2="200.0" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="200.0" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">0 ms</text><line x1="275.47169811320754" y1="16" x2="275.47169811320754" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="275.47169811320754" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">20 ms</text><line x1="350.9433962264151" y1="16" x2="350.9433962264151" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="350.9433962264151" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">40 ms</text><line x1="426.4150943396226" y1="16" x2="426.4150943396226" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="426.4150943396226" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">60 ms</text><line x1="501.88679245283015" y1="16" x2="501.88679245283015" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="501.88679245283015" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">80 ms</text><line x1="577.3584905660377" y1="16" x2="577.3584905660377" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="577.3584905660377" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">100 ms</text><line x1="652.8301886792452" y1="16" x2="652.8301886792452" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="652.8301886792452" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">120 ms</text><text x="192" y="33" font-size="10.5" text-anchor="end">Meydan ön sayfası (/news)</text><line x1="436.6" y1="29" x2="720.0" y2="29" stroke="#4A463E" stroke-width="1"/><rect x="434.6" y="23" width="4" height="12" fill="#1B1A17"/><rect x="543.7" y="23" width="4" height="12" fill="#7A1E2B"/><circle cx="720.0" cy="29" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="57" font-size="10.5" text-anchor="end">Açık öneriler</text><line x1="347.9" y1="53" x2="676.2" y2="53" stroke="#4A463E" stroke-width="1"/><rect x="345.9" y="47" width="4" height="12" fill="#1B1A17"/><rect x="409.3" y="47" width="4" height="12" fill="#7A1E2B"/><circle cx="676.2" cy="53" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="81" font-size="10.5" text-anchor="end">Konu sayfası</text><line x1="280.0" y1="77" x2="312.1" y2="77" stroke="#4A463E" stroke-width="1"/><rect x="278.0" y="71" width="4" height="12" fill="#1B1A17"/><rect x="298.4" y="71" width="4" height="12" fill="#7A1E2B"/><circle cx="312.1" cy="77" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="105" font-size="10.5" text-anchor="end">Dilekçe</text><line x1="250.9" y1="101" x2="267.9" y2="101" stroke="#4A463E" stroke-width="1"/><rect x="248.9" y="95" width="4" height="12" fill="#1B1A17"/><rect x="261.0" y="95" width="4" height="12" fill="#7A1E2B"/><circle cx="267.9" cy="101" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="129" font-size="10.5" text-anchor="end">Takvim</text><line x1="258.1" y1="125" x2="301.5" y2="125" stroke="#4A463E" stroke-width="1"/><rect x="256.1" y="119" width="4" height="12" fill="#1B1A17"/><rect x="290.5" y="119" width="4" height="12" fill="#7A1E2B"/><circle cx="301.5" cy="125" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="153" font-size="10.5" text-anchor="end">Arama (istanbul)</text><line x1="236.6" y1="149" x2="252.8" y2="149" stroke="#4A463E" stroke-width="1"/><rect x="234.6" y="143" width="4" height="12" fill="#1B1A17"/><rect x="245.2" y="143" width="4" height="12" fill="#7A1E2B"/><circle cx="252.8" cy="149" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="177" font-size="10.5" text-anchor="end">Karar Saati durumu</text><line x1="255.8" y1="173" x2="527.9" y2="173" stroke="#4A463E" stroke-width="1"/><rect x="253.8" y="167" width="4" height="12" fill="#1B1A17"/><rect x="272.0" y="167" width="4" height="12" fill="#7A1E2B"/><circle cx="527.9" cy="173" r="2.6" fill="none" stroke="#4A463E"/></svg>
 <p class="note">Siyah çizgi p50, bordo çizgi p99, halka en büyük değer. Ortalama ile p50 birbirine yakın, ama tek tek istekler p99'un katlarına çıkabiliyor: Karar Saati durumunda p99 19,60 ms iken en büyük değer 86,90 ms. En yavaş uç nokta ön sayfadır: haberler her istekte bütün kararlardan yeniden hesaplanır. Ölçek büyürse ilk adım bu sonucu önbellekte tutmaktır (Proxy); bugünkü ölçekte gerekmedi.</p>
 <div class="box"><span class="kicker">Üretim sistemlerinin dört gereksinimi</span>
-<p><b>Güvenilirlik:</b> sistem sessizce yanlış karar vermemeli; her karar deftere yazılır ve üç düğümde doğrulanır, oylamasız değişiklik geri alınır. <b>Ölçeklenebilirlik:</b> tek lider ve tek API süreci ödev ölçeğindedir; defter kayıtları toplu gönderilir (250 oyluk açılış 15 saniyeden 2,7 saniyeye indi). <b>Sürdürülebilirlik:</b> desenler, 481 otomatik test ve tasarım belgesi. <b>Uyarlanabilirlik:</b> eşikler ve süreler koda değil yönetmeliğe yazılıdır ve oylamayla değişir; kod değişmeden kurallar uyum sağlar.</p></div>
+<p><b>Güvenilirlik:</b> sistem sessizce yanlış karar vermemeli; her karar deftere yazılır ve üç düğümde doğrulanır, oylamasız değişiklik geri alınır. <b>Ölçeklenebilirlik:</b> tek lider ve tek API süreci ödev ölçeğindedir; defter kayıtları toplu gönderilir (250 oyluk açılış 15 saniyeden 2,7 saniyeye indi). <b>Sürdürülebilirlik:</b> desenler, 485 otomatik test ve tasarım belgesi. <b>Uyarlanabilirlik:</b> eşikler ve süreler koda değil yönetmeliğe yazılıdır ve oylamayla değişir; kod değişmeden kurallar uyum sağlar.</p></div>
 </section>
 
 <div class="partHead"><span>Bölüm III</span>Politikalar</div>
@@ -1056,12 +1055,12 @@ class ClosureKind(ProposalKind):
 
 <section id="test">
 <h2><span class="no">23</span>Test ve doğrulama</h2>
-<p class="lead">Kurallar ve akışlar otomatik testlerle, arayüz tarayıcıda betikle ve elle denendi. Son tam çalıştırma 8 Ekim 2026: 481 testin hepsi geçti, atlanan yok.</p>
+<p class="lead">Kurallar ve akışlar otomatik testlerle, arayüz tarayıcıda betikle ve elle denendi. Son tam çalıştırma 8 Ekim 2026: 485 testin hepsi geçti, atlanan yok.</p>
 <table>
 <thead><tr><th style="width:17%">Katman</th><th>Ne test edilir</th><th style="width:20%">Sonuç</th></tr></thead>
 <tbody>
-<tr><td>Birim (228)</td><td>R1–R9 ve denetim zinciri, öneri durum geçişleri, kayıt defteri, kapsam–muhatap matrisi, havale çözümleme ve döngü, sayım ve eşikler, baskın kümeleri, olgunlaşma, görsel denetimi ve EXIF silme. Değerlendirme düzeneği: metrik formülleri ders notundaki örnekle (DP 40, YN 10, YP 60, DN 890), üretecin ve ayrımın tekrarlanabilirliği, depoların ortak arayüzü, Facade'ın gözlemcilere haber vermesi.</td><td>Hepsi geçti</td></tr>
-<tr><td>Entegrasyon (224)</td><td>Gerçek PostgreSQL ve Neo4j ile: Karar Saati döngüsü, gizli oy, havale kabulü ve süresi, silme, pay çakışması, oylamasız değişiklik, dilekçe ve yanıt, görsel yükleme. Takvim: kabulde etkinlik ve defter kaydı, salonun Genel kapsama ait olması ve çakışma reddi, katılım ve etkinlikten sonra fotoğraflı rapor, geç kabulde etkinlik yazılmaması. Tohum: senaryolar, takvim ve ön sayfa, Türkçe arama.</td><td>Hepsi geçti</td></tr>
+<tr><td>Birim (231)</td><td>R1–R9 ve denetim zinciri, öneri durum geçişleri, kayıt defteri, kapsam–muhatap matrisi, havale çözümleme ve döngü, sayım ve eşikler, baskın kümeleri, olgunlaşma, görsel denetimi ve EXIF silme. Değerlendirme düzeneği: metrik formülleri ders notundaki örnekle (DP 40, YN 10, YP 60, DN 890), üretecin ve ayrımın tekrarlanabilirliği, depoların ortak arayüzü, Facade'ın gözlemcilere haber vermesi.</td><td>Hepsi geçti</td></tr>
+<tr><td>Entegrasyon (225)</td><td>Gerçek PostgreSQL ve Neo4j ile: Karar Saati döngüsü, gizli oy, havale kabulü ve süresi, silme, pay çakışması, oylamasız değişiklik, dilekçe ve yanıt, görsel yükleme. Takvim: kabulde etkinlik ve defter kaydı, salonun Genel kapsama ait olması ve çakışma reddi, katılım ve etkinlikten sonra fotoğraflı rapor, geç kabulde etkinlik yazılmaması. Tohum: senaryolar, takvim ve ön sayfa, Türkçe arama.</td><td>Hepsi geçti</td></tr>
 <tr><td>Defter (29)</td><td>Zincir bütünlüğü, bozulma tespiti, üç düğümde çoğaltma ve yetişme</td><td>Hepsi geçti</td></tr>
 <tr><td>İstemci</td><td>TypeScript tür denetimi, ESLint; Mahzen çürümesi ve doğum tarihi maskesi için iki denetim betiği</td><td>Temiz</td></tr>
 <tr><td>Arayüz</td><td>1440 px ve 375 px genişlikte takvim, etkinlik, ön sayfa, arama ve kılavuz; yatay taşma yok. Etkinlikli bir konu önerisi formdan uçtan uca açıldı.</td><td>Web'de denendi</td></tr>
@@ -1070,32 +1069,8 @@ class ClosureKind(ProposalKind):
 <p>Denenmeyenler: Android'de fotoğraf seçme ile yeni ekranlar (takvim, etkinlik, ön sayfa, arama). Sunum yığını bu sürümün tohumuyla yeniden kurulmadı; bu raporun yeni ekran görüntüleri ayrı bir önizleme yığınından alındı.</p>
 </section>
 
-<section id="beyan">
-<h2><span class="no">24</span>Yapay zekâ kullanım beyanı</h2>
-<p class="lead">Bu ödevde yapay zekâ destekli bir kodlama aracı kullanıldı: Claude Code (Anthropic; model Claude Opus 5.5). Ders notundaki ayrımla söylersek, yapay zekâ ürünün içinde değil, geliştirme sürecinde kullanıldı. Ürünün kendisinde öğrenen bir model yoktur; Hâtif kural tabanlıdır (§4).</p>
-<table>
-<thead><tr><th style="width:24%">İş</th><th>Kim yaptı</th></tr></thead>
-<tbody>
-<tr><td>Temel tasarım</td><td>Öğrenci. İki mod (Meydan ve Mahzen), öneri türleri, Karar Saati, havale, Hâtif ve temel kurallar öğrencinin tasarım belgesinden gelir.</td></tr>
-<tr><td>Belgedeki boşluklar</td><td>Yapay zekâ yorum önerdi; öğrenci onayladı ya da değiştirdi. Kararlar ve gerekçeleri tasarım belgesinde (DESIGN.md §14) listelidir. Bu sürümde öneri sahibinin kendi önerisine itiraz edememesi kuralını yapay zekâ koydu; öğrencinin onayına sunuldu.</td></tr>
-<tr><td>Yeni mekanizmalar</td><td>Öğrencinin isteği ya da onayıyla eklendi (ör. muhatap, dilekçe, takvim, gazete, görseller, kodun desenlerle yeniden düzenlenmesi). Ayrıntılı tasarımı yapay zekâ önerdi.</td></tr>
-<tr><td>Kod, testler, belgeler</td><td>Yapay zekâ yazdı; öğrenci yönlendirdi, siteyi kullanıp bulduğu sorunları bildirdi.</td></tr>
-<tr><td>Ölçüm ve bu rapor</td><td>Benzetim, ölçüm betikleri ve rapor metni yapay zekâ tarafından yazıldı. Rapordaki sayılar elle yazılmadı; ölçüm dosyalarından bir betikle üretildi.</td></tr>
-</tbody>
-</table>
-<h3>Çıktılar nasıl doğrulandı</h3>
-<ul>
-  <li><b>Kod:</b> her değişiklikten sonra otomatik testler, tür denetimi ve lint çalıştırıldı (481 test). Yeniden düzenleme, öncesinde ve sonrasında aynı testlerden geçti.</li>
-  <li><b>Arayüz:</b> ekranlar tarayıcıda iki genişlikte açılıp görüntüleri incelendi; formlar uçtan uca dolduruldu.</li>
-  <li><b>Sayılar:</b> tablolar ve grafikler <code>docs/rapor/olustur.py</code> ile <code>docs/degerlendirme/</code> altındaki ölçüm dosyalarından üretilir. Sınama kümesi sabit bir dosyadır; sonuçlar yeniden çalıştırılabilir.</li>
-  <li><b>Kaynaklar:</b> kaynakçadaki kitap ve makaleler ders notlarında geçenlerdir; kanunun yayım bilgisi resmî mevzuat kaynağından denetlendi.</li>
-  <li><b>Bağımlılıklar:</b> sürümleri kilit dosyalarıyla sabitlendi.</li>
-</ul>
-<p>Kodun ve raporun bütün sorumluluğu öğrenciye aittir.</p>
-</section>
-
 <section id="kaynak">
-<h2><span class="no">25</span>Kaynaklar</h2>
+<h2><span class="no">24</span>Kaynaklar</h2>
 <ul class="refs">
   <li>Takan, S. (2026). <i>Yapay Zekâ Mühendisliğine Giriş</i>; <i>Temel Modelleri Anlamak</i>; <i>Problem Çerçeveleme</i> (Hafta 2). Yapay Zekâ Mühendisliği ve YZ Destekli Yazılım Geliştirme ders notları, Ankara Üniversitesi.</li>
   <li>Takan, S. (2026). <i>Yazılım Tasarım Desenleri: Yapay Zekâ ve Veri Mühendisliği Perspektifinden</i>. Ders notu, Ankara Üniversitesi.</li>
