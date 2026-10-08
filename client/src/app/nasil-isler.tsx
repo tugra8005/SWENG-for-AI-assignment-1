@@ -1,5 +1,6 @@
 /**
- * Kılavuz: Meşveret'in amacı ve bütün sistemi, terimleri canlandırmalı şekillerle.
+ * Kılavuz: Meşveret'in amacı ve bütün sistemi, terimleri canlandırmalı şekillerle; kararların
+ * dünyadaki sonuçları (muhatap, dilekçe, takvim, gazete) ve kullanım kolaylıkları dahil.
  *
  * Sayılar (süreler, eşikler, Karar Saati'nin günü) yönetmelikten canlı okunur; oylamayla
  * değiştiğinde sayfa eskimez. Şekiller örnektir ve tohumdaki senaryolardan alınır.
@@ -18,6 +19,7 @@ import {
   WindowFigure,
 } from '@/components/guide/figures-meydan';
 import { CellarFigure, LedgerFigure, RaidFigure } from '@/components/guide/figures-guard';
+import { AddresseeFigure, EventFigure, PetitionFigure } from '@/components/guide/figures-world';
 import { Anchor, Body, Columns, InitialText, Kicker, Page, Rule, useScrollTo } from '@/components/paper';
 import { RevealTally } from '@/components/reveal-tally';
 import { describeArticleValue } from '@/lib/format';
@@ -26,9 +28,13 @@ import { fonts, layout, paper } from '@/theme/tokens';
 
 const SECTIONS: [string, string][] = [
   ['modlar', 'İki mod: Meydan ve Mahzen'],
+  ['dunya', 'Kararlar dünyaya nasıl dokunur'],
   ['oneri', 'Öneri ve iki şerit'],
   ['karar-saati', 'Karar Saati'],
   ['kapsam', 'Kapsam: kim neye karar verir'],
+  ['muhatap', 'Muhatap ve dilekçe'],
+  ['takvim', 'Takvim ve etkinlik'],
+  ['gazete', 'Gazete ön sayfası ve görseller'],
   ['havale', 'Havale'],
   ['yonetmelik', 'Yönetmelik ve değiştirilemez maddeler'],
   ['hatif', 'Hâtif'],
@@ -37,6 +43,7 @@ const SECTIONS: [string, string][] = [
   ['baskin', 'Baskın tespiti'],
   ['defter', 'Defter'],
   ['mahzen', 'Mahzen'],
+  ['kullanim', 'Telefon, arama ve kısayollar'],
   ['aciklar', 'Bilinçli açıklar'],
   ['sozluk', 'Sözlük'],
 ];
@@ -76,12 +83,14 @@ const MECHANISMS: [string, string, string, string][] = [
 ];
 
 const PAGES: [string, string][] = [
-  ['Meydan', 'ana sayfa: Karar Saati geri sayımı, itiraza açık öneriler, kuyruk, alanlar ve konular'],
+  ['Meydan', 'gazetenin ön sayfası: kararlardan derlenen haberler, Karar Saati geri sayımı, yaklaşan etkinlikler, itiraza açık öneriler, kuyruk, alanlar ve konular'],
   ['Karar Saati', 'açık oturumda oy pusulası; geçmiş oturumların sonuçları ve oyların açılışı'],
+  ['Takvim', 'kabul edilen etkinlikler; Geliyorum, etkinlik raporları ve fotoğraflar'],
   ['Havale', 'oyunuzu devretmek, size gelen havaleleri kabul etmek ya da iade etmek'],
   ['Yönetmelik', 'bütün kurallar, geçmişleri ve değiştirilemez maddeler'],
   ['Defter', 'kayıtlar ve üç düğümün doğrulaması'],
-  ['Zil', 'oy verdiğiniz ve açtığınız önerilerin sonuçları'],
+  ['Zil', 'oy verdiğiniz ve açtığınız önerilerin sonuçları, dilekçe yanıtları, etkinlik raporları'],
+  ['Büyüteç', 'konu, öneri, mesaj, dilekçe ve etkinliklerde arama'],
   ['Takma adınız', 'profiliniz: kapsam üyelikleri, havaleler, oylarınızı doğrulama'],
 ];
 
@@ -90,6 +99,11 @@ const GLOSSARY: [string, string][] = [
   ['Mahzen', 'Anonim, geçici tartışma alanı; teşvik edilmez.'],
   ['Alan', 'Konuların sınıflandığı ağaç: Kent › Ulaşım › Bisiklet.'],
   ['Konu', 'Kabul edilmiş, tartışmaya açık başlık.'],
+  ['Muhatap', 'Konunun iletildiği yer: Meşveret Takvimi ya da bir kurum (belediye, bakanlık).'],
+  ['Dilekçe', 'Kurum muhataplı konunun kuruma giden yazısı (MŞV-yıl-sıra); Karar da iletilir.'],
+  ['Etkinlik', 'Takvime giden konunun tarihi, saati ve yeri; Geliyorum ve rapor.'],
+  ['Gazete', 'Meydan\'ın ön sayfası: kararlardan hesaplanan haberler.'],
+  ['Baskı görünümü', 'Görselin yarım ton gazete baskısı; dokununca özgün fotoğraf açılır.'],
   ['Öneri', 'Her değişikliğin biçimi: konu, alt konu, düzenleme, silme, yönetmelik, kapanış.'],
   ['Sessiz onay', 'Hızlı şeritteki önerinin itiraz eşiğine ulaşmadan süre sonunda kabul edilmesi.'],
   ['İtiraz', 'Hızlı şeritteki öneriyi Karar Saati\'ne gönderen kişisel karşı çıkış.'],
@@ -196,6 +210,20 @@ export default function Guide() {
         </View>
       </Section>
 
+      <Section id="dunya">
+        <P>
+          Burada alınan bir karar ekranda kalmaz. Her konu önerisi bir yere iletilmek için açılır; buna{' '}
+          <Text style={st.b}>muhatap</Text> denir. Takvime giden konu kabul edilince etkinliği takvime yazılır.
+          Bir belediyeye ya da bakanlığa giden konu kabul edilince kuruma dilekçe olarak gider; konu karara
+          bağlanınca Karar da aynı kuruma iletilir. Yönetmelik, silme ve düzenleme Meşveret&apos;in iç düzenidir.
+        </P>
+        <P>
+          Meydan&apos;ın ön sayfası bu sonuçların gazetesidir: hangi konu açıldı, hangi dilekçe gitti, hangi kurum
+          yanıt verdi ya da süresinde vermedi, hangi etkinlik gerçekleşti. Haberler elle yazılmaz; kararlardan
+          hesaplanır ve her biri kaydın kendisine bağlanır.
+        </P>
+      </Section>
+
       <Section id="oneri">
         <P>
           Meydan&apos;da her değişiklik bir öneridir: yeni konu, alt konu, düzenleme, silme, yönetmelik değişikliği,
@@ -260,12 +288,57 @@ export default function Guide() {
         </P>
       </Section>
 
+      <Section id="muhatap">
+        <P>
+          Bir kapsam yalnızca yetki alanındaki kuruma yazar (R9, R2&apos;nin muhatap karşılığı). Şehir kapsamı kendi
+          belediyesine, Genel kapsam bütün belediyelere ve bakanlıklara yazabilir; ilgi ve yaş kapsamları belediyeye
+          yazamaz. Öneri formunda seçemeyeceğiniz muhatap gri durur ve nedeni yazar.
+        </P>
+        <AddresseeFigure no={4} />
+        <P>
+          Dilekçenin evrak numarası, alıcıları, metni ve dayanağı (Karar Saati sonucu ya da sessiz onay) deftere
+          mühürlenir. 3071 sayılı Kanun gereği yanıt süresi 30 gündür. Kurumun yanıtını konunun bir katılımcısı
+          işler: yazının tarihi, sayısı, metni ve isteğe bağlı taranmış görüntüsü. Defter yanıtı kimin işlediğini
+          kaydeder.
+        </P>
+        <PetitionFigure no={5} />
+      </Section>
+
+      <Section id="takvim">
+        <P>
+          Takvime giden bir konu önerisi isterse etkinlik bildirir: tarih, saat, süre ve yer (ortak toplantı salonu,
+          bir adres ya da çevrim içi). Etkinlik, önerinin karara bağlanabileceği en erken andan (sessiz onay süresi,{' '}
+          {r('sessiz_onay_suresi')}) sonra olmalıdır. Konu kabul edilince takvime yazılır ve deftere mühürlenir.
+        </P>
+        <EventFigure no={6} />
+        <P>
+          Takvim sayfası yaklaşan ve geçmiş etkinlikleri ay ay listeler; web&apos;de takvime abone olunabilir ya da tek
+          etkinlik telefonun takvimine eklenebilir (.ics). Etkinlik başlayana kadar “Geliyorum” denebilir ve geri
+          alınabilir. Etkinlik bittikten sonra katılımını bildirenler kısa bir rapor ve fotoğraf ekler; rapor
+          ön sayfada “Gerçekleşti” haberi olur.
+        </P>
+      </Section>
+
+      <Section id="gazete">
+        <P>
+          Ön sayfanın manşeti son haftanın görselli en yeni haberidir; yoksa en yeni haber. Altında ikinci
+          haberler, yanda Karar Saati geri sayımı ve yaklaşan etkinlikler durur. Silinen konunun haberleri
+          yayımlanmaz.
+        </P>
+        <P>
+          Görseller mesajlara, konu önerisinin kapağına, dilekçe yanıtına ve etkinlik raporuna eklenir. Her görselin
+          ne gösterdiğini anlatan bir alt metni olmalıdır. Yüklenen fotoğraf yeniden kodlanır; konum ve cihaz
+          bilgisi (EXIF) silinir. Sitede önce gazete baskısı gibi yarım ton görünür, dokununca özgün fotoğraf açılır.
+          Görselin bulunduğu içerik oylamayla silinirse görsel de kaybolur; defterdeki hash&apos;i kalır.
+        </P>
+      </Section>
+
       <Section id="havale">
         <P>
           Oyunuzu genel olarak ya da bir alan için güvendiğiniz birine devredebilirsiniz. Alan havalesi genel
           havaleyi ezer, alt alanlar üst alanın havalesini miras alır, zincir son kişiye kadar akar.
         </P>
-        <DelegationFigure no={4} />
+        <DelegationFigure no={7} />
         <P>
           Havale, alan kişi kabul edince yürürlüğe girer ({r('havale_kabul_suresi')} içinde); temsilcinin oyu açık
           olduğu için kimse onayı olmadan temsilci yapılamaz. Her havale {r('havale_suresi')} sonra kendiliğinden
@@ -280,7 +353,7 @@ export default function Guide() {
           Yönetmelik sayfasına yazılıdır. Değişiklik yönetmelik önerisiyle ve {r('yonetmelik_esigi')} oyla olur; oturum
           kapanınca uygulanır, o oturumun oylamaları açılıştaki değerlerle sayılır.
         </P>
-        <RegulationFigure no={5} />
+        <RegulationFigure no={8} />
         <P>
           Bazı şeyler oylamanın dışındadır: yedi temel ilke (D1–D7: temel oy, öneri hakkı, Şerh, silmenin yalnızca
           oylamayla olması, eşzamanlı çoğunluk, defterin değiştirilemezliği ve bu listenin kendisi) ve her sayının
@@ -294,7 +367,7 @@ export default function Guide() {
           etiket yorumu bırakır: alan doğru mu, metinde adı geçen kaynak etiketlenmiş mi, şehir uyuyor mu; silmede
           alıntı kuralın karşılığını taşıyor mu.
         </P>
-        <OracleFigure no={6} />
+        <OracleFigure no={9} />
         <P>
           Karar Saati&apos;nde oy verir: kurallar ve denetimler geçerse EVET, biri bile geçmezse HAYIR. Kararı her
           zaman aynıdır. Ona havale edenin oyu bu kurallara göre kullanılır.
@@ -307,7 +380,7 @@ export default function Guide() {
           kuralına dayanmalı ve ihlal eden kısmı aynen alıntılamalıdır (R7). Eşik {r('silme_esigi')}; yazar kendi
           mesajını basit çoğunlukla sildirebilir.
         </P>
-        <DeletionFigure no={7} />
+        <DeletionFigure no={10} />
       </Section>
 
       <Section id="kapanis">
@@ -316,7 +389,7 @@ export default function Guide() {
           metin ekleyebilir; Karar Saati&apos;nde onay oylaması yapılır, en çok onayı alan metin Karar olur, eşitlikte
           karar çıkmaz.
         </P>
-        <ClosureFigure no={8} />
+        <ClosureFigure no={11} />
         <P>
           Kapanan konu salt okunurdur; kapanıştan {r('yeniden_acma')} sonra yeni bir konu önerisiyle yeniden
           açılabilir.
@@ -329,7 +402,7 @@ export default function Guide() {
           Karar Saati açılışında son {r('baskin_yeni_uye_suresi')} içinde katılanların etkileşim grafı taranır (yakın
           kayıt, ortak başlık, yanıt, havale).
         </P>
-        <RaidFigure no={9} />
+        <RaidFigure no={12} />
         <P>
           En az {r('baskin_min_kume')} kişilik, yoğunluğu {r('baskin_yogunluk_esigi')} olan ve {r('baskin_katilim_araligi')}{' '}
           içinde katılmış bir küme o oylamanın seçmen listesinden çıkar. Aynı tespit Mahzen&apos;in ifşa oylamasında
@@ -343,7 +416,7 @@ export default function Guide() {
           havaleler, Kararlar, Şerhler ve ifşa edilen Mahzen başlıkları üç düğümlü bir deftere yazılır. Kayıt
           güncellenemez ve silinemez (D6). Meydan&apos;daki her içeriğin altındaki ⌗ mühür o kaydı açar.
         </P>
-        <LedgerFigure no={10} />
+        <LedgerFigure no={13} />
         <P>
           Defter sayfasındaki Doğrula, zinciri üç düğümde yeniden hesaplar ve yönetmeliğin son oylanmış hâliyle
           karşılaştırır. Sunucuyu işleten biri bir kuralı oylamasız değiştirirse fark görünür ve bir sonraki Karar
@@ -357,12 +430,29 @@ export default function Guide() {
           eşleştirilemez. Yeni yanıt başlığı üste çıkarır; başlık sayısı {r('mahzen_kapasite')}&apos;ü aşınca en alttaki
           kalıcı olarak silinir. Yaşayan başlıklar deftere yazılmaz. İçerik kuralı ve silme oylaması yoktur.
         </P>
-        <CellarFigure no={11} />
+        <CellarFigure no={14} />
         <P>
           Başlıkta yazanlar ifşa oylaması açabilir: oylama açılmadan önce yazmış olanların yarısından fazlası (
           {r('mahzen_ifsa_esigi')}) EVET derse herkesin takma adı açılır, başlık defterle mühürlenip Meydan
           görünümüne geçer ve oylamayı açan kişi adına taslak bir konu önerisi oluşur. Bu, ilk yazışta uyarıyla
           kabul edilen bir çoğunluk tiranlığıdır.
+        </P>
+      </Section>
+
+      <Section id="kullanim">
+        <P>
+          <Text style={st.b}>Telefondan giriş.</Text> Bilgisayar ile telefon aynı ağdaysa, bilgisayarın yerel adresiyle
+          açılan site API&apos;yi de o adreste arar; ayrıca ayar gerekmez. Expo Go uygulamasında da aynısı geçerlidir.
+        </P>
+        <P>
+          <Text style={st.b}>Arama.</Text> Başlıktaki büyüteç konu, öneri, tartışma mesajı, dilekçe ve etkinliklerde
+          arar; Türkçe büyük-küçük harf kurallarına uyar (İSTANBUL = istanbul). Web&apos;de herhangi bir sayfada “/”
+          tuşu aramayı açar. Mahzen ve silinen içerik aranmaz.
+        </P>
+        <P>
+          <Text style={st.b}>Küçük kolaylıklar.</Text> Yazdığınız önerinin başlığı ve metni bu cihazda saklanır; sayfa
+          kapansa da kaybolmaz, gönderince silinir. Öneri, dilekçe ve etkinlik sayfalarında bağlantıyı kopyalayabilir
+          (telefonda paylaşabilir), dilekçeyi yazdırabilirsiniz. Profilinizde açtığınız öneriler durumlarıyla listelenir.
         </P>
       </Section>
 
@@ -374,6 +464,8 @@ export default function Guide() {
           ['Oylar birkaç kişide toplanabilir', 'Havale alma sınırı yoktur; Müşavir etiketi yoğunlaşmayı görünür yapar, süre dolumu unutulmuş gücü sıfırlar.'],
           ['Hâtif kime çalışıyor?', 'Kuralları sistemi yazan yazar; Hâtif\'e havale eden oyunu kural yazarına emanet eder.'],
           ['Kod değiştirilebilir', 'Defter verideki oylamasız değişikliği yakalar ve geri alır; sunucuyu işletenin kodu değiştirmesini geri alamaz.'],
+          ['Dilekçe yanıtı doğrulanmaz', 'Kurumun yanıtını üye işler; defter kimin işlediğini kaydeder ama yazının gerçekten kurumdan geldiğini kanıtlamaz. Gerçek bir kuruma e-posta gönderilmez.'],
+          ['Gerçek gruplar baskın sanılabilir', 'Aynı saatte kaydolup birbirine yazan bir sınıf, baskın tespitinin gözünde hızlı bir baskından ayırt edilemez. Ölçümler raporda: dışlama bir oturumluk ve gerekçelidir.'],
         ].map(([head, text]) => (
           <View key={head} style={st.gap}>
             <Text style={st.gapHead}>{head}</Text>
@@ -422,8 +514,9 @@ export default function Guide() {
         ))}
       </View>
       <P>
-        Hepsi herkesin doğrulayabileceği bir deftere yazılır (§ {num('defter')}). Yanında kuralların bilerek
-        işlemediği bir yer de vardır: Mahzen (§ {num('mahzen')}).
+        Kararlar ekranda kalmaz: takvime yazılır ya da kuruma dilekçe olarak gider (§ {num('dunya')}). Hepsi
+        herkesin doğrulayabileceği bir deftere yazılır (§ {num('defter')}). Yanında kuralların bilerek işlemediği
+        bir yer de vardır: Mahzen (§ {num('mahzen')}).
       </P>
 
       {/* Geniş ekranda içindekiler solda yapışık sütunda durur; bölümler sağda akar. */}
