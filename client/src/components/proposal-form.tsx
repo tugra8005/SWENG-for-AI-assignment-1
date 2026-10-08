@@ -14,8 +14,10 @@ import {
   Muted,
   Rule,
 } from '@/components/paper';
+import { EventFields, type EventInput } from '@/components/event';
 import { ImageAttach, type MediaItem } from '@/components/media';
 import { useAuth } from '@/lib/auth';
+import { useLocalDraft } from '@/lib/draft';
 import { describeArticleValue, fmtPercent1 } from '@/lib/format';
 import { shareImpact, toRows } from '@/lib/shares';
 import { useApi } from '@/lib/useApi';
@@ -193,6 +195,16 @@ export function ProposalForm({
 
   const [title, setTitle] = useState(initial?.title ?? '');
   const [body, setBody] = useState(initial?.body ?? '');
+  // Cihazda saklanan taslak (Mahzen'den gelen sunucu taslağında gerekmez: o zaten kayıtlı).
+  const draftKey = `mesveret.taslak.${type}.${ctx.parent ?? ctx.topic ?? ctx.message ?? ctx.article ?? ctx.reopen ?? ''}`;
+  const localDraft = useLocalDraft(
+    draftKey, title, body,
+    (d) => {
+      setTitle((t) => t || d.title);
+      setBody((b) => b || d.body);
+    },
+    !draftId,
+  );
   const [area, setArea] = useState<string | null>(null);
   const [scope, setScope] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
@@ -207,6 +219,8 @@ export function ProposalForm({
   const [cover, setCover] = useState<MediaItem[]>([]);
   // Muhatap (R9): kapsam seçilince sunucu her muhatabın bu kapsama açık olup olmadığını söyler.
   const [addressee, setAddressee] = useState<string | null>(null);
+  // Takvime giden konunun etkinliği (isteğe bağlı): kabul edilince takvime yazılır.
+  const [event, setEvent] = useState<EventInput | null>(null);
   const [error, setError] = useState<unknown>(null);
 
   const currentText = history.data?.versions?.at(-1)?.text ?? '';
@@ -245,6 +259,8 @@ export function ProposalForm({
     if (needsLabels) Object.assign(payload, { area_id: area, scope_id: scope, resource_ids: picked });
     if (needsLabels && cover.length) payload.cover_media_id = cover[0].id;
     if (needsLabels && addressee) payload.addressee = addressee;
+    const toCalendar = (addressee ?? inherited?.id) === 'takvim';
+    if (needsLabels && toCalendar && event) payload.event = event;
     if (needsLabels && splitResources.length) {
       payload.share_effect = Object.fromEntries(
         splitResources.map((r) => [
@@ -274,6 +290,7 @@ export function ProposalForm({
         method: 'POST',
         body: payload,
       });
+      localDraft.clear();
       onDone(res.id);
     } catch (e) {
       setError(e);
@@ -337,6 +354,8 @@ export function ProposalForm({
           label={type === 'KAPANIS' ? 'Başlık (isteğe bağlı)' : 'Başlık'}
           value={title}
           onChangeText={setTitle}
+          maxLength={200}
+          hint={title.length > 150 ? `${title.length}/200 karakter` : undefined}
         />
       ) : null}
 
@@ -428,6 +447,7 @@ export function ProposalForm({
         value={body}
         onChangeText={setBody}
         multiline
+        hint={localDraft.savedAt ? 'Taslak bu cihazda saklandı; gönderince silinir.' : undefined}
       />
 
       {needsLabels ? (
@@ -471,11 +491,12 @@ export function ProposalForm({
               : chosenAddressee?.kind === 'KURUM'
                 ? `Kabul edilirse ${chosenAddressee.name} adresine dilekçe olarak gider; konu karara bağlanınca Karar da iletilir. Yanıt süresi 30 gündür (3071 sayılı Kanun).`
                 : chosenAddressee?.kind === 'TAKVIM'
-                  ? 'Kabul edilirse Meşveret Takvimi’ne yazılır.'
+                  ? 'Kabul edilirse Meşveret Takvimi’ne yazılır. Bir etkinlik bildirirseniz (tarih, saat, yer) takvimde o gün görünür.'
                   : inherited
                     ? `Seçmezseniz üst konunun muhatabı kullanılır: ${inherited.name}.`
                     : 'Her konu bir yere iletilmek için açılır: takvime ya da bir kuruma. Kapsam yalnızca yetki alanındaki kuruma yazar (R9).'}
           </Muted>
+          {(addressee ?? inherited?.id) === 'takvim' ? <EventFields onChange={setEvent} /> : null}
           <Chips
             label="Etkilenen kaynaklar (isteğe bağlı)"
             options={(resources.data ?? [])

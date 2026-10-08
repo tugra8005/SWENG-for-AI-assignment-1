@@ -95,6 +95,39 @@ export function withDative(n: number): string {
 
 export const shortHash = (h?: string | null) => (h ? h.slice(0, 8) : '········');
 
+const weekdayFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, weekday: 'long' });
+const monthYearFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, month: 'long', year: 'numeric' });
+const monthShortFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, month: 'short' });
+const dayFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, day: 'numeric' });
+/** "Cuma" */
+export const fmtWeekday = (iso: string) => weekdayFmt.format(new Date(iso));
+/** "Ekim 2026" (ajanda ay başlığı) */
+export const fmtMonthYear = (iso: string) => monthYearFmt.format(new Date(iso));
+/** "EKİ" (takvim yaprağı) */
+export const fmtMonthShort = (iso: string) =>
+  monthShortFmt.format(new Date(iso)).replace('.', '').toLocaleUpperCase('tr-TR');
+/** "25" */
+export const fmtDay = (iso: string) => dayFmt.format(new Date(iso));
+
+/** Göreli zaman: "az önce", "12 dakika önce", "3 saat önce", "dün", "5 gün önce"; daha eskisi tarih.
+ * Gelecek için "2 gün sonra". ``now`` sahte saatin şimdiki anıdır (bkz. useClock). */
+export function fmtAgo(iso: string | null | undefined, now: number): string {
+  if (!iso) return '—';
+  const diff = now - new Date(iso).getTime();
+  const future = diff < 0;
+  const abs = Math.abs(diff);
+  const min = Math.round(abs / 60_000);
+  const say = (n: number, unit: string) => `${n} ${unit} ${future ? 'sonra' : 'önce'}`;
+  if (min < 1) return future ? 'birazdan' : 'az önce';
+  if (min < 60) return say(min, 'dakika');
+  const h = Math.round(abs / 3_600_000);
+  if (h < 24) return say(h, 'saat');
+  const d = Math.round(abs / 86_400_000);
+  if (d === 1) return future ? 'yarın' : 'dün';
+  if (d < 14) return say(d, 'gün');
+  return fmtDate(iso);
+}
+
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /** "3g 04:12:09" biçiminde kalan süre. */

@@ -26,6 +26,7 @@ import {
   type DeletionBasis,
 } from '@/components/paper';
 import { ImageAttach, PictureSet, PrintImage, type MediaItem } from '@/components/media';
+import { EventBox } from '@/components/event';
 import { AddresseeLine, PetitionBox } from '@/components/petition';
 import { maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
@@ -347,6 +348,7 @@ export default function TopicPage() {
   const decision = (
     <>
       {t.decision ? <Decision d={t.decision} onChanged={topic.reload} /> : null}
+      <EventBox e={t.event} />
       <PetitionBox items={t.petitions} />
     </>
   );

@@ -80,6 +80,7 @@ export function Rule({ double, faint, style }: { double?: boolean; faint?: boole
 const NAV = [
   { href: '/', label: 'Meydan' },
   { href: '/karar-saati', label: 'Karar Saati' },
+  { href: '/takvim', label: 'Takvim' },
   { href: '/havale', label: 'Havale' },
   { href: '/yonetmelik', label: 'Yönetmelik' },
   { href: '/defter', label: 'Defter' },
@@ -100,7 +101,7 @@ function NavLinks({ narrow }: { narrow?: boolean }) {
     );
   });
   if (!narrow) return <>{links}</>;
-  // Telefonda beş bölümün beşi de görünür: satıra yayılır, sığmazsa (320 px) alta kırılır.
+  // Telefonda altı bölümün hepsi görünür: satıra yayılır, sığmazsa alta kırılır.
   // Önceki sürüm yatay kaydırıyordu; 375 px'te Havale, Yönetmelik ve Defter ekran dışında kalıyordu.
   return <View style={s.navNarrow}>{links}</View>;
 }
@@ -162,20 +163,47 @@ function Bell() {
   );
 }
 
+/** Arama: büyüteç View'larla çizilir (cam halka ve sap); web'de "/" tuşu da aramayı açar. */
+function SearchButton() {
+  const path = usePathname();
+  const color = path === '/ara' ? paper.seal : paper.ink;
+  return (
+    <Pressable
+      onPress={() => router.push('/ara')}
+      accessibilityRole="link"
+      accessibilityLabel="Ara"
+      hitSlop={8}
+      style={[{ width: 18, height: 18 }, Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : null]}
+    >
+      <View style={{ width: 13, height: 13, borderRadius: 7, borderWidth: 2, borderColor: color }} />
+      <View
+        style={{
+          position: 'absolute', width: 7, height: 2.5, backgroundColor: color, right: 0, bottom: 2,
+          transform: [{ rotate: '45deg' }],
+        }}
+      />
+    </Pressable>
+  );
+}
+
 /** Oturum bağlantıları. Takma ad kimliktir: büyük harfe çevrilmez. */
 function Account({ small }: { small?: boolean }) {
   const { me, logout } = useAuth();
   const text = small ? s.accountSmall : s.account;
   if (!me) {
     return (
-      <Link href="/giris" style={[text, { color: paper.seal }]}>
-        giriş
-      </Link>
+      <View style={{ flexDirection: 'row', gap: small ? 12 : 14, alignItems: 'center' }}>
+        <SearchButton />
+        <Link href="/giris" style={[text, { color: paper.seal }]}>
+          giriş
+        </Link>
+      </View>
     );
   }
   return (
     // Dar ekranda uzun takma ad kısalır ("MostlyHarm…"); zil ve çıkış her zaman görünür.
     <View style={{ flexDirection: 'row', gap: small ? 12 : 14, alignItems: 'center', flexShrink: 1, minWidth: 0 }}>
+      <SearchButton />
       <Bell />
       <Link
         href={`/profil/${encodeURIComponent(me.nickname)}`}
@@ -195,6 +223,10 @@ function Account({ small }: { small?: boolean }) {
 function sectionOf(path: string): string {
   const map: [string, string][] = [
     ['/karar-saati', 'Karar Saati'],
+    ['/takvim', 'Takvim'],
+    ['/etkinlik', 'Takvim · Etkinlik'],
+    ['/dilekce', 'Meydan · Dilekçe'],
+    ['/ara', 'Arama'],
     ['/havale', 'Havale'],
     ['/yonetmelik', 'Yönetmelik'],
     ['/defter', 'Defter'],

@@ -165,7 +165,8 @@ def test_seed_calendar_and_front_page(seeded, client):  # noqa: F811
     assert {"GERCEKLESTI", "YANIT", "DILEKCE", "ETKINLIK", "KONU"} <= kinds
     held = next(it for it in [page["lead"], *page["items"]] if it["kind"] == "GERCEKLESTI")
     assert held["headline"] == "Gerçekleşti: Dekalog I gösterimi"
-    assert held["dek"].startswith("14 kişi katıldı.")
+    assert held["dek"] == "14 kişi katıldı; raporu nazli yazdı."
+    assert held["lines"][0].startswith("On dört kişi geldik")
     assert [e["title"] for e in page["upcoming"]] == ["Menon okuması"]
 
     # Şiir akşamı itiraz süresinde: saat bir gün ilerleyince kabul edilir ve takvime düşer.
@@ -175,3 +176,21 @@ def test_seed_calendar_and_front_page(seeded, client):  # noqa: F811
     scheduler.tick(seeded.at(target), target)
     titles = [e["title"] for e in client.get("/calendar").json()["upcoming"]]
     assert titles == ["Menon okuması", "Şiir akşamı: Cemal Süreya"]
+
+
+def test_search_is_turkish_case_insensitive_and_skips_deleted(seeded, client):  # noqa: F811
+    r = client.get("/search", params={"q": "İSTANBUL"}).json()
+    assert any("semt pazarları" in t["title"].lower() for t in r["groups"]["konular"])
+    assert r["groups"]["dilekceler"][0]["title"].startswith("MŞV-2026-")
+    menon = client.get("/search", params={"q": "menon"}).json()
+    assert [e["title"] for e in menon["groups"]["etkinlikler"]] == ["Menon okuması"]
+    assert menon["groups"]["mesajlar"]  # felsefe konusundaki mesajlar
+    assert client.get("/search", params={"q": "a"}).status_code == 422
+    # Oylamayla silinen içerik aranmaz: IK-1 silmesi kabul edilince reklam mesajı sonuçtan çıkar.
+    assert client.get("/search", params={"q": "kampanyası"}).json()["groups"]["mesajlar"]
+    from mesveret.services import seed
+
+    p = proposals.get_proposal(seeded, seed.scenario_ids(seeded)["silme_67"])
+    proposals.accept(seeded, p)
+    seeded.commit()
+    assert client.get("/search", params={"q": "kampanyası"}).json()["groups"]["mesajlar"] == []

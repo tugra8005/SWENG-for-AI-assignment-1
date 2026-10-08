@@ -26,11 +26,13 @@ import {
   useWide,
 } from '@/components/paper';
 import { PrintImage } from '@/components/media';
+import { DateBlock } from '@/components/event';
+import { ShareLink } from '@/components/share';
 import { AddresseeLine } from '@/components/petition';
 import { ProposalForm } from '@/components/proposal-form';
 import { maturityDetail, maturityLine, NarrowingBox, ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
-import { describeArticleValue, fmtDateTime, fmtNumber, fmtSession, STATUS_LABELS, TYPE_LABELS } from '@/lib/format';
+import { describeArticleValue, fmtDateTime, fmtNumber, fmtSession, fmtTime, STATUS_LABELS, TYPE_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -176,11 +178,25 @@ export default function ProposalPage() {
         </Muted>
       </View>
       {p.addressee?.kind !== 'IC' ? <AddresseeLine a={p.addressee} /> : null}
+      <View style={{ marginTop: 6 }}>
+        <ShareLink path={`/oneri/${p.id}`} title={`Öneri №${p.id}: ${p.title}`} />
+      </View>
       <Rule double />
     </>
   );
   const lead = (
     <>
+      {p.event ? (
+        <View style={st.eventBox}>
+          <DateBlock iso={p.event.starts_at} small />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Kicker style={{ color: paper.seal }}>Etkinlik · kabul edilirse takvime yazılır</Kicker>
+            <Body style={{ fontSize: 16 }}>
+              {fmtTime(p.event.starts_at)}–{fmtTime(p.event.ends_at)} · {p.event.venue_text}
+            </Body>
+          </View>
+        </View>
+      ) : null}
       {p.narrowings?.map((n: any, i: number) => (
         <NarrowingBox key={i} message={n.message} share={n.share} total={n.total} />
       ))}
@@ -473,6 +489,16 @@ export default function ProposalPage() {
 }
 
 const st = StyleSheet.create({
+  eventBox: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: paper.hairline,
+    backgroundColor: paper.sheet,
+  },
   body: { fontFamily: fonts.serif, fontSize: 19, lineHeight: 28, color: paper.ink, paddingTop: 8 },
   row: { flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 },
   h1: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, color: paper.ink },

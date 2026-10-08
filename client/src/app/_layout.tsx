@@ -12,7 +12,7 @@ import {
 } from '@expo-google-fonts/newsreader';
 import { VT323_400Regular } from '@expo-google-fonts/vt323';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -51,7 +51,20 @@ export default function RootLayout() {
     const style = document.createElement('style');
     style.textContent = 'input::placeholder, textarea::placeholder { overflow: visible; }';
     document.head.appendChild(style);
-    return () => style.remove();
+    // Klavye kısayolu: yazı alanı dışında "/" aramayı açar.
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+      if (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        router.push('/ara');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      style.remove();
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   if (!loaded) return null;

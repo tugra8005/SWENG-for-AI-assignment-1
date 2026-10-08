@@ -4,14 +4,15 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Body, Grid, H1, InfoNotice, Kicker, Loading, Muted, Page, PageHead } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
-import { fmtDateTime } from '@/lib/format';
+import { useClock } from '@/lib/clock';
+import { fmtAgo, fmtDateTime } from '@/lib/format';
 import { useNotifications } from '@/lib/notifications';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
 type Item = {
   id: number;
-  kind: 'KARAR_SAATI' | 'SESSIZ_ONAY' | 'YAVAS_SERIT' | 'DILEKCE';
+  kind: 'KARAR_SAATI' | 'SESSIZ_ONAY' | 'YAVAS_SERIT' | 'DILEKCE' | 'TAKVIM';
   title: string;
   lines: string[];
   link: string | null;
@@ -24,12 +25,14 @@ const LINK_LABEL: Record<Item['kind'], string> = {
   SESSIZ_ONAY: 'Öneriyi aç →',
   YAVAS_SERIT: 'Öneriyi aç →',
   DILEKCE: 'Dilekçeyi aç →',
+  TAKVIM: 'Etkinliği aç →',
 };
 
 export default function Notifications() {
   const { me } = useAuth();
   const list = useApi<{ unread: number; items: Item[] }>(me ? '/notifications' : null);
   const { markAllRead } = useNotifications();
+  const { now } = useClock();
   const unread = list.data?.unread ?? 0;
 
   // Sayfa açılınca hepsi okundu sayılır; "yeni" işareti bu görünümde kalır (liste yeniden okunmaz).
@@ -52,8 +55,9 @@ export default function Notifications() {
       <PageHead kicker="Size gelen sonuçlar" title="Bildirimler">
         <Muted>
           Oy verdiğiniz ya da oyunuzun havaleyle kullanıldığı önerilerin sonuçları her Karar Saati
-          kapanınca burada görünür; açtığınız önerilerin sessiz onay ve itiraz sonuçları da. Bildirimler
-          yalnızca size görünür ve deftere yazılmaz.
+          kapanınca burada görünür; açtığınız önerilerin sessiz onay ve itiraz sonuçları, dilekçelere
+          gelen yanıtlar ve katıldığınız etkinliklerin raporları da. Bildirimler yalnızca size görünür
+          ve deftere yazılmaz.
         </Muted>
       </PageHead>
       {list.loading && !list.data ? <Loading /> : null}
@@ -67,7 +71,7 @@ export default function Notifications() {
           <View key={n.id} style={[st.item, !n.read && st.unread]}>
             <View style={st.head}>
               {!n.read ? <Kicker style={{ color: paper.seal }}>yeni</Kicker> : null}
-              <Kicker>{fmtDateTime(n.created_at)}</Kicker>
+              <Kicker>{fmtAgo(n.created_at, now())} · {fmtDateTime(n.created_at)}</Kicker>
             </View>
             <Text style={st.title}>{n.title}</Text>
             {n.lines.map((line, i) => (

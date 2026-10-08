@@ -325,7 +325,9 @@ def view(ctx: Ctx, event_id: int, viewer: User | None) -> dict:
         viewer_info["attend_refusal"] = "Katılımınızı bildirmek için giriş yapın."
     else:
         viewer_info["attending"] = viewer.id in attendees
-        if ctx.now >= ev.starts_at:
+        if ctx.now >= ev.ends_at:
+            viewer_info["attend_refusal"] = "Etkinlik gerçekleşti; katılım listesi kapandı."
+        elif ctx.now >= ev.starts_at:
             viewer_info["attend_refusal"] = "Etkinlik başladı; katılım artık değiştirilemez."
         else:
             viewer_info["can_attend"] = True

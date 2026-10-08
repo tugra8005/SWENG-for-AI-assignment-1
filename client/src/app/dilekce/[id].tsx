@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { api } from '@/api/client';
 import { ImageAttach, PrintImage, type MediaItem } from '@/components/media';
@@ -19,6 +19,7 @@ import {
   Seal,
 } from '@/components/paper';
 import { STATUS_TEXT } from '@/components/petition';
+import { ShareLink } from '@/components/share';
 import { maskBirthDate } from '@/lib/birth-date';
 import { useAuth } from '@/lib/auth';
 import { useClock } from '@/lib/clock';
@@ -106,6 +107,25 @@ function ReplyForm({ petitionId, pending, onDone }: { petitionId: number; pendin
   );
 }
 
+/** Web'de yazdırılırken yalnızca yazı (antet, metin, imza) kâğıda çıkar; site çerçevesi gizlenir. */
+const printable = Platform.OS === 'web' ? ({ dataSet: { print: 'letter' } } as object) : {};
+
+function PrintButton() {
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const style = document.createElement('style');
+    style.textContent = `@media print {
+      body * { visibility: hidden !important; }
+      [data-print="letter"], [data-print="letter"] * { visibility: visible !important; }
+      [data-print="letter"] { position: absolute; left: 0; top: 0; width: 100%; border: none !important; }
+    }`;
+    document.head.appendChild(style);
+    return () => style.remove();
+  }, []);
+  if (Platform.OS !== 'web') return null;
+  return <Button label="Yazdır" variant="quiet" onPress={() => window.print()} />;
+}
+
 export default function PetitionPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { me } = useAuth();
@@ -123,7 +143,12 @@ export default function PetitionPage() {
         <Link href={`/konu/${d.topic.id}`} style={{ textDecorationLine: 'underline' }}>Konu №{d.topic.id} · {d.topic.title}</Link>
       </Kicker>
 
-      <View style={st.letter} accessibilityLabel={`${d.number} sayılı dilekçe`}>
+      <View style={st.tools}>
+        <PrintButton />
+        <ShareLink path={`/dilekce/${d.id}`} title={`${d.number} · ${d.subject}`} />
+      </View>
+
+      <View style={st.letter} accessibilityLabel={`${d.number} sayılı dilekçe`} {...printable}>
         <View style={st.letterHead}>
           <Image source={sealMark} style={st.seal} accessibilityLabel="Meşveret mührü" />
           <View style={{ flex: 1 }}>
@@ -205,8 +230,9 @@ export default function PetitionPage() {
 }
 
 const st = StyleSheet.create({
+  tools: { flexDirection: 'row', gap: 16, marginTop: 10, flexWrap: 'wrap' },
   letter: {
-    marginTop: 14,
+    marginTop: 10,
     backgroundColor: paper.sheet,
     borderWidth: 1,
     borderColor: paper.ink,

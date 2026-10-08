@@ -18,6 +18,7 @@ import {
 } from '@/components/paper';
 import { DelegationNotices } from '@/components/delegation-expiry';
 import { LedgerFeed } from '@/components/ledger-feed';
+import { LeadStory, NewsCard, NewsKicker, UpcomingEvents, type FrontPage } from '@/components/news';
 import { EmptyLine, ProposalRow, type ProposalSummary } from '@/components/proposal-row';
 import { ProposalTitle } from '@/components/proposal-title';
 import { useAuth } from '@/lib/auth';
@@ -87,6 +88,9 @@ export default function Home() {
   const proposals = useApi<ProposalSummary[]>('/proposals?state=open', 30_000);
   const areas = useApi<Area[]>('/areas');
   const topics = useApi<any[]>('/topics');
+  const news = useApi<FrontPage>('/news', 60_000);
+  const lead = news.data?.lead ?? null;
+  const cards = news.data?.items ?? [];
   const fast = (proposals.data ?? []).filter((p) => p.status === 'SILENT');
   const slow = (proposals.data ?? []).filter((p) => p.status !== 'SILENT');
 
@@ -134,22 +138,37 @@ export default function Home() {
     ),
   );
 
-  // Geniş ekran: gazetenin ön sayfası. Üstte Karar Saati ve davet; altında üç sütun (hızlı şerit,
-  // yavaş şerit, alanlar) ve konular ızgarası.
+  // Geniş ekran: gazetenin ön sayfası. Solda manşet, sağda Karar Saati, davet ve yaklaşan
+  // etkinlikler; altında haberler, sonra şeritler ve alanlar, en altta konular.
   if (wide) {
     return (
       <Page>
-        <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
-          <View style={{ flex: 1.7 }}>
-            <DecisionHourBand />
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1 }}>
+            <NewsKicker />
+            {lead ? <LeadStory n={lead} wide /> : news.loading ? <Loading /> : null}
+            {/* Manşetin altında ikinci haberler: sağ sütun boyunca sayfa boş kalmaz. */}
+            <Grid min={330} rowGap={0}>
+              {cards.slice(0, 4).map((n) => <NewsCard key={n.id} n={n} />)}
+            </Grid>
           </View>
-          <View style={st.invite}>
-            <Kicker>Meydan</Kicker>
-            {introText}
-            <View style={{ alignSelf: 'flex-start' }}>{cta}</View>
+          <View style={st.rail}>
+            <DecisionHourBand />
+            <View style={{ gap: 10, marginTop: 16 }}>
+              {introText}
+              <View style={{ alignSelf: 'flex-start' }}>{cta}</View>
+            </View>
+            <UpcomingEvents items={news.data?.upcoming ?? []} />
           </View>
         </View>
         {me ? <DelegationNotices /> : null}
+        {cards.length > 4 ? (
+          <Section title="Haberler" aside={<Kicker>kararlardan derlenir</Kicker>}>
+            <Grid min={260} rowGap={0}>
+              {cards.slice(4, 12).map((n) => <NewsCard key={n.id} n={n} />)}
+            </Grid>
+          </Section>
+        ) : null}
         <Grid min={300} ruled>
           {fastSection}
           <>
@@ -176,6 +195,15 @@ export default function Home() {
         <View style={{ flex: 1, minWidth: 240 }}>{introText}</View>
         {cta}
       </View>
+
+      {lead ? (
+        <View style={{ marginTop: 18 }}>
+          <NewsKicker />
+          <LeadStory n={lead} />
+        </View>
+      ) : null}
+      {cards.slice(0, 5).map((n) => <NewsCard key={n.id} n={n} />)}
+      <UpcomingEvents items={news.data?.upcoming ?? []} />
 
       {fastSection}
       {slowSection}
@@ -206,10 +234,8 @@ const st = StyleSheet.create({
   bandButton: { borderWidth: 1.5, borderColor: paper.ink, paddingVertical: 10, paddingHorizontal: 14 },
   bandButtonText: { fontFamily: fonts.monoBold, fontSize: 12, letterSpacing: 1.4, color: paper.ink },
   columns: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 28 },
-  invite: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 10,
+  rail: {
+    width: 360,
     marginLeft: 28,
     paddingLeft: 28,
     borderLeftWidth: 1,

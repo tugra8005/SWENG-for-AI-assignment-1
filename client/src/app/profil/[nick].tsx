@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import { createContext, useContext, useState } from 'react';
 import { StyleSheet, Text, type TextStyle, View, useWindowDimensions } from 'react-native';
 
@@ -20,7 +20,7 @@ import {
   useWide,
 } from '@/components/paper';
 import { useAuth } from '@/lib/auth';
-import { fmtDate } from '@/lib/format';
+import { fmtDate, STATUS_LABELS } from '@/lib/format';
 import { useApi } from '@/lib/useApi';
 import { fonts, paper } from '@/theme/tokens';
 
@@ -238,6 +238,8 @@ function Private({ p, onChanged, part }: { p: any; onChanged: () => void; part?:
   if (part === 'activity') {
     return (
       <View style={{ gap: 2 }}>
+        <MyProposals />
+        <Rule faint />
         {delegations}
         <Rule faint />
         {votes}
@@ -252,6 +254,8 @@ function Private({ p, onChanged, part }: { p: any; onChanged: () => void; part?:
   return (
     <View style={st.private}>
       <Kicker style={{ color: paper.seal }}>Yalnızca size görünür</Kicker>
+      <MyProposals />
+      <Rule faint />
       {delegations}
       <Rule faint />
       {identity}
@@ -261,6 +265,25 @@ function Private({ p, onChanged, part }: { p: any; onChanged: () => void; part?:
       <Rule faint />
       {interestList}
       <ErrorNotice error={error} />
+    </View>
+  );
+}
+
+/** Açtığı öneriler ve durumları (yalnızca kendi profilinde). */
+function MyProposals() {
+  const list = useApi<any[]>('/proposals?mine=true');
+  const rows = list.data ?? [];
+  return (
+    <View>
+      <Kicker style={{ marginBottom: 6 }}>Açtığınız öneriler ({rows.length})</Kicker>
+      {rows.length === 0 && !list.loading ? <Muted style={{ fontSize: 14 }}>Henüz öneri açmadınız.</Muted> : null}
+      {rows.slice(0, 12).map((r) => (
+        <Link key={r.id} href={`/oneri/${r.id}`} style={st.mine}>
+          <Text style={st.mineNo}>№{r.id} </Text>
+          <Text style={st.mineTitle}>{r.title}</Text>
+          <Text style={st.mineStatus}> · {STATUS_LABELS[r.status] ?? r.status}</Text>
+        </Link>
+      ))}
     </View>
   );
 }
@@ -409,4 +432,8 @@ const st = StyleSheet.create({
   stampText: { fontFamily: fonts.serifDisplay, fontSize: 20, letterSpacing: 3, color: paper.seal },
   stampSub: { fontFamily: fonts.mono, fontSize: 9, color: paper.seal },
   private: { marginTop: 18, borderTopWidth: 2, borderTopColor: paper.seal, paddingTop: 10 },
+  mine: { paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: paper.hairline },
+  mineNo: { fontFamily: fonts.mono, fontSize: 12, color: paper.muted },
+  mineTitle: { fontFamily: fonts.serifMedium, fontSize: 15, color: paper.ink },
+  mineStatus: { fontFamily: fonts.serifItalic, fontSize: 14, color: paper.inkSoft },
 });

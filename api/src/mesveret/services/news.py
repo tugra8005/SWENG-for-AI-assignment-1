@@ -29,6 +29,7 @@ from mesveret.db.models import (
 from mesveret.domain.regulation import article_title
 from mesveret.domain.rules import format_date
 from mesveret.services import calendar, media, ontology, petitions
+from mesveret.services.profile import nickname_map
 
 LIMIT = 30
 
@@ -66,8 +67,10 @@ def _addressee_line(ctx: Ctx, topic: Topic) -> str:
 
 
 def topics_accepted(ctx: Ctx, live: dict[int, Topic]) -> Iterator[dict]:
+    with_event = set(ctx.db.execute(select(CalendarEvent.topic_id)).scalars())
     for t in live.values():
-        if t.accepted_proposal_id is None:
+        # Etkinlikli konunun haberi "Takvime eklendi"dir; aynı konu iki kez yazılmaz.
+        if t.accepted_proposal_id is None or t.id in with_event:
             continue
         p = ctx.db.get(Proposal, t.accepted_proposal_id)
         how = "Karar Saati'nde kabul edildi" if p and p.session_id else "itirazsız kabul edildi"
@@ -158,11 +161,14 @@ def events_held(ctx: Ctx, live: dict[int, Topic]) -> Iterator[dict]:
         photos = media.attached(ctx, "rapor", [r.id for r in reports])
         image = next((m[0] for r in reports if (m := photos.get(r.id))), None)
         count = max((r.headcount or 0 for r in reports), default=0)
-        head = f"Gerçekleşti: {ev.title}"
-        dek = (f"{count} kişi katıldı. " if count else "") + _sentence(reports[0].text, 160) + "."
-        yield _item("GERCEKLESTI", ev.id, reports[0].created_at, "Etkinlik raporu", head, dek,
-                    f"/etkinlik/{ev.id}", image=image or media.cover(ctx, ev.proposal_id),
-                    area=ontology.area_name(ctx, t.area_id))
+        names = nickname_map(ctx, [r.author_id for r in reports])
+        who = ", ".join(names.get(r.author_id, "?") for r in reports)
+        dek = (f"{count} kişi katıldı; " if count else "") + (
+            f"raporu {who} yazdı." if len(reports) == 1 else f"raporları {who} yazdı.")
+        yield _item("GERCEKLESTI", ev.id, reports[0].created_at, "Etkinlik raporu",
+                    f"Gerçekleşti: {ev.title}", dek, f"/etkinlik/{ev.id}",
+                    image=image or media.cover(ctx, ev.proposal_id),
+                    area=ontology.area_name(ctx, t.area_id), lines=[_clip(reports[0].text, 280)])
 
 
 def _value_text(value: Any) -> str:
