@@ -1,5 +1,6 @@
 // rapor.html → A4 PDF (sayfa numaralı alt bilgiyle; kapakta alt bilgi yok).
 //   python3 docs/rapor/olustur.py && node docs/rapor/pdf.mjs
+//   python3 docs/rapor/olustur.py --a5 && node docs/rapor/pdf.mjs a5   (yaprağa iki sayfa basılacak A5)
 // playwright-core ve Chromium gerekir: PLAYWRIGHT_CORE (modül yolu) ve CHROME (çalıştırılabilir)
 // ortam değişkenleriyle verilir; verilmezse modül normal yoldan aranır, tarayıcıyı Playwright seçer.
 // Kapak ayrı basılıp pdfunite (poppler) ile başa eklenir; pdfunite yoksa kapak da alt bilgili basılır.
@@ -13,8 +14,10 @@ import path from 'path';
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_CORE || 'playwright-core');
 const here = path.dirname(fileURLToPath(import.meta.url));
-const src = path.join(here, 'rapor.html');
-const out = path.join(here, 'Mesveret-Analiz-Tasarim-Politikalar.pdf');
+const a5 = process.argv[2] === 'a5';
+const src = path.join(here, a5 ? 'rapor-a5.html' : 'rapor.html');
+const out = path.join(here, a5 ? 'Mesveret-Analiz-Tasarim-Politikalar-A5.pdf' : 'Mesveret-Analiz-Tasarim-Politikalar.pdf');
+const side = a5 ? '11mm' : '17mm';
 
 const browser = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : {});
 const page = await browser.newPage();
@@ -27,11 +30,11 @@ if (missing.length || fonts.length) {
   console.error('Yüklenmeyen görsel ya da yazı tipi:', missing, fonts);
   process.exitCode = 1;
 }
-const base = { format: 'A4', preferCSSPageSize: true, printBackground: true };
+const base = { format: a5 ? 'A5' : 'A4', preferCSSPageSize: true, printBackground: true };
 const footer = {
   displayHeaderFooter: true,
   headerTemplate: '<span></span>',
-  footerTemplate: '<div style="width:100%;font-family:monospace;font-size:7pt;color:#6B6558;padding:0 17mm;'
+  footerTemplate: `<div style="width:100%;font-family:monospace;font-size:7pt;color:#6B6558;padding:0 ${side};`
     + 'display:flex;justify-content:space-between"><span>MEŞVERET · Analiz, Tasarım ve Politikalar</span>'
     + '<span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>',
 };

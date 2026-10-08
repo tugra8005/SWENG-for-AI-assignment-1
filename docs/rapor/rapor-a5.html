@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Meşveret — Analiz, Tasarım ve Politikalar</title>
+<style>
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/400Regular/Newsreader_400Regular.ttf'); font-weight: 400; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/400Regular_Italic/Newsreader_400Regular_Italic.ttf'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/600SemiBold/Newsreader_600SemiBold.ttf'); font-weight: 600; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/800ExtraBold/Newsreader_800ExtraBold.ttf'); font-weight: 800; }
+@font-face { font-family: 'Plex Mono'; src: url('../../client/node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf'); font-weight: 400; }
+@font-face { font-family: 'Plex Mono'; src: url('../../client/node_modules/@expo-google-fonts/ibm-plex-mono/500Medium/IBMPlexMono_500Medium.ttf'); font-weight: 500; }
+
+@page { size: A4; margin: 17mm 17mm 18mm 17mm; }
+:root { --ink: #1B1A17; --soft: #4A463E; --muted: #6B6558; --hair: #CFC6B3; --seal: #7A1E2B; --wash: #F4EFE4; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: 'Newsreader', serif; font-size: 10.6pt; line-height: 1.42; color: var(--ink); background: #fff; }
+p { margin: 0 0 6pt; }
+h1, h2, h3 { font-family: 'Newsreader', serif; color: var(--ink); }
+h2 { font-weight: 800; font-size: 17pt; margin: 0 0 4pt; padding-top: 2pt; border-bottom: 2.2pt double var(--ink); padding-bottom: 3pt; break-after: avoid; }
+h2 .no { font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 10pt; color: var(--seal); margin-right: 6pt; vertical-align: 3pt; }
+h3 { font-weight: 600; font-size: 12pt; margin: 10pt 0 3pt; break-after: avoid; }
+.lead { font-size: 11.6pt; line-height: 1.4; margin: 6pt 0 8pt; }
+.kicker { font-family: 'Plex Mono', monospace; font-size: 7.6pt; letter-spacing: 0.9pt; text-transform: uppercase; color: var(--muted); }
+section { margin-bottom: 14pt; }
+.newpage { break-before: page; }
+ul, ol { margin: 0 0 7pt; padding-left: 15pt; }
+li { margin-bottom: 2pt; }
+b, strong { font-weight: 600; }
+code, .mono { font-family: 'Plex Mono', monospace; font-size: 8.6pt; }
+table { width: 100%; border-collapse: collapse; margin: 4pt 0 9pt; font-size: 9.2pt; line-height: 1.3; break-inside: auto; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th { font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 7.4pt; letter-spacing: 0.5pt; text-transform: uppercase; text-align: left; color: var(--soft); border-bottom: 1pt solid var(--ink); padding: 3pt 5pt 3pt 0; vertical-align: bottom; }
+td { border-bottom: 0.5pt solid var(--hair); padding: 3.5pt 5pt 3.5pt 0; vertical-align: top; }
+td.k { font-family: 'Plex Mono', monospace; font-size: 8.2pt; white-space: nowrap; color: var(--seal); }
+td.c { text-align: center; }
+.yes { color: #2F4A2A; font-weight: 600; }
+.no-x { color: var(--seal); font-weight: 600; }
+figure { margin: 8pt 0 10pt; break-inside: avoid; }
+figure img { display: block; width: 100%; border: 0.6pt solid var(--ink); }
+figure.narrow img { width: 72%; margin: 0 auto; }
+figure.half img { width: 58%; margin: 0 auto; }
+figcaption { font-size: 8.8pt; line-height: 1.35; color: var(--soft); margin-top: 4pt; font-style: italic; }
+figcaption b { font-style: normal; font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 7.8pt; color: var(--seal); letter-spacing: 0.4pt; margin-right: 3pt; }
+.side { display: flex; gap: 12pt; align-items: flex-start; break-inside: avoid; }
+.side > div { flex: 1; }
+.side figure { flex: 0 0 34%; margin-top: 2pt; }
+.box { border: 0.8pt solid var(--ink); background: #FAF7F0; padding: 6pt 9pt; margin: 6pt 0 10pt; break-inside: avoid; }
+.box .kicker { color: var(--seal); display: block; margin-bottom: 2pt; }
+.box p:last-child { margin-bottom: 0; }
+svg { display: block; width: 100%; height: auto; margin: 4pt 0 2pt; }
+svg text { font-family: 'Newsreader', serif; }
+svg .m { font-family: 'Plex Mono', monospace; }
+
+/* kapak */
+.cover { height: 258mm; display: flex; flex-direction: column; break-after: page; }
+.cover .top { display: flex; justify-content: space-between; font-family: 'Plex Mono', monospace; font-size: 8.4pt; letter-spacing: 1.2pt; text-transform: uppercase; color: var(--ink); border-bottom: 2.4pt double var(--ink); padding-bottom: 4pt; }
+.cover .course { text-align: center; font-family: 'Plex Mono', monospace; font-size: 8pt; letter-spacing: 1pt; text-transform: uppercase; color: var(--soft); margin-top: 3mm; }
+.cover .mast { text-align: center; margin-top: 26mm; }
+.cover .mast img { width: 28mm; }
+.cover .mast .name { font-weight: 800; font-size: 50pt; letter-spacing: 6pt; line-height: 1; margin-top: 6mm; }
+.cover .mast .tag { font-style: italic; color: var(--soft); font-size: 12pt; margin-top: 3mm; }
+.cover .title { text-align: center; margin-top: 18mm; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); padding: 7mm 0; }
+.cover .title .t { font-weight: 800; font-size: 25pt; line-height: 1.15; }
+.cover .title .s { font-size: 12pt; color: var(--soft); margin-top: 3mm; line-height: 1.4; }
+.cover .author { text-align: center; margin-top: 22mm; }
+.cover .author .kicker { display: block; margin-bottom: 2mm; }
+.cover .author .who { font-weight: 600; font-size: 19pt; line-height: 1.2; }
+.cover .author .no { font-family: 'Plex Mono', monospace; font-size: 10.5pt; margin-top: 2mm; color: var(--soft); }
+.cover .meta { margin-top: auto; display: flex; justify-content: space-between; font-size: 10.5pt; border-top: 2.4pt double var(--ink); padding-top: 4mm; }
+.cover .meta > div { flex: 1; }
+.cover .meta .kicker { display: block; margin-bottom: 1mm; }
+.tocpage { break-after: page; }
+.tocpage h2 { margin-bottom: 8pt; }
+.tocpage .toc { columns: 1; font-size: 11.5pt; margin-top: 6pt; }
+.tocpage .toc div { padding: 3pt 0; }
+.tocpage .toc span { width: 26pt; font-size: 9pt; }
+.tocpage .toc .part { margin-top: 10pt; }
+.toc { columns: 2; column-gap: 14mm; font-size: 9.6pt; margin-top: 3pt; }
+.toc div { break-inside: avoid; padding: 1.2pt 0; border-bottom: 0.4pt dotted var(--hair); }
+.toc span { font-family: 'Plex Mono', monospace; font-size: 8pt; color: var(--seal); display: inline-block; width: 18pt; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); margin: 8pt 0 10pt; }
+.stats div { padding: 5pt 6pt; border-left: 0.5pt solid var(--hair); }
+.stats div:first-child { border-left: 0; padding-left: 0; }
+.stats .n { font-weight: 800; font-size: 18pt; line-height: 1.05; }
+.stats .l { font-size: 8.4pt; color: var(--soft); line-height: 1.25; }
+
+/* sayısal tablolar */
+table.num td.n, table.num th.n { text-align: right; font-variant-numeric: tabular-nums; font-family: 'Plex Mono', monospace; font-size: 8.4pt; padding-left: 6pt; }
+table.num th { text-align: right; padding-left: 6pt; }
+table.num th:first-child { text-align: left; padding-left: 0; }
+table.num tr.best td { background: #EEF0E6; }
+table.num tr.best td:first-child { font-weight: 600; }
+td.sub { font-family: 'Plex Mono', monospace; font-size: 7.4pt; letter-spacing: 0.6pt; text-transform: uppercase; color: var(--seal); padding-top: 7pt; border-bottom: 0.8pt solid var(--ink); }
+.bar { height: 7pt; background: var(--wash); border: 0.4pt solid var(--hair); margin-top: 2pt; }
+.bar span { display: block; height: 100%; }
+table.grid td, table.grid th { text-align: center; }
+table.grid tbody th { text-align: left; border-bottom: 0.5pt solid var(--hair); }
+table.grid td { font-family: 'Plex Mono', monospace; font-size: 8.4pt; }
+table.grid td.cur { outline: 1.2pt solid var(--seal); outline-offset: -2pt; font-weight: 500; color: var(--seal); }
+table.cm { width: auto; margin: 4pt 0 8pt; }
+table.cm th, table.cm td { padding: 5pt 10pt; border: 0.6pt solid var(--ink); text-align: center; }
+table.cm thead th { border-top: 0; border-left: 0; border-right: 0; }
+table.cm tbody th { text-align: left; border-left: 0; }
+table.cm td { font-family: 'Plex Mono', monospace; font-size: 9pt; }
+.note { font-size: 9pt; line-height: 1.38; color: var(--soft); margin: 2pt 0 8pt; }
+.box .note { margin-bottom: 0; }
+
+/* kanvas */
+table.canvas { border: 1pt solid var(--ink); table-layout: fixed; }
+table.canvas td { width: 50%; padding: 5pt 8pt 6pt; border: 0.6pt solid var(--ink); font-size: 9.4pt; line-height: 1.33; }
+table.canvas .kicker { display: block; color: var(--seal); margin-bottom: 2pt; }
+
+/* kod */
+pre { font-family: 'Plex Mono', monospace; font-size: 7.6pt; line-height: 1.38; background: #FAF7F0; border: 0.6pt solid var(--hair); padding: 5pt 7pt; margin: 3pt 0 6pt; white-space: pre; overflow: hidden; }
+.side.code2 { display: block; }
+.code2 > div { margin-bottom: 4pt; }
+.code2 .kicker { display: block; margin-bottom: 2pt; }
+
+/* bölüm başlıkları */
+.partHead { break-before: page; font-family: 'Newsreader', serif; font-weight: 800; font-size: 26pt; line-height: 1.1; border-top: 2.4pt double var(--ink); border-bottom: 1pt solid var(--ink); padding: 5mm 0 4mm; margin: 0 0 7mm; }
+.partHead span { display: block; font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 8pt; letter-spacing: 1.2pt; text-transform: uppercase; color: var(--seal); margin-bottom: 2mm; }
+.partHead + section { break-before: auto; }
+.toc .part { font-weight: 600; border-bottom: 0.8pt solid var(--ink); margin-top: 4pt; }
+.toc .part span { color: var(--ink); }
+
+/* kaynakça */
+ul.refs { list-style: none; padding-left: 0; }
+ul.refs li { padding-left: 16pt; text-indent: -16pt; margin-bottom: 4pt; }
+</style>
+<style>
+/* A5 sürümü: yaprağa iki sayfa, ölçeklemeden basılır; boyutlar kâğıttaki gerçek boyutlardır. */
+@page { size: A5; margin: 11mm 11mm 13mm 11mm; }
+body { font-size: 9.6pt; line-height: 1.4; }
+p { margin-bottom: 5pt; }
+h2 { font-size: 14pt; padding-bottom: 2pt; }
+h2 .no { font-size: 8.5pt; vertical-align: 2pt; }
+h3 { font-size: 10.8pt; margin: 8pt 0 2pt; }
+.lead { font-size: 10.2pt; margin: 4pt 0 6pt; }
+.kicker { font-size: 6.8pt; letter-spacing: 0.6pt; }
+ul, ol { padding-left: 12pt; }
+table { font-size: 8pt; margin: 3pt 0 7pt; }
+th { font-size: 6.6pt; letter-spacing: 0.3pt; padding: 2.5pt 4pt 2.5pt 0; }
+td { padding: 3pt 4pt 3pt 0; }
+td.k { font-size: 7.4pt; white-space: normal; }
+table.num td.n, table.num th.n { font-size: 7.4pt; padding-left: 4pt; }
+table.num th { padding-left: 4pt; }
+table.grid td { font-size: 7.4pt; }
+td.sub { font-size: 6.6pt; }
+table.canvas td { font-size: 8pt; padding: 4pt 5pt; }
+figcaption { font-size: 8pt; }
+figcaption b { font-size: 7pt; }
+.note { font-size: 8.2pt; }
+code, .mono { font-size: 7.8pt; }
+pre { font-size: 6.4pt; padding: 4pt 5pt; }
+.box { padding: 5pt 7pt; }
+.stats { grid-template-columns: 1fr 1fr; }
+.stats .n { font-size: 15pt; }
+.stats .l { font-size: 7.8pt; }
+.partHead { font-size: 20pt; padding: 4mm 0 3mm; margin-bottom: 5mm; }
+.partHead span { font-size: 7pt; }
+
+/* A4'teki zorunlu sayfa geçişleri A5'te boşluk bırakır; yalnızca bölüm başları yeni sayfada. */
+.newpage { break-before: auto; }
+
+/* Yan yana düzenler dar sütunda alt alta. */
+.side { display: block; }
+.side figure { margin: 6pt 0 8pt; }
+.side.code2 > div { margin-bottom: 4pt; }
+
+/* Kırpılmış ekran görüntüsü: kutu bölgenin oranında, görsel içinde kaydırılır. */
+.crop { overflow: hidden; border: 0.6pt solid var(--ink); margin: 0 auto 4pt; }
+.crop img { display: block; border: 0; max-width: none; }
+
+/* Geniş diyagramlarda küçük yazılar dar sütunda okunur kalsın. */
+/* Sınıf şemasının kutuları dar; o şema özgün boyutunda kalır (büyütülünce yazı taşar). */
+svg[viewBox^="0 0 760"]:not([aria-label="Öneri türlerinin sınıf şeması"]) :is([font-size="9"], [font-size="9.5"], [font-size="10"], [font-size="10.5"]) { font-size: 11.5px; }
+
+/* Kapak ve içindekiler. */
+.cover { height: 184mm; }
+.cover .top { font-size: 7pt; }
+.cover .course { font-size: 6.8pt; }
+.cover .mast { margin-top: 12mm; }
+.cover .mast img { width: 18mm; }
+.cover .mast .name { font-size: 32pt; letter-spacing: 4pt; margin-top: 4mm; }
+.cover .mast .tag { font-size: 9.5pt; }
+.cover .title { margin-top: 9mm; padding: 4mm 0; }
+.cover .title .t { font-size: 16.5pt; }
+.cover .title .s { font-size: 9pt; }
+.cover .author { margin-top: 11mm; }
+.cover .author .who { font-size: 14pt; }
+.cover .author .no { font-size: 8.5pt; }
+.cover .meta { font-size: 8.4pt; }
+.tocpage h2 { margin-bottom: 4pt; }
+.tocpage .toc { font-size: 9pt; margin-top: 2pt; }
+.tocpage .toc div { padding: 0.9pt 0; }
+.tocpage .toc .part { margin-top: 4pt; }
+</style>
+</head>
+<body>
+<!-- KAPAK -->
+<div class="cover">
+  <div class="top"><span>Ankara Üniversitesi</span><span>2026–2027 Güz Dönemi</span></div>
+  <div class="course">Yazılım Mühendisliğine Giriş · Dönem ödevi</div>
+  <div class="mast">
+    <img src="gorseller/muhur.png" alt="Meşveret mührü">
+    <div class="name">MEŞVERET</div>
+    <div class="tag">Oylamayla yönetilen forum — her karar kayda geçer</div>
+  </div>
+  <div class="title">
+    <div class="t">Analiz, Tasarım ve Politikalar Raporu</div>
+    <div class="s">Problemin çerçevesi, yapay zekânın nerede gerektiği, ölçümler,<br>kodun tasarım desenleriyle yeniden düzenlenmesi ve sistemin kuralları</div>
+  </div>
+  <div class="author">
+    <span class="kicker">Hazırlayan</span>
+    <div class="who">Alparslan Tuğra ŞAHİN</div>
+    <div class="no">Öğrenci No: 24290636</div>
+  </div>
+  <div class="meta">
+    <div><span class="kicker">Ders</span>Yazılım Mühendisliğine Giriş</div>
+    <div style="text-align:center"><span class="kicker">Öğretim Üyesi</span>Doç. Dr. Savaş TAKAN</div>
+    <div style="text-align:right"><span class="kicker">Tarih</span>9 Ekim 2026</div>
+  </div>
+</div>
+
+<!-- İÇİNDEKİLER -->
+<div class="tocpage">
+  <h2>İçindekiler</h2>
+  <div class="toc">
+<div class="part"><span>I</span>Problem ve analiz</div>
+<div><span>1</span>Özet</div>
+<div><span>2</span>Problem çerçeveleme</div>
+<div><span>3</span>Paydaşlar, kısıtlar ve ön-otopsi</div>
+<div><span>4</span>Yapay zekâ gerekli mi?</div>
+<div><span>5</span>Başarı metrikleri</div>
+<div><span>6</span>Baskın tespiti: ölçüm</div>
+<div class="part"><span>II</span>Tasarım ve kod</div>
+<div><span>7</span>Tasarım desenleri ve SOLID</div>
+<div><span>8</span>Sistem nasıl kurulu ve ne kadar hızlı</div>
+<div class="part"><span>III</span>Politikalar</div>
+<div><span>9</span>Azınlıkları nasıl koruyoruz</div>
+<div><span>10</span>İnsanları kapsamlara ayırma</div>
+<div><span>11</span>Kararları bölgeye ve konuya sınırlama</div>
+<div><span>12</span>Öneri ve karar akışı</div>
+<div><span>13</span>Yönetmelik ve değiştirilemez maddeler</div>
+<div><span>14</span>Havale (oy devri)</div>
+<div><span>15</span>İçerik ve silme</div>
+<div><span>16</span>Mahzen: neden var</div>
+<div><span>17</span>Kararların sonucu: muhatap, dilekçe, takvim, gazete</div>
+<div><span>18</span>Görseller</div>
+<div><span>19</span>Bütünlük, gizlilik ve güvenlik</div>
+<div><span>20</span>Küçük kolaylıklar</div>
+<div class="part"><span>IV</span>Süreç</div>
+<div><span>21</span>Karşılaşılan sorunlar ve çözümleri</div>
+<div><span>22</span>Bilinçli açıklar</div>
+<div><span>23</span>Test ve doğrulama</div>
+<div><span>24</span>Yapay zekâ kullanım beyanı</div>
+<div><span>25</span>Kaynaklar</div>
+  </div>
+</div>
+
+<div class="partHead"><span>Bölüm I</span>Problem ve analiz</div>
+<section id="ozet">
+<h2><span class="no">1</span>Özet</h2>
+<p class="lead">Meşveret'te konular, kurallar ve silmeler oylamayla değişir; her karar üç düğümlü bir deftere mühürlenir ve bir muhataba iletilir: takvime ya da bir kuruma. Tasarımın merkezindeki sorun çoğunluğun azınlığı ezmesidir. Sistem bunu ortadan kaldırmaz; kapsam, eşzamanlı çoğunluk, nitelikli çoğunluk, şerh, gizli oy ve değiştirilemez maddelerle sınırlar.</p>
+<div class="stats">
+  <div><div class="n">9</div><div class="l">denetim kuralı (R1–R9), bir denetim zinciri olarak öneri açılırken çalışır</div></div>
+  <div><div class="n">0</div><div class="l">öğrenen model: her karar noktası için "yapay zekâ gerekli mi?" sorusu yanıtlandı (§4)</div></div>
+  <div><div class="n">5</div><div class="l">basamaklı temel çizgi merdiveniyle ölçülen baskın tespiti (§6)</div></div>
+  <div><div class="n">485</div><div class="l">otomatik test: 231 birim, 29 defter, 225 entegrasyon; hepsi geçti (9 Ekim 2026)</div></div>
+</div>
+<p>Rapor dört bölümdür. <b>Birinci bölüm</b> problemi ders notlarındaki yöntemle çerçeveler: iş hedefinden karara ve göreve giden huni, problem kanvası, paydaşlar, kısıtlar ve ön-otopsi. Ardından her karar noktası için yapay zekânın gerekip gerekmediğini sorar, başarı metriklerini üç katmanda tanımlar ve veriden karar üreten tek bileşeni, baskın tespitini temel çizgilere karşı ölçer. <b>İkinci bölüm</b> kodun tasarım desenleriyle yeniden düzenlenmesini anlatır: bulunan anti-desenler, uygulanan desenler, uygulanmayanlar ve gerekçeleri. <b>Üçüncü bölüm</b> sistemin kurallarını, <b>dördüncü bölüm</b> karşılaşılan sorunları, bilinçli açıkları, testleri ve yapay zekâ kullanım beyanını içerir.</p>
+<p>Ekran görüntüleri çalışan sistemden, tohum verisiyle alınmıştır. Sistemin saati sahtedir: 29 Eylül 2026 Salı 10:00. Ölçümler ve tablolar ölçüm dosyalarından üretilir (<code>docs/degerlendirme/</code>); rapor <code>docs/rapor/olustur.py</code> ile yeniden oluşturulabilir. Ayrıntılı tasarım belgesi <code>DESIGN.md</code>, kurulum ve senaryolar <code>README.md</code> dosyasındadır.</p>
+</section>
+
+<section id="cerceve" class="newpage">
+<h2><span class="no">2</span>Problem çerçeveleme</h2>
+<p class="lead">"Önce doğru problemi bul, sonra problemi doğru çöz." Çerçeveleme hunisini iki düzeyde uyguladık: bütün sistem için ve sistemde veriden karar üreten tek bileşen olan baskın tespiti için.</p>
+<table>
+<thead><tr><th style="width:15%">Basamak</th><th style="width:43%">Meşveret (bütün sistem)</th><th>Baskın tespiti</th></tr></thead>
+<tbody>
+<tr><td class="k">İş hedefi</td><td>Moderatörü olmayan bir topluluğun ortak kararları çoğunluk tiranlığına düşmeden alması ve kararların dünyada bir karşılığı olması</td><td>Oylama sonuçlarının topluluğun gerçek üyelerinin iradesini yansıtması</td></tr>
+<tr><td class="k">İş sorusu</td><td>Topluluk kararları neden meşruiyet kaybeder? Çünkü azınlık ezilir, kurallar keyfî değişir, silme sansüre döner, kararın sonucu görülmez.</td><td>Bir oylama, kısa sürede açılmış ve birbirine bağlı hesaplarla ele geçirilebilir mi?</td></tr>
+<tr><td class="k">Karar</td><td>Bu öneri kabul edilsin mi? Kim oy verir (kapsam), hangi eşikle, sonuç kime iletilir (muhatap)?</td><td>Karar Saati açılırken hangi hesaplar bu oylamanın paydasından çıkarılsın?</td></tr>
+<tr><td class="k">Tahmin ya da kural</td><td>Tahmin yok. Kurallar (R1–R9) ve eşikler yönetmelikte yazılıdır.</td><td>Hesabın koordineli bir kümenin parçası olup olmadığı</td></tr>
+<tr><td class="k">Görev türü</td><td>Kural tabanlı karar sistemi ve ağırlıklı sayım</td><td>Hesap başına ikili sınıflandırma; grafta kümeleme olarak da kurulabilir</td></tr>
+<tr><td class="k">Veri ve etiket</td><td>Yönetmelik, ontoloji (kapsamlar, alanlar, kaynak sahipliği), oylar</td><td>Katılım anları ve ETKİLEŞİM grafı. Gerçek etiket yok: tohumdaki beş baskıncı dışında kimin baskıncı olduğu bilinmez. Ölçüm etiketli bir benzetimle yapıldı (§6).</td></tr>
+</tbody>
+</table>
+<p>Huninin son basamağı bir uyarı içerir. Baskın tespiti için etiketli veri yoktur ve toplanması da zordur: baskıncı kendini bildirmez. Bu, ders notundaki "Veri var mı / toplanabilir mi?" sorusunun hayır yanıtıdır ve yapay zekâ kararını belirler (§4).</p>
+
+<h3>Tek sayfalık problem kanvası</h3>
+<table class="canvas">
+<tbody>
+<tr><td><span class="kicker">1 · İş hedefi ve değer</span>Moderatörsüz bir toplulukta konu, kural ve silme kararlarını oylamayla almak; azınlığın kaynağını ve sesini korumak; kararı bir muhataba iletmek.</td>
+<td><span class="kicker">2 · Karar ve eylem</span>Her öneri için kabul ya da ret, seçmen kapsamı ve eşik. Kabulde konu açılır, takvime ya da kuruma iletilir. Sıklık: hızlı şerit sürekli (24 saat), Karar Saati haftada bir.</td></tr>
+<tr><td><span class="kicker">3 · Görev</span>Kural tabanlı denetim (R1–R9) ve ağırlıklı sayım. Veriden karar üreten tek bileşen baskın tespitidir: hesap başına ikili sınıflandırma.</td>
+<td><span class="kicker">4 · Veri</span>Üyelik, şehir (adresten), yaş grubu (doğum tarihinden), ilgi alanları, oylar, etkileşim grafı. Ad, adres ve doğum tarihi yalnızca sahibine görünür; defterde takma kimlik vardır, kişisel veri yoktur.</td></tr>
+<tr><td><span class="kicker">5 · Metrikler</span>İş: kurum muhataplı kararların yanıt alma oranı, etkinliklerin gerçekleşmesi. Ürün: itiraz ve sessiz onay oranları. Model: baskın tespitinde kesinlik, duyarlılık ve hata maliyeti. Koruyucu: yanlış işaretlenen gerçek üye (§5).</td>
+<td><span class="kicker">6 · Temel çizgi</span>Bugünkü durum: moderatörlü forum ya da basit çoğunluk oylaması. Baskın tespitinde merdiven: rastgele, hiç kimse, basit kural, üretimdeki kural, basit öğrenen model.</td></tr>
+<tr><td><span class="kicker">7 · Kısıtlar</span>Tek kişilik dönem ödevi; bütçe sıfır, GPU yok, ücretli servis yok. Oy hakkını kısıtlayan her karar açıklanabilir olmalı. Dilekçede yasal yanıt süresi 30 gün (3071 sayılı Kanun).</td>
+<td><span class="kicker">8 · Risk ve başarı</span>Ön-otopsi bulguları için bkz. §3. Kabul ölçütü: tohumdaki senaryoların otomatik testlerle beklenen sonucu vermesi; tohumdaki baskının gerçek üye dışlanmadan yakalanması.</td></tr>
+</tbody>
+</table>
+
+<div class="side">
+<div class="box" style="flex:1"><span class="kicker">Kötü problem tanımı</span>
+<p>"Yapay zekâ destekli, demokratik ve güvenli bir forum geliştirilecektir."</p>
+<p class="note">Kim kullanacak, hangi kararı verecek? "Demokratik" ve "güvenli" nasıl ölçülecek? Çözüm (yapay zekâ) problemden önce seçilmiş.</p></div>
+<div class="box" style="flex:1.4"><span class="kicker">İyi problem tanımı</span>
+<p>"Moderatörü olmayan bir toplulukta her yapısal değişiklik bir öneridir. Sistem öneriyi kimin oylayacağını kaynağın sahipliğinden çıkarır, kararı bir muhataba iletir ve deftere mühürler. Başarı: tohumdaki senaryoların beklenen sonucu vermesi; bir şehrin payını başka şehre aktaran önerinin (№17) o şehrin ayrı oylamasında durması; baskın tespitinin gerçek üyeyi dışlamadan tohumdaki baskını yakalaması."</p>
+<p class="note">✓ kullanıcı ✓ karar ✓ görev ✓ metrik ✓ temel çizgi</p></div>
+</div>
+</section>
+
+<section id="paydas">
+<h2><span class="no">3</span>Paydaşlar, kısıtlar ve ön-otopsi</h2>
+<p class="lead">Paydaşlar farklı şeyler ister; ödünleşimleri yazılı karara bağladık. Kısıtlar seçimlerin bir kısmını baştan belirledi. Ön-otopsi, sistemin altı ay sonra başarısız olduğunu varsayıp nedenlerini sıralar.</p>
+<table>
+<thead><tr><th style="width:20%">Paydaş</th><th style="width:27%">İstediği</th><th style="width:22%">Kiminle çatışır</th><th>Sistemdeki karşılığı</th></tr></thead>
+<tbody>
+<tr><td>Çoğunluk</td><td>Hızlı karar</td><td>Azınlığın vetosu</td><td>Sessiz onay, basit çoğunluk</td></tr>
+<tr><td>Azınlık kapsamları (bir şehir, bir ilgi grubu)</td><td>Kendi kaynağına kendisi karar versin</td><td>Çoğunluğun hızı</td><td>R2, eşzamanlı çoğunluk, şerh, gizli oy</td></tr>
+<tr><td>Öneri sahibi</td><td>Önerisinin görülmesi ve sonucu</td><td>İtiraz edenler</td><td>Olgunlaşma süresi, bildirimler, muhatap</td></tr>
+<tr><td>Kurumlar (belediye, bakanlık)</td><td>Dilekçenin yetkili bir kapsamdan gelmesi</td><td>—</td><td>R9, 30 günlük yanıt süresi</td></tr>
+<tr><td>Sunucuyu işleten</td><td>Sistemin çalışması</td><td>Herkes: kuralları oylamasız değiştirme gücü vardır</td><td>Defter, oylamasız değişiklik tespiti (veri düzeyinde)</td></tr>
+<tr><td>Ders yürütücüsü</td><td>Gereksinimler, analiz, tasarım</td><td>—</td><td>DESIGN.md §16 eşleme tablosu, bu rapor</td></tr>
+<tr><td>Baskıncılar (karşıt paydaş)</td><td>Bir oylamayı ele geçirmek</td><td>Herkes</td><td>Baskın tespiti, bekleme süreleri</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th style="width:20%">Kısıt</th><th>Değer</th><th style="width:40%">Seçime etkisi</th></tr></thead>
+<tbody>
+<tr><td>Zaman</td><td>Tek kişilik dönem ödevi, birkaç haftalık geliştirme</td><td>Eşzamanlılık yerine tek lider; dağıtık uzlaşma yok</td></tr>
+<tr><td>Bütçe</td><td>Sıfır: ücretli API, bulut yok</td><td>Hâtif kural tabanlı; gerçek kuruma gönderim yok</td></tr>
+<tr><td>Gecikme</td><td>Sayfa yanıtı yerelde 100 ms'nin altında (p95); Karar Saati açılışı birkaç saniye</td><td>Defter kayıtları toplu gönderilir (§8)</td></tr>
+<tr><td>Gizlilik (KVKK)</td><td>Ad, adres, doğum tarihi yalnızca sahibine</td><td>Defterde takma kimlik; görsellerde EXIF silinir</td></tr>
+<tr><td>Donanım</td><td>Dizüstü bilgisayar, Docker; telefon için Expo Go</td><td>Tek kod tabanı (web ve Android)</td></tr>
+<tr><td>Yasal ve etik</td><td>Oy hakkını kısıtlayan karar gerekçeli olmalı; dilekçede 30 gün</td><td>Baskın tespiti gerekçe yazar; kara kutu model kullanılamaz</td></tr>
+</tbody>
+</table>
+<h3>Ön-otopsi: "Altı ay geçti ve Meşveret başarısız oldu. Neden?"</h3>
+<table>
+<thead><tr><th style="width:36%">Olası neden</th><th>Olasılık</th><th>Etki</th><th style="width:38%">Önlem</th></tr></thead>
+<tbody>
+<tr><td>Bir şehrin bütçe payı oylamayla başka şehre aktarıldı</td><td>düşük</td><td>yüksek</td><td>R2 ve eşzamanlı çoğunluk (yapıldı)</td></tr>
+<tr><td>Çoğunluk önce eşikleri düşürdü, sonra güvenceleri kaldırdı</td><td>orta</td><td>yüksek</td><td>D1–D7, izinli aralıklar, R8 (yapıldı)</td></tr>
+<tr><td>Bir baskın oylamayı ele geçirdi</td><td>orta</td><td>yüksek</td><td>Baskın tespiti; sabırlı ve sessiz baskın yakalanmıyor (ölçüldü, §6)</td></tr>
+<tr><td>Gerçek bir grup baskın sanılıp oydan dışlandı, topluluğun güveni azaldı</td><td>orta</td><td>yüksek</td><td>Gerekçe ve bir oturumluk dışlama (yapıldı); iki aşamalı sayım (önerildi, yapılmadı)</td></tr>
+<tr><td>İşleten kuralları sessizce değiştirdi</td><td>düşük</td><td>yüksek</td><td>Defter karşılaştırması ve geri alma (veri düzeyinde yapıldı; kod düzeyinde değil)</td></tr>
+<tr><td>Kararlar dünyada karşılık bulmadı, katılım düştü</td><td>yüksek</td><td>orta</td><td>Muhatap, dilekçe, takvim, gazete (yapıldı); gerçek iletim yok</td></tr>
+<tr><td>Kimse 24 saatte itiraz etmedi, istenmeyen değişiklik geçti</td><td>orta</td><td>orta</td><td>Bildirimler, olgunlaşma; sessizlik rıza sayılır (bilinçli açık)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="yz">
+<h2><span class="no">4</span>Yapay zekâ gerekli mi?</h2>
+<p class="lead">Ders notundaki karar ağacını (etik ve yasal mı → basit bir kural işi görüyor mu → veri var mı → hatanın bedeli yönetilebilir mi) sistemdeki her karar noktasına uyguladık. Hiçbir nokta öğrenen bir model gerektirmiyor. Kurallar ya yeterli ya da açıklanabilirlik nedeniyle zorunlu; tek veri odaklı bileşende öğrenen model ölçüldü ve kuralı geçemedi.</p>
+<table>
+<thead><tr><th style="width:21%">Karar noktası</th><th style="width:13%">Etik ve yasal mı</th><th style="width:22%">Basit kural yetiyor mu</th><th style="width:11%">Veri</th><th style="width:15%">Hatanın bedeli</th><th>Seçim</th></tr></thead>
+<tbody>
+<tr><td>Önerinin kurallara uyması (R1–R9)</td><td>evet</td><td>evet: kurallar yönetmelikte yazılı (harf notu örneği gibi)</td><td>—</td><td>yüksek: yanlış ret hak kaybıdır</td><td><b>Kural</b></td></tr>
+<tr><td>Oy sayımı ve eşik</td><td>evet</td><td>evet: aritmetik</td><td>—</td><td>çok yüksek</td><td><b>Kural</b></td></tr>
+<tr><td>Hâtif'in etiket denetimi (alan, kaynak, şehir)</td><td>evet</td><td>büyük ölçüde: anahtar kelime eşlemesi</td><td>etiketli öneri yok</td><td>orta: tek oy, gerekçesi yazılı</td><td><b>Kural</b>; dil modeli ileride yalnızca öneri olarak</td></tr>
+<tr><td>Silmenin içerik kuralına uyması (H4)</td><td>dikkat: ifade özgürlüğü</td><td>kısmen: kelime eşlemesi anlamı kaçırır</td><td>yok</td><td>yüksek</td><td><b>Kural ve insan oyu</b> (2/3)</td></tr>
+<tr><td>Baskın tespiti</td><td>dikkat: oy hakkını kısıtlar, gerekçe zorunlu</td><td>ölçüldü: hızlı baskını yakalıyor</td><td>gerçek etiket yok</td><td>yüksek, iki yönde</td><td><b>Kural</b>; öğrenen model ölçüldü, reddedildi</td></tr>
+<tr><td>Muhatap yetkisi (R9)</td><td>evet</td><td>evet: tablo</td><td>—</td><td>orta</td><td><b>Kural</b></td></tr>
+<tr><td>Haber üretimi</td><td>evet</td><td>evet: kalıp</td><td>—</td><td>düşük</td><td><b>Kural</b></td></tr>
+<tr><td>Yarım ton baskı</td><td>evet</td><td>evet: algoritma</td><td>—</td><td>düşük</td><td><b>Algoritma</b></td></tr>
+</tbody>
+</table>
+<h3>Yelpazenin solundan başlamak</h3>
+<p>Kural, klasik makine öğrenmesi, derin öğrenme ve büyük dil modeli bir yelpazedir: sağa gittikçe esneklik, maliyet ve karmaşıklık artar. Ders notunun kuralı, sola ancak sol yetmediğini ölçtüğünüzde geçmektir. Baskın tespitinde bunu ölçtük (§6): öğrenen karar ağacı benzetimde kurala göre daha ucuz çıktı ama duyarlılığı 0,09 kaldı; gerçek tohum verisinde beş baskıncının hiçbirini yakalamadı. Öğrendiği kural benzetimin izlerine dayanıyordu. Yeni veri geçmişe benzemedi; ders notundaki beşinci koşul ("benzer yeni veri") sağlanmadı. Baskıncı da kurala uyum sağlayan bir karşı taraftır: kural yayımlandığında (Meşveret'te eşikler herkese açık yönetmelik maddeleridir) baskın biçim değiştirir.</p>
+<h3>Hâtif: yapay zekâ değil, bilerek</h3>
+<p>Ödev yapay zekâ tabanlı bir bilirkişi öneriyordu. Hâtif kural tabanlıdır ve bu bilinçli bir seçimdir:</p>
+<ul>
+  <li><b>Belirlenimcilik.</b> Aynı öneri her seferinde aynı oyu almalıdır. Dil modelleri olasılıksaldır: aynı girdiye farklı yanıt verebilir, girdideki küçük bir fark çıktıyı değiştirebilir. Hâtif'in oyu defterde mühürlüdür ve itiraz edilebilir olmalıdır; yeniden çalıştırınca değişen bir oy savunulamaz.</li>
+  <li><b>Halüsinasyon.</b> Bir dil modeli olmayan bir kural ihlali uydurabilir. Oylamada bu, bir seçmenin oyunu uydurma bir gerekçeye dayandırmak demektir.</li>
+  <li><b>Açıklanabilirlik.</b> Hâtif her HAYIR'ın gerekçesini kural koduyla yazar: "R2: …", "H4: IK-2 kuralının belirtilen kısımda karşılığı yok".</li>
+  <li><b>Maliyet belirleyici değil.</b> Öneri başına 1.500 girdi ve 300 çıktı jetonu, milyon jeton başına varsayımsal 1 $ ve 4 $ fiyatla öneri başına yaklaşık 0,003 $ tutar; tohumdaki 24 öneri için birkaç sent. Seçimi maliyet değil, belirlenimcilik ve açıklama zorunluluğu belirledi.</li>
+</ul>
+<div class="side">
+<div class="box" style="flex:1"><span class="kicker">Yapay zekânın üründeki rolü (Hâtif)</span>
+<p><b>Tamamlayıcı:</b> sistem Hâtif olmadan da çalışır; Hâtif yalnızca bir oy ve bir yorumdur. <b>Tepkisel:</b> öneri açılınca ve Karar Saati açılınca çalışır. <b>Statik:</b> kuralları kişiye göre değişmez; yönetmelik değişince herkes için değişir.</p></div>
+<div class="box" style="flex:1"><span class="kicker">İnsan döngüde: emekle, yürü, koş</span>
+<p>Karar her zaman seçmenlerindir; Hâtif bir oydur. Etiket denetimine bir dil modeli eklenseydi "emekle" aşamasında kalırdı: formda öneri sahibine alan ve kaynak önerir, kişi seçer. Oy veremez, gerekçesi Hâtif'in kural gerekçesinin yerine geçemez.</p></div>
+</div>
+</section>
+
+<section id="metrik">
+<h2><span class="no">5</span>Başarı metrikleri</h2>
+<p class="lead">Metrikler üç katmanda tanımlandı ve birbirine bağlandı: iş metriği kararların dünyada karşılık bulup bulmadığını, ürün metriği sistemin nasıl kullanıldığını, model metriği tek veri odaklı bileşenin başarımını ölçer. Her biri için bir koruyucu metrik vardır.</p>
+<table>
+<thead><tr><th style="width:11%">Katman</th><th style="width:34%">Metrik</th><th style="width:22%">Tohumdaki değer</th><th>Koruyucu (guardrail)</th></tr></thead>
+<tbody>
+<tr><td class="k">İş</td><td>Kurum muhataplı dilekçelerin yanıt alma oranı</td><td>1 / 3 dilekçe (11 alıcıdan 1'i); ikisinin süresi dolmadı</td><td>Süresinde yanıt verilmeyen dilekçe gazetede haber olur</td></tr>
+<tr><td class="k">İş</td><td>Gerçekleşen etkinliklerin raporlanma oranı</td><td>4 / 5 geçmiş etkinlik raporlu; kısa film gecesinin raporu yazılmadı</td><td>Raporu yalnızca katılımını bildiren yazar</td></tr>
+<tr><td class="k">İş</td><td>Azınlık payını gasp eden önerinin uygulanmaması</td><td>№17 Genel'de kabul, İstanbul'da ret: uygulanmadı</td><td>Orantısızlık eşiği izinli aralıkta (5–30 puan)</td></tr>
+<tr><td class="k">Ürün</td><td>Sessiz onayla kabul edilen öneri payı</td><td>20 / 35 öneri</td><td>İtiraz eşiği en çok 20 itiraz ya da %20 (izinli aralık)</td></tr>
+<tr><td class="k">Ürün</td><td>İtirazla yavaş şeride geçen öneri</td><td>5 öneri, 15 itiraz</td><td>Öneri sahibi kendi önerisine itiraz edemez</td></tr>
+<tr><td class="k">Model</td><td>Baskın tespitinde kesinlik ve duyarlılık</td><td>Canlı: 5/5 yakalandı, yanlış işaret 0. Benzetim: 0,26 / 0,32</td><td>Yanlış işaretlenen gerçek üye sayısı</td></tr>
+</tbody>
+</table>
+<div class="box"><span class="kicker">Goodhart yasası: ölçüt hedef olunca bozulur</span>
+<p>"Yakalanan baskıncı sayısı" hedef olsaydı, eşikleri düşürmek sayıyı artırırdı; aynı saatte kaydolan gerçek bir sınıf da dışlanırdı. Koruyucu metrik bu yüzden yanlış işaretlenen gerçek üye sayısıdır. "Sessiz onayla kabul" hedef olsaydı itiraz eşiğini yükseltmek oranı artırırdı; izinli aralık eşiği en çok 20 itiraza ya da aktif üyelerin %20'sine bağlar. Model metriği iş metriğinden kopuk okunmaz: baskın tespitinin duyarlılığı yükseldiğinde gerçek üyelerin oy hakkı azalıyorsa sistem iş hedefinden uzaklaşır.</p></div>
+</section>
+
+<section id="baskin" class="newpage">
+<h2><span class="no">6</span>Baskın tespiti: ölçüm</h2>
+<p class="lead">Baskın tespiti sistemde veriden karar üreten tek bileşendir: Karar Saati açılırken yeni katılmış ve birbirine yoğun bağlı hesap kümelerini oylamanın paydasından çıkarır. Bileşeni ders notundaki yöntemle ölçtük: temel çizgi merdiveni, karışıklık matrisi, kesinlik ve duyarlılık, hata maliyeti ve eşik seçimi.</p>
+<h3>Veri: etiketli benzetim</h3>
+<p>Gerçek veride baskın nadirdir ve etiketsizdir. Ölçüm, üretimdeki ETKİLEŞİM sinyallerini (yakın kayıt, yanıt, ortak başlık) aynı ağırlıklarla üreten bir benzetimle yapıldı. Her senaryo bir Karar Saati anlık görüntüsüdür: eski üyeler, tek tük yeni gelenler, aynı öğleden sonra kaydolup birbirine yazan gerçek bir grup (sınıf), bir duyurudan sonra iki güne yayılan katılım ve senaryoların yaklaşık yarısında beş biçimden birinde bir baskın. Biçimler: hızlı (dakikalar arayla kayıt ve yanıt; tohumdaki biçim), sabırlı (günlere yayılmış), sessiz (etkileşimsiz), bölünmüş (iki küçük küme), kamufle (eski üyelere de yazan). Eğitim ve sınama ayrımı senaryo adının özetiyle yapıldı; sınama kümesi bir kez yazılıp sabitlendi.</p>
+<table class="num"><thead><tr><th>Küme</th><th>Senaryo</th><th>Hesap</th><th>Son 7 günde katılan</th><th>Baskıncı</th><th>Baskınlı senaryo</th></tr></thead><tbody><tr><td>Eğitim</td><td class="n">284</td><td class="n">23.633</td><td class="n">3.381</td><td class="n">795</td><td class="n">136</td></tr><tr><td>Sınama (sabit dosya)</td><td class="n">116</td><td class="n">9.501</td><td class="n">1.326</td><td class="n">323</td><td class="n">57</td></tr></tbody></table>
+<h3>Temel çizgi merdiveni</h3>
+<p>Beş tespitçi aynı sınama kümesinde ölçüldü. Hata maliyeti: kaçan baskıncı 1, yanlışlıkla işaretlenen gerçek üye 5 birim. Gerekçe: yanlış işaret, gerçek bir üyenin o oturumdaki oy hakkını alır; kaçan bir baskıncı ise sonucu ancak oylama yakınsa değiştirir. Oran paydaşlarla tartışılacak bir karardır; aşağıda başka oranlar da tarandı.</p>
+<table class="num"><thead><tr><th>Tespitçi</th><th>DP</th><th>YN</th><th>YP</th><th>Doğruluk</th><th>Doğruluk<br>(yeni üyeler)</th><th>Kesinlik</th><th>Duyarlılık</th><th>F1</th><th>F2</th><th>Maliyet</th></tr></thead><tbody><tr><td>Rastgele</td><td class="n">7</td><td class="n">316</td><td class="n">324</td><td class="n">%93,3</td><td class="n">%73,2</td><td class="n">0,02</td><td class="n">0,02</td><td class="n">0,02</td><td class="n">0,02</td><td class="n"><b>1.936</b></td></tr><tr><td>Hiç kimse</td><td class="n">0</td><td class="n">323</td><td class="n">0</td><td class="n">%96,6</td><td class="n">%75,6</td><td class="n">0,00</td><td class="n">0,00</td><td class="n">0,00</td><td class="n">0,00</td><td class="n"><b>323</b></td></tr><tr><td>Yeni üye kuralı</td><td class="n">323</td><td class="n">0</td><td class="n">1.003</td><td class="n">%89,4</td><td class="n">%24,4</td><td class="n">0,24</td><td class="n">1,00</td><td class="n">0,39</td><td class="n">0,62</td><td class="n"><b>5.015</b></td></tr><tr><td>Küme kuralı (üretim)</td><td class="n">104</td><td class="n">219</td><td class="n">289</td><td class="n">%94,7</td><td class="n">%61,7</td><td class="n">0,26</td><td class="n">0,32</td><td class="n">0,29</td><td class="n">0,31</td><td class="n"><b>1.664</b></td></tr><tr class="best"><td>Karar ağacı (öğrenilen)</td><td class="n">28</td><td class="n">295</td><td class="n">1</td><td class="n">%96,9</td><td class="n">%77,7</td><td class="n">0,97</td><td class="n">0,09</td><td class="n">0,16</td><td class="n">0,11</td><td class="n"><b>300</b></td></tr></tbody></table>
+<svg viewBox="0 0 560 184" role="img" aria-label="Kesinlik ve duyarlılık"><line x1="190.0" y1="18" x2="190.0" y2="178" stroke="#CFC6B3" stroke-width="0.6"/><text x="190.0" y="12" font-size="9" text-anchor="middle" class="m" fill="#4A463E">0,0</text><line x1="260.0" y1="18" x2="260.0" y2="178" stroke="#CFC6B3" stroke-width="0.6"/><text x="260.0" y="12" font-size="9" text-anchor="middle" class="m" fill="#4A463E">0,2</text><line x1="330.0" y1="18" x2="330.0" y2="178" stroke="#CFC6B3" stroke-width="0.6"/><text x="330.0" y="12" font-size="9" text-anchor="middle" class="m" fill="#4A463E">0,4</text><line x1="400.0" y1="18" x2="400.0" y2="178" stroke="#CFC6B3" stroke-width="0.6"/><text x="400.0" y="12" font-size="9" text-anchor="middle" class="m" fill="#4A463E">0,6</text><line x1="470.0" y1="18" x2="470.0" y2="178" stroke="#CFC6B3" stroke-width="0.6"/><text x="470.0" y="12" font-size="9" text-anchor="middle" class="m" fill="#4A463E">0,8</text><line x1="540.0" y1="18" x2="540.0" y2="178" stroke="#CFC6B3" stroke-width="0.6"/><text x="540.0" y="12" font-size="9" text-anchor="middle" class="m" fill="#4A463E">1,0</text><text x="182" y="38" font-size="11.5" text-anchor="end">Rastgele</text><rect x="190" y="26" width="7.4" height="9" fill="#1B1A17"/><rect x="190" y="37.5" width="7.6" height="8" fill="#fff" stroke="#1B1A17" stroke-width="1"/><text x="201.4" y="34" font-size="8.5" class="m" fill="#1B1A17">0,02</text><text x="201.6" y="45" font-size="8.5" class="m" fill="#1B1A17">0,02</text><text x="182" y="68" font-size="11.5" text-anchor="end">Hiç kimse</text><rect x="190" y="56" width="1.0" height="9" fill="#1B1A17"/><rect x="190" y="67.5" width="1.0" height="8" fill="#fff" stroke="#1B1A17" stroke-width="1"/><text x="194.0" y="64" font-size="8.5" class="m" fill="#1B1A17">0,00</text><text x="194.0" y="75" font-size="8.5" class="m" fill="#1B1A17">0,00</text><text x="182" y="98" font-size="11.5" text-anchor="end">Yeni üye kuralı</text><rect x="190" y="86" width="85.3" height="9" fill="#1B1A17"/><rect x="190" y="97.5" width="350.0" height="8" fill="#fff" stroke="#1B1A17" stroke-width="1"/><text x="279.3" y="94" font-size="8.5" class="m" fill="#1B1A17">0,24</text><text x="544.0" y="105" font-size="8.5" class="m" fill="#1B1A17">1,00</text><text x="182" y="128" font-size="11.5" text-anchor="end">Küme kuralı (üretim)</text><rect x="190" y="116" width="92.6" height="9" fill="#1B1A17"/><rect x="190" y="127.5" width="112.7" height="8" fill="#fff" stroke="#1B1A17" stroke-width="1"/><text x="286.6" y="124" font-size="8.5" class="m" fill="#1B1A17">0,26</text><text x="306.7" y="135" font-size="8.5" class="m" fill="#1B1A17">0,32</text><text x="182" y="158" font-size="11.5" text-anchor="end">Karar ağacı (öğrenilen)</text><rect x="190" y="146" width="337.9" height="9" fill="#1B1A17"/><rect x="190" y="157.5" width="30.3" height="8" fill="#fff" stroke="#1B1A17" stroke-width="1"/><text x="531.9" y="154" font-size="8.5" class="m" fill="#1B1A17">0,97</text><text x="224.3" y="165" font-size="8.5" class="m" fill="#1B1A17">0,09</text><rect x="350" y="168" width="9" height="9" fill="#1B1A17"/><text x="363" y="176" font-size="10">kesinlik</text><rect x="430" y="168.5" width="8" height="8" fill="#fff" stroke="#1B1A17" stroke-width="1"/><text x="443" y="176" font-size="10">duyarlılık</text></svg>
+<ul>
+  <li><b>Doğruluk tuzağı.</b> Hiç kimseyi işaretlemeyen tespitçinin doğruluğu %96,6, duyarlılığı sıfırdır. Eski üyeler kolay negatiftir ve doğruluğu şişirir; yalnızca son yedi günde katılanlar arasında aynı tespitçinin doğruluğu %75,6 olur. Doğruluk bu problemde neredeyse bilgi taşımaz.</li>
+  <li><b>Basit kural</b> (son yedi günde katılan herkes) bütün baskıncıları yakalar ama 1.003 gerçek yeni üyeyi de dışlar; maliyeti en yüksek olandır.</li>
+  <li><b>Üretimdeki küme kuralı</b> 104 baskıncıyı yakalar, 289 gerçek üyeyi yanlış işaretler. F2 değeri 0,31.</li>
+  <li><b>Öğrenen karar ağacı</b> (hesap başına altı öznitelikten, hata maliyetiyle öğrenilen derinliği 2 ağaç) maliyette en iyisidir ama "hiç kimse"ye çok yakındır: kesinliği yüksek, duyarlılığı 0,09. Öğrendiği kural: <i>İşaretle: kümede katılım yayılımı (saat) < 79.74 ve üyelik yaşı (saat) < 1.04; ya da kümede katılım yayılımı (saat) ≥ 79.74 ve eski üyelerle etkileşim ağırlığı < 0.50.</i></li>
+</ul>
+<div class="side">
+<div style="flex:0 0 42%">
+<h3 style="margin-top:2pt">Karışıklık matrisi (küme kuralı)</h3>
+<table class="cm"><thead><tr><th></th><th>İşaretlendi</th><th>İşaretlenmedi</th></tr></thead><tbody><tr><th>Baskıncı (323)</th><td><b>DP 104</b></td><td>YN 219</td></tr><tr><th>Gerçek üye (9.178)</th><td>YP 289</td><td>DN 8.889</td></tr></tbody></table>
+<p class="note">Kesinlik = DP / (DP + YP); duyarlılık = DP / (DP + YN). Ders notundaki örnekle (DP 40, YN 10, YP 60, DN 890) aynı formüller; metrik kodu bu örnekle test edilir.</p>
+</div>
+<div style="flex:1">
+<h3 style="margin-top:2pt">Hangi baskın yakalanıyor, kim yanlış işaretleniyor</h3>
+<table class="num"><thead><tr><th style="width:30%">Grup</th><th>İşaretlenen</th><th>Oran</th><th style="width:40%"></th></tr></thead><tbody><tr><td colspan="4" class="sub">Baskıncılar (yakalanması istenen)</td></tr><tr><td>hızlı baskın</td><td class="n">46/46</td><td class="n">%100</td><td><div class="bar"><span style="width:100%;background:#2F4A2A"></span></div></td></tr><tr><td>kamufle baskın</td><td class="n">40/54</td><td class="n">%74</td><td><div class="bar"><span style="width:74%;background:#2F4A2A"></span></div></td></tr><tr><td>bölünmüş baskın</td><td class="n">18/51</td><td class="n">%35</td><td><div class="bar"><span style="width:35%;background:#2F4A2A"></span></div></td></tr><tr><td>sabırlı baskın</td><td class="n">0/68</td><td class="n">%0</td><td><div class="bar"><span style="width:0%;background:#2F4A2A"></span></div></td></tr><tr><td>sessiz baskın</td><td class="n">0/104</td><td class="n">%0</td><td><div class="bar"><span style="width:0%;background:#2F4A2A"></span></div></td></tr><tr><td colspan="4" class="sub">Gerçek yeni üyeler (işaretlenmemesi istenen)</td></tr><tr><td>gerçek grup (sınıf)</td><td class="n">263/269</td><td class="n">%98</td><td><div class="bar"><span style="width:98%;background:#7A1E2B"></span></div></td></tr><tr><td>duyuru dalgası</td><td class="n">19/373</td><td class="n">%5</td><td><div class="bar"><span style="width:5%;background:#7A1E2B"></span></div></td></tr><tr><td>tek tük yeni üye</td><td class="n">7/361</td><td class="n">%2</td><td><div class="bar"><span style="width:2%;background:#7A1E2B"></span></div></td></tr></tbody></table>
+</div>
+</div>
+<p>Kuralın başarısı baskının biçimine bağlıdır. Hızlı baskın neredeyse her zaman yakalanır; sabırlı ve sessiz baskın hiç yakalanmaz, çünkü kural katılımın 24 saat içinde toplanmasını ve hesapların birbirine bağlı olmasını ister. Asıl sorun yanlış işaretlerdir: aynı öğleden sonra kaydolup birbirine yazan gerçek bir grup, yapı olarak hızlı baskından ayırt edilemez. Bu, ders notundaki "tek hata kabul edilemezse" uyarısının bu problemdeki karşılığıdır.</p>
+<h3>Eşik bir iş kararıdır</h3>
+<p>Kuralın iki eşiği (en küçük küme ve yoğunluk) tarandı; hücrelerde kesinlik / duyarlılık. İşaretli hücre yönetmelikteki varsayılandır.</p>
+<table class="num grid"><thead><tr><th>Küme eşiği</th><th>yoğunluk ≥ 1/3</th><th>yoğunluk ≥ 1/2</th><th>yoğunluk ≥ 2/3</th><th>yoğunluk ≥ 1</th></tr></thead><tbody><tr><th>en az 3 hesap</th><td>0,28 / 0,45</td><td>0,28 / 0,41</td><td>0,22 / 0,28</td><td>0,48 / 0,24</td></tr><tr><th>en az 4 hesap</th><td>0,27 / 0,37</td><td class="cur">0,26 / 0,32</td><td>0,19 / 0,19</td><td>0,42 / 0,15</td></tr><tr><th>en az 5 hesap</th><td>0,25 / 0,28</td><td>0,24 / 0,24</td><td>0,16 / 0,13</td><td>0,42 / 0,12</td></tr><tr><th>en az 6 hesap</th><td>0,19 / 0,19</td><td>0,17 / 0,15</td><td>0,11 / 0,09</td><td>0,43 / 0,09</td></tr><tr><th>en az 8 hesap</th><td>0,08 / 0,05</td><td>0,05 / 0,02</td><td>0,05 / 0,02</td><td>0,30 / 0,02</td></tr></tbody></table>
+<p>Hangi eşiğin seçileceği, yanlış işaretin kaçan baskıncıya göre bedeline (r) bağlıdır. Ders notundaki maliyet hesabının (Maliyet = c<sub>YN</sub>·YN + c<sub>YP</sub>·YP) bu problemdeki karşılığı:</p>
+<table class="num"><thead><tr><th>Yanlış işaretin bedeli r<br>(kaçan baskıncı = 1)</th><th>En ucuz eşik</th><th>YN</th><th>YP</th><th>Maliyet</th></tr></thead><tbody><tr><td class="n">0,2</td><td>en az 3 hesap, yoğunluk ≥ 1/3</td><td class="n">177</td><td class="n">367</td><td class="n">250,4</td></tr><tr><td class="n">1,0</td><td>en az 3 hesap, yoğunluk ≥ 1</td><td class="n">247</td><td class="n">81</td><td class="n">328,0</td></tr><tr><td class="n">5,0</td><td>en az 8 hesap, yoğunluk ≥ 1</td><td class="n">315</td><td class="n">19</td><td class="n">410,0</td></tr><tr><td class="n">20,0</td><td>en az 8 hesap, yoğunluk ≥ 1</td><td class="n">315</td><td class="n">19</td><td class="n">695,0</td></tr></tbody></table><p class="note">Karşılaştırma: hiç kimseyi işaretlememenin maliyeti her oranda 323 birimdir (yalnızca kaçan baskıncılar).</p>
+<p>Kural ancak yanlış işaretin bedeli kaçan baskıncınınkinin <b>DP/YP</b> katından azsa "hiç kimseyi işaretleme"den ucuzdur (başa baş oranı r*). Bu oran benzetimdeki bir varsayıma, birlikte kaydolan gerçek grupların sıklığına çok bağlıdır. Gerçek grup hiç yoksa r* 4,69, senaryoların %35'inde varsa 0,38:</p>
+<svg viewBox="0 0 560 230" role="img" aria-label="Başa baş oranı"><line x1="60" y1="190.0" x2="540" y2="190.0" stroke="#CFC6B3" stroke-width="0.6"/><text x="54" y="193.0" font-size="9" text-anchor="end" class="m" fill="#4A463E">0</text><line x1="60" y1="155.2" x2="540" y2="155.2" stroke="#CFC6B3" stroke-width="0.6"/><text x="54" y="158.2" font-size="9" text-anchor="end" class="m" fill="#4A463E">1</text><line x1="60" y1="120.4" x2="540" y2="120.4" stroke="#CFC6B3" stroke-width="0.6"/><text x="54" y="123.4" font-size="9" text-anchor="end" class="m" fill="#4A463E">2</text><line x1="60" y1="85.6" x2="540" y2="85.6" stroke="#CFC6B3" stroke-width="0.6"/><text x="54" y="88.6" font-size="9" text-anchor="end" class="m" fill="#4A463E">3</text><line x1="60" y1="50.80000000000001" x2="540" y2="50.80000000000001" stroke="#CFC6B3" stroke-width="0.6"/><text x="54" y="53.80000000000001" font-size="9" text-anchor="end" class="m" fill="#4A463E">4</text><line x1="60" y1="16.0" x2="540" y2="16.0" stroke="#CFC6B3" stroke-width="0.6"/><text x="54" y="19.0" font-size="9" text-anchor="end" class="m" fill="#4A463E">5</text><text x="60.0" y="204" font-size="9" text-anchor="middle" class="m" fill="#4A463E">%0</text><text x="156.0" y="204" font-size="9" text-anchor="middle" class="m" fill="#4A463E">%10</text><text x="252.0" y="204" font-size="9" text-anchor="middle" class="m" fill="#4A463E">%20</text><text x="396.0" y="204" font-size="9" text-anchor="middle" class="m" fill="#4A463E">%35</text><text x="540.0" y="204" font-size="9" text-anchor="middle" class="m" fill="#4A463E">%50</text><line x1="60" y1="155.2" x2="540" y2="155.2" stroke="#7A1E2B" stroke-width="0.9" stroke-dasharray="4 3"/><text x="536" y="151.2" font-size="9.5" text-anchor="end" fill="#7A1E2B">r = 1: iki hata eşit</text><line x1="60" y1="16.0" x2="540" y2="16.0" stroke="#7A1E2B" stroke-width="0.9" stroke-dasharray="4 3"/><text x="536" y="12.0" font-size="9.5" text-anchor="end" fill="#7A1E2B">r = 5: raporun varsayımı</text><path d="M60.0 26.8 L156.0 147.5 L252.0 167.4 L396.0 176.8 L540.0 179.6" fill="none" stroke="#1B1A17" stroke-width="1.6"/><circle cx="60.0" cy="26.8" r="3" fill="#1B1A17"/><text x="66.0" y="20.8" font-size="9.5" class="m">4,69</text><circle cx="156.0" cy="147.5" r="3" fill="#1B1A17"/><text x="162.0" y="141.5" font-size="9.5" class="m">1,22</text><circle cx="252.0" cy="167.4" r="3" fill="#1B1A17"/><text x="258.0" y="161.4" font-size="9.5" class="m">0,65</text><circle cx="396.0" cy="176.8" r="3" fill="#1B1A17"/><text x="402.0" y="170.8" font-size="9.5" class="m">0,38</text><circle cx="540.0" cy="179.6" r="3" fill="#1B1A17"/><text x="546.0" y="173.6" font-size="9.5" class="m">0,30</text><text x="300.0" y="224" font-size="10.5" text-anchor="middle" fill="#4A463E">senaryolarda birlikte kaydolan gerçek grubun (sınıf) bulunma payı</text><text x="14" y="103.0" font-size="10.5" text-anchor="middle" fill="#4A463E" transform="rotate(-90 14 103.0)">başa baş oranı r*</text></svg>
+<p class="note">Okuma: eğri kesikli çizginin üstündeyse kural o oranda kârlıdır. Yanlış işaret kaçan baskıncıdan 5 kat pahalıysa (raporun varsayımı) kural benzetimdeki hiçbir durumda "hiç kimse"den ucuz değildir; gerçek grup hiç olmasa bile başa baş oranı 5'in altında kalır. İki hata eşit pahalıysa kural, gerçek grupların payı %10 ile %20 arasındaki bir değere kadar kârlıdır.</p>
+<h3>Canlı ölçüm: Karar Saati #1</h3>
+<p>Aynı tespitçiler tohumdaki gerçek oturumun anlık görüntüsünde de çalıştırıldı: 45 seçmen, 5 baskıncı (tohumda bilinen).</p>
+<table class="num"><thead><tr><th>Tespitçi</th><th>Yakalanan baskıncı</th><th>Yanlış işaret</th><th>Doğruluk</th></tr></thead><tbody><tr><td>Rastgele</td><td class="n">0/5</td><td class="n">1</td><td class="n">%86,7</td></tr><tr><td>Hiç kimse</td><td class="n">0/5</td><td class="n">0</td><td class="n">%88,9</td></tr><tr><td>Yeni üye kuralı</td><td class="n">5/5</td><td class="n">0</td><td class="n">%100,0</td></tr><tr><td>Küme kuralı (üretim)</td><td class="n">5/5</td><td class="n">0</td><td class="n">%100,0</td></tr><tr><td>Karar ağacı (öğrenilen)</td><td class="n">0/5</td><td class="n">0</td><td class="n">%88,9</td></tr></tbody></table>
+<p>Küme kuralı beş baskıncıyı da yanlış işaretsiz yakaladı. Yeni üye kuralı da kusursuz göründü, ama bu tohumun bir sınırıdır: tohumda baskıncılardan başka son yedi günde katılan üye yoktur, yanlış işaret ölçülemez. Benzetimde eğitilen karar ağacı gerçek baskının hiçbir hesabını yakalamadı: öğrendiği kural benzetimin izlerine dayanıyordu ve gerçek veriye genellenmedi.</p>
+<div class="box"><span class="kicker">Karar ve öneri</span>
+<p><b>Ölçümün söylediği:</b> kuralın yararı iki bilinmeyene bağlıdır: yanlış işaretin bedeli (r) ve birlikte kaydolan gerçek grupların sıklığı. İkisi de topluluğa göre değişir ve ölçülemez.</p>
+<p><b>Karar:</b> üretimde küme kuralı kaldı. Hızlı baskına karşı tek savunmadır; canlı veride doğru çalıştı; açıklanabilirdir (kişiye ve sonuç ekranına gerekçe yazılır); eşikleri topluluğun oylayabildiği yönetmelik maddeleridir; dışlama yalnızca o oturum içindir. Öğrenen model genellenmediği için reddedildi. Sınırlar bilinçli açık olarak yazıldı (§22).</p>
+<p><b>Öneri (yapılmadı; karar topluluğundur):</b> iki aşamalı sayım. Şüpheli hesapların oyları paydadan çıkarılmak yerine ayrıca sayılır. Sonuç onlarla ve onlarsız aynıysa kimse dışlanmaz; yanlış işaretin bedeli sıfıra iner. Sonuç değişiyorsa oylama "baskına duyarlı" diye işaretlenir ve karar, ders notundaki afet örneğinde olduğu gibi insana bırakılır: model sıralar, insan karar verir.</p></div>
+</section>
+
+<div class="partHead"><span>Bölüm II</span>Tasarım ve kod</div>
+<section id="desen" class="newpage">
+<h2><span class="no">7</span>Tasarım desenleri ve SOLID</h2>
+<p class="lead">Ders notundaki desen kataloğunu kod tabanına iki adımda uyguladık: önce desen ve anti-desen tespiti, sonra yeniden düzenleme. Davranış değişmedi: yeniden düzenlemeden önce ve sonra entegrasyon testlerinin hepsi geçti. Desenler bir amaç olarak değil, kodda gerçek bir sorunu çözdükleri yerde kullanıldı.</p>
+
+<h3>Bulunan anti-desenler</h3>
+<table>
+<thead><tr><th style="width:22%">Anti-desen</th><th style="width:30%">Nerede</th><th>Belirti</th></tr></thead>
+<tbody>
+<tr><td>Her şeyi bilen modül</td><td><code>services/proposals.py</code> (1.004 satır)</td><td>Açılış, beş öneri türünün dalları, durum denetimleri, dilekçe ve bildirim çağrıları ve görünümler tek dosyada</td></tr>
+<tr><td>Uzun <code>if/elif</code> zincirleri</td><td>Öneri motorunda beş yerde türe göre dal; Karar Saati'nde beş yerde <code>p.type == "KAPANIS"</code>; görsellerde eklenti türüne göre dal</td><td>Yeni bir öneri türü her zinciri değiştirmeyi gerektirir (Açık/Kapalı ilkesinin ihlali)</td></tr>
+<tr><td>Dağınık durum denetimi</td><td><code>p.status == "SILENT"</code> gibi karşılaştırmalar servislere dağılmış</td><td>Geçersiz geçiş engellenmiyordu: karara bağlanmış bir öneri ikinci kez kabul edilirse etkileri iki kez uygulanırdı</td></tr>
+<tr><td>Döngüsel bağımlılık</td><td>Öneri motoru ↔ dilekçe ↔ bildirim; fonksiyon içinden içe aktarma</td><td>Gizli bağımlılık; takvimi eklemek öneri motorunu değiştirmeyi gerektirecekti</td></tr>
+<tr><td>Adsız komutlar</td><td>Zamanlayıcı işleri <code>lambda</code> olarak</td><td>Bir işin ne yaptığı ancak çalıştırınca görülür</td></tr>
+<tr><td>Ölü parametre</td><td>Kullanılmayan bağlam parametreli yardımcılar</td><td>Okuyanı yanıltır</td></tr>
+</tbody>
+</table>
+
+<h3>Uygulanan desenler</h3>
+<table>
+<thead><tr><th style="width:17%">Desen</th><th style="width:31%">Nerede</th><th style="width:30%">Çözdüğü sorun</th><th>Bedeli</th></tr></thead>
+<tbody>
+<tr><td><b>Strategy, Registry, Factory Method</b></td><td><code>services/proposal_kinds.py</code>: her öneri türü bir sınıf; <code>@KINDS.register</code>; <code>kind_for(p)</code></td><td>Türe göre beş <code>if/elif</code> zinciri</td><td>Bir türün davranışı birkaç metoda dağılır</td></tr>
+<tr><td><b>Template Method</b></td><td><code>open_proposal</code> sabit iskelet; türün kancaları (<code>after_open</code>, <code>view</code>)</td><td>Açılış sırası her türde aynı, birkaç adım türe özgü</td><td>Kalıtım; boş kanca sessiz kalır</td></tr>
+<tr><td><b>State</b></td><td><code>domain/lifecycle.py</code>: <code>Silent</code>, <code>Queued</code>, <code>Voting</code>, <code>Accepted</code>…</td><td>Dağınık durum denetimi; çift kabul</td><td>Veritabanında durum hâlâ metin; eşleme <code>state_of</code></td></tr>
+<tr><td><b>Chain of Responsibility</b></td><td><code>domain/rules.py</code>: R1–R9 birer halka</td><td>Her kural kendi tür denetimini yapıyordu</td><td>Zincir kesilmez: kişi bütün gerekçeleri görsün</td></tr>
+<tr><td><b>Observer</b></td><td><code>services/events.py</code>: <code>TopicAccepted</code>, <code>DecisionMade</code>, <code>SessionClosed</code>…</td><td>Döngüsel bağımlılık; yeni sonuç (takvim) motoru değiştirmeden eklenmeli</td><td>Aboneler aynı işlemde; defter bilerek abone değil (zincir sırası)</td></tr>
+<tr><td><b>Strategy</b></td><td>Karar Saati: <code>YesNoBallot</code>, <code>ApprovalBallot</code></td><td>Beş kapanış dalı</td><td>Biçimi öneri türü seçer</td></tr>
+<tr><td><b>Command</b></td><td><code>services/jobs.py</code>: <code>EndSilentPeriod</code>, <code>CloseDecisionHour</code>…</td><td>Adsız işler</td><td>Her iş idempotent olmalı</td></tr>
+<tr><td><b>Facade</b></td><td><code>services/proposals.py</code>; uç noktalar yalnızca servisleri bilir</td><td>Arkadaki türler, durumlar, kurallar ve olaylar tek kapıdan</td><td>Facade büyüyebilir</td></tr>
+<tr><td><b>Repository, Adapter</b></td><td><code>OntologyView</code> (bellek içi ve Neo4j), <code>LedgerClient</code> (HTTP ve sahte)</td><td>Kurallar verinin nereden geldiğini bilmez; testler Docker'sız</td><td>İki uygulama aynı sözleşme testlerinden geçer</td></tr>
+<tr><td><b>Memento</b></td><td>Karar Saati anlık görüntüsü; son oylanmış yönetmeliğe dönüş</td><td>Pencere boyunca kurallar ve seçmenler değişmemeli</td><td>Anlık görüntü JSON olarak saklanır</td></tr>
+</tbody>
+</table>
+
+<h3>Öneri türleri: Strategy ve Registry</h3>
+<svg viewBox="0 0 760 236" role="img" aria-label="Öneri türlerinin sınıf şeması">
+  <defs>
+    <marker id="tri" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0L12 6L0 12z" fill="#fff" stroke="#1B1A17"/></marker>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker>
+  </defs>
+  <g fill="none" stroke="#1B1A17" stroke-width="1">
+    <rect x="270" y="6" width="220" height="104" fill="#F4EFE4"/><line x1="270" y1="26" x2="490" y2="26"/>
+    <rect x="16" y="22" width="190" height="62"/><line x1="16" y1="42" x2="206" y2="42"/>
+    <rect x="556" y="22" width="190" height="62"/><line x1="556" y1="42" x2="746" y2="42"/>
+    <rect x="16" y="160" width="128" height="62"/><rect x="164" y="160" width="128" height="62"/><rect x="312" y="160" width="136" height="62"/>
+    <rect x="468" y="160" width="128" height="62"/><rect x="616" y="160" width="128" height="62"/>
+    <path d="M80 160V140H680V160"/><path d="M228 140V160"/><path d="M380 110V140" marker-end="url(#tri)"/><path d="M532 140V160"/>
+    <path d="M206 54H268" marker-end="url(#arr)" stroke-dasharray="4 3"/>
+    <path d="M556 54H492" marker-end="url(#arr)" stroke-dasharray="4 3"/>
+  </g>
+  <text x="380" y="20" text-anchor="middle" font-size="12.5" font-style="italic" font-weight="600">ProposalKind</text>
+  <g font-size="10" class="m"><text x="278" y="42">+ prepare(ctx, user, girdi)</text><text x="278" y="56">+ apply(ctx, öneri, kazanan)</text><text x="278" y="70">+ threshold_key(öneri)</text><text x="278" y="84">+ after_open() · view() · draft_fields()</text><text x="278" y="100">ballot: "binary" | "approval"</text></g>
+  <text x="111" y="37" text-anchor="middle" font-size="12" font-weight="600">proposals (Facade)</text>
+  <g font-size="10" class="m"><text x="24" y="58">open_proposal() · accept()</text><text x="24" y="73">kind_for(p).apply(…)</text></g>
+  <text x="651" y="37" text-anchor="middle" font-size="12" font-weight="600">KINDS (Registry)</text>
+  <g font-size="10" class="m"><text x="564" y="58">@KINDS.register("KONU")</text><text x="564" y="73">kind_of(tür) → sınıf (Factory)</text></g>
+  <g font-size="11" font-weight="600" text-anchor="middle"><text x="80" y="185">TopicKind</text><text x="228" y="185">SubtopicKind</text><text x="380" y="185">DeletionKind</text><text x="532" y="185">RegulationKind</text><text x="680" y="185">ClosureKind</text></g>
+  <g font-size="9" text-anchor="middle" fill="#4A463E"><text x="80" y="201">KONU</text><text x="80" y="214">ReopenKind da bu aileden</text><text x="228" y="201">ALT_KONU</text><text x="228" y="214">üst konunun muhatabı</text><text x="380" y="201">SILME · eşik: silme_esigi</text><text x="380" y="214">H4 içerik denetimi</text><text x="532" y="201">YONETMELIK · R8</text><text x="532" y="214">eşik: yonetmelik_esigi</text><text x="680" y="201">KAPANIS · onay oylaması</text><text x="680" y="214">açılışta ilk metin</text></g>
+</svg>
+<p class="note">Yeni bir öneri türü yeni bir sınıf ve bir <code>@KINDS.register</code> satırıdır; motor ve diğer türler değişmez. Düzenleme (<code>EditKind</code>) ve yeniden açma (<code>ReopenKind</code>) şemada yer darlığından gösterilmedi.</p>
+
+<div class="side">
+<div style="flex:1.15">
+<h3 style="margin-top:2pt">Yaşam döngüsü: State</h3>
+<svg viewBox="0 0 430 210" role="img" aria-label="Önerinin durum şeması">
+  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
+  <g fill="#fff" stroke="#1B1A17" stroke-width="1">
+    <rect x="6" y="88" width="64" height="26" rx="13"/><rect x="104" y="14" width="86" height="26" rx="13"/><rect x="104" y="88" width="86" height="26" rx="13"/>
+    <rect x="104" y="162" width="86" height="26" rx="13"/><rect x="226" y="88" width="76" height="26" rx="13"/>
+    <rect x="340" y="20" width="84" height="26" rx="13" fill="#F4EFE4"/><rect x="340" y="88" width="84" height="26" rx="13" fill="#F4EFE4"/><rect x="340" y="156" width="84" height="26" rx="13" fill="#F4EFE4"/>
+  </g>
+  <g fill="none" stroke="#1B1A17" stroke-width="1">
+    <path d="M70 96L102 32" marker-end="url(#a3)"/><path d="M70 101H102" marker-end="url(#a3)"/><path d="M70 106L102 170" marker-end="url(#a3)"/>
+    <path d="M147 40V86" marker-end="url(#a3)"/><path d="M147 162V116" marker-end="url(#a3)"/><path d="M190 101H224" marker-end="url(#a3)"/>
+    <path d="M302 96L338 38" marker-end="url(#a3)"/><path d="M302 101H338" marker-end="url(#a3)"/><path d="M302 106L338 164" marker-end="url(#a3)"/>
+    <path d="M190 22H300Q330 22 338 28" marker-end="url(#a3)" stroke-dasharray="3 3"/>
+  </g>
+  <g font-size="10" text-anchor="middle" class="m"><text x="38" y="105">TASLAK</text><text x="147" y="31">SESSİZ</text><text x="147" y="105">KUYRUK</text><text x="147" y="179">RAKİP SÜRE</text><text x="264" y="105">OYLAMA</text><text x="382" y="37">KABUL</text><text x="382" y="105">RET</text><text x="382" y="173">ÇAKIŞMA</text></g>
+  <g font-size="8.6" fill="#4A463E"><text x="152" y="66">itiraz eşiği</text><text x="152" y="140">süre doldu</text><text x="193" y="94">açılış</text><text x="200" y="16">süre doldu (itirazsız)</text></g>
+</svg>
+<p class="note">Son durumlar hiçbir geçişi kabul etmez: ikinci kabul "Öneri zaten karara bağlandı" gerekçesiyle reddedilir.</p>
+</div>
+<div style="flex:1">
+<h3 style="margin-top:2pt">Kararın sonuçları: Observer</h3>
+<svg viewBox="0 0 360 210" role="img" aria-label="Alan olayları ve aboneler">
+  <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
+  <g fill="#fff" stroke="#1B1A17" stroke-width="1">
+    <rect x="6" y="80" width="112" height="50" fill="#F4EFE4"/><rect x="150" y="80" width="78" height="50"/>
+    <rect x="258" y="10" width="96" height="40"/><rect x="258" y="85" width="96" height="40"/><rect x="258" y="160" width="96" height="40"/>
+  </g>
+  <g fill="none" stroke="#1B1A17" stroke-width="1"><path d="M118 105H148" marker-end="url(#a4)"/><path d="M228 98L256 34" marker-end="url(#a4)"/><path d="M228 105H256" marker-end="url(#a4)"/><path d="M228 112L256 176" marker-end="url(#a4)"/></g>
+  <g font-size="10.5" text-anchor="middle"><text x="62" y="100" font-weight="600">Öneri motoru</text><text x="62" y="116" class="m" font-size="8.6">publish(TopicAccepted)</text>
+  <text x="189" y="102" font-weight="600">events</text><text x="189" y="117" class="m" font-size="8.6">EventBus</text>
+  <text x="306" y="28" font-weight="600">petitions</text><text x="306" y="42" font-size="8.6" fill="#4A463E">kuruma dilekçe</text>
+  <text x="306" y="103" font-weight="600">calendar</text><text x="306" y="117" font-size="8.6" fill="#4A463E">takvime etkinlik</text>
+  <text x="306" y="178" font-weight="600">notifications</text><text x="306" y="192" font-size="8.6" fill="#4A463E">zile bildirim</text></g>
+</svg>
+<p class="note">Takvim eklenirken öneri motorunda tek satır değişmedi; yeni bir abone yazıldı.</p>
+</div>
+</div>
+
+<h3>Denetim zinciri: Chain of Responsibility</h3>
+<svg viewBox="0 0 760 60" role="img" aria-label="Kural zinciri">
+  <defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
+  <g fill="#fff" stroke="#1B1A17" stroke-width="1">
+    <rect x="4" y="12" width="76" height="34"/><rect x="100" y="12" width="64" height="34"/><rect x="184" y="12" width="80" height="34"/><rect x="284" y="12" width="64" height="34"/>
+    <rect x="368" y="12" width="64" height="34"/><rect x="452" y="12" width="64" height="34"/><rect x="536" y="12" width="64" height="34"/><rect x="620" y="12" width="64" height="34"/>
+    <rect x="704" y="12" width="52" height="34" fill="#F4EFE4"/>
+  </g>
+  <g fill="none" stroke="#1B1A17"><path d="M80 29H98" marker-end="url(#a5)"/><path d="M164 29H182" marker-end="url(#a5)"/><path d="M264 29H282" marker-end="url(#a5)"/><path d="M348 29H366" marker-end="url(#a5)"/><path d="M432 29H450" marker-end="url(#a5)"/><path d="M516 29H534" marker-end="url(#a5)"/><path d="M600 29H618" marker-end="url(#a5)"/><path d="M684 29H702" marker-end="url(#a5)"/></g>
+  <g font-size="10.5" text-anchor="middle" class="m"><text x="42" y="33">Alan var</text><text x="132" y="33">R1</text><text x="224" y="33">R2 · R3</text><text x="316" y="33">R5</text><text x="400" y="33">R6</text><text x="484" y="33">R7</text><text x="568" y="33">R8</text><text x="652" y="33">R9</text><text x="730" y="33">rapor</text></g>
+</svg>
+<p class="note">Her halka yalnızca kendi türlerini denetler (R1 alt konu, R7 silme, R8 yönetmelik, R9 konu) ve öneriyi bir sonrakine iletir. Hâtif oylamada aynı zinciri yeniden çalıştırır.</p>
+
+<h3>Önce ve sonra</h3>
+<div class="side code2">
+<div><span class="kicker">Önce · tek fonksiyonda tür dalları</span>
+<pre>def _apply(ctx, p, winner_text_id):
+    t = ProposalType(p.type)
+    if t is ProposalType.KONU and p.payload.get("reopen"):
+        ...
+    elif t in (ProposalType.KONU, ProposalType.ALT_KONU):
+        topic = _new_topic(ctx, p, ...)
+        petitions.send(ctx, topic, p, "TALEP", p.body)
+    elif t is ProposalType.DUZENLEME:
+        ...
+    elif t is ProposalType.SILME:
+        ...
+    elif t is ProposalType.YONETMELIK:
+        ...
+    elif t is ProposalType.KAPANIS:
+        ...
+        petitions.send(ctx, topic, p, "KARAR", d.text)</pre></div>
+<div><span class="kicker">Sonra · tür kendi davranışını taşır</span>
+<pre>def accept(ctx, p, *, winner_text_id=None, note=None):
+    new_state = state_of(p.status).accept()  # State
+    kind_for(p).apply(ctx, p, winner_text_id)  # Strategy
+    p.status = str(new_state.status)
+    ...
+
+@KINDS.register(ProposalType.KAPANIS)       # Registry
+class ClosureKind(ProposalKind):
+    ballot = "approval"
+    def apply(self, ctx, p, winner_text_id):
+        ...
+        events.publish(ctx, events.DecisionMade(topic, p, d))
+                                             # Observer</pre></div>
+</div>
+
+<h3>SOLID</h3>
+<table>
+<thead><tr><th style="width:24%">İlke</th><th>Koddaki karşılığı</th></tr></thead>
+<tbody>
+<tr><td><b>S</b> · Tek sorumluluk</td><td>Öneri motoru (Facade) akışı yönetir; türler kendi hazırlık ve uygulamasını, durum sınıfları geçişleri, kurallar denetimi, aboneler sonuçları taşır.</td></tr>
+<tr><td><b>O</b> · Açık/kapalı</td><td>Yeni öneri türü, yeni zamanlanmış iş, yeni karar sonucu ve yeni tespitçi var olan kodu değiştirmeden eklenir (Registry, iş kaynakları, olay aboneleri).</td></tr>
+<tr><td><b>L</b> · Liskov</td><td>Her <code>ProposalKind</code> ve her <code>BallotMethod</code> aynı sözleşmeyi verir; motor hangisi olduğunu sormaz.</td></tr>
+<tr><td><b>I</b> · Arayüz ayrımı</td><td>Kurallar yalnızca <code>OntologyView</code>'u, değerlendirme yalnızca <code>ScenarioRepository</code>'yi bilir.</td></tr>
+<tr><td><b>D</b> · Bağımlılığı tersine çevirme</td><td>Servisler graf ve defter istemcisini bağlamdan (<code>Ctx</code>) alır; testler bellek içi graf ve sahte defterle çalışır.</td></tr>
+</tbody>
+</table>
+
+<h3>Bilerek uygulanmayanlar</h3>
+<p>Desen bir amaç değil, araçtır; gereksiz desen kodu karmaşıklaştırır (YAGNI, KISS). <b>Composite:</b> görsel işleme tek bir hattır (çöz, düzelt, küçült, yarım ton); onu iç içe dönüştürücülere çevirmek tek gerçeklemesi olan bir soyutlama, yani ders notundaki "erken soyutlama" anti-deseni olurdu. <b>Builder:</b> öneri girdisi varsayılanlı bir dataclass'tır; Python'da bu yeterlidir. <b>Abstract Factory:</b> graf ve defter istemcisi bağımsız seçilir (yerel modda bellek içi graf gerçek defterle çalışır); aile tutarlılığı aranmadığı için gerekmedi. <b>Singleton:</b> yalnızca ayarlar için, Python'un önerdiği biçimde (<code>lru_cache</code>); servisler ayarları bağlamdan alır, gizli global durum yoktur.</p>
+
+<h3>Ödevdeki yeniden tasarım gereksinimlerinin karşılığı</h3>
+<p>Ders notunun uygulama ödevi bir duygu analizi servisini altı gereksinimle yeniden tasarlatıyor. Bu projede aynı yapıyı veriden karar üreten bileşenin, baskın tespitinin değerlendirme düzeneğinde kurduk (<code>api/src/mesveret/evaluation/</code>):</p>
+<table>
+<thead><tr><th style="width:4%">#</th><th style="width:34%">Gereksinim</th><th>Karşılığı</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Model seçimi YAML'dan (Registry + Factory)</td><td><code>docs/degerlendirme/config.yaml</code>; tespitçiler <code>@DETECTORS.register</code> ile kaydolur, <code>DETECTORS.create(ad, **parametreler)</code> ile üretilir</td></tr>
+<tr><td>2</td><td>Ön işleme ve model tek nesnede (Pipeline)</td><td>Karar ağacı öznitelik çıkarımını kendi içinde yapar: eğitimde ve tahminde aynı kod. Küme tespitçisi üretimdeki fonksiyonun kendisini çağırır; eğitim–sunum farkı yoktur</td></tr>
+<tr><td>3</td><td>Veri kaynağı CSV ya da PostgreSQL (Repository)</td><td>Sabit sınama dosyası (JSON), tohumdan üretim, canlı yığın (PostgreSQL ve Neo4j) ve testler için bellek içi depo; hepsi tek arayüz</td></tr>
+<tr><td>4</td><td>Metrikler deney izleme sunucusuna ve konsola (Observer)</td><td>Konsol tablosu ve JSON dosyası birer gözlemci; dış sunucu yerine dosya (bütçe ve bağımlılık kısıtı)</td></tr>
+<tr><td>5</td><td>Tek uç noktadan sunum (Facade)</td><td><code>Evaluation.run()</code> ve <code>python -m mesveret.evaluation config.yaml</code></td></tr>
+<tr><td>6</td><td>Her bileşen için birim testi (sahte depo)</td><td><code>tests/domain/test_evaluation.py</code>: metrikler (ders notundaki örnekle), senaryolar, depolar, öznitelikler, tespitçiler, gözlemciler ve Facade</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="sistem">
+<h2><span class="no">8</span>Sistem nasıl kurulu ve ne kadar hızlı</h2>
+<p class="lead">Tek bir istemci (web ve Android), kuralları uygulayan bir API ve üç ayrı depo vardır: işlemler PostgreSQL'de, ilişkiler Neo4j grafında, kararların kanıtı üç düğümlü defterde durur.</p>
+<svg viewBox="0 0 760 200" role="img" aria-label="Mimari">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
+  <g fill="none" stroke="#1B1A17" stroke-width="1.1">
+    <rect x="10" y="62" width="150" height="76" rx="4"/>
+    <rect x="215" y="40" width="190" height="120" rx="4" fill="#F4EFE4"/>
+    <rect x="470" y="10" width="280" height="50" rx="4"/>
+    <rect x="470" y="75" width="280" height="50" rx="4"/>
+    <rect x="470" y="140" width="280" height="50" rx="4"/>
+    <path d="M160 100H213" marker-end="url(#ar)"/>
+    <path d="M405 70L468 38" marker-end="url(#ar)"/>
+    <path d="M405 100H468" marker-end="url(#ar)"/>
+    <path d="M405 130L468 162" marker-end="url(#ar)"/>
+  </g>
+  <text x="85" y="88" text-anchor="middle" font-size="14" font-weight="600">İstemci</text>
+  <text x="85" y="106" text-anchor="middle" font-size="11" fill="#4A463E">Expo: web ve Android</text>
+  <text x="85" y="121" text-anchor="middle" font-size="11" fill="#4A463E">tek kod tabanı</text>
+  <text x="310" y="66" text-anchor="middle" font-size="14" font-weight="600">API (FastAPI)</text>
+  <text x="310" y="86" text-anchor="middle" font-size="11" fill="#4A463E">R1–R9 denetimi, Hâtif</text>
+  <text x="310" y="102" text-anchor="middle" font-size="11" fill="#4A463E">öneri akışı, Karar Saati</text>
+  <text x="310" y="118" text-anchor="middle" font-size="11" fill="#4A463E">zamanlayıcı, sahte saat</text>
+  <text x="310" y="134" text-anchor="middle" font-size="11" fill="#4A463E">defter outbox'ı</text>
+  <text x="482" y="31" font-size="13" font-weight="600">PostgreSQL</text>
+  <text x="482" y="49" font-size="10.5" fill="#4A463E">kimlik, içerik, sürümler, oylar, dilekçe, görsel</text>
+  <text x="482" y="96" font-size="13" font-weight="600">Neo4j (graf)</text>
+  <text x="482" y="114" font-size="10.5" fill="#4A463E">kapsam, alan, kaynak sahipliği, havale, etkileşim</text>
+  <text x="482" y="161" font-size="13" font-weight="600">Defter: lider + 2 takipçi</text>
+  <text x="482" y="179" font-size="10.5" fill="#4A463E">hash zinciri, sadece ekleme, /verify</text>
+</svg>
+<ul>
+  <li><b>Yönetmelik veridir.</b> Bütün eşikler ve süreler graf düğümlerinde durur; kod sabit eşik yazmaz.</li>
+  <li><b>Kurallar saf fonksiyonlardır.</b> R1–R9 ontoloji üzerinden çalışır ve veritabanı olmadan test edilir.</li>
+  <li><b>Defter kaydı işlemle birlikte yazılır.</b> Kayıt aynı PostgreSQL işleminde outbox'a girer; lider erişilemezse bekler, sıra bozulmaz.</li>
+  <li><b>Saat sahtedir.</b> Sessiz onay, olgunlaşma, Karar Saati ve havale süreleri komutla ileri sarılabilir; sunumda saat durdurulur.</li>
+  <li><b>Katmanlar.</b> <code>domain/</code> saf mantıktır ve veritabanı bilmez; <code>services/</code> iş akışlarıdır; <code>routers/</code> HTTP uç noktalarıdır. Değerlendirme düzeneği (<code>evaluation/</code>) üretim kodunu çağırır, üretim onu çağırmaz.</li>
+</ul>
+<h3>Gecikme: ortalama yanıltır</h3>
+<p>Yedi uç noktaya ısınmadan sonra 300 ardışık istek atıldı (tek bağlantı; geliştirme makinesi, tek süreçli API, aynı makinede PostgreSQL ve Neo4j). Değerler milisaniyedir. Ölçüm üretim performansını değil, uç noktalar arasındaki farkı ve dağılımın kuyruğunu gösterir.</p>
+<table class="num"><thead><tr><th>Uç nokta</th><th>Ortalama</th><th>p50</th><th>p95</th><th>p99</th><th>En büyük</th></tr></thead><tbody><tr><td>Meydan ön sayfası (/news)</td><td class="n">65,0</td><td class="n">62,7</td><td class="n">78,0</td><td class="n">91,6</td><td class="n">137,8</td></tr><tr><td>Açık öneriler</td><td class="n">40,2</td><td class="n">39,2</td><td class="n">47,5</td><td class="n">56,0</td><td class="n">126,2</td></tr><tr><td>Konu sayfası</td><td class="n">21,5</td><td class="n">21,2</td><td class="n">24,3</td><td class="n">26,6</td><td class="n">29,7</td></tr><tr><td>Dilekçe</td><td class="n">13,7</td><td class="n">13,5</td><td class="n">15,7</td><td class="n">16,7</td><td class="n">18,0</td></tr><tr><td>Takvim</td><td class="n">15,9</td><td class="n">15,4</td><td class="n">19,7</td><td class="n">24,5</td><td class="n">26,9</td></tr><tr><td>Arama (istanbul)</td><td class="n">9,8</td><td class="n">9,7</td><td class="n">11,5</td><td class="n">12,5</td><td class="n">14,0</td></tr><tr><td>Karar Saati durumu</td><td class="n">15,4</td><td class="n">14,8</td><td class="n">17,7</td><td class="n">19,6</td><td class="n">86,9</td></tr></tbody></table>
+<svg viewBox="0 0 560 198" role="img" aria-label="Gecikme dağılımı"><line x1="200.0" y1="16" x2="200.0" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="200.0" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">0 ms</text><line x1="246.44412191582003" y1="16" x2="246.44412191582003" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="246.44412191582003" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">20 ms</text><line x1="292.88824383164007" y1="16" x2="292.88824383164007" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="292.88824383164007" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">40 ms</text><line x1="339.3323657474601" y1="16" x2="339.3323657474601" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="339.3323657474601" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">60 ms</text><line x1="385.77648766328014" y1="16" x2="385.77648766328014" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="385.77648766328014" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">80 ms</text><line x1="432.22060957910014" y1="16" x2="432.22060957910014" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="432.22060957910014" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">100 ms</text><line x1="478.66473149492015" y1="16" x2="478.66473149492015" y2="194" stroke="#CFC6B3" stroke-width="0.6"/><text x="478.66473149492015" y="11" font-size="9" text-anchor="middle" class="m" fill="#4A463E">120 ms</text><text x="192" y="33" font-size="10.5" text-anchor="end">Meydan ön sayfası (/news)</text><line x1="345.6" y1="29" x2="520.0" y2="29" stroke="#4A463E" stroke-width="1"/><rect x="343.6" y="23" width="4" height="12" fill="#1B1A17"/><rect x="410.2" y="23" width="5" height="12" fill="#fff" stroke="#1B1A17" stroke-width="1.1"/><circle cx="520.0" cy="29" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="57" font-size="10.5" text-anchor="end">Açık öneriler</text><line x1="291.0" y1="53" x2="493.1" y2="53" stroke="#4A463E" stroke-width="1"/><rect x="289.0" y="47" width="4" height="12" fill="#1B1A17"/><rect x="327.5" y="47" width="5" height="12" fill="#fff" stroke="#1B1A17" stroke-width="1.1"/><circle cx="493.1" cy="53" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="81" font-size="10.5" text-anchor="end">Konu sayfası</text><line x1="249.2" y1="77" x2="269.0" y2="77" stroke="#4A463E" stroke-width="1"/><rect x="247.2" y="71" width="4" height="12" fill="#1B1A17"/><rect x="259.3" y="71" width="5" height="12" fill="#fff" stroke="#1B1A17" stroke-width="1.1"/><circle cx="269.0" cy="77" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="105" font-size="10.5" text-anchor="end">Dilekçe</text><line x1="231.3" y1="101" x2="241.8" y2="101" stroke="#4A463E" stroke-width="1"/><rect x="229.3" y="95" width="4" height="12" fill="#1B1A17"/><rect x="236.3" y="95" width="5" height="12" fill="#fff" stroke="#1B1A17" stroke-width="1.1"/><circle cx="241.8" cy="101" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="129" font-size="10.5" text-anchor="end">Takvim</text><line x1="235.8" y1="125" x2="262.5" y2="125" stroke="#4A463E" stroke-width="1"/><rect x="233.8" y="119" width="4" height="12" fill="#1B1A17"/><rect x="254.4" y="119" width="5" height="12" fill="#fff" stroke="#1B1A17" stroke-width="1.1"/><circle cx="262.5" cy="125" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="153" font-size="10.5" text-anchor="end">Arama (istanbul)</text><line x1="222.5" y1="149" x2="232.5" y2="149" stroke="#4A463E" stroke-width="1"/><rect x="220.5" y="143" width="4" height="12" fill="#1B1A17"/><rect x="226.5" y="143" width="5" height="12" fill="#fff" stroke="#1B1A17" stroke-width="1.1"/><circle cx="232.5" cy="149" r="2.6" fill="none" stroke="#4A463E"/><text x="192" y="177" font-size="10.5" text-anchor="end">Karar Saati durumu</text><line x1="234.4" y1="173" x2="401.8" y2="173" stroke="#4A463E" stroke-width="1"/><rect x="232.4" y="167" width="4" height="12" fill="#1B1A17"/><rect x="243.0" y="167" width="5" height="12" fill="#fff" stroke="#1B1A17" stroke-width="1.1"/><circle cx="401.8" cy="173" r="2.6" fill="none" stroke="#4A463E"/></svg>
+<p class="note">Dolu kutu p50, boş kutu p99, halka en büyük değer. Ortalama ile p50 birbirine yakın, ama tek tek istekler p99'un katlarına çıkabiliyor: Karar Saati durumunda p99 19,60 ms iken en büyük değer 86,90 ms. En yavaş uç nokta ön sayfadır: haberler her istekte bütün kararlardan yeniden hesaplanır. Ölçek büyürse ilk adım bu sonucu önbellekte tutmaktır (Proxy); bugünkü ölçekte gerekmedi.</p>
+<div class="box"><span class="kicker">Üretim sistemlerinin dört gereksinimi</span>
+<p><b>Güvenilirlik:</b> sistem sessizce yanlış karar vermemeli; her karar deftere yazılır ve üç düğümde doğrulanır, oylamasız değişiklik geri alınır. <b>Ölçeklenebilirlik:</b> tek lider ve tek API süreci ödev ölçeğindedir; defter kayıtları toplu gönderilir (250 oyluk açılış 15 saniyeden 2,7 saniyeye indi). <b>Sürdürülebilirlik:</b> desenler, 485 otomatik test ve tasarım belgesi. <b>Uyarlanabilirlik:</b> eşikler ve süreler koda değil yönetmeliğe yazılıdır ve oylamayla değişir; kod değişmeden kurallar uyum sağlar.</p></div>
+</section>
+
+<div class="partHead"><span>Bölüm III</span>Politikalar</div>
+<section id="azinlik" class="newpage">
+<h2><span class="no">9</span>Azınlıkları nasıl koruyoruz</h2>
+<p class="lead">Basit çoğunlukla yönetilen bir forumda sayıca küçük grup her oylamayı kaybeder. Meşveret buna karşı yedi mekanizma kullanır: kararı etkilenenlere daraltır, etkilenen parçaya ayrı oy verir, kuralları ve silmeyi 2/3'e bağlar, kaybedene silinemez söz hakkı tanır, oyu gizler ve bazı güvenceleri oylamanın dışında tutar.</p>
+<table>
+<thead><tr><th style="width:23%">Mekanizma</th><th style="width:30%">Neyi engeller</th><th>Nasıl</th></tr></thead>
+<tbody>
+<tr><td><b>Kapsam ve R2</b> (bölme)</td><td>Bir grubun başka bir grubun kaynağı hakkında karar vermesi</td><td>Karara yalnızca kaynağın sahibi kapsam ya da onun alt kümesi oy verir. Alt küme kendi payına daraltılır (§11).</td></tr>
+<tr><td><b>Eşzamanlı çoğunluk</b></td><td>Bütünün bir parçanın payını gasp etmesi</td><td>Payı ortalamadan en az 10 yüzde puanı fazla azalan kapsam ayrıca oylar. Öneri iki oylamada da çoğunluk almalıdır.</td></tr>
+<tr><td><b>Nitelikli çoğunluk</b></td><td>Kuralların ve başkasının içeriğinin basit çoğunlukla değişmesi</td><td>Yönetmelik değişikliği ve başkasının içeriğini silme kullanılan oyların en az 2/3'ünü ister.</td></tr>
+<tr><td><b>Şerh</b></td><td>Kaybeden tarafın sesinin kayıttan silinmesi</td><td>Kapanış oylamasında kaybeden metnin sahibi ve destekçileri Karar'a şerh ekler. Şerh düzenlenemez, silinemez.</td></tr>
+<tr><td><b>Gerekçeli silme</b></td><td>Çoğunluğun beğenmediği görüşü silmesi</td><td>Silme bir içerik kuralına dayanmalı ve ihlal eden kısmı alıntılamalı; silinen içerik defterde kalır (§15).</td></tr>
+<tr><td><b>Gizli oy</b></td><td>Karşı oy verenin görülüp cezalandırılması</td><td>Seçmenin oyu mühürlenir, sonuçta yalnızca toplam görünür. Başkalarının oyunu taşıyan temsilcinin oyu açıktır.</td></tr>
+<tr><td><b>Değiştirilemez maddeler</b></td><td>Güvencelerin 2/3 ile iki adımda kaldırılması</td><td>D1–D7 ve parametrelerin izinli aralıkları oylamanın dışındadır; R8 bu yöndeki öneriyi açılışta reddeder (§13).</td></tr>
+</tbody>
+</table>
+<h3>Bölmenin iki yönü</h3>
+<p>Ödevin "uzmanlar ve bölme" ipucunu iki yönde uyguladık. Birinci yön: parça, bütün adına karar veremez (R2). İstanbul seçmenleri ortak bütçenin tamamını İstanbul'a ayırmayı önerirse öneri İstanbul'un payına daraltılır (Şekil 1). İkinci yön: bütün, parçanın payını tek başına alamaz. Tohumdaki "İstanbul payının yarısı Ankara'ya" önerisi Genel kapsamda kabul oyu aldı, İstanbul'un ayrı oylamasında reddedildi ve uygulanmadı.</p>
+<p>Bu yapının benzerleri vardır: Calhoun'un eşzamanlı çoğunluğu, ABD'nin iki meclisli yasama yapısı ve AB Konseyi'nde üye devletlerin %55'i ile nüfusun %65'ini birlikte isteyen çifte çoğunluk. Meşveret'teki biçim bunların en dar olanıdır: ikinci oylama yalnızca payı orantısız azalan kapsam için ve yalnızca o pay için açılır. Veto genel bir itiraz hakkına dönüşmez.</p>
+<div class="box"><span class="kicker">Neden "her şey oylamayla" kuralının dışına çıktık</span>
+<p>Ödev, forumda her şeyin oylamayla yürümesini istiyor. Bütün güvenceler oylanabilir olsaydı 2/3'lük bir çoğunluk önce eşiği düşürüp sonra güvenceyi kaldırabilirdi. 2/3'lük bir güvence, 2/3'lük bir çoğunluğa karşı bir şey korumaz. Bu yüzden yedi ilkeyi ve her sayısal parametrenin izinli aralığını oylamanın dışında tuttuk. Bunun bedeli de bilinçli açıklar arasında yazılıdır: bugünkü kurucular yarının topluluğunu bağlar.</p></div>
+</section>
+
+<section id="kapsam">
+<h2><span class="no">10</span>İnsanları kapsamlara ayırma</h2>
+<p class="lead">Bir karara kimin oy vereceğini kapsam belirler. Kapsamlar insanları profil verisinden (şehir, yaş grubu) ya da kendi seçtikleri ilgilerden türetilen gruplara ayırır. Ödevin "konu kabulüne yalnızca ilgili kullanıcılar katılır" gereği buradan karşılanır.</p>
+<table>
+<thead><tr><th>Kapsam</th><th>Nasıl belirlenir</th><th>Kim değiştirir</th><th>Oy hakkı</th><th>Tohumdaki örnekler</th></tr></thead>
+<tbody>
+<tr><td><b>Genel</b></td><td>E-postası doğrulanmış herkes</td><td>—</td><td>Hemen</td><td>Genel</td></tr>
+<tr><td><b>Şehir</b> (nitelik)</td><td>Adresin il alanından</td><td>Sistem; kişi seçemez</td><td>Kayıtta hemen; adres değişince 90 gün sonra</td><td>İstanbul, Ankara, İzmir, Bursa, Tokat</td></tr>
+<tr><td><b>Yaş grubu</b> (nitelik)</td><td>Doğum tarihinden, o günün tarihine göre</td><td>Sistem; doğum gününde kendiliğinden geçer</td><td>Hemen</td><td>18–24, 25–34, 35–49, 50+</td></tr>
+<tr><td><b>İlgi</b></td><td>Bir alana katılma</td><td>Kişi katılır ya da ayrılır</td><td>14 gün sonra</td><td>Sinema, Felsefe, Bisiklet …</td></tr>
+</tbody>
+</table>
+<svg viewBox="0 0 760 150" role="img" aria-label="Kapsamların alt küme ilişkisi">
+  <g fill="none" stroke="#1B1A17" stroke-width="1.1">
+    <rect x="300" y="8" width="160" height="34" rx="4" fill="#F4EFE4"/>
+    <rect x="20" y="88" width="220" height="52" rx="4"/>
+    <rect x="270" y="88" width="220" height="52" rx="4"/>
+    <rect x="520" y="88" width="220" height="52" rx="4"/>
+    <path d="M380 42V64H130V86"/><path d="M380 64V86"/><path d="M380 64H630V86"/>
+  </g>
+  <text x="380" y="30" text-anchor="middle" font-size="13" font-weight="600">Genel</text>
+  <text x="130" y="108" text-anchor="middle" font-size="12.5" font-weight="600">Şehir kapsamları</text>
+  <text x="130" y="127" text-anchor="middle" font-size="10.5" fill="#4A463E">İstanbul · Ankara · İzmir · Bursa · Tokat</text>
+  <text x="380" y="108" text-anchor="middle" font-size="12.5" font-weight="600">Yaş grupları</text>
+  <text x="380" y="127" text-anchor="middle" font-size="10.5" fill="#4A463E">18–24 · 25–34 · 35–49 · 50+</text>
+  <text x="630" y="108" text-anchor="middle" font-size="12.5" font-weight="600">İlgi kapsamları</text>
+  <text x="630" y="127" text-anchor="middle" font-size="10.5" fill="#4A463E">her alan için bir tane</text>
+  <text x="395" y="58" font-size="9.5" class="m" fill="#6B6558">ALT_KUMESI</text>
+</svg>
+<ul>
+  <li><b>Alt küme ilişkisi yapısaldır.</b> "İstanbul ⊂ Genel" grafta bir kenarla tanımlanır, üye listelerinden hesaplanmaz. İstanbul ile Sinema ilgisi gibi iki ilgisiz kapsam birbirinin alt kümesi değildir.</li>
+  <li><b>Bekleme süreleri kasıtlıdır.</b> İlgi kapsamına katılan 14 gün, şehir değiştiren 90 gün bekler. Böylece bir oylamaya son dakika üye taşınamaz. İki süre de yönetmelik maddesidir.</li>
+  <li><b>Seçmen kapsamını öneriyi açan seçer.</b> R5, öneriyi açanın da o kapsamda oy hakkı olmasını ister. Hâtif, metin bir şehri anıp başka bir şehrin kapsamı seçildiyse bunu yorumuna yazar (H3).</li>
+  <li><b>Kapsam ayrıcalık değildir.</b> Herkesin kendi oyu 1'dir. Ağırlığı yalnızca kabul edilmiş havale artırır (§14).</li>
+</ul>
+</section>
+
+<section id="sinirlama" class="newpage">
+<h2><span class="no">11</span>Kararları bölgeye ve konuya sınırlama</h2>
+<p class="lead">Her öneri üç şeye bağlanır: bir alana (konu), bir seçmen kapsamına (bölge ya da grup) ve etkilediği kaynaklara. R1, R2 ve R9 bu bağların birbiriyle tutarlı olmasını öneri açılırken denetler.</p>
+<h3>Konu: alan ağacı (R1)</h3>
+<p>Alanlar bir ağaçtır (ör. Kent → Ulaşım → Bisiklet; Bilim ve düşünce → Felsefe → Etik). Alt konu, üst konunun alanında ya da onun alt alanlarında kalmalıdır; Sinema konusunun altına Edebiyat konusu açılamaz. Hâtif ayrıca başlık ve metindeki kelimeleri alanların anahtar kelimeleriyle eşler ve uyuşmazlığı yazar (H1).</p>
+<h3>Bölge ve grup: kaynak sahipliği (R2)</h3>
+<table>
+<thead><tr><th>Kaynak</th><th>Sahibi</th><th>Bölünebilir</th></tr></thead>
+<tbody>
+<tr><td>Alanlar, yönetmelik maddeleri</td><td>Genel</td><td>Hayır</td></tr>
+<tr><td>Konu</td><td>Konuyu kabul eden önerinin seçmen kapsamı</td><td>Hayır</td></tr>
+<tr><td>Etkinlik bütçesi</td><td>Genel</td><td>Evet, şehir bazında (İstanbul 4.000, Ankara 6.000, İzmir 5.000, Bursa 5.000 puan)</td></tr>
+<tr><td>Ortak toplantı salonu</td><td>Genel</td><td>Hayır</td></tr>
+</tbody>
+</table>
+<p>Seçmen kapsamı S, kaynağın sahibi O olsun. S = O ise öneri geçer. S, O'nun alt kümesiyse ve kaynak S'nin türüne göre bölünebiliyorsa öneri S'nin payına daraltılır; bölünemiyorsa reddedilir. S, O'nun alt kümesi değilse (üst küme ya da ilgisiz) reddedilir. İspat yükü karar verende: kapsam, kaynağa sahipliğini ontolojide göstermek zorundadır.</p>
+<figure data-fig="daralma">
+<div class="crop" style="width:100%;aspect-ratio:870/490"><img src="gorseller/istanbul-daralma.png" alt="İstanbul kapsamıyla açılan ve İstanbul payına daraltılan öneri" style="width:151.724%;margin-left:-2.299%;margin-top:-12.644%"></div>
+<figcaption><b>Şekil 1.</b> №33 önerisi. Talep "Etkinlik bütçesinin tamamı İstanbul'a" idi (üstte üstü çizili). İstanbul kapsamı yalnızca kendi payına karar verebildiği için oylanan şey "Etki: Etkinlik bütçesinin İstanbul payı" oldu. Çerçeveli kutu payı gösterir (4.000 / 20.000 puan).</figcaption>
+</figure>
+<h3>Muhatap: yetki alanı (R9)</h3>
+<p>Bir konu bir kuruma iletilecekse, kapsam yalnızca kendi yetki alanındaki kuruma yazabilir. Bir şehrin sakinleri başka bir şehrin belediyesine ya da bir bakanlığa topluluk adına yazamaz; ilgi grupları belediyeye yazamaz, çünkü bir şehrin sakini değildirler.</p>
+<table>
+<thead><tr><th>Seçmen kapsamı</th><th class="c">Meşveret Takvimi</th><th class="c">Bir belediye</th><th class="c">Bütün belediyeler</th><th class="c">Bakanlıklar</th></tr></thead>
+<tbody>
+<tr><td>Genel</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+<tr><td>Şehir (ör. İstanbul)</td><td class="c yes">✓</td><td class="c">yalnız kendi belediyesi</td><td class="c no-x">✗</td><td class="c no-x">✗</td></tr>
+<tr><td>Yaş grubu</td><td class="c yes">✓</td><td class="c no-x">✗</td><td class="c no-x">✗</td><td class="c yes">✓</td></tr>
+<tr><td>İlgi</td><td class="c yes">✓</td><td class="c no-x">✗</td><td class="c no-x">✗</td><td class="c yes">✓</td></tr>
+</tbody>
+</table>
+<figure data-fig="r9" class="narrow">
+<div class="crop" style="width:100%;aspect-ratio:830/530"><img src="gorseller/r9-red.png" alt="Öneri formunda muhatap seçimi ve R9 reddi" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 2.</b> Ankara kapsamıyla açılan konu önerisi. Form, Ankara'nın yazamayacağı muhatapları "bu kapsam yazamaz" diye soluk gösterir. Muhatap seçilmeden gönderilen öneri R9 gerekçesiyle reddedildi ve kaydedilmedi; aynı anda alan seçilmediği için geçerlilik ihlali de listelendi.</figcaption>
+</figure>
+</section>
+
+<section id="akis" class="newpage">
+<h2><span class="no">12</span>Öneri ve karar akışı</h2>
+<p class="lead">Her yapısal değişiklik bir öneridir. Öneri ya 24 saatlik sessiz onayla (itiraz eşiği aşılmazsa) ya da haftalık Karar Saati'nde oyla kabul edilir.</p>
+<svg viewBox="0 0 760 214" role="img" aria-label="Öneri akışı">
+  <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
+  <g fill="none" stroke="#1B1A17" stroke-width="1.1">
+    <rect x="8" y="80" width="112" height="52" rx="4"/>
+    <rect x="150" y="80" width="112" height="52" rx="4"/>
+    <rect x="300" y="12" width="150" height="56" rx="4"/>
+    <rect x="300" y="146" width="150" height="56" rx="4"/>
+    <rect x="490" y="146" width="122" height="56" rx="4"/>
+    <rect x="640" y="70" width="112" height="72" rx="4" fill="#F4EFE4"/>
+    <path d="M120 106H148" marker-end="url(#ar2)"/>
+    <path d="M262 98L298 48" marker-end="url(#ar2)"/>
+    <path d="M262 116L298 166" marker-end="url(#ar2)"/>
+    <path d="M375 68V144" marker-end="url(#ar2)" stroke-dasharray="3 3"/>
+    <path d="M450 174H488" marker-end="url(#ar2)"/>
+    <path d="M450 40H696V68" marker-end="url(#ar2)"/>
+    <path d="M612 174H696V144" marker-end="url(#ar2)"/>
+  </g>
+  <text x="64" y="102" text-anchor="middle" font-size="12.5" font-weight="600">Öneri açılır</text>
+  <text x="64" y="119" text-anchor="middle" font-size="10" fill="#4A463E">R1–R9 denetimi</text>
+  <text x="206" y="102" text-anchor="middle" font-size="12.5" font-weight="600">Şerit</text>
+  <text x="206" y="119" text-anchor="middle" font-size="10" fill="#4A463E">türe göre</text>
+  <text x="375" y="34" text-anchor="middle" font-size="12.5" font-weight="600">Hızlı şerit</text>
+  <text x="375" y="51" text-anchor="middle" font-size="10" fill="#4A463E">24 saat sessiz onay</text>
+  <text x="375" y="168" text-anchor="middle" font-size="12.5" font-weight="600">Yavaş şerit</text>
+  <text x="375" y="185" text-anchor="middle" font-size="10" fill="#4A463E">olgunlaşma 48 sa – 7 gün</text>
+  <text x="551" y="168" text-anchor="middle" font-size="12.5" font-weight="600">Karar Saati</text>
+  <text x="551" y="185" text-anchor="middle" font-size="10" fill="#4A463E">Pazar 20:00, 60 dk</text>
+  <text x="696" y="96" text-anchor="middle" font-size="12.5" font-weight="600">Kabul</text>
+  <text x="696" y="113" text-anchor="middle" font-size="10" fill="#4A463E">deftere mühür</text>
+  <text x="696" y="128" text-anchor="middle" font-size="10" fill="#4A463E">muhataba iletim</text>
+  <text x="383" y="110" font-size="9.5" fill="#6B6558">itiraz eşiği aşılırsa</text>
+  <text x="560" y="34" font-size="9.5" fill="#6B6558">itiraz yetmezse</text>
+</svg>
+<table>
+<thead><tr><th>Öneri türü</th><th>Ne yapar</th><th>Şerit</th><th>Eşik (Karar Saati'nde)</th></tr></thead>
+<tbody>
+<tr><td class="k">KONU</td><td>Yeni konu açar; muhatabı seçilir, takvime gidiyorsa etkinliğin tarihi ve yeri yazılır</td><td>Hızlı</td><td>Basit çoğunluk (&gt; 1/2)</td></tr>
+<tr><td class="k">ALT_KONU</td><td>Konunun altında konu açar; muhatap üstten gelir</td><td>Hızlı</td><td>Basit çoğunluk</td></tr>
+<tr><td class="k">DÜZENLEME</td><td>Başkasının mesajını ya da açılış metnini değiştirir</td><td>Hızlı</td><td>Basit çoğunluk</td></tr>
+<tr><td class="k">SİLME</td><td>Mesajı ya da konuyu gizler</td><td>Yavaş</td><td>≥ 2/3 (kendi mesajı: basit çoğunluk)</td></tr>
+<tr><td class="k">YÖNETMELİK</td><td>Madde değiştirir, içerik kuralı ekler ya da kaldırır</td><td>Yavaş, Genel kapsam</td><td>≥ 2/3</td></tr>
+<tr><td class="k">KAPANIŞ</td><td>Konuyu bir Karar'a bağlar; 48 saat rakip metin eklenir</td><td>Yavaş</td><td>Onay oylaması: en çok onay alan metin</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><b>İtiraz eşiği:</b> en az 3 ya da kapsamdaki aktif üyelerin %5'i (aktif: son 30 günde giriş yapmış). Eşik aşılınca öneri hemen yavaş şeride geçer. Öneri sahibi kendi önerisine itiraz edemez; aksi hâlde kendi önerisini bir haftalık Karar Saati kuyruğuna çekerek erteleyebilirdi.</li>
+  <li><b>Durum geçişleri:</b> taslak, sessiz onay, rakip metin süresi, kuyruk, oylama, kabul, ret ve pay çakışması ayrı durumlardır; her durum yalnızca kendi geçişlerine izin verir. Karara bağlanmış bir öneri ikinci kez kabul edilemez (§7, State).</li>
+  <li><b>Karar Saati:</b> açılışta seçmen listesi, havale grafı ve yönetmelik dondurulur; pencere boyunca havale verilemez ve geri alınamaz. Oylar mühürlü verilir, kapanışta açılır ve sayılır.</li>
+  <li><b>Olgunlaşma:</b> öneri oylanmadan önce dar etkiliyse 48 saat, geniş etkiliyse 72 saat, Genel kapsamlı ya da yönetmelik önerisiyse 7 gün yayında kalır. Tartışmaya zaman ayrılır.</li>
+  <li><b>Tekrarı önleme:</b> oylamayla reddedilen hedefe 30 gün yeniden öneri açılamaz (R6). Karara bağlanan konu 90 gün sonra yeniden açılabilir.</li>
+  <li><b>Hâtif:</b> kural tabanlı sembolik bilirkişi. Her öneriye yorum yazar, oylamada R1–R9 ve H1–H4'e göre EVET ya da HAYIR verir. Gerçek bir yapay zekâ servisi bilinçli olarak kullanılmadı.</li>
+</ul>
+<figure data-fig="kararsaati">
+<div class="crop" style="width:72%;aspect-ratio:617/570"><img src="gorseller/karar-saati-sonuc.png" alt="Karar Saati #1 sonuç açıklaması" style="width:233.387%;margin-left:-15.397%;margin-top:-38.088%"></div><div class="crop" style="width:72%;aspect-ratio:617/550"><img src="gorseller/karar-saati-sonuc.png" alt="Karar Saati #1 sonuç açıklaması" style="width:233.387%;margin-left:-117.990%;margin-top:-38.088%"></div>
+<figcaption><b>Şekil 3.</b> Karar Saati #1'in sonuç açıklaması. Üstte kapanış onay oylaması: üç rakip metinden 11 onay alan "Parklar her gün 22:00'de kapansın" Karar oldu. Altta "Gece metro seferleri" 8/13 ağırlıklı EVET (%61,5) ile kabul edildi. İki oylamada da 5 hesap baskın şüphesiyle sayılmadı. Temsilcilerin ve Hâtif'in oyu açık; diğer oylar yalnızca toplamlara katıldı.</figcaption>
+</figure>
+</section>
+
+<section id="yonetmelik">
+<h2><span class="no">13</span>Yönetmelik ve değiştirilemez maddeler</h2>
+<p class="lead">Eşikler ve süreler oylanabilir yönetmelik maddelerinde durur. Yedi ilke ve her parametrenin izinli aralığı oylamanın dışındadır; bunları değiştirmeye çalışan öneri açılışta reddedilir (R8).</p>
+<table>
+<thead><tr><th>Madde</th><th>İlke</th></tr></thead>
+<tbody>
+<tr><td class="k">D1</td><td>Her yurttaşın bir temel oyu vardır.</td></tr>
+<tr><td class="k">D2</td><td>Her yurttaş öneri açabilir.</td></tr>
+<tr><td class="k">D3</td><td>Kaybeden taraf şerh ekleyebilir; şerh silinemez.</td></tr>
+<tr><td class="k">D4</td><td>İçerik yalnızca oylamayla silinebilir.</td></tr>
+<tr><td class="k">D5</td><td>Eşzamanlı çoğunluk ilkesi.</td></tr>
+<tr><td class="k">D6</td><td>Defter değiştirilemez.</td></tr>
+<tr><td class="k">D7</td><td>Bu liste değişmez: madde eklenemez, çıkarılamaz, parametre aralıkları genişletilemez.</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th>Parametre</th><th>Varsayılan</th><th>İzinli aralık</th></tr></thead>
+<tbody>
+<tr><td class="k">sessiz_onay_suresi</td><td>24 saat</td><td>12 – 72 saat</td></tr>
+<tr><td class="k">itiraz_esigi</td><td>en az 3; aktif üyelerin %5'i</td><td>3–20 itiraz · %2–%20</td></tr>
+<tr><td class="k">basit_cogunluk</td><td>&gt; 1/2</td><td>&gt; 1/2 – ≥ 2/3</td></tr>
+<tr><td class="k">yonetmelik_esigi</td><td>≥ 2/3</td><td>≥ 2/3 – ≥ 3/4</td></tr>
+<tr><td class="k">silme_esigi</td><td>≥ 2/3</td><td>≥ 2/3 – ≥ 3/4</td></tr>
+<tr><td class="k">orantisizlik_esigi</td><td>10 yüzde puanı</td><td>5 – 30</td></tr>
+<tr><td class="k">red_bekleme</td><td>30 gün</td><td>7 – 90 gün</td></tr>
+<tr><td class="k">ilgi_bekleme / adres_bekleme</td><td>14 gün / 90 gün</td><td>0–30 / 0–180 gün</td></tr>
+<tr><td class="k">havale_suresi</td><td>180 gün</td><td>30 – 365 gün</td></tr>
+<tr><td class="k">olgunlasma_dar / genis / genel</td><td>48 saat / 72 saat / 7 gün</td><td>24 saat – 14 gün</td></tr>
+<tr><td class="k">mahzen_kapasite / ust_sinir</td><td>100 başlık / 300 yanıt</td><td>30–300 / 50–1000</td></tr>
+<tr><td class="k">karar_saati</td><td>Pazar 20:00, 60 dakika</td><td>pencere 30 – 180 dakika</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><b>Kendini koruma:</b> <code>yonetmelik_esigi</code> da 2/3 ile, o anki değeriyle değişir; muafiyet yoktur.</li>
+  <li><b>Anlık görüntü:</b> Karar Saati açılırken bütün değerler dondurulur. Bir oturumda kabul edilen değişiklik bir sonraki oturumdan itibaren geçerlidir; sayım sırasında eşik kaymaz.</li>
+  <li><b>Örnek:</b> tohumdaki Karar Saati #1'de sessiz onay süresi 2/3 ile 24 saatten 36 saate çıkarıldı. Aynı öneri 80 saat isteseydi R8 açılışta reddederdi.</li>
+</ul>
+<figure data-fig="yonetmelik">
+<div class="crop" style="width:100%;aspect-ratio:972/672"><img src="gorseller/yonetmelik.png" alt="Yönetmelik sayfası" style="width:148.148%;margin-left:-37.860%;margin-top:-23.457%"></div>
+<figcaption><b>Şekil 4.</b> Yönetmelik sayfası. Değiştirilemez maddeler çift çerçeveli, kilit işaretli bölümde durur; parametrelerin değeri ve izinli aralığı aşağıdaki bölümlerde listelenir.</figcaption>
+</figure>
+</section>
+
+<section id="havale">
+<h2><span class="no">14</span>Havale (oy devri)</h2>
+<p class="lead">Oy hakkı, bütün alanlarda ya da tek bir alanda güvenilen birine devredilebilir. Havale, alan kişi kabul edince yürürlüğe girer ve 180 gün sonra düşer.</p>
+<ul>
+  <li><b>Kapsam ve miras:</b> bir alana verilen havale alt alanları da kapsar; daha özel havale önceliklidir. Zincirleme serbesttir.</li>
+  <li><b>Döngü yasağı (R4):</b> mirası da izleyerek döngü kuran havale reddedilir; döngüde oy hiçbir yere varmaz.</li>
+  <li><b>Kabul:</b> havale istek olarak başlar; alan kişi 7 gün içinde kabul eder, reddeder ya da sonradan iade eder. "Havale kabul etmiyorum" seçeneği vardır.</li>
+  <li><b>Süre:</b> 180 gün sonra düşer; 14 gün önce uyarı gösterilir, kişi yeniler. Unutulmuş havaleler güç biriktirmez.</li>
+  <li><b>Pencere kilidi:</b> Karar Saati açıkken havale verilemez ve geri alınamaz.</li>
+  <li><b>Açık temsilci oyu:</b> ağırlığı 1'den büyük olan (başkalarının oyunu taşıyan) kişinin oyu açıktır; seçmenler temsilcilerinin ne oy verdiğini görür.</li>
+  <li><b>Müşavir:</b> bir alanda en az 5 doğrudan havale alan kişi bu etiketi taşır. Etiket görünürlüktür, rütbe değildir. Ödevin "herkes eşit, bazıları daha eşit" ifadesi havale ağırlığıyla karşılanır.</li>
+</ul>
+</section>
+
+<section id="silme">
+<h2><span class="no">15</span>İçerik ve silme</h2>
+<p class="lead">Tartışmaya yazmak oylamasızdır. Başkasının içeriğini silmek bir içerik kuralına dayanmalı, kuralı ihlal eden kısmı metinden aynen alıntılamalı (R7) ve kullanılan oyların 2/3'ünü almalıdır. Silinen içerik sitede gizlenir, defterde kalır.</p>
+<table>
+<thead><tr><th>Kural</th><th>Başlık</th><th>Kapsadığı</th></tr></thead>
+<tbody>
+<tr><td class="k">IK-1</td><td>Spam ve reklam</td><td>Tartışmayla ilgisiz ticari tanıtım, reklam, aynı iletinin tekrarı</td></tr>
+<tr><td class="k">IK-2</td><td>Hakaret ve tehdit</td><td>Kişiyi ya da grubu aşağılayan söz, küfür, zarar verme tehdidi; sert eleştiri hakaret değildir</td></tr>
+<tr><td class="k">IK-3</td><td>Kişisel bilgi ifşası</td><td>Başkasının telefonu, adresi, kimlik numarası gibi bilgilerini rızası olmadan paylaşmak</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><b>"Konu dışı" kuralı bilerek yoktur.</b> Neyin konu dışı olduğunu çoğunluk belirler; böyle bir kural, çoğunluğun beğenmediği her görüşü silmenin gerekçesi olurdu.</li>
+  <li><b>Kendi mesajını silmek</b> gerekçe istemez ve basit çoğunlukla olur.</li>
+  <li><b>Hâtif (H4)</b> dayanılan kuralın anahtar kelimelerinden birinin alıntıda geçip geçmediğine bakar ve bulduğu kelimeyi yazar.</li>
+  <li><b>Düzenleme:</b> kişi kendi mesajını serbestçe yeni sürümle düzenler; başkasının mesajı DÜZENLEME önerisiyle değişir. Sürüm geçmişi ve fark görünümü herkese açıktır.</li>
+</ul>
+<p>Tohumdaki 4. senaryo üç sonucu gösterir: IK-2 (hakaret) gerekçeli silme %60 EVET aldı ve 2/3'e ulaşamadığı için içerik kaldı; IK-1 (spam) gerekçeli silme %67 ile kabul edildi; yazarın kendi mesajını silme isteği 7/12 ile kabul edildi.</p>
+<div class="side">
+<div>
+<p><b>Sansür şeridi.</b> Silinen mesajın yerinde siyah bir şerit durur: hangi oylamayla, hangi kurala dayanarak ya da yazarın isteğiyle silindiği ve defterdeki hash'i. Okuyucu bir şeyin silindiğini ve nedenini görür; içerik isteyen herkes için defterde açıktır. Silinen mesaja eklenmiş fotoğrafın adresi de 410 (artık yok) döner.</p>
+<p>Şeritteki yazının rengi erişilebilirlik denetiminde değişti: bordo yazı siyah zeminde 2,0:1 kontrastla okunmuyordu; aynı tonun açık hâli (#D4576B) 5,4:1 verir.</p>
+</div>
+<figure data-fig="sansur">
+<div class="crop" style="width:95%;aspect-ratio:840/740"><img src="gorseller/sansur-seridi.png" alt="Konu sayfasında iki sansür şeridi" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 5.</b> Bisiklet yolları konusu: #11 IK-1 gereğince, #12 yazarının isteğiyle silindi. Hakaret içeren #14 ise 2/3'e ulaşamadığı için görünür kaldı (29 Eylül görüntüsü).</figcaption>
+</figure>
+</div>
+</section>
+
+<section id="mahzen">
+<h2><span class="no">16</span>Mahzen: neden var</h2>
+<p class="lead">Mahzen, kimliğin bedel olduğu düşüncelerin kimliksiz tartışılabildiği, kayda geçmeyen ve kendiliğinden silinen bir alandır. Bir düşünce karara dönüşmek isterse yazanların kimliği açılır.</p>
+<p>Meydan'da her şey kimlikli ve kalıcıdır. Bu sorumluluk sağlar, ama azınlıkta kalan ya da henüz olgunlaşmamış bir düşünceyi söylemenin bedelini de artırır: söylenen her şey bir takma ada ve deftere bağlanır. Mahzen bu düşünceler için anonim, geçici bir felsefe tartışması (diskur) yeridir. Ödevin akran öğrenmesi gereği de buradan beslenir. Mahzen teşvik edilmez: Meydan'ın altında sade bir bağlantıdır, bildirim ve sayaç yoktur.</p>
+<div class="side">
+<div>
+<ul>
+  <li><b>Gölge kimliği:</b> her yazar başlığa özel bir kimlik alır (sunucu anahtarıyla HMAC). Aynı başlıkta izlenebilir, başlıklar arasında eşleştirilemez.</li>
+  <li><b>Geçicilik:</b> 100 başlık sınırı aşılınca en alttaki başlık kalıcı silinir; 300 yanıttan sonra başlık yükselmez; yaşayan başlık deftere yazılmaz; eskiyen metin görsel olarak çürür.</li>
+  <li><b>Denetim yok:</b> içerik kuralı ve silme önerisi yoktur; kaba bir başlık aşağı düşerek kaybolur. Fotoğraf eklenmez; fotoğraf kimlik sızdırabilir.</li>
+  <li><b>Köprü:</b> başlıkta yazanlar "öneriye dönüştür" oylaması açabilir. Oylar gizlidir ve değiştirilebilir. Seçmen listesinin yarısından fazlası EVET deyince başlık donar, takma adlar açılır, kayıt deftere yazılır ve içerikten taslak bir konu önerisi oluşur.</li>
+  <li><b>Rıza:</b> ilk yazışta bu sonuç açıkça yazılır; onaylanmadan mesaj kabul edilmez.</li>
+</ul>
+<p>Anonim konuşma serbesttir, ama karar kimliksiz alınmaz. İfşa oylamasının kendisi bir çoğunluk tiranlığıdır; bunu bilinçli açık olarak yazdık (§22).</p>
+</div>
+<figure data-fig="mahzen">
+<div class="crop" style="width:100%;aspect-ratio:840/880"><img src="gorseller/mahzen.png" alt="Mahzen başlığı ve ifşa oylaması" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 6.</b> "Çoğunluk haklı olabilir mi?" başlığı: Gölge kimlikleri, ömür çubuğu ve açık ifşa oylaması (5 seçmen, geçmesi için 3 EVET). 29 Eylül görüntüsü.</figcaption>
+</figure>
+</div>
+</section>
+
+<section id="sonuc" class="newpage">
+<h2><span class="no">17</span>Kararların sonucu: muhatap, dilekçe, takvim, gazete</h2>
+<p class="lead">Her konu önerisi bir yere iletilmek için açılır: Meşveret Takvimi'ne ya da bir kuruma. Kurum muhataplı konu kabul edilince kuruma dilekçe gider; takvime giden konu kabul edilince etkinlik takvime yazılır. Meydan'ın ön sayfası bu sonuçları bir gazete gibi yayımlar.</p>
+<p>Bu bölüm, sistemin ilk sürümündeki bir eksikten doğdu: kabul edilen kararlar yalnızca forumu değiştiriyordu (konu açılıyor, metin değişiyor, kural değişiyordu) ve dünyada bir karşılığı yoktu. Artık her kararın bir alıcısı ve izlenebilir bir sonucu vardır.</p>
+<h3>Muhatap ve dilekçe</h3>
+<ul>
+  <li><b>Muhataplar:</b> Meşveret Takvimi; üye şehirlerin belediyeleri (30 büyükşehir için "Büyükşehir Belediyesi", diğerleri için "Belediyesi"), bütün belediyeler birden; Ulaştırma ve Altyapı, Kültür ve Turizm, Çevre, Şehircilik ve İklim Değişikliği bakanlıkları. Yönetmelik, silme ve düzenleme önerileri Meşveret'in iç düzenine gider.</li>
+  <li><b>Dilekçe:</b> evrak numarası (MŞV-2026-0001), konu, alıcılar, kabul edilen metin ve imza satırı. İmza satırı kararın nasıl alındığını yazar: Karar Saati sonucu ya da "itirazsız kabul".</li>
+  <li><b>Yanıt süresi:</b> 3071 sayılı Dilekçe Hakkının Kullanılmasına Dair Kanun'a göre 30 gün. Durum hesaplanır: yanıt bekleniyor, yanıtlandı, süresinde yanıt verilmedi.</li>
+  <li><b>Yanıt:</b> kurumun yanıtını konunun bir katılımcısı işler: yazının metni, tarihi, sayısı ve taranmış görüntüsü. Yanıt deftere mühürlenir; öneri sahibine ve konunun katılımcılarına bildirim gider.</li>
+</ul>
+<figure data-fig="pazar">
+<div class="crop" style="width:100%;aspect-ratio:840/725"><img src="gorseller/konu-pazar.png" alt="İstanbul semt pazarları konusu" style="width:171.429%;margin-left:-11.310%;margin-top:-13.690%"></div><div class="crop" style="width:75%;aspect-ratio:358/110"><img src="gorseller/konu-pazar.png" alt="İstanbul semt pazarları konusu" style="width:402.235%;margin-left:-275.140%;margin-top:-78.771%"></div>
+<figcaption><b>Şekil 7.</b> İstanbul kapsamındaki "İstanbul semt pazarları" konusu. Başlığın altında muhatap (→ İstanbul Büyükşehir Belediyesi), altta dilekçe kutusu: MŞV-2026-0001, 11 Eylül'de iletildi, yasal süre 11 Ekim, durum "yanıtlandı".</figcaption>
+</figure>
+<div class="side">
+<figure data-fig="dilekce" style="flex: 0 0 62%">
+<div class="crop" style="width:100%;aspect-ratio:820/730"><img src="gorseller/dilekce.png" alt="Dilekçe sayfası" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 8.</b> Dilekçe resmî yazı düzeninde: antet, sayı, tarih, konu, alıcı, metin, imza satırı ve defter mührü. Altta İBB'nin 20 Eylül tarihli yanıtı ve onu işleyen üye.</figcaption>
+</figure>
+<figure data-fig="dilekcetel">
+<div class="crop" style="width:50%;aspect-ratio:390/844"><img src="gorseller/dilekce-telefon.png" alt="Dilekçe sayfası telefonda" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 9.</b> Aynı dilekçe telefonda.</figcaption>
+</figure>
+</div>
+<h3>Takvim ve etkinlik</h3>
+<p>Takvime giden bir konu önerisine etkinlik bilgisi eklenir: tarih, saat, süre ve yer. Yer üç türdür: ortak toplantı salonu, bir adres ya da çevrim içi bağlantı. Konu kabul edilince etkinlik takvime yazılır, deftere <code>ETKINLIK_PLANLANDI</code> kaydı düşer ve öneri sahibine bildirim gider.</p>
+<ul>
+  <li><b>Salon bir kaynaktır.</b> Ortak toplantı salonunun sahibi Genel kapsamdır. Salonu seçen öneri bu kaynağı kendiliğinden etiketler; R2 gereği yalnızca Genel kapsamla açılabilir. Bir şehir grubu salonu kendi başına ayıramaz.</li>
+  <li><b>Çakışma:</b> aynı salonda saatleri kesişen planlı bir etkinlik varsa öneri açılışta reddedilir. İki bekleyen öneri aynı saati isterse önce kabul edilen salonu alır; ikincisi kabul edildiğinde etkinlik yazılmaz ve öneri sahibine bildirilir.</li>
+  <li><b>Zaman:</b> etkinlik, önerinin karara bağlanabileceği en erken andan (sessiz onay süresinden) sonra başlamalıdır; süre 15 dakika ile 12 saat arasındadır.</li>
+  <li><b>Katılım ve rapor:</b> üyeler etkinlik başlayana kadar "Geliyorum" diyebilir. Etkinlik bittikten sonra katılacağını bildirmiş olanlar birer rapor yazar: metin, katılımcı sayısı ve en çok dört fotoğraf. Rapor deftere <code>ETKINLIK_RAPORU</code> olarak mühürlenir.</li>
+  <li><b>Takvim uygulamalarına aktarma:</b> takvimin tamamı ve her etkinlik iCalendar (.ics, RFC 5545) olarak indirilir; telefonun ya da e-postanın takvimine eklenir.</li>
+</ul>
+<figure data-fig="etkinlikformu" class="narrow">
+<div class="crop" style="width:100%;aspect-ratio:795/742"><img src="gorseller/etkinlik-formu.png" alt="Konu önerisi formunda muhatap ve etkinlik alanları" style="width:161.006%;margin-left:-30.818%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 10.</b> Konu önerisi formu. Muhatap olarak Meşveret Takvimi seçilince etkinlik alanları açılır: tarih, saat, süre ve yer. Ortak salon seçilince form, salonun Genel kapsamın kaynağı olduğunu ve çakışan öneri açılamayacağını yazar.</figcaption>
+</figure>
+<figure data-fig="takvim">
+<div class="crop" style="width:78%;aspect-ratio:690/955"><img src="gorseller/takvim.png" alt="Meşveret Takvimi sayfası" style="width:200.000%;margin-left:-0.000%;margin-top:-0.000%"></div><div class="crop" style="width:78%;aspect-ratio:680/640"><img src="gorseller/takvim.png" alt="Meşveret Takvimi sayfası" style="width:202.941%;margin-left:-102.941%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 11.</b> Takvim, ay başlıklarıyla: üstte Ekim–Aralık'taki sekiz yaklaşan etkinlik, altta Eylül'ün son haftasında gerçekleşen beş etkinlik. Dördünün raporu var; kısa film gecesine dört kişi katılacağını bildirmişti, rapor yazan olmadı. Akşam pazarı denemesi İstanbul kapsamında, diğerleri Genel; salondaki etkinliklerin saatleri çakışmaz.</figcaption>
+</figure>
+<figure data-fig="etkinlik">
+<div class="crop" style="width:100%;aspect-ratio:880/305"><img src="gorseller/etkinlik.png" alt="Dekalog I gösterimi etkinlik sayfası" style="width:150.000%;margin-left:-3.977%;margin-top:-13.068%"></div><div class="crop" style="width:60%;aspect-ratio:320/215"><img src="gorseller/etkinlik.png" alt="Dekalog I gösterimi etkinlik sayfası" style="width:412.500%;margin-left:-301.562%;margin-top:-42.188%"></div>
+<figcaption><b>Şekil 12.</b> Gerçekleşmiş bir etkinlik: Dekalog I gösterimi. Altı kişi "Geliyorum" demişti; nazli'nin raporuna göre 14 kişi geldi. Rapor ve etkinlik ayrı defter mühürleri taşır; katılım listesi etkinlik bitince kapanır.</figcaption>
+</figure>
+<h3>Gazete ön sayfası</h3>
+<p>Meydan'ın ön sayfası kararlardan derlenen haberlerdir. Haberler ayrıca yazılmaz; her biri bir kayıttan üretilir: kabul edilen konu, Karar, iletilen dilekçe, kurumun yanıtı, süresi geçen dilekçe, takvime eklenen ve gerçekleşen etkinlik, yönetmelik değişikliği ve oylamayla silme. Manşet, son yedi günün fotoğraflı en yeni haberidir; fotoğraflı haber yoksa en yeni haber manşet olur. Yan sütunda Karar Saati'ne kalan süre ve yaklaşan etkinlikler durur.</p>
+<div class="side">
+<figure data-fig="gazete" style="flex: 0 0 66%">
+<div class="crop" style="width:100%;aspect-ratio:865/495"><img src="gorseller/gazete.png" alt="Gazete ön sayfası geniş ekranda" style="width:166.474%;margin-left:-10.983%;margin-top:-26.012%"></div><div class="crop" style="width:55%;aspect-ratio:345/575"><img src="gorseller/gazete.png" alt="Gazete ön sayfası geniş ekranda" style="width:417.391%;margin-left:-289.855%;margin-top:-65.217%"></div>
+<figcaption><b>Şekil 13.</b> Ön sayfa geniş ekranda. Manşet en yeni haber: park temizliğinin raporu. Altında takvime eklenen etkinlikler; altta, sağ sütundan Karar Saati'ne kalan süre ve yaklaşan etkinlikler.</figcaption>
+</figure>
+<figure data-fig="gazetetel">
+<div class="crop" style="width:50%;aspect-ratio:390/812"><img src="gorseller/gazete-telefon.png" alt="Gazete ön sayfası telefonda" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 14.</b> Aynı sayfa telefonda: önce Karar Saati, sonra manşet.</figcaption>
+</figure>
+</div>
+<div class="box"><span class="kicker">Sınırlar</span>
+<p>İletim sitede bir kayıttır; gerçek bir kuruma e-posta ya da e-Devlet başvurusu gönderilmez. Yanıtı kurum değil üye işler: defter kimin işlediğini kaydeder ama yanıtın gerçekten kurumdan geldiğini doğrulamaz. Etkinlik raporunu da katılımcı yazar; katılımcı sayısı onun beyanıdır. Haberlerin önemini bir editör seçmez; manşet kuralla belirlenir.</p></div>
+</section>
+
+<section id="gorsel">
+<h2><span class="no">18</span>Görseller</h2>
+<p class="lead">Üyeler tartışma mesajlarına, konu önerilerine (kapak), etkinlik raporlarına ve dilekçe yanıtlarına (taranmış belge) fotoğraf ekleyebilir. Sunucu her fotoğrafı yeniden kodlar, konum ve cihaz bilgisini siler ve sitede gösterilen gazete baskısı görünümlü bir sürüm üretir.</p>
+<ul>
+  <li><b>Denetim:</b> JPEG, PNG ya da WebP; en çok 8 MB ve 40 megapiksel. Boyut çözülmeden önce kontrol edilir; küçük dosyada dev görsel (sıkıştırma bombası) reddedilir.</li>
+  <li><b>Gizlilik:</b> EXIF, GPS konumu ve cihaz bilgisi silinir; telefonun yön bilgisi silinmeden önce uygulanır.</li>
+  <li><b>Erişilebilirlik:</b> alt metin zorunludur (3–300 karakter); ekran okuyucu bu cümleyi okur, görselin altında künye olarak da yazılır.</li>
+  <li><b>Kayıt:</b> eklenen görselin özgün sürümünün SHA-256 özeti deftere yazılır; indirilen dosyanın özeti defterdekiyle karşılaştırılabilir.</li>
+  <li><b>Silme:</b> görselin bağlı olduğu mesaj ya da konu oylamayla silinirse görselin adresi de 410 döner.</li>
+  <li><b>Sınırlar:</b> mesaj başına 4 görsel; kişi başına henüz kullanılmamış en çok 12 yükleme. Mahzen'e görsel eklenmez.</li>
+</ul>
+<figure data-fig="gorselmesaj" class="narrow">
+<div class="crop" style="width:100%;aspect-ratio:880/560"><img src="gorseller/gorsel-mesaj.png" alt="Mesajdaki fotoğrafın baskı görünümü" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 15.</b> Tartışma mesajına eklenen fotoğraf, 45° nokta ızgarasıyla 16 tonlu baskı görünümünde. Üstteki fotoğrafa dokunulduğu için özgün renkli sürümü açık; köşedeki etiket hangisinin gösterildiğini söyler. Altta alt metin künye olarak durur.</figcaption>
+</figure>
+<figure data-fig="gorselyukleme" class="narrow">
+<div class="crop" style="width:100%;aspect-ratio:880/225"><img src="gorseller/gorsel-yukleme.png" alt="Görsel yükleme ve alt metin alanı" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 16.</b> Yükleme: seçilen fotoğrafın önizlemesi ve zorunlu "Görselde ne var?" alanı. Alt metin yazılmadan "Ekle" düğmesi açılmaz.</figcaption>
+</figure>
+</section>
+
+<section id="butunluk">
+<h2><span class="no">19</span>Bütünlük, gizlilik ve güvenlik</h2>
+<p class="lead">Kararların kanıtı üç düğümlü, sadece eklenebilir bir defterdedir. Oylar mühürlenerek verilir, yönetmeliğin oylamasız değiştirilmesi tespit edilip geri alınır, yeni hesaplarla yapılan baskın oylamadan dışlanır.</p>
+<div class="side">
+<div>
+<h3 style="margin-top:0">Defter</h3>
+<p>Her kayıt bir öncekinin özetine bağlıdır: hash = sha256(önceki_hash ‖ içerik_hash ‖ zaman ‖ tür). Üç düğüm ayrı SQLite dosyalarında tutulur; güncelleme ve silme tetikleyicilerle engellenir. Lider kayıtları takipçilere çoğaltır, geride kalan takipçi yetişir. <code>/verify</code> her düğümün zincirini baştan hesaplar ve düğümleri karşılaştırır: tutarlı, geride, tutarsız ya da bütünlüğü bozuk. Lider erişilemezse kayıtlar API'de bekler ve sırayla gönderilir.</p>
+<h3>Gizli oy (commit-reveal)</h3>
+<p>Oy anında deftere seçimin kendisi değil, seçim ve gizli bir tuzdan üretilen mühür yazılır. Pencere kapanınca seçim ve tuz açılır; herkes mührü yeniden hesaplayıp doğrulayabilir. Seçmenin oyu oturuma özel bir takma kimlikle yazılır.</p>
+<h3>Oylamasız değişiklik tespiti</h3>
+<p>Yönetmeliğin tam hâli her Karar Saati sonunda özetiyle deftere yazılır. Açılışta ve kapanışta çalışan değerler bu kayıtla karşılaştırılır; veritabanına doğrudan yapılmış bir değişiklik bulunursa deftere yazılır ve son oylanmış hâle geri alınır.</p>
+</div>
+<figure data-fig="defter" style="flex: 0 0 40%">
+<div class="crop" style="width:75%;aspect-ratio:640/800"><img src="gorseller/defter.png" alt="Defter doğrulama ekranı" style="width:100.000%;margin-left:-0.000%;margin-top:-0.000%"></div>
+<figcaption><b>Şekil 17.</b> Defter doğrulaması: zincir ve yönetmelik tutarlı; üç düğümde 646 kayıt, çalışan kodun yönetmeliği defterdeki son kayıtla aynı.</figcaption>
+</figure>
+</div>
+<h3>Baskın tespiti</h3>
+<p>Kullanıcılar arasındaki etkileşimler (yanıt, havale, aynı dakikalarda kayıt, ortak başlık) graftaki ETKİLEŞİM kenarlarına ağırlık olarak işlenir. Karar Saati açılırken son 7 günde katılmış hesaplar arasında, katılım anları 24 saat içinde toplanan, en az 4 kişilik ve kenar yoğunluğu en az 1/2 olan kümeler işaretlenir. İşaretlenen hesaplar oylamanın paydasından çıkar; gerekçe kendilerine ve sonuç ekranında sayı olarak gösterilir, içerikleri silinmez. Kuralın ölçümü, temel çizgilerle karşılaştırması ve sınırları için bkz. §6.</p>
+<h3>Hesap güvenliği</h3>
+<p>Şifreler argon2 ile saklanır, oturum JWT ile taşınır. 18 yaş altı kayıt reddedilir. Profilde ad, adres ve doğum tarihi yalnızca sahibine görünür; başkaları takma adı, rolleri ve havale sayısını görür. E-posta doğrulama kodu bu sürümde gerçek e-postayla değil, sunucu günlüğüne yazılarak verilir.</p>
+</section>
+
+<section id="kolaylik">
+<h2><span class="no">20</span>Küçük kolaylıklar</h2>
+<p class="lead">Kuralları değiştirmeyen ama günlük kullanımı kolaylaştıran eklemeler. Her biri kullanırken karşılaşılan bir sürtünmeden doğdu.</p>
+<table>
+<thead><tr><th style="width:21%">Kolaylık</th><th style="width:33%">Hangi sürtünmeyi giderir</th><th>Nasıl çalışır</th></tr></thead>
+<tbody>
+<tr><td><b>Arama</b></td><td>Eski bir konuyu, öneriyi ya da dilekçeyi bulmak için alanları tek tek gezmek</td><td>Başlıktaki büyüteç ya da web'de <code>/</code> tuşu. Konular, öneriler, mesajlar, dilekçeler ve etkinlikler ayrı sütunlarda listelenir. Eşleme Türkçe harf kurallarıyla yapılır ("İSTANBUL" = "istanbul"). Silinen içerik, taslaklar ve Mahzen aranmaz.</td></tr>
+<tr><td><b>Taslak saklama</b></td><td>Uzun bir öneri yazarken sayfa kapanınca metnin kaybolması</td><td>Başlık ve metin yazarken bu cihazda saklanır, sayfa yeniden açılınca geri gelir, öneri gönderilince silinir. Sunucuya gitmez.</td></tr>
+<tr><td><b>Başlık sayacı</b></td><td>200 karakter sınırına gönderince takılmak</td><td>150 karakteri geçince alanın altında "172/200 karakter" görünür; sınırdan sonra yazı alınmaz.</td></tr>
+<tr><td><b>Bağlantı paylaşma</b></td><td>Bir öneriyi ya da dilekçeyi başkasına göstermek için adresi elle kopyalamak</td><td>Öneri, dilekçe ve etkinlik sayfalarında "Bağlantıyı kopyala" (telefonda "Paylaş").</td></tr>
+<tr><td><b>Dilekçe yazdırma</b></td><td>Dilekçeyi kâğıda dökünce menülerin ve düğmelerin de basılması</td><td>"Yazdır" yalnızca resmî yazıyı basar; site çerçevesi baskıda gizlenir.</td></tr>
+<tr><td><b>Takvime ekleme</b></td><td>Etkinlik tarihini ayrı bir takvime elle yazmak</td><td>Her etkinlik ve bütün takvim .ics olarak indirilir; telefonun takvim uygulaması abone olabilir.</td></tr>
+<tr><td><b>Göreli zaman</b></td><td>"29.09.2026 07:00" gibi tarihlerden ne kadar zaman geçtiğini hesaplamak</td><td>Bildirimlerde ve ön sayfada "3 gün önce", "dün", "2 saat sonra"; iki haftadan eski olaylarda tarih.</td></tr>
+<tr><td><b>Açtığınız öneriler</b></td><td>Kendi önerilerinin hangi aşamada olduğunu bulmak</td><td>Kendi profilinizde açtığınız öneriler durumlarıyla listelenir; başkasının profilinde görünmez.</td></tr>
+<tr><td><b>Telefondan açma</b></td><td>Aynı ağdaki telefonda site açılınca giriş yapılamaması</td><td>İstemci API adresini sayfanın açıldığı makineden türetir; ayrı ayar gerekmez.</td></tr>
+</tbody>
+</table>
+<figure data-fig="arama">
+<div class="crop" style="width:100%;aspect-ratio:840/270"><img src="gorseller/arama.png" alt="Arama sayfası İstanbul araması" style="width:157.143%;margin-left:-3.571%;margin-top:-22.619%"></div><div class="crop" style="width:60%;aspect-ratio:420/130"><img src="gorseller/arama.png" alt="Arama sayfası İstanbul araması" style="width:314.286%;margin-left:-207.143%;margin-top:-64.286%"></div>
+<figcaption><b>Şekil 18.</b> "İSTANBUL" araması büyük harfle yazıldı; Türkçe kurallarla küçültülüp eşlendi. Konu, üç öneri ve bir dilekçe bulundu.</figcaption>
+</figure>
+</section>
+
+<div class="partHead"><span>Bölüm IV</span>Süreç</div>
+<section id="sorunlar" class="newpage">
+<h2><span class="no">21</span>Karşılaşılan sorunlar ve çözümleri</h2>
+<p class="lead">Sorunların bir kısmı tasarım sırasında öngörüldü, bir kısmı tarayıcıda, testlerde ve ölçümde ortaya çıktı. Her biri bir kurala, bir yönetmelik maddesine ya da koda dönüştü. Son bölüm bu sürümde, kodun desenlerle yeniden düzenlenmesi ve ölçüm sırasında bulunanlardır.</p>
+<table>
+<thead><tr><th style="width:34%">Sorun</th><th>Çözüm</th><th style="width:12%">Nerede</th></tr></thead>
+<tbody>
+<tr><td colspan="3" class="sub">Kurallar</td></tr>
+<tr><td>Çoğunluk, azınlığa ait bir kaynak hakkında karar verebiliyordu.</td><td>Kaynak sahipliği ontolojide tanımlandı; yalnızca sahip kapsam ya da alt kümesi karar verir, alt küme kendi payına daraltılır.</td><td>R2, §11</td></tr>
+<tr><td>Genel kapsam bir şehrin payını oylamayla başka şehre aktarabiliyordu.</td><td>Bölünebilir kaynakta pay etkisi zorunlu oldu; payı orantısız azalan kapsam ayrıca oylar.</td><td>D5, §9</td></tr>
+<tr><td>2/3'lük bir çoğunluk bütün güvenceleri iki oylamada kaldırabilirdi.</td><td>Değiştirilemez maddeler ve izinli aralıklar; R8 bu yöndeki öneriyi açılışta reddeder.</td><td>R8, §13</td></tr>
+<tr><td>Gerekçesiz silme çoğunluk sansürüne dönüşebilirdi.</td><td>Üç dar içerik kuralı, kural ve alıntı zorunluluğu, 2/3 eşiği, Hâtif'in alıntı denetimi.</td><td>R7, H4</td></tr>
+<tr><td>Silinen içerik iz bırakmadan kayboluyordu.</td><td>Silme gizlemedir: sansür şeridi, gerekçe ve defterdeki kayıt kalır.</td><td>D4, §15</td></tr>
+<tr><td>Karşı oy verenler görülüp baskı altına alınabilirdi.</td><td>Commit-reveal ile gizli oy; yalnızca temsilci ve Hâtif oyu açık.</td><td>§19</td></tr>
+<tr><td>Havale istenmeden yüklenebiliyor ve alan kişinin gizli oyunu açığa çıkarabiliyordu.</td><td>Havale kabulü: istek, kabul, ret, iade; kabul edilmeyen havale oylamaya katılmaz.</td><td>§14</td></tr>
+<tr><td>Unutulmuş havaleler süresiz güç biriktiriyordu.</td><td>180 günlük süre, 14 gün önce uyarı ve yenileme.</td><td>havale_suresi</td></tr>
+<tr><td>Oturum sırasında eşik ya da seçmen listesi değişirse sayım kayabilirdi.</td><td>Açılışta yönetmelik, seçmen ve havale anlık görüntüsü; değişiklik sonraki oturumda geçerli.</td><td>§13</td></tr>
+<tr><td>Aynı gün katılan yeni hesaplarla oylama ele geçirilebilirdi.</td><td>Etkileşim grafında yeni üye kümelerinin tespiti; işaretlenenler o oturumun paydasından çıkar.</td><td>§6</td></tr>
+<tr><td>Sunucuyu işleten kişi yönetmeliği veritabanından oylamasız değiştirebilirdi.</td><td>Yönetmelik özeti defterde; açılış ve kapanışta karşılaştırma, kayıt ve geri alma.</td><td>§19</td></tr>
+<tr><td>Aynı bütçeye dokunan iki öneri aynı oturumda kabul edilince ikincisi geçersiz paylara dayanıyordu.</td><td>Öneri dayandığı payları saklar; paylar değiştiyse "pay çakışması" ile uygulanmaz.</td><td>§12</td></tr>
+<tr><td>Öneriler fark edilmeden aceleyle oylanabiliyordu.</td><td>Olgunlaşma süresi: 48 saat, 72 saat, 7 gün.</td><td>olgunlasma_*</td></tr>
+<tr><td>Bir kapsam yetkisi dışındaki kuruma yazabilirdi.</td><td>Kapsam–muhatap yetki matrisi açılışta denetlenir.</td><td>R9</td></tr>
+<tr><td>Bir şehir grubu ortak salonu kendi başına ayırabilirdi; iki etkinlik aynı saate düşebilirdi.</td><td>Salon Genel kapsamın kaynağıdır (R2); aynı saatte planlı etkinlik varsa öneri açılmaz.</td><td>R2, §17</td></tr>
+<tr><td colspan="3" class="sub">Altyapı ve arayüz</td></tr>
+<tr><td>Zamanlayıcı ile komut satırı aynı Karar Saati işini iki kez işleyebiliyordu.</td><td>PostgreSQL oturum kilidi; kilidi alamayan arka plan adımı atlar.</td><td>zamanlayıcı</td></tr>
+<tr><td>Defter lideri düşerse kayıtlar kaybolabilirdi.</td><td>Outbox: kayıt işlemle birlikte yazılır, lider dönünce sırayla gönderilir.</td><td>§19</td></tr>
+<tr><td>Kararlar dünyada hiçbir şeyi değiştirmiyordu.</td><td>Muhatap zorunlu; kuruma dilekçe, takvime etkinlik, ön sayfada haber.</td><td>§17</td></tr>
+<tr><td>Yüklenen fotoğraflar konum ve cihaz bilgisi sızdırabilirdi; silinen mesajın fotoğrafı adresiyle erişilebilir kalıyordu.</td><td>Yeniden kodlama, EXIF silme, piksel ve boyut sınırı; bağlı içerik silinince görsel 410 döner.</td><td>§18</td></tr>
+<tr><td>Bordo yazı siyah sansür şeridinde okunmuyordu (2,0:1).</td><td>Şeritte aynı tonun açık hâli kullanıldı (5,4:1).</td><td>arayüz</td></tr>
+<tr><td>Site telefondan açılınca giriş yapılamıyordu; hızlı giriş düğmesi API yeniden başlarken kayboluyordu.</td><td>İstemci API adresini sayfanın açıldığı makineden türetir; düğme API'ye ulaşamazsa yeniden sorar.</td><td>arayüz</td></tr>
+<tr><td colspan="3" class="sub">Bu sürümde: yeniden düzenleme ve ölçüm</td></tr>
+<tr><td>Öneri servisi 1.004 satıra ulaşmıştı; türe göre dallanma beş ayrı yerdeydi. Yeni bir öneri türü her zinciri değiştirmeyi gerektiriyordu.</td><td>Her öneri türü kendi sınıfında (Strategy), sınıflar bir kayıt defterinde (Registry); servis tek giriş kapısı (Facade).</td><td>§7</td></tr>
+<tr><td>Karara bağlanmış bir öneri ikinci kez kabul edilirse etkileri iki kez uygulanırdı.</td><td>Durumlar sınıf oldu; geçersiz geçiş hata verir.</td><td>§7</td></tr>
+<tr><td>Öneri sahibi kendi önerisine itiraz ederek onu bir haftalık kuyruğa çekebiliyordu.</td><td>Sahibin kendi önerisine itirazı reddedilir.</td><td>§12</td></tr>
+<tr><td>Benzetim üreteci kamufle ve bölünmüş baskında bazı hesapların katılım anını geleceğe yazıyordu.</td><td>Kayma, kalan süreyle sınırlandı; üretecin testleri bunu yakalar.</td><td>§6</td></tr>
+<tr><td>Karar ağacı benzetimin bir izini öğrendi: gerçek yeni üyelerin yanıt sayısı dar bir aralıkta üretiliyordu.</td><td>Aralıklar genişletildi. Ağaç yine de canlı veride baskıncıları yakalayamadı; bu bir sonuç olarak rapora yazıldı.</td><td>§6</td></tr>
+<tr><td>Karar ağacının bölme araması karesel zamanlıydı; ölçüm yavaştı.</td><td>Değerler sıralanıp tek geçişte taranıyor.</td><td>evaluation/</td></tr>
+<tr><td>Geçmiş etkinlikte katılım hâlâ "7 kişi geliyor" diye yazıyordu.</td><td>Etkinlik başlayınca katılım kapanır ve satır "7 kişi Geliyorum dedi" olur.</td><td>§17</td></tr>
+<tr><td>Etkinlikli bir konu ön sayfada iki kez çıkıyordu (yeni konu ve takvim haberi).</td><td>Etkinlikli konu yalnızca etkinlik haberi olarak çıkar.</td><td>§17</td></tr>
+<tr><td>Tohum, etkinlik raporunu etkinlik bitmeden yazmaya çalışıyordu; kural raporu reddetti ve tohum yarıda kaldı.</td><td>Tohumdaki rapor zamanı etkinlik sonrasına alındı; kural değişmedi.</td><td>tohum</td></tr>
+<tr><td>Tohuma etkinlikler eklenince öneri numaraları kaydı; belgeler eski numaraları gösteriyordu.</td><td>README, sunum betiği ve kılavuz şekli yeni numaralara göre düzeltildi.</td><td>belgeler</td></tr>
+<tr><td colspan="3" class="sub">Kullanım testinde bulunanlar (9 Ekim)</td></tr>
+<tr><td>"Yanıtla"ya basınca bir şey olmuyor gibiydi: yazma alanı masaüstünde 3.200 piksel aşağıda kalıyordu.</td><td>Yanıt seçilince yazma alanı odaklanır ve görünür alana gelir.</td><td>konu sayfası</td></tr>
+<tr><td>İtiraz tek tıkla, onaysız deftere yazılıyordu; geri alınamıyor.</td><td>İtiraz önce ne olacağını söyler (defter, geri alınamaz, eşik) ve onay ister. Öneri sahibine düğme yerine "Kendi önerinize itiraz edemezsiniz" yazar.</td><td>§12</td></tr>
+<tr><td>Ziyaretçiye yaklaşan etkinlikte "rapor için giriş yapın", geçmiş etkinlikte "katılım için giriş yapın" deniyordu; giriş yapsa da yapamazdı.</td><td>Önce zamana bakılır: "rapor etkinlikten sonra", "katılım listesi kapandı"; giriş uyarısı en son.</td><td>takvim</td></tr>
+<tr><td>Takvim dosyasındaki (.ics) etkinlik bağlantısı API'nin adresine gidiyordu; takvim uygulamasından açılmıyordu.</td><td>Bağlantı sitenin adresine gider: tarayıcıda Referer'dan, abonelikte yapılandırmadan.</td><td>takvim</td></tr>
+<tr><td>Veritabanının küçük harf işlevi Türkçe I/İ'yi çevirmez; "İSTANBUL" araması "İstanbul"u bulmazdı.</td><td>Eşleme Türkçe harf kurallarıyla uygulamada yapılır.</td><td>§20</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="aciklar">
+<h2><span class="no">22</span>Bilinçli açıklar</h2>
+<p class="lead">Sistemin çözmediği ve çözemeyeceği noktaları gizlemedik; tasarım belgesinde 41 madde olarak yazılıdır. En önemlileri şunlardır.</p>
+<ol>
+  <li><b>İfşa oylaması bir çoğunluk tiranlığıdır.</b> Mahzen seçmenlerinin yarısından fazlası, karşı oy verenler dahil herkesin kimliğini açar. Uyarı rızayı belgeler, tiranlığı kaldırmaz.</li>
+  <li><b>Sahte hesap.</b> Gerçek çözüm e-Devlet gibi bir kimlik doğrulamasıdır ve kapsam dışıdır; baskın tespiti yalnızca hafifletir.</li>
+  <li><b>Gerçek gruplar baskın sanılabilir; ölçüldü.</b> Benzetimde birlikte kaydolup birbirine yazan gerçek grupların üyelerinden 263 / 269 hesap işaretlendi; sabırlı ve sessiz baskınların hiçbiri yakalanmadı. Kural yapıya bakar, niyete bakamaz. Dışlama bir oturumluktur ve gerekçesi kişiye gösterilir (§6).</li>
+  <li><b>Sunucuya güven.</b> Gizli oyda tuzları pencere boyunca sunucu tutar; defter mühürlerin sonradan değişmediğini kanıtlar, sunucunun dürüst olduğunu kanıtlamaz.</li>
+  <li><b>Etiketlemeyi öneri sahibi yapar.</b> Kaynak etiketini hiç koymayan biri R2'yi atlatabilir; itiraz eşiği ve Hâtif'in H2 denetimi bunu hafifletir.</li>
+  <li><b>Sessizlik rıza sayılır.</b> 24 saat içinde bakmayan azınlık hızlı şeritteki bir değişikliği kaçırabilir.</li>
+  <li><b>Eşik kilitleme.</b> 2/3'lük çoğunluk eşiği 3/4'e çıkarırsa geri indirmek 3/4 ister; izinli aralık bunu 3/4 ile sınırlar.</li>
+  <li><b>Defter lideri tek hata noktasıdır.</b> Tutarsızlık yakalanır, ama hangi zincirin doğru olduğunu seçecek dış bir dayanak yoktur.</li>
+  <li><b>2/3 gerçek bir hakareti de koruyabilir.</b> Seçmenlerin üçte birinden fazlası isterse kural ihlali olan içerik görünür kalır; çoğunluğun azınlık görüşlerini silebilmesinin zararı daha büyük kabul edildi.</li>
+  <li><b>Ölü el.</b> Değiştirilemez maddelerdeki bir hata oylamayla düzeltilemez; tek çıkış forumu baştan kurmaktır.</li>
+  <li><b>Dilekçe yanıtını ve etkinlik raporunu üye işler.</b> Defter işleyeni kaydeder; yanıtın kurumdan geldiğini, katılımcı sayısının doğru olduğunu doğrulamaz. Dilekçe gerçekte gönderilmez.</li>
+  <li><b>Etkinlik, kabul anında geçmişte kalabilir.</b> İtirazla yavaş şeride geçen bir etkinlik önerisi Karar Saati'nde kabul edildiğinde tarihi geçmiş olabilir; konu açılır, etkinlik takvime yazılmaz.</li>
+  <li><b>Arama ve haberler ölçeklenmez.</b> Arama her türde son 2.000 kaydı tarar; haberler her istekte bütün kararlardan yeniden hesaplanır. Manşeti bir editör değil kural seçer.</li>
+</ol>
+</section>
+
+<section id="test">
+<h2><span class="no">23</span>Test ve doğrulama</h2>
+<p class="lead">Kurallar ve akışlar otomatik testlerle, arayüz tarayıcıda betikle ve elle denendi. Son tam çalıştırma 9 Ekim 2026: 485 testin hepsi geçti, atlanan yok.</p>
+<table>
+<thead><tr><th style="width:17%">Katman</th><th>Ne test edilir</th><th style="width:20%">Sonuç</th></tr></thead>
+<tbody>
+<tr><td>Birim (231)</td><td>R1–R9 ve denetim zinciri, öneri durum geçişleri, kayıt defteri, kapsam–muhatap matrisi, havale çözümleme ve döngü, sayım ve eşikler, baskın kümeleri, olgunlaşma, görsel denetimi ve EXIF silme. Değerlendirme düzeneği: metrik formülleri ders notundaki örnekle (DP 40, YN 10, YP 60, DN 890), üretecin ve ayrımın tekrarlanabilirliği, depoların ortak arayüzü, Facade'ın gözlemcilere haber vermesi.</td><td>Hepsi geçti</td></tr>
+<tr><td>Entegrasyon (225)</td><td>Gerçek PostgreSQL ve Neo4j ile: Karar Saati döngüsü, gizli oy, havale kabulü ve süresi, silme, pay çakışması, oylamasız değişiklik, dilekçe ve yanıt, görsel yükleme. Takvim: kabulde etkinlik ve defter kaydı, salonun Genel kapsama ait olması ve çakışma reddi, katılım ve etkinlikten sonra fotoğraflı rapor, geç kabulde etkinlik yazılmaması. Tohum: senaryolar, takvim ve ön sayfa, Türkçe arama.</td><td>Hepsi geçti</td></tr>
+<tr><td>Defter (29)</td><td>Zincir bütünlüğü, bozulma tespiti, üç düğümde çoğaltma ve yetişme</td><td>Hepsi geçti</td></tr>
+<tr><td>İstemci</td><td>TypeScript tür denetimi, ESLint; Mahzen çürümesi ve doğum tarihi maskesi için iki denetim betiği</td><td>Temiz</td></tr>
+<tr><td>Arayüz</td><td>1440 px ve 375 px genişlikte takvim, etkinlik, ön sayfa, arama ve kılavuz; yatay taşma yok. Etkinlikli bir konu önerisi formdan uçtan uca açıldı.</td><td>Web'de denendi</td></tr>
+<tr><td>Kullanım testi</td><td>Farklı tohum hesaplarıyla, masaüstünde ve telefonda betikli akışlar: ziyaretçi olarak gezinme, takvimden "Geliyorum", geçmiş etkinliğe rapor, itiraz ve öneri sahibinin görünümü, mesaja yanıt, arama, salonu dolu saate etkinlik önerisi, bildirimler, profil, Mahzen girişi, .ics dosyası</td><td>Dört sorun bulundu ve düzeltildi (§21)</td></tr>
+</tbody>
+</table>
+<p>Denenmeyenler: Android'de fotoğraf seçme ile yeni ekranlar (takvim, etkinlik, ön sayfa, arama). Sunum yığını bu sürümün tohumuyla yeniden kurulmadı; bu raporun yeni ekran görüntüleri ayrı bir önizleme yığınından alındı.</p>
+</section>
+
+<section id="beyan">
+<h2><span class="no">24</span>Yapay zekâ kullanım beyanı</h2>
+<p class="lead">Bu ödevde yapay zekâ destekli bir kodlama aracı kullanıldı: Claude Code (Anthropic; model Claude Opus 5.5). Ders notundaki ayrımla söylersek, yapay zekâ ürünün içinde değil, geliştirme sürecinde kullanıldı. Ürünün kendisinde öğrenen bir model yoktur; Hâtif kural tabanlıdır (§4).</p>
+<table>
+<thead><tr><th style="width:24%">İş</th><th>Kim yaptı</th></tr></thead>
+<tbody>
+<tr><td>Temel tasarım</td><td>Öğrenci. İki mod (Meydan ve Mahzen), öneri türleri, Karar Saati, havale, Hâtif ve temel kurallar öğrencinin tasarım belgesinden gelir.</td></tr>
+<tr><td>Belgedeki boşluklar</td><td>Yapay zekâ yorum önerdi; öğrenci onayladı ya da değiştirdi. Kararlar ve gerekçeleri tasarım belgesinde (DESIGN.md §14) listelidir. Bu sürümde öneri sahibinin kendi önerisine itiraz edememesi kuralını yapay zekâ koydu; öğrencinin onayına sunuldu.</td></tr>
+<tr><td>Yeni mekanizmalar</td><td>Öğrencinin isteği ya da onayıyla eklendi (ör. muhatap, dilekçe, takvim, gazete, görseller, kodun desenlerle yeniden düzenlenmesi). Ayrıntılı tasarımı yapay zekâ önerdi.</td></tr>
+<tr><td>Kod, testler, tohum verisi, belgeler</td><td>Yapay zekâ yazdı; öğrenci yönlendirdi, siteyi kullanıp bulduğu sorunları bildirdi. Tohumdaki farklı siyasi görüşlerden mesajlar ve takvim etkinlikleri öğrencinin isteğiyle eklendi; metinlerini yapay zekâ yazdı.</td></tr>
+<tr><td>Ölçüm, kullanım testi ve bu rapor</td><td>Benzetim, ölçüm betikleri, betikli kullanım testi ve rapor metni yapay zekâ tarafından yazıldı; kullanım testinin bulduğu sorunları da yapay zekâ düzeltti. Rapordaki sayılar elle yazılmadı; ölçüm dosyalarından bir betikle üretildi.</td></tr>
+</tbody>
+</table>
+<h3>Çıktılar nasıl doğrulandı</h3>
+<ul>
+  <li><b>Kod:</b> her değişiklikten sonra otomatik testler, tür denetimi ve lint çalıştırıldı (485 test). Yeniden düzenleme, öncesinde ve sonrasında aynı testlerden geçti.</li>
+  <li><b>Arayüz:</b> ekranlar tarayıcıda iki genişlikte açılıp görüntüleri incelendi; formlar uçtan uca dolduruldu.</li>
+  <li><b>Sayılar:</b> tablolar ve grafikler <code>docs/rapor/olustur.py</code> ile <code>docs/degerlendirme/</code> altındaki ölçüm dosyalarından üretilir. Sınama kümesi sabit bir dosyadır; sonuçlar yeniden çalıştırılabilir.</li>
+  <li><b>Kaynaklar:</b> kaynakçadaki kitap ve makaleler ders notlarında geçenlerdir; kanunun yayım bilgisi resmî mevzuat kaynağından denetlendi.</li>
+  <li><b>Bağımlılıklar:</b> sürümleri kilit dosyalarıyla sabitlendi.</li>
+</ul>
+<p>Kodun ve raporun bütün sorumluluğu öğrenciye aittir.</p>
+</section>
+
+<section id="kaynak">
+<h2><span class="no">25</span>Kaynaklar</h2>
+<ul class="refs">
+  <li>Takan, S. (2026). <i>Yapay Zekâ Mühendisliğine Giriş</i>; <i>Temel Modelleri Anlamak</i>; <i>Problem Çerçeveleme</i> (Hafta 2). Yapay Zekâ Mühendisliği ve YZ Destekli Yazılım Geliştirme ders notları, Ankara Üniversitesi.</li>
+  <li>Takan, S. (2026). <i>Yazılım Tasarım Desenleri: Yapay Zekâ ve Veri Mühendisliği Perspektifinden</i>. Ders notu, Ankara Üniversitesi.</li>
+  <li>Gamma, E., Helm, R., Johnson, R., Vlissides, J. (1994). <i>Design Patterns: Elements of Reusable Object-Oriented Software</i>. Addison-Wesley.</li>
+  <li>Martin, R. C. (2017). <i>Clean Architecture</i>. Prentice Hall.</li>
+  <li>Huyen, C. (2022). <i>Designing Machine Learning Systems</i>. O'Reilly.</li>
+  <li>Huyen, C. (2025). <i>AI Engineering: Building Applications with Foundation Models</i>. O'Reilly.</li>
+  <li>Lakshmanan, V., Robinson, S., Munn, M. (2020). <i>Machine Learning Design Patterns</i>. O'Reilly.</li>
+  <li>Sculley, D. vd. (2015). Hidden Technical Debt in Machine Learning Systems. <i>NeurIPS 28</i>.</li>
+  <li>Klein, G. (2007). Performing a Project Premortem. <i>Harvard Business Review</i>, 85(9).</li>
+  <li>3071 sayılı Dilekçe Hakkının Kullanılmasına Dair Kanun (1984). Resmî Gazete, 10.11.1984, sayı 18571.</li>
+  <li>Desruisseaux, B. (2009). <i>Internet Calendaring and Scheduling Core Object Specification (iCalendar)</i>. RFC 5545, IETF.</li>
+</ul>
+</section>
+
+</body>
+</html>

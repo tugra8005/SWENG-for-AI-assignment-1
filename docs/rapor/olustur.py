@@ -2,6 +2,12 @@
 
     python3 docs/rapor/olustur.py        # docs/rapor/rapor.html yazılır
     node docs/rapor/pdf.mjs              # A4 PDF (ayrıntı dosyanın başında)
+    python3 docs/rapor/olustur.py --a5   # rapor-a5.html: iki sayfa bir yaprağa basılacak A5 sürümü
+    node docs/rapor/pdf.mjs a5
+
+A5 sürümünde yazılar A5'te gerçek boyutunda okunur; grafikler dar genişliğe göre yeniden çizilir,
+ekran görüntüleri ``CROPS_A5``'teki bölgelere kırpılır. Açıklamadaki ``<span class="a4">`` ve
+``<span class="a5">`` parçaları yalnızca kendi sürümünde kalır ("solda" / "üstte" gibi).
 
 Sayılar elle yazılmaz: baskın tespitinin sonuçları ``docs/degerlendirme/sonuclar.json``'dan,
 gecikme ``docs/degerlendirme/gecikme.json``'dan, test sayıları ``testler.json``'dan okunur.
@@ -16,6 +22,8 @@ from __future__ import annotations
 
 import json
 import re
+import struct
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -37,6 +45,8 @@ GROUPS = {"baskin_hizli": "hızlı baskın", "baskin_kamufle": "kamufle baskın"
           "duyuru": "duyuru dalgası", "tekil": "tek tük yeni üye"}
 
 INK, SOFT, HAIR, SEAL, OK = "#1B1A17", "#4A463E", "#CFC6B3", "#7A1E2B", "#2F4A2A"
+# Grafiklerin çizim genişliği (birim): A4'te 760, A5'te dar sütuna göre 560 (yazılar küçülmesin).
+W = 760
 
 
 def tr(x: float, d: int = 2) -> str:
@@ -207,7 +217,7 @@ def t_veri() -> str:
 
 def svg_merdiven() -> str:
     keys = ["rastgele", "hic_kimse", "yeni_uye", "kume", "karar_agaci"]
-    w, row, left = 760, 30, 190
+    w, row, left = W, 30, 190
     h = 34 + row * len(keys)
     scale = (w - left - 20) / 1.0
     parts = [f'<svg viewBox="0 0 {w} {h}" role="img" aria-label="Kesinlik ve duyarlılık">']
@@ -232,7 +242,7 @@ def svg_merdiven() -> str:
 
 def svg_basabas() -> str:
     pts = [(r["sinif_payi"], r["basabas_orani"]) for r in extra["sinif_payi"] if r["basabas_orani"]]
-    w, h, l, b, t, rgt = 760, 230, 60, 40, 16, 20
+    w, h, l, b, t, rgt = W, 230, 60, 40, 16, 20
     xmax, ymax = 0.5, 5.0
 
     def x(v: float) -> float:
@@ -263,7 +273,7 @@ def svg_basabas() -> str:
 
 def svg_gecikme() -> str:
     items = list(lat["olcumler"].items())
-    w, row, left = 760, 24, 200
+    w, row, left = W, 24, 200
     h = 30 + row * len(items)
     vmax = max(m["en_buyuk"] for _, m in items)
     scale = (w - left - 40) / vmax
@@ -291,8 +301,58 @@ SVGS = {"merdiven": svg_merdiven, "basabas": svg_basabas, "gecikme": svg_gecikme
 # --- birleştirme ------------------------------------------------------------------------------------
 
 
-def build() -> str:
+# A5: görsel → kırpılacak bölgeler (x0, y0, x1, y1, metin genişliğinin yüzdesi). Bölgeler alt alta durur.
+CROPS_A5: dict[str, list[tuple[int, int, int, int, int]]] = {
+    "istanbul-daralma.png": [(20, 110, 890, 600, 100)],
+    "r9-red.png": [(0, 0, 830, 530, 100)],
+    "karar-saati-sonuc.png": [(95, 235, 712, 805, 72), (728, 235, 1345, 785, 72)],
+    "yonetmelik.png": [(368, 228, 1340, 900, 100)],
+    "sansur-seridi.png": [(0, 0, 840, 740, 95)],
+    "mahzen.png": [(0, 0, 840, 880, 100)],
+    "konu-pazar.png": [(95, 115, 935, 840, 100), (985, 282, 1343, 392, 75)],
+    "dilekce.png": [(0, 0, 820, 730, 100)],
+    "dilekce-telefon.png": [(0, 0, 390, 844, 50)],
+    "etkinlik-formu.png": [(245, 0, 1040, 742, 100)],
+    "takvim.png": [(0, 0, 690, 955, 78), (700, 0, 1380, 640, 78)],
+    "etkinlik.png": [(35, 115, 915, 420, 100), (965, 135, 1285, 350, 60)],
+    "gazete.png": [(95, 225, 960, 720, 100), (1000, 225, 1345, 800, 55)],
+    "gazete-telefon.png": [(0, 0, 390, 812, 50)],
+    "gorsel-mesaj.png": [(0, 0, 880, 560, 100)],
+    "gorsel-yukleme.png": [(0, 0, 880, 225, 100)],
+    "defter.png": [(0, 0, 640, 800, 75)],
+    "arama.png": [(30, 190, 870, 460, 100), (870, 270, 1290, 400, 60)],
+}
+
+
+def png_size(path: Path) -> tuple[int, int]:
+    with path.open("rb") as f:
+        head = f.read(24)
+    return struct.unpack(">II", head[16:24])
+
+
+def crop_images(body: str) -> str:
+    def one(m: re.Match) -> str:
+        name, alt = m.group(1), m.group(2)
+        crops = CROPS_A5.get(name)
+        if not crops:
+            raise SystemExit(f"A5 için kırpma tanımı yok: {name}")
+        width, _ = png_size(ROOT / "gorseller" / name)
+        out = []
+        for x0, y0, x1, y1, pct in crops:
+            cw, ch = x1 - x0, y1 - y0
+            out.append(
+                f'<div class="crop" style="width:{pct}%;aspect-ratio:{cw}/{ch}">'
+                f'<img src="gorseller/{name}" alt="{alt}" style="width:{100 * width / cw:.3f}%;'
+                f'margin-left:-{100 * x0 / cw:.3f}%;margin-top:-{100 * y0 / cw:.3f}%"></div>')
+        return "".join(out)
+
+    return re.sub(r'<img src="gorseller/([^"]+)" alt="([^"]*)">', one, body)
+
+
+def build(edition: str = "a4") -> str:
     head = (ROOT / "bolumler" / "_head.html").read_text(encoding="utf-8")
+    if edition == "a5":
+        head += (ROOT / "bolumler" / "_a5.html").read_text(encoding="utf-8")
     cover = (ROOT / "bolumler" / "_kapak.html").read_text(encoding="utf-8")
     body = "\n".join((ROOT / "bolumler" / f).read_text(encoding="utf-8") for f in FRAGMENTS)
 
@@ -332,6 +392,13 @@ def build() -> str:
         body = body.replace(f'<section id="{ids[0]}"',
                             f'<div class="partHead"><span>Bölüm {roman}</span>{name}</div>\n<section id="{ids[0]}"', 1)
 
+    # Sürüme özgü açıklama parçaları: yalnızca kendi sürümünde kalır.
+    other = "a4" if edition == "a5" else "a5"
+    body = re.sub(rf'<span class="{other}">.*?</span>', "", body, flags=re.S)
+    body = re.sub(rf'<span class="{edition}">(.*?)</span>', r"\1", body, flags=re.S)
+    if edition == "a5":
+        body = crop_images(body)
+
     left = re.findall(r"\{\{[^}]+\}\}|<span class=\"no\">#</span>|Şekil #\.", body + cover)
     if left:
         raise SystemExit(f"Doldurulmamış yer tutucular: {sorted(set(left))}")
@@ -339,6 +406,9 @@ def build() -> str:
 
 
 if __name__ == "__main__":
-    out = ROOT / "rapor.html"
-    out.write_text(build(), encoding="utf-8")
+    edition = "a5" if "--a5" in sys.argv[1:] else "a4"
+    if edition == "a5":
+        W = 560
+    out = ROOT / ("rapor-a5.html" if edition == "a5" else "rapor.html")
+    out.write_text(build(edition), encoding="utf-8")
     print(f"{out} yazıldı")

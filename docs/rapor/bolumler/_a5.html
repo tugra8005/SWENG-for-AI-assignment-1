@@ -1,0 +1,68 @@
+<style>
+/* A5 sürümü: yaprağa iki sayfa, ölçeklemeden basılır; boyutlar kâğıttaki gerçek boyutlardır. */
+@page { size: A5; margin: 11mm 11mm 13mm 11mm; }
+body { font-size: 9.6pt; line-height: 1.4; }
+p { margin-bottom: 5pt; }
+h2 { font-size: 14pt; padding-bottom: 2pt; }
+h2 .no { font-size: 8.5pt; vertical-align: 2pt; }
+h3 { font-size: 10.8pt; margin: 8pt 0 2pt; }
+.lead { font-size: 10.2pt; margin: 4pt 0 6pt; }
+.kicker { font-size: 6.8pt; letter-spacing: 0.6pt; }
+ul, ol { padding-left: 12pt; }
+table { font-size: 8pt; margin: 3pt 0 7pt; }
+th { font-size: 6.6pt; letter-spacing: 0.3pt; padding: 2.5pt 4pt 2.5pt 0; }
+td { padding: 3pt 4pt 3pt 0; }
+td.k { font-size: 7.4pt; white-space: normal; }
+table.num td.n, table.num th.n { font-size: 7.4pt; padding-left: 4pt; }
+table.num th { padding-left: 4pt; }
+table.grid td { font-size: 7.4pt; }
+td.sub { font-size: 6.6pt; }
+table.canvas td { font-size: 8pt; padding: 4pt 5pt; }
+figcaption { font-size: 8pt; }
+figcaption b { font-size: 7pt; }
+.note { font-size: 8.2pt; }
+code, .mono { font-size: 7.8pt; }
+pre { font-size: 6.4pt; padding: 4pt 5pt; }
+.box { padding: 5pt 7pt; }
+.stats { grid-template-columns: 1fr 1fr; }
+.stats .n { font-size: 15pt; }
+.stats .l { font-size: 7.8pt; }
+.partHead { font-size: 20pt; padding: 4mm 0 3mm; margin-bottom: 5mm; }
+.partHead span { font-size: 7pt; }
+
+/* A4'teki zorunlu sayfa geçişleri A5'te boşluk bırakır; yalnızca bölüm başları yeni sayfada. */
+.newpage { break-before: auto; }
+
+/* Yan yana düzenler dar sütunda alt alta. */
+.side { display: block; }
+.side figure { margin: 6pt 0 8pt; }
+.side.code2 > div { margin-bottom: 4pt; }
+
+/* Kırpılmış ekran görüntüsü: kutu bölgenin oranında, görsel içinde kaydırılır. */
+.crop { overflow: hidden; border: 0.6pt solid var(--ink); margin: 0 auto 4pt; }
+.crop img { display: block; border: 0; max-width: none; }
+
+/* Geniş diyagramlarda küçük yazılar dar sütunda okunur kalsın. */
+/* Sınıf şemasının kutuları dar; o şema özgün boyutunda kalır (büyütülünce yazı taşar). */
+svg[viewBox^="0 0 760"]:not([aria-label="Öneri türlerinin sınıf şeması"]) :is([font-size="9"], [font-size="9.5"], [font-size="10"], [font-size="10.5"]) { font-size: 11.5px; }
+
+/* Kapak ve içindekiler. */
+.cover { height: 184mm; }
+.cover .top { font-size: 7pt; }
+.cover .course { font-size: 6.8pt; }
+.cover .mast { margin-top: 12mm; }
+.cover .mast img { width: 18mm; }
+.cover .mast .name { font-size: 32pt; letter-spacing: 4pt; margin-top: 4mm; }
+.cover .mast .tag { font-size: 9.5pt; }
+.cover .title { margin-top: 9mm; padding: 4mm 0; }
+.cover .title .t { font-size: 16.5pt; }
+.cover .title .s { font-size: 9pt; }
+.cover .author { margin-top: 11mm; }
+.cover .author .who { font-size: 14pt; }
+.cover .author .no { font-size: 8.5pt; }
+.cover .meta { font-size: 8.4pt; }
+.tocpage h2 { margin-bottom: 4pt; }
+.tocpage .toc { font-size: 9pt; margin-top: 2pt; }
+.tocpage .toc div { padding: 0.9pt 0; }
+.tocpage .toc .part { margin-top: 4pt; }
+</style>

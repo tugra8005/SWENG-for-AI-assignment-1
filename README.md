@@ -7,7 +7,7 @@
 
 Kararlar ekranda kalmaz: her konu bir yere iletilmek için açılır (**muhatap**). Takvime giden konu kabul edilince etkinliği takvime yazılır; bir belediyeye ya da bakanlığa giden konu kuruma **dilekçe** olarak gider, Kararı da iletilir. Meydan'ın ön sayfası bu sonuçların **gazetesidir**.
 
-Tasarım kararları, ontoloji, kuralların gerekçeleri, kullanılan **tasarım desenleri** ve **bilinçli açıklar** [DESIGN.md](DESIGN.md) belgesinde. Ödev raporu (A4, basılı): [docs/rapor/Mesveret-Analiz-Tasarim-Politikalar.pdf](docs/rapor/Mesveret-Analiz-Tasarim-Politikalar.pdf); `python3 docs/rapor/olustur.py` ve `node docs/rapor/pdf.mjs` ile ölçüm dosyalarından yeniden üretilir. Baskın tespitinin değerlendirmesi: [docs/degerlendirme/](docs/degerlendirme/).
+Tasarım kararları, ontoloji, kuralların gerekçeleri, kullanılan **tasarım desenleri** ve **bilinçli açıklar** [DESIGN.md](DESIGN.md) belgesinde. Ödev raporu (A4, basılı): [docs/rapor/Mesveret-Analiz-Tasarim-Politikalar.pdf](docs/rapor/Mesveret-Analiz-Tasarim-Politikalar.pdf); yaprağa iki sayfa basmak için A5 sürümü: [docs/rapor/Mesveret-Analiz-Tasarim-Politikalar-A5.pdf](docs/rapor/Mesveret-Analiz-Tasarim-Politikalar-A5.pdf) (yazıcıda "2 sayfa/yaprak", ölçekleme yok). İkisi de `python3 docs/rapor/olustur.py [--a5]` ve `node docs/rapor/pdf.mjs [a5]` ile ölçüm dosyalarından yeniden üretilir. Baskın tespitinin değerlendirmesi: [docs/degerlendirme/](docs/degerlendirme/).
 
 ```
 api/       FastAPI (Python 3.12): kimlik, öneri motoru, havale, Karar Saati, Mahzen, Hâtif, dilekçe,
