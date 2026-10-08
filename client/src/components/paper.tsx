@@ -3,7 +3,7 @@
  * Kâğıt zemin, mürekkep, tek vurgu mühür bordosu; serif metin, mono hash ve sayılar.
  */
 import { Link, router, usePathname } from 'expo-router';
-import { Children, createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Children, createContext, type ReactNode, type Ref, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -820,13 +820,15 @@ export function Field({
   label,
   hint,
   error,
+  inputRef,
   ...props
-}: TextInputProps & { label: string; hint?: string; error?: string }) {
+}: TextInputProps & { label: string; hint?: string; error?: string; inputRef?: Ref<TextInput> }) {
   const [focused, setFocused] = useState(false);
   return (
     <View style={{ marginBottom: 14 }}>
       <Kicker style={{ marginBottom: 4 }}>{label}</Kicker>
       <TextInput
+        ref={inputRef}
         placeholderTextColor={paper.muted}
         aria-label={label}
         {...props}

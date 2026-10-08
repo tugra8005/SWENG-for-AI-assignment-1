@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { api, API_URL } from '@/api/client';
-import { DateBlock, EVENT_STATUS, type EventSummary } from '@/components/event';
+import { attendeeLine, DateBlock, EVENT_STATUS, type EventSummary } from '@/components/event';
 import { ImageAttach, PictureSet, type MediaItem } from '@/components/media';
 import {
   Body,
@@ -129,7 +129,7 @@ export default function EventPage() {
 
   const rsvp = (
     <View style={st.rsvp}>
-      <Kicker>{e.attendees ? `${e.attendees} kişi geliyor` : 'Henüz kimse katılımını bildirmedi'}</Kicker>
+      <Kicker>{attendeeLine(e) ?? 'Henüz kimse katılımını bildirmedi'}</Kicker>
       {e.attendee_names.length ? <Body style={{ fontSize: 15 }}>{e.attendee_names.join(', ')}</Body> : null}
       {me && e.viewer.can_attend ? (
         <Button

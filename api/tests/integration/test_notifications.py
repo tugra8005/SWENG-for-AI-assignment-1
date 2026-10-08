@@ -108,5 +108,6 @@ def test_notifications_api_lists_and_marks_read(seeded, client):  # noqa: F811
     # Başkasının bildirimi işaretlenemez.
     other = headers_for(ctx, user(ctx, "ceren"))
     assert client.post("/notifications/read", json={"ids": [first]}, headers=other).json() == {"marked": 0}
-    # ceren: Karar Saati + semt pazarı konusuna yazdığı için İBB'nin yanıtı (tohum)
-    assert notifications.unread_count(ctx, user(ctx, "ceren")) == 2
+    # ceren: Karar Saati + semt pazarı konusuna yazdığı için İBB'nin yanıtı + açtığı iki etkinliğin
+    # (bisiklet turu, akşam pazarı) takvime eklenmesi (tohum)
+    assert notifications.unread_count(ctx, user(ctx, "ceren")) == 4

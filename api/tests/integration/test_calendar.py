@@ -62,6 +62,11 @@ def test_accepted_calendar_topic_plans_the_event(ctx, client, ledger):
     assert ics.headers["content-type"].startswith("text/calendar")
     assert "SUMMARY:Dekalog I gösterimi" in ics.text and ics.text.endswith("END:VCALENDAR\r\n")
     assert "BEGIN:VEVENT" in client.get("/calendar.ics").text
+    # Bağlantı sitenin adresine gider: sayfa geçişinde Referer, abonelikte yapılandırma.
+    link = f"/etkinlik/{ev['id']}"
+    via_page = client.get(f"/events/{ev['id']}/ics", headers={"referer": "http://192.168.1.5:8081/etkinlik/3?x=1"})
+    assert f"URL:http://192.168.1.5:8081{link}" in via_page.text
+    assert f"URL:{ctx.settings.client_url}{link}" in ics.text
 
 
 def test_event_requires_calendar_addressee_and_enough_lead_time(ctx, client):
@@ -115,11 +120,16 @@ def test_attendance_then_report_with_photo_after_the_event(ctx, client, ledger):
     view = client.get(url, headers=headers_for(ctx, b)).json()
     assert view["attendee_names"] == ["bora"] and view["viewer"]["attending"]
     assert "bittikten sonra" in view["viewer"]["report_refusal"]
+    # Ziyaretçiye önce zaman söylenir: giriş yapsa da etkinlik bitmeden rapor yazamaz.
+    anon = client.get(url).json()["viewer"]
+    assert "bittikten sonra" in anon["report_refusal"] and "giriş" in anon["attend_refusal"]
 
     during = _set(ctx, ev.starts_at + timedelta(minutes=10))
     r = client.put(f"{url}/attendance", headers=headers_for(during, c), json={"coming": True})
     assert r.status_code == 409
     after = _set(ctx, ev.ends_at + timedelta(hours=1))
+    anon = client.get(url).json()["viewer"]
+    assert anon["attend_refusal"].startswith("Etkinlik gerçekleşti") and "giriş" in anon["report_refusal"]
     report = {"text": "On dört kişi geldik, gösterimden sonra bir saat konuştuk.", "headcount": 14}
     r = client.post(f"{url}/reports", headers=headers_for(after, c), json=report)
     assert r.status_code == 403 and "bildirenler" in r.json()["detail"]
@@ -155,19 +165,30 @@ def test_seed_calendar_and_front_page(seeded, client):  # noqa: F811
     from mesveret.services import scheduler
 
     cal = client.get("/calendar").json()
-    assert [e["title"] for e in cal["upcoming"]] == ["Menon okuması"]
-    [past] = cal["past"]
-    assert past["title"] == "Dekalog I gösterimi" and past["reports"] == 1
-    assert past["venue"]["kind"] == "SALON" and past["attendees"] == 6
+    upcoming = [e["title"] for e in cal["upcoming"]]
+    assert len(upcoming) == 8 and upcoming[:3] == [
+        "Menon okuması", "Dekalog II gösterimi", "Ankara: Kızılay–ODTÜ bisiklet sürüşü"]
+    assert upcoming[-1] == "Yıl sonu şiir seçkisi"  # yakından uzağa
+    assert [e["title"] for e in cal["past"]] == [  # yakından eskiye
+        "Park temizliği: Kültürpark", "Kısa film gecesi", "Bisiklet turu: Kadıköy–Moda sahili",
+        "Dekalog I gösterimi", "Şiir akşamı: Necip Fazıl ve Nâzım"]
+    past = {e["title"]: e for e in cal["past"]}
+    assert past["Dekalog I gösterimi"]["reports"] == 1
+    assert past["Dekalog I gösterimi"]["venue"]["kind"] == "SALON"
+    assert past["Dekalog I gösterimi"]["attendees"] == 6
+    assert past["Kısa film gecesi"]["reports"] == 0  # gerçekleşti, raporu yazılmadı
+    assert {e["scope"] for e in cal["upcoming"]} >= {"Genel", "İstanbul"}
 
     page = client.get("/news").json()
-    kinds = {it["kind"] for it in [page["lead"], *page["items"]]}
+    items = [page["lead"], *page["items"]]
+    kinds = {it["kind"] for it in items}
     assert {"GERCEKLESTI", "YANIT", "DILEKCE", "ETKINLIK", "KONU"} <= kinds
-    held = next(it for it in [page["lead"], *page["items"]] if it["kind"] == "GERCEKLESTI")
-    assert held["headline"] == "Gerçekleşti: Dekalog I gösterimi"
+    assert page["lead"]["headline"] == "Gerçekleşti: Park temizliği: Kültürpark"
+    held = next(it for it in items if it["headline"] == "Gerçekleşti: Dekalog I gösterimi")
     assert held["dek"] == "14 kişi katıldı; raporu nazli yazdı."
     assert held["lines"][0].startswith("On dört kişi geldik")
-    assert [e["title"] for e in page["upcoming"]] == ["Menon okuması"]
+    assert "Gerçekleşti: Kısa film gecesi" not in {it["headline"] for it in items}
+    assert [e["title"] for e in page["upcoming"]] == upcoming[:3]
 
     # Şiir akşamı itiraz süresinde: saat bir gün ilerleyince kabul edilir ve takvime düşer.
     target = seeded.now + timedelta(days=1)
@@ -175,7 +196,7 @@ def test_seed_calendar_and_front_page(seeded, client):  # noqa: F811
     seeded.db.commit()
     scheduler.tick(seeded.at(target), target)
     titles = [e["title"] for e in client.get("/calendar").json()["upcoming"]]
-    assert titles == ["Menon okuması", "Şiir akşamı: Cemal Süreya"]
+    assert titles[:3] == ["Menon okuması", "Şiir akşamı: Cemal Süreya", "Dekalog II gösterimi"]
 
 
 def test_search_is_turkish_case_insensitive_and_skips_deleted(seeded, client):  # noqa: F811

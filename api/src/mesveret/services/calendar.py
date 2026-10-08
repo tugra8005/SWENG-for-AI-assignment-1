@@ -206,10 +206,11 @@ def _attendee_count(ctx: Ctx, ev: CalendarEvent) -> int:
 
 
 def report_refusal(ctx: Ctx, ev: CalendarEvent, user: User | None) -> str | None:
-    if user is None:
-        return "Rapor yazmak için giriş yapın."
+    # Önce zaman: etkinlik bitmeden giriş yapmak da rapor yazdırmaz.
     if ctx.now < ev.ends_at:
         return f"Rapor etkinlik bittikten sonra yazılır ({format_date(ev.ends_at)})."
+    if user is None:
+        return "Rapor yazmak için giriş yapın."
     if _attending(ctx, ev, user.id) is None:
         return "Raporu etkinliğe katılacağını bildirenler yazar."
     exists = ctx.db.execute(select(EventReport.id).where(
@@ -321,16 +322,17 @@ def view(ctx: Ctx, event_id: int, viewer: User | None) -> dict:
     })
     viewer_info: dict[str, Any] = {"attending": False, "can_attend": False,
                                    "attend_refusal": None, "report_refusal": None}
-    if viewer is None:
+    if viewer is not None:
+        viewer_info["attending"] = viewer.id in attendees
+    # Önce zaman, sonra giriş: bitmiş etkinlikte ziyaretçiye "giriş yapın" denmez.
+    if ctx.now >= ev.ends_at:
+        viewer_info["attend_refusal"] = "Etkinlik gerçekleşti; katılım listesi kapandı."
+    elif ctx.now >= ev.starts_at:
+        viewer_info["attend_refusal"] = "Etkinlik başladı; katılım artık değiştirilemez."
+    elif viewer is None:
         viewer_info["attend_refusal"] = "Katılımınızı bildirmek için giriş yapın."
     else:
-        viewer_info["attending"] = viewer.id in attendees
-        if ctx.now >= ev.ends_at:
-            viewer_info["attend_refusal"] = "Etkinlik gerçekleşti; katılım listesi kapandı."
-        elif ctx.now >= ev.starts_at:
-            viewer_info["attend_refusal"] = "Etkinlik başladı; katılım artık değiştirilemez."
-        else:
-            viewer_info["can_attend"] = True
+        viewer_info["can_attend"] = True
     viewer_info["report_refusal"] = report_refusal(ctx, ev, viewer)
     viewer_info["can_report"] = viewer_info["report_refusal"] is None
     body["viewer"] = viewer_info

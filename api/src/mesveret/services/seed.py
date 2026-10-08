@@ -855,11 +855,11 @@ def _scenario_istanbul(w: World) -> None:
 
 def _event_topic(w: World, key: str, author: str, parent: str, title: str, body: str,
                  area: str, opened: datetime, starts: datetime, minutes: int, venue: dict,
-                 *, accept: bool = True) -> None:
+                 *, accept: bool = True, scope: str = "genel") -> None:
     """Takvime giden alt konu: etkinlik bilgisiyle açılır, 24 saat sonra kabul edilir."""
     def open_(c: Ctx) -> None:
         w.ids[f"p:{key}"] = proposals.open_proposal(c, w.users[author], ProposalInput(
-            type="ALT_KONU", title=title, body=body, area_id=area, scope_id="genel",
+            type="ALT_KONU", title=title, body=body, area_id=area, scope_id=scope,
             parent_topic_id=w.ids[parent], addressee="takvim",
             event={"starts_at": starts.isoformat(), "duration_min": minutes, "venue": venue},
         )).id
@@ -879,9 +879,9 @@ def _event_topic(w: World, key: str, author: str, parent: str, title: str, body:
         w.at(opened + timedelta(hours=24), accept_)
 
 
-def _attend(w: World, key: str, who: list[str], first: datetime) -> None:
+def _attend(w: World, key: str, who: list[str], first: datetime, gap: float = 5) -> None:
     for i, nick in enumerate(who):
-        w.at(first + timedelta(hours=5 * i), lambda c, nick=nick: calendar.attend(
+        w.at(first + timedelta(hours=gap * i), lambda c, nick=nick: calendar.attend(
             c, w.users[nick], w.ids[f"e:{key}"], True))
 
 
@@ -913,6 +913,106 @@ def _scenario_calendar(w: World) -> None:
                  "Ekimin şiir akşamında herkes Cemal Süreya'dan bir şiir okusun.", "siir",
                  _t(minutes=5), datetime(2026, 10, 2, 17, 0, tzinfo=UTC), 120, {"kind": "SALON"},
                  accept=False)
+
+
+def _report(w: World, key: str, who: str, when: datetime, text: str, headcount: int) -> None:
+    w.at(when, lambda c: calendar.add_report(c, w.users[who], w.ids[f"e:{key}"], text,
+                                             headcount, []))
+
+
+def _utc(month: int, day: int, hour: int) -> datetime:
+    return datetime(2026, month, day, hour, tzinfo=UTC)
+
+
+def _calendar_season(w: World) -> None:
+    """Takvimin geri kalanı: geçen hafta gerçekleşen dört etkinlik (üçü raporlu, biri raporsuz) ve
+    Ekim–Aralık'a yayılan yedi etkinlik.
+
+    Öneriler Menon'dan (22 Eylül 03:00) sonra, İstanbul vakasından önce açılır: yalnızca
+    İstanbul, olgunlaşma ve şiir akşamı önerilerinin numarası kayar. Salon saatleri çakışmaz.
+    Saatler UTC'dir (İstanbul = UTC+3). En yeni haber park temizliğinin raporudur.
+    """
+    online = {"kind": "CEVRIMICI",
+              "text": "Görüntülü toplantı; bağlantı buluşmadan bir saat önce konuya yazılır"}
+    # Gerçekleşenler.
+    _event_topic(w, "siir_eylul", "okan", "siir", "Şiir akşamı: Necip Fazıl ve Nâzım",
+                 "Eylül şiir akşamı: sırayı kura belirlesin; Necip Fazıl'dan 'Kaldırımlar', "
+                 "Nâzım'dan 'Memleketimden İnsan Manzaraları'. Herkes bir şiir daha getirebilir.",
+                 "siir", _utc(9, 22, 8), _utc(9, 24, 17), 120, {"kind": "SALON"})
+    _attend(w, "siir_eylul", ["okan", "pinar", "rana", "kerem", "gulsen", "vedat", "harun",
+                              "melis"], _utc(9, 23, 9), gap=3)
+    _report(w, "siir_eylul", "okan", _utc(9, 25, 6), (
+        "On bir kişiydik. Sırayı kura belirledi: önce gulsen 'Memleketimden İnsan Manzaraları'ndan "
+        "bir bölüm, sonra kerem 'Kaldırımlar'ı okudu. vedat 'Çanakkale Şehitlerine'yi okurken iki "
+        "kişi ayağa kalktı, harun oturdu; kimse kimseye bir şey demedi. pinar kadın şairler "
+        "akşamını önerdi."), 11)
+    _event_topic(w, "bisiklet_turu", "ceren", "bisiklet", "Bisiklet turu: Kadıköy–Moda sahili",
+                 "Bisiklet yolları dilekçesine fotoğraf toplamak için cumartesi sabahı sahil "
+                 "boyunca birlikte sürelim. Bisikleti olmayan paylaşımlı bisiklet kullanabilir.",
+                 "bisiklet", _utc(9, 23, 6), _utc(9, 26, 7), 150,
+                 {"kind": "ADRES", "text": "Kadıköy İskelesi önü; Moda sahil yolu boyunca"})
+    _attend(w, "bisiklet_turu", ["ceren", "emre", "deniz", "cansu", "melis", "hakan", "mert"],
+            _utc(9, 24, 7))
+    _report(w, "bisiklet_turu", "ceren", _utc(9, 26, 14), (
+        "Dokuz kişiydik; melis ilk kez bisiklete bindi ve hiç düşmedi. Moda'ya kadar sahil yolunda "
+        "bisiklet yolu iki yerde aniden bitiyor, bir yerde de park etmiş arabalar yolu kapatıyor. "
+        "Bunları bisiklet yolları dilekçesinin takibine ekleyelim."), 9)
+    _event_topic(w, "kisa_film", "gizem", "film", "Kısa film gecesi",
+                 "Öğrenci kısa filmlerinden bir seçki; dört film, her birinden sonra on dakika "
+                 "konuşma.", "kisa-film", _utc(9, 23, 12), _utc(9, 26, 17), 90,
+                 {"kind": "CEVRIMICI", "text": "Ortak izleme bağlantısı konuya yazılır"})
+    _attend(w, "kisa_film", ["gizem", "irem", "leyla", "kaan"], _utc(9, 24, 13))
+    _event_topic(w, "park_temizlik", "ilker", "parklar", "Park temizliği: Kültürpark",
+                 "Kapanış saatini tartışırken parkın kendisine de bakalım: pazar sabahı üç saat "
+                 "gönüllü temizlik.", "parklar", _utc(9, 24, 9), _utc(9, 27, 7), 180,
+                 {"kind": "ADRES", "text": "Bursa, Kültürpark ana kapısı; eldiven ve torba bizden"})
+    _attend(w, "park_temizlik", ["ilker", "burak", "leyla", "kerem", "gizem", "pinar", "fatih"],
+            _utc(9, 25, 10))
+    # Yaklaşanlar.
+    _event_topic(w, "dekalog2", "leyla", "film", "Dekalog II gösterimi",
+                 "Dekalog'un ikinci bölümü. Altyazılı kopya hakan'da; gösterimden sonra yarım saat "
+                 "konuşalım.", "sinema", _utc(9, 26, 6), _utc(10, 9, 17), 120, {"kind": "SALON"})
+    _attend(w, "dekalog2", ["leyla", "nazli", "mert", "nevzat", "harun", "irem", "hakan"],
+            _utc(9, 27, 7))
+    _event_topic(w, "burke_paine", "selin", "felsefe",
+                 "Burke ve Paine: Fransız Devrimi'ne iki bakış",
+                 "Menon'dan sonraki okuma: Burke'ün 'Fransız Devrimi Üzerine Düşünceler'i ile "
+                 "Paine'in 'İnsan Hakları'ndan seçilmiş bölümler.", "felsefe", _utc(9, 26, 9),
+                 _utc(10, 15, 17), 120, online)
+    _attend(w, "burke_paine", ["selin", "nevzat", "gulsen", "fatih", "ipek"], _utc(9, 27, 10))
+    _event_topic(w, "ankara_surus", "hale", "bisiklet", "Ankara: Kızılay–ODTÜ bisiklet sürüşü",
+                 "Cumartesi sabahı birlikte, yavaş tempoda bir sürüş; yokuşlar için elektrikli "
+                 "bisikletler de gelsin.", "bisiklet", _utc(9, 26, 12), _utc(10, 10, 7), 120,
+                 {"kind": "ADRES", "text": "Güvenpark önü, Kızılay; dönüş metroyla"})
+    _attend(w, "ankara_surus", ["hale", "aylin", "harun", "elif", "irem", "nazli", "dogan"],
+            _utc(9, 27, 13), gap=2)
+    _event_topic(w, "pazar_aksam", "ceren", "pazar", "Akşam pazarı denemesi: Kadıköy",
+                 "Bir salı akşamı tezgâhları 18:00'de kuralım; çalışanlar için akşam pazarı tutar "
+                 "mı, görelim.", "kent", _utc(9, 26, 15), _utc(10, 13, 15), 180,
+                 {"kind": "ADRES", "text": "Kadıköy Salı pazarı alanı"}, scope="sehir:istanbul")
+    _attend(w, "pazar_aksam", ["ceren", "emre", "rana", "ayse", "hakan", "gulsen"],
+            _utc(9, 27, 16), gap=2)
+    _event_topic(w, "yesilcam", "hakan", "film", "Yeşilçam gecesi: Hababam Sınıfı",
+                 "Yeşilçam ayının ilk filmi salonda, topluca. Ardından çay ve sohbet.", "sinema",
+                 _utc(9, 27, 6), _utc(10, 16, 17), 150, {"kind": "SALON"})
+    _attend(w, "yesilcam", ["hakan", "nevzat", "melis", "rana", "kerem", "vedat"],
+            _utc(9, 28, 7), gap=3)
+    _event_topic(w, "belgesel_acilis", "nazli", "belgesel-ayi",
+                 "Belgesel ayı açılışı: bir şehir belgeseli",
+                 "Kasım'ın ilk cuması: bir şehrin gündelik hayatını anlatan bir belgesel. Soruyu "
+                 "önceden konuya yazalım.", "belgesel", _utc(9, 27, 8), _utc(11, 6, 17), 120,
+                 {"kind": "SALON"})
+    _attend(w, "belgesel_acilis", ["nazli", "mert", "ayse", "gulsen", "cansu"], _utc(9, 28, 9),
+            gap=3)
+    _event_topic(w, "siir_seckisi", "leyla", "siir", "Yıl sonu şiir seçkisi",
+                 "Yıl boyunca okunan şiirlerden küçük bir seçki; herkes en sevdiğini bir kez daha "
+                 "okusun.", "siir", _utc(9, 27, 10), _utc(12, 18, 17), 120, {"kind": "SALON"})
+    _attend(w, "siir_seckisi", ["leyla", "okan", "pinar"], _utc(9, 28, 11), gap=3)
+    # Park temizliğinin raporu en yeni haberdir (bir önceki haber: seçkinin takvime eklenmesi).
+    _report(w, "park_temizlik", "burak", _utc(9, 28, 12), (
+        "On iki kişi, kırk iki torba. En çok cam şişe ve izmarit çıktı. İki bank kırık; "
+        "fotoğraflarıyla belediyeye bildirdik. fatih ile ben yeni bankların kimin bütçesinden "
+        "yapılacağını tartıştık; torba ağırdı, tartışma kısa sürdü."), 12)
 
 
 def _chatter(w: World) -> None:
@@ -1051,6 +1151,7 @@ def _build(ctx: Ctx) -> Iterator[str]:
     _scenario_istanbul(w)
     _scenario_maturation(w)
     _scenario_calendar(w)
+    _calendar_season(w)
     _chatter(w)
     w.run(ctx)
     w.users["ayse"].cellar_warned_at = None  # sunumda Mahzen giriş uyarısı görünsün

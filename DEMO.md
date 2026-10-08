@@ -54,17 +54,17 @@ Her adımda kumanda adımın başlığını, sorusunu ve hangi kullanıcıyla ha
 ### Adım 2 · Öneri ve sessiz onay
 **Süre:** 13 sn · **Soru:** ölçek: her şey oylanırsa kimse oy vermez
 
-1. Menü → **1) aylin → /oneri/22**: *Sessiz onay* bölümü, geri sayım ve **İtiraz et**.
+1. Menü → **1) aylin → /oneri/33**: *Sessiz onay* bölümü, geri sayım ve **İtiraz et**.
 
 > **Konuşma:** Her şeyi oylamaya koyarsak kimse oy vermez. Konu önerisi yirmi dört saat itiraza açık kalır; aktif üyelerin yirmide biri itiraz etmezse sessizce kabul edilir.
 
 ### Adım 3 · İstanbul vakası: R2 daraltma
 **Süre:** 12 sn · **Soru:** bölme: parça bütün adına karar veremez
 
-Geçiş: saat bir gün ilerler, №22 itirazsız kabul edilir.
+Geçiş: saat bir gün ilerler, №33 itirazsız kabul edilir.
 
 1. Menü → **1) aylin → /konu/…**: öneri konu oldu; üstte *R2 · otomatik daralma* kutusu.
-2. Menü → **2) aylin → /oneri/22**: başlıkta talep üstü çizili, altında etki; pay çubuğu 4.000 / 20.000.
+2. Menü → **2) aylin → /oneri/33**: başlıkta talep üstü çizili, altında etki; pay çubuğu 4.000 / 20.000.
 
 > **Konuşma:** Bir gün geçti ve öneri itirazsız konu oldu. Ama İstanbul bütçenin tamamı hakkında karar veremez: R2 talebi daralttı, etki yalnızca İstanbul'un payı.
 

@@ -145,6 +145,7 @@ export default function ProposalPage() {
   const res = useApi<any>(`/proposals/${id}`);
   const wide = useWide();
   const [error, setError] = useState<unknown>(null);
+  const [confirming, setConfirming] = useState(false);
   const p = res.data;
 
   if (!p) return <Page>{res.error ? <ErrorNotice error={res.error} /> : <Loading />}</Page>;
@@ -153,6 +154,7 @@ export default function ProposalPage() {
     setError(null);
     try {
       await api(`/proposals/${p.id}/objections`, { method: 'POST' });
+      setConfirming(false);
       res.reload();
     } catch (e) {
       setError(e);
@@ -388,12 +390,26 @@ export default function ProposalPage() {
           </Body>
           <ObjectionMeter count={p.objections.count} threshold={p.objections.threshold} />
           <ErrorNotice error={error} />
-          {me && !p.viewer?.has_objected ? (
+          {me && p.viewer?.is_proposer ? (
+            <Muted style={{ marginTop: 8 }}>Kendi önerinize itiraz edemezsiniz.</Muted>
+          ) : me && !p.viewer?.has_objected && confirming ? (
+            // İtiraz deftere yazılır ve geri alınamaz: tek tıkla değil, onayla verilir.
+            <View style={st.confirm}>
+              <Body style={{ fontSize: 15 }}>
+                İtirazınız adınızla deftere yazılır ve geri alınamaz. Eşik {p.objections.threshold} itirazda
+                aşılır; öneri o zaman sessiz onayla değil, Karar Saati&apos;nde oylanır.
+              </Body>
+              <View style={st.confirmActions}>
+                <Button label="Evet, itiraz et" onPress={object} />
+                <Button label="Vazgeç" variant="quiet" onPress={() => setConfirming(false)} />
+              </View>
+            </View>
+          ) : me && !p.viewer?.has_objected ? (
             <View style={{ marginTop: 12 }}>
               <Button
                 label="İtiraz et"
                 variant="secondary"
-                onPress={object}
+                onPress={() => setConfirming(true)}
                 disabled={p.viewer?.has_vote_right === false}
               />
               {p.viewer?.has_vote_right === false ? <Muted>{p.viewer.vote_right_reason}</Muted> : null}
@@ -489,6 +505,15 @@ export default function ProposalPage() {
 }
 
 const st = StyleSheet.create({
+  confirm: {
+    marginTop: 12,
+    padding: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: paper.seal,
+    backgroundColor: paper.sheet,
+  },
+  confirmActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
   eventBox: {
     flexDirection: 'row',
     gap: 12,

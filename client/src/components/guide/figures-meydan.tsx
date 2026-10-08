@@ -24,14 +24,14 @@ export function JourneyFigure({ no }: { no: number }) {
       no={no}
       title="Önerinin yolculuğu: hızlı şerit ve yavaş şerit"
       height={196}
-      label="Hızlı şeritte iki öneri. İtiraz almayan №22 sessiz onay süresi dolunca kabul edilir. Eşik kadar itiraz alan №9 yavaş şeride geçer ve Pazar 20:00 Karar Saati'nde oylanır."
-      caption="№22'ye süre boyunca eşik kadar itiraz gelmedi: süre dolunca kendiliğinden kabul edildi. №9 eşiğe ulaştı: yavaş şeride geçti, ilk uygun Karar Saati'nde oylanacak."
+      label="Hızlı şeritte iki öneri. İtiraz almayan №33 sessiz onay süresi dolunca kabul edilir. Eşik kadar itiraz alan №9 yavaş şeride geçer ve Pazar 20:00 Karar Saati'nde oylanır."
+      caption="№33'e süre boyunca eşik kadar itiraz gelmedi: süre dolunca kendiliğinden kabul edildi. №9 eşiğe ulaştı: yavaş şeride geçti, ilk uygun Karar Saati'nde oylanacak."
     >
       <Text style={[guide.lane, { position: 'absolute', top: 0 }]}>Hızlı şerit · sessiz onay süresi</Text>
       <View style={[guide.track, { top: 40 }]} />
       <Animated.View style={[guide.track, { top: 39, height: 3, right: undefined, width: aLeft, backgroundColor: SEAL }]} />
       <Animated.View style={[guide.card, { top: 28, left: aLeft, width: CARD }]}>
-        <Text style={guide.monoBold}>№22</Text>
+        <Text style={guide.monoBold}>№33</Text>
       </Animated.View>
       <MiniStamp text="KABUL" style={{ right: 6, top: 24, opacity: shown(t, 0.53) }} />
 

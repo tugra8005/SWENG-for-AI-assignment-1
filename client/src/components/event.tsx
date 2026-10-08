@@ -35,6 +35,12 @@ export const EVENT_STATUS: Record<EventStatus, string> = {
   GERCEKLESTI: 'gerçekleşti',
 };
 
+/** "6 kişi geliyor"; etkinlik başladıktan sonra katılım kapanır: "6 kişi Geliyorum dedi". */
+export function attendeeLine(e: { attendees: number; status: EventStatus }): string | null {
+  if (!e.attendees) return null;
+  return e.status === 'YAKLASIYOR' ? `${e.attendees} kişi geliyor` : `${e.attendees} kişi Geliyorum dedi`;
+}
+
 /** Takvim yaprağı: üstte ay, ortada gün, altta gün adı ve saat. */
 export function DateBlock({ iso, small }: { iso: string; small?: boolean }) {
   return (
@@ -62,7 +68,7 @@ export function EventRow({ e }: { e: EventSummary }) {
         </Text>
         <Text style={st.rowMeta}>
           {[e.area_name, e.scope, EVENT_STATUS[e.status],
-            e.attendees ? `${e.attendees} kişi geliyor` : null,
+            attendeeLine(e),
             e.reports ? `${e.reports} rapor` : null].filter(Boolean).join(' · ')}
         </Text>
       </View>
@@ -82,7 +88,7 @@ export function EventBox({ e }: { e?: EventSummary | null }) {
           <Text style={st.boxVenue}>{e.venue.text}</Text>
           <Muted style={{ fontSize: 13 }}>
             {fmtTime(e.starts_at)}–{fmtTime(e.ends_at)}
-            {e.attendees ? ` · ${e.attendees} kişi geliyor` : ''}
+            {e.attendees ? ` · ${attendeeLine(e)}` : ''}
           </Muted>
         </View>
       </View>

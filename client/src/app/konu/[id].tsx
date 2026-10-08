@@ -1,6 +1,6 @@
 import { Link, router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, type TextInput, View } from 'react-native';
 
 import { api } from '@/api/client';
 import {
@@ -254,7 +254,12 @@ export default function TopicPage() {
   const [text, setText] = useState('');
   const [pics, setPics] = useState<MediaItem[]>([]);
   const [error, setError] = useState<unknown>(null);
+  const input = useRef<TextInput>(null);
   const t = topic.data;
+  // "Yanıtla" yazma alanını odaklar; web'de tarayıcı alanı görünür yere kaydırır.
+  useEffect(() => {
+    if (reply) input.current?.focus();
+  }, [reply]);
 
   if (!t) {
     return (
@@ -423,6 +428,7 @@ export default function TopicPage() {
         {me && t.status === 'OPEN' ? (
           <View style={{ marginTop: 18 }}>
             <Field
+              inputRef={input}
               label={reply ? `#${reply} numaralı mesaja yanıt` : 'Mesajınız'}
               value={text}
               onChangeText={setText}
