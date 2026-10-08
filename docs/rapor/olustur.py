@@ -1,6 +1,7 @@
 """Raporu bölüm parçalarından ve ölçüm dosyalarından üretir.
 
     python3 docs/rapor/olustur.py        # docs/rapor/rapor.html yazılır
+    node docs/rapor/pdf.mjs              # A4 PDF (ayrıntı dosyanın başında)
 
 Sayılar elle yazılmaz: baskın tespitinin sonuçları ``docs/degerlendirme/sonuclar.json``'dan,
 gecikme ``docs/degerlendirme/gecikme.json``'dan, test sayıları ``testler.json``'dan okunur.

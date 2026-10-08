@@ -1,0 +1,120 @@
+<section id="sorunlar" class="newpage">
+<h2><span class="no">#</span>Karşılaşılan sorunlar ve çözümleri</h2>
+<p class="lead">Sorunların bir kısmı tasarım sırasında öngörüldü, bir kısmı tarayıcıda, testlerde ve ölçümde ortaya çıktı. Her biri bir kurala, bir yönetmelik maddesine ya da koda dönüştü. Son bölüm bu sürümde, kodun desenlerle yeniden düzenlenmesi ve ölçüm sırasında bulunanlardır.</p>
+<table>
+<thead><tr><th style="width:34%">Sorun</th><th>Çözüm</th><th style="width:12%">Nerede</th></tr></thead>
+<tbody>
+<tr><td colspan="3" class="sub">Kurallar</td></tr>
+<tr><td>Çoğunluk, azınlığa ait bir kaynak hakkında karar verebiliyordu.</td><td>Kaynak sahipliği ontolojide tanımlandı; yalnızca sahip kapsam ya da alt kümesi karar verir, alt küme kendi payına daraltılır.</td><td>R2, §{{ref:sinirlama}}</td></tr>
+<tr><td>Genel kapsam bir şehrin payını oylamayla başka şehre aktarabiliyordu.</td><td>Bölünebilir kaynakta pay etkisi zorunlu oldu; payı orantısız azalan kapsam ayrıca oylar.</td><td>D5, §{{ref:azinlik}}</td></tr>
+<tr><td>2/3'lük bir çoğunluk bütün güvenceleri iki oylamada kaldırabilirdi.</td><td>Değiştirilemez maddeler ve izinli aralıklar; R8 bu yöndeki öneriyi açılışta reddeder.</td><td>R8, §{{ref:yonetmelik}}</td></tr>
+<tr><td>Gerekçesiz silme çoğunluk sansürüne dönüşebilirdi.</td><td>Üç dar içerik kuralı, kural ve alıntı zorunluluğu, 2/3 eşiği, Hâtif'in alıntı denetimi.</td><td>R7, H4</td></tr>
+<tr><td>Silinen içerik iz bırakmadan kayboluyordu.</td><td>Silme gizlemedir: sansür şeridi, gerekçe ve defterdeki kayıt kalır.</td><td>D4, §{{ref:silme}}</td></tr>
+<tr><td>Karşı oy verenler görülüp baskı altına alınabilirdi.</td><td>Commit-reveal ile gizli oy; yalnızca temsilci ve Hâtif oyu açık.</td><td>§{{ref:butunluk}}</td></tr>
+<tr><td>Havale istenmeden yüklenebiliyor ve alan kişinin gizli oyunu açığa çıkarabiliyordu.</td><td>Havale kabulü: istek, kabul, ret, iade; kabul edilmeyen havale oylamaya katılmaz.</td><td>§{{ref:havale}}</td></tr>
+<tr><td>Unutulmuş havaleler süresiz güç biriktiriyordu.</td><td>180 günlük süre, 14 gün önce uyarı ve yenileme.</td><td>havale_suresi</td></tr>
+<tr><td>Oturum sırasında eşik ya da seçmen listesi değişirse sayım kayabilirdi.</td><td>Açılışta yönetmelik, seçmen ve havale anlık görüntüsü; değişiklik sonraki oturumda geçerli.</td><td>§{{ref:yonetmelik}}</td></tr>
+<tr><td>Aynı gün katılan yeni hesaplarla oylama ele geçirilebilirdi.</td><td>Etkileşim grafında yeni üye kümelerinin tespiti; işaretlenenler o oturumun paydasından çıkar.</td><td>§{{ref:baskin}}</td></tr>
+<tr><td>Sunucuyu işleten kişi yönetmeliği veritabanından oylamasız değiştirebilirdi.</td><td>Yönetmelik özeti defterde; açılış ve kapanışta karşılaştırma, kayıt ve geri alma.</td><td>§{{ref:butunluk}}</td></tr>
+<tr><td>Aynı bütçeye dokunan iki öneri aynı oturumda kabul edilince ikincisi geçersiz paylara dayanıyordu.</td><td>Öneri dayandığı payları saklar; paylar değiştiyse "pay çakışması" ile uygulanmaz.</td><td>§{{ref:akis}}</td></tr>
+<tr><td>Öneriler fark edilmeden aceleyle oylanabiliyordu.</td><td>Olgunlaşma süresi: 48 saat, 72 saat, 7 gün.</td><td>olgunlasma_*</td></tr>
+<tr><td>Bir kapsam yetkisi dışındaki kuruma yazabilirdi.</td><td>Kapsam–muhatap yetki matrisi açılışta denetlenir.</td><td>R9</td></tr>
+<tr><td>Bir şehir grubu ortak salonu kendi başına ayırabilirdi; iki etkinlik aynı saate düşebilirdi.</td><td>Salon Genel kapsamın kaynağıdır (R2); aynı saatte planlı etkinlik varsa öneri açılmaz.</td><td>R2, §{{ref:sonuc}}</td></tr>
+<tr><td colspan="3" class="sub">Altyapı ve arayüz</td></tr>
+<tr><td>Zamanlayıcı ile komut satırı aynı Karar Saati işini iki kez işleyebiliyordu.</td><td>PostgreSQL oturum kilidi; kilidi alamayan arka plan adımı atlar.</td><td>zamanlayıcı</td></tr>
+<tr><td>Defter lideri düşerse kayıtlar kaybolabilirdi.</td><td>Outbox: kayıt işlemle birlikte yazılır, lider dönünce sırayla gönderilir.</td><td>§{{ref:butunluk}}</td></tr>
+<tr><td>Kararlar dünyada hiçbir şeyi değiştirmiyordu.</td><td>Muhatap zorunlu; kuruma dilekçe, takvime etkinlik, ön sayfada haber.</td><td>§{{ref:sonuc}}</td></tr>
+<tr><td>Yüklenen fotoğraflar konum ve cihaz bilgisi sızdırabilirdi; silinen mesajın fotoğrafı adresiyle erişilebilir kalıyordu.</td><td>Yeniden kodlama, EXIF silme, piksel ve boyut sınırı; bağlı içerik silinince görsel 410 döner.</td><td>§{{ref:gorsel}}</td></tr>
+<tr><td>Bordo yazı siyah sansür şeridinde okunmuyordu (2,0:1).</td><td>Şeritte aynı tonun açık hâli kullanıldı (5,4:1).</td><td>arayüz</td></tr>
+<tr><td>Site telefondan açılınca giriş yapılamıyordu; hızlı giriş düğmesi API yeniden başlarken kayboluyordu.</td><td>İstemci API adresini sayfanın açıldığı makineden türetir; düğme API'ye ulaşamazsa yeniden sorar.</td><td>arayüz</td></tr>
+<tr><td colspan="3" class="sub">Bu sürümde: yeniden düzenleme ve ölçüm</td></tr>
+<tr><td>Öneri servisi 1.004 satıra ulaşmıştı; türe göre dallanma beş ayrı yerdeydi. Yeni bir öneri türü her zinciri değiştirmeyi gerektiriyordu.</td><td>Her öneri türü kendi sınıfında (Strategy), sınıflar bir kayıt defterinde (Registry); servis tek giriş kapısı (Facade).</td><td>§{{ref:desen}}</td></tr>
+<tr><td>Karara bağlanmış bir öneri ikinci kez kabul edilirse etkileri iki kez uygulanırdı.</td><td>Durumlar sınıf oldu; geçersiz geçiş hata verir.</td><td>§{{ref:desen}}</td></tr>
+<tr><td>Öneri sahibi kendi önerisine itiraz ederek onu bir haftalık kuyruğa çekebiliyordu.</td><td>Sahibin kendi önerisine itirazı reddedilir.</td><td>§{{ref:akis}}</td></tr>
+<tr><td>Benzetim üreteci kamufle ve bölünmüş baskında bazı hesapların katılım anını geleceğe yazıyordu.</td><td>Kayma, kalan süreyle sınırlandı; üretecin testleri bunu yakalar.</td><td>§{{ref:baskin}}</td></tr>
+<tr><td>Karar ağacı benzetimin bir izini öğrendi: gerçek yeni üyelerin yanıt sayısı dar bir aralıkta üretiliyordu.</td><td>Aralıklar genişletildi. Ağaç yine de canlı veride baskıncıları yakalayamadı; bu bir sonuç olarak rapora yazıldı.</td><td>§{{ref:baskin}}</td></tr>
+<tr><td>Karar ağacının bölme araması karesel zamanlıydı; ölçüm yavaştı.</td><td>Değerler sıralanıp tek geçişte taranıyor.</td><td>evaluation/</td></tr>
+<tr><td>Etkinlikli bir konu ön sayfada iki kez çıkıyordu (yeni konu ve takvim haberi).</td><td>Etkinlikli konu yalnızca etkinlik haberi olarak çıkar.</td><td>§{{ref:sonuc}}</td></tr>
+<tr><td>Tohum, etkinlik raporunu etkinlik bitmeden yazmaya çalışıyordu; kural raporu reddetti ve tohum yarıda kaldı.</td><td>Tohumdaki rapor zamanı etkinlik sonrasına alındı; kural değişmedi.</td><td>tohum</td></tr>
+<tr><td>Tohuma etkinlikler eklenince öneri numaraları kaydı; belgeler eski numaraları gösteriyordu.</td><td>README, sunum betiği ve kılavuz şekli yeni numaralara göre düzeltildi.</td><td>belgeler</td></tr>
+<tr><td>Veritabanının küçük harf işlevi Türkçe I/İ'yi çevirmez; "İSTANBUL" araması "İstanbul"u bulmazdı.</td><td>Eşleme Türkçe harf kurallarıyla uygulamada yapılır.</td><td>§{{ref:kolaylik}}</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="aciklar">
+<h2><span class="no">#</span>Bilinçli açıklar</h2>
+<p class="lead">Sistemin çözmediği ve çözemeyeceği noktaları gizlemedik; tasarım belgesinde 41 madde olarak yazılıdır. En önemlileri şunlardır.</p>
+<ol>
+  <li><b>İfşa oylaması bir çoğunluk tiranlığıdır.</b> Mahzen seçmenlerinin yarısından fazlası, karşı oy verenler dahil herkesin kimliğini açar. Uyarı rızayı belgeler, tiranlığı kaldırmaz.</li>
+  <li><b>Sahte hesap.</b> Gerçek çözüm e-Devlet gibi bir kimlik doğrulamasıdır ve kapsam dışıdır; baskın tespiti yalnızca hafifletir.</li>
+  <li><b>Gerçek gruplar baskın sanılabilir; ölçüldü.</b> Benzetimde birlikte kaydolup birbirine yazan gerçek grupların üyelerinden {{v:bicim.sinif.isaretlenen}} / {{v:bicim.sinif.hesap}} hesap işaretlendi; sabırlı ve sessiz baskınların hiçbiri yakalanmadı. Kural yapıya bakar, niyete bakamaz. Dışlama bir oturumluktur ve gerekçesi kişiye gösterilir (§{{ref:baskin}}).</li>
+  <li><b>Sunucuya güven.</b> Gizli oyda tuzları pencere boyunca sunucu tutar; defter mühürlerin sonradan değişmediğini kanıtlar, sunucunun dürüst olduğunu kanıtlamaz.</li>
+  <li><b>Etiketlemeyi öneri sahibi yapar.</b> Kaynak etiketini hiç koymayan biri R2'yi atlatabilir; itiraz eşiği ve Hâtif'in H2 denetimi bunu hafifletir.</li>
+  <li><b>Sessizlik rıza sayılır.</b> 24 saat içinde bakmayan azınlık hızlı şeritteki bir değişikliği kaçırabilir.</li>
+  <li><b>Eşik kilitleme.</b> 2/3'lük çoğunluk eşiği 3/4'e çıkarırsa geri indirmek 3/4 ister; izinli aralık bunu 3/4 ile sınırlar.</li>
+  <li><b>Defter lideri tek hata noktasıdır.</b> Tutarsızlık yakalanır, ama hangi zincirin doğru olduğunu seçecek dış bir dayanak yoktur.</li>
+  <li><b>2/3 gerçek bir hakareti de koruyabilir.</b> Seçmenlerin üçte birinden fazlası isterse kural ihlali olan içerik görünür kalır; çoğunluğun azınlık görüşlerini silebilmesinin zararı daha büyük kabul edildi.</li>
+  <li><b>Ölü el.</b> Değiştirilemez maddelerdeki bir hata oylamayla düzeltilemez; tek çıkış forumu baştan kurmaktır.</li>
+  <li><b>Dilekçe yanıtını ve etkinlik raporunu üye işler.</b> Defter işleyeni kaydeder; yanıtın kurumdan geldiğini, katılımcı sayısının doğru olduğunu doğrulamaz. Dilekçe gerçekte gönderilmez.</li>
+  <li><b>Etkinlik, kabul anında geçmişte kalabilir.</b> İtirazla yavaş şeride geçen bir etkinlik önerisi Karar Saati'nde kabul edildiğinde tarihi geçmiş olabilir; konu açılır, etkinlik takvime yazılmaz.</li>
+  <li><b>Arama ve haberler ölçeklenmez.</b> Arama her türde son 2.000 kaydı tarar; haberler her istekte bütün kararlardan yeniden hesaplanır. Manşeti bir editör değil kural seçer.</li>
+</ol>
+</section>
+
+<section id="test">
+<h2><span class="no">#</span>Test ve doğrulama</h2>
+<p class="lead">Kurallar ve akışlar otomatik testlerle, arayüz tarayıcıda betikle ve elle denendi. Son tam çalıştırma {{v:test.tarih}}: {{v:test.toplam}} testin hepsi geçti, atlanan yok.</p>
+<table>
+<thead><tr><th style="width:17%">Katman</th><th>Ne test edilir</th><th style="width:20%">Sonuç</th></tr></thead>
+<tbody>
+<tr><td>Birim ({{v:test.birim}})</td><td>R1–R9 ve denetim zinciri, öneri durum geçişleri, kayıt defteri, kapsam–muhatap matrisi, havale çözümleme ve döngü, sayım ve eşikler, baskın kümeleri, olgunlaşma, görsel denetimi ve EXIF silme. Değerlendirme düzeneği: metrik formülleri ders notundaki örnekle (DP 40, YN 10, YP 60, DN 890), üretecin ve ayrımın tekrarlanabilirliği, depoların ortak arayüzü, Facade'ın gözlemcilere haber vermesi.</td><td>Hepsi geçti</td></tr>
+<tr><td>Entegrasyon ({{v:test.entegrasyon}})</td><td>Gerçek PostgreSQL ve Neo4j ile: Karar Saati döngüsü, gizli oy, havale kabulü ve süresi, silme, pay çakışması, oylamasız değişiklik, dilekçe ve yanıt, görsel yükleme. Takvim: kabulde etkinlik ve defter kaydı, salonun Genel kapsama ait olması ve çakışma reddi, katılım ve etkinlikten sonra fotoğraflı rapor, geç kabulde etkinlik yazılmaması. Tohum: senaryolar, takvim ve ön sayfa, Türkçe arama.</td><td>Hepsi geçti</td></tr>
+<tr><td>Defter ({{v:test.defter}})</td><td>Zincir bütünlüğü, bozulma tespiti, üç düğümde çoğaltma ve yetişme</td><td>Hepsi geçti</td></tr>
+<tr><td>İstemci</td><td>TypeScript tür denetimi, ESLint; Mahzen çürümesi ve doğum tarihi maskesi için iki denetim betiği</td><td>Temiz</td></tr>
+<tr><td>Arayüz</td><td>1440 px ve 375 px genişlikte takvim, etkinlik, ön sayfa, arama ve kılavuz; yatay taşma yok. Etkinlikli bir konu önerisi formdan uçtan uca açıldı.</td><td>Web'de denendi</td></tr>
+</tbody>
+</table>
+<p>Denenmeyenler: Android'de fotoğraf seçme ile yeni ekranlar (takvim, etkinlik, ön sayfa, arama). Sunum yığını bu sürümün tohumuyla yeniden kurulmadı; bu raporun yeni ekran görüntüleri ayrı bir önizleme yığınından alındı.</p>
+</section>
+
+<section id="beyan">
+<h2><span class="no">#</span>Yapay zekâ kullanım beyanı</h2>
+<p class="lead">Bu ödevde yapay zekâ destekli bir kodlama aracı kullanıldı: Claude Code (Anthropic; model Claude Opus 5.5). Ders notundaki ayrımla söylersek, yapay zekâ ürünün içinde değil, geliştirme sürecinde kullanıldı. Ürünün kendisinde öğrenen bir model yoktur; Hâtif kural tabanlıdır (§{{ref:yz}}).</p>
+<table>
+<thead><tr><th style="width:24%">İş</th><th>Kim yaptı</th></tr></thead>
+<tbody>
+<tr><td>Temel tasarım</td><td>Öğrenci. İki mod (Meydan ve Mahzen), öneri türleri, Karar Saati, havale, Hâtif ve temel kurallar öğrencinin tasarım belgesinden gelir.</td></tr>
+<tr><td>Belgedeki boşluklar</td><td>Yapay zekâ yorum önerdi; öğrenci onayladı ya da değiştirdi. Kararlar ve gerekçeleri tasarım belgesinde (DESIGN.md §14) listelidir. Bu sürümde öneri sahibinin kendi önerisine itiraz edememesi kuralını yapay zekâ koydu; öğrencinin onayına sunuldu.</td></tr>
+<tr><td>Yeni mekanizmalar</td><td>Öğrencinin isteği ya da onayıyla eklendi (ör. muhatap, dilekçe, takvim, gazete, görseller, kodun desenlerle yeniden düzenlenmesi). Ayrıntılı tasarımı yapay zekâ önerdi.</td></tr>
+<tr><td>Kod, testler, belgeler</td><td>Yapay zekâ yazdı; öğrenci yönlendirdi, siteyi kullanıp bulduğu sorunları bildirdi.</td></tr>
+<tr><td>Ölçüm ve bu rapor</td><td>Benzetim, ölçüm betikleri ve rapor metni yapay zekâ tarafından yazıldı. Rapordaki sayılar elle yazılmadı; ölçüm dosyalarından bir betikle üretildi.</td></tr>
+</tbody>
+</table>
+<h3>Çıktılar nasıl doğrulandı</h3>
+<ul>
+  <li><b>Kod:</b> her değişiklikten sonra otomatik testler, tür denetimi ve lint çalıştırıldı ({{v:test.toplam}} test). Yeniden düzenleme, öncesinde ve sonrasında aynı testlerden geçti.</li>
+  <li><b>Arayüz:</b> ekranlar tarayıcıda iki genişlikte açılıp görüntüleri incelendi; formlar uçtan uca dolduruldu.</li>
+  <li><b>Sayılar:</b> tablolar ve grafikler <code>docs/rapor/olustur.py</code> ile <code>docs/degerlendirme/</code> altındaki ölçüm dosyalarından üretilir. Sınama kümesi sabit bir dosyadır; sonuçlar yeniden çalıştırılabilir.</li>
+  <li><b>Kaynaklar:</b> kaynakçadaki kitap ve makaleler ders notlarında geçenlerdir; kanunun yayım bilgisi resmî mevzuat kaynağından denetlendi.</li>
+  <li><b>Bağımlılıklar:</b> sürümleri kilit dosyalarıyla sabitlendi.</li>
+</ul>
+<p>Kodun ve raporun bütün sorumluluğu öğrenciye aittir.</p>
+</section>
+
+<section id="kaynak">
+<h2><span class="no">#</span>Kaynaklar</h2>
+<ul class="refs">
+  <li>Takan, S. (2026). <i>Yapay Zekâ Mühendisliğine Giriş</i>; <i>Temel Modelleri Anlamak</i>; <i>Problem Çerçeveleme</i> (Hafta 2). Yapay Zekâ Mühendisliği ve YZ Destekli Yazılım Geliştirme ders notları, Ankara Üniversitesi.</li>
+  <li>Takan, S. (2026). <i>Yazılım Tasarım Desenleri: Yapay Zekâ ve Veri Mühendisliği Perspektifinden</i>. Ders notu, Ankara Üniversitesi.</li>
+  <li>Gamma, E., Helm, R., Johnson, R., Vlissides, J. (1994). <i>Design Patterns: Elements of Reusable Object-Oriented Software</i>. Addison-Wesley.</li>
+  <li>Martin, R. C. (2017). <i>Clean Architecture</i>. Prentice Hall.</li>
+  <li>Huyen, C. (2022). <i>Designing Machine Learning Systems</i>. O'Reilly.</li>
+  <li>Huyen, C. (2025). <i>AI Engineering: Building Applications with Foundation Models</i>. O'Reilly.</li>
+  <li>Lakshmanan, V., Robinson, S., Munn, M. (2020). <i>Machine Learning Design Patterns</i>. O'Reilly.</li>
+  <li>Sculley, D. vd. (2015). Hidden Technical Debt in Machine Learning Systems. <i>NeurIPS 28</i>.</li>
+  <li>Klein, G. (2007). Performing a Project Premortem. <i>Harvard Business Review</i>, 85(9).</li>
+  <li>3071 sayılı Dilekçe Hakkının Kullanılmasına Dair Kanun (1984). Resmî Gazete, 10.11.1984, sayı 18571.</li>
+  <li>Desruisseaux, B. (2009). <i>Internet Calendaring and Scheduling Core Object Specification (iCalendar)</i>. RFC 5545, IETF.</li>
+</ul>
+</section>
