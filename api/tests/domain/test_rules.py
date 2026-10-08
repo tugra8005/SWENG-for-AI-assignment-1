@@ -290,3 +290,14 @@ def test_r8_parameter_must_stay_inside_its_unchangeable_range():
     assert r8_messages(regulation_change("ilgi_bekleme", {"gun": 365}))
     assert not r8_messages(regulation_change("yonetmelik_esigi", {"oran": "3/4", "karsilastirma": ">="}))
     assert not r8_messages(regulation_change("red_bekleme", {"gun": 45}))
+
+
+def test_rule_chain_reports_every_link_in_order():
+    from mesveret.domain.rules import proposal_chain
+
+    codes = []
+    link = proposal_chain()
+    while link is not None:
+        codes.append(link.code)
+        link = link.next
+    assert codes == ["GECERLILIK", "R1", "R2–R3", "R5", "R6", "R7", "R8", "R9"]

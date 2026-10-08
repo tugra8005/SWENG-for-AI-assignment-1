@@ -11,9 +11,9 @@ mühürlüdür: deftere yalnızca commit yazılır. Pencere kapanınca oylar aç
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any
+from typing import Any, ClassVar
 
 from sqlalchemy import select
 
@@ -40,7 +40,7 @@ from mesveret.domain.shade import vote_pseudonym
 from mesveret.domain.tally import tally_approval, tally_binary
 from mesveret.domain.text import locative_name, percent_tr
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
-from mesveret.services import ledger, notifications, ontology, proposals, regulation, topics
+from mesveret.services import events, ledger, ontology, proposals, regulation, topics
 from mesveret.services.oracle import ORACLE_ID
 from mesveret.services.profile import nickname_map
 
@@ -118,8 +118,7 @@ def _snapshot(ctx: Ctx, session: DecisionSession, p: Proposal, delegations,
     )
     ctx.db.add(item)
     if not concurrent:
-        p.status, p.session_id = "VOTING", session.id
-        ctx.graph.set_proposal_status(p.id, p.status)
+        proposals.enter_session(ctx, p, session.id)
     return item
 
 
@@ -204,10 +203,7 @@ def open_session(
             continue
         vote, reason = _oracle_decision(ctx, p)
         item.oracle_note = {"choice": YES if vote else NO, "reason": reason}
-        choice: Any = vote
-        if p.type == "KAPANIS":
-            choice = [ct.id for ct in proposals.closure_texts(ctx, p)] if vote else []
-        _cast(ctx, session, item, p, oracle, choice)
+        _cast(ctx, session, item, p, oracle, ballot_for(p).oracle_choice(ctx, p, vote))
 
     if scripted:
         apply_vote_plan(ctx, session)
@@ -238,20 +234,6 @@ def apply_vote_plan(ctx: Ctx, session: DecisionSession) -> list[str]:
 # --- oy -----------------------------------------------------------------------------------------
 
 
-def _normalize_choice(p: Proposal, choice: Any, ctx: Ctx) -> Any:
-    if p.type == "KAPANIS":
-        if not isinstance(choice, list):
-            raise DomainError("Kapanış oylamasında kabul edilebilir metinleri işaretleyin.")
-        valid = {ct.id for ct in proposals.closure_texts(ctx, p)}
-        ids = sorted({int(c) for c in choice})
-        if not set(ids) <= valid:
-            raise DomainError("Geçersiz karar metni.")
-        return ids
-    if not isinstance(choice, bool):
-        raise DomainError("Bu oylamada EVET ya da HAYIR seçilmeli.")
-    return YES if choice else NO
-
-
 def _cast(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Proposal, user: User,
           choice: Any) -> Ballot:
     flagged = {f["user_id"]: f["reason"] for f in item.flagged}
@@ -271,7 +253,7 @@ def _cast(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Proposal, us
     )).first()
     if existing:
         raise Conflict("Bu oylamada oyunuzu zaten verdiniz; mühürlü oy değiştirilemez.")
-    normalized = _normalize_choice(p, choice, ctx)
+    normalized = ballot_for(p).normalize(ctx, p, choice)
     # Geliştirme ortamında tuz türetilir: demo ve tohum iki çalıştırmada aynı defteri üretir.
     salt = (derived_salt(ctx.settings.shade_key.encode(), session.id, p.id, item.vote_scope_id,
                          user.id) if ctx.settings.is_dev else new_salt())
@@ -414,36 +396,62 @@ def _pct_whole(yes: int, cast: int) -> str:
     return percent_tr((200 * yes + cast) // (2 * cast), 0) if cast else "oy yok"
 
 
-def _close_approval(ctx: Ctx, session: DecisionSession, item: SessionItem, p: Proposal) -> None:
-    ballots = _reveal(ctx, session, p, item)
-    texts = proposals.closure_texts(ctx, p)
-    votes = {b.voter_id: set(b.choice) for b in ballots}
-    t = tally_approval(votes, item.resolved, set(item.eligible), [ct.id for ct in texts])
-    tn = nickname_map(ctx, [ct.author_id for ct in texts])
-    result = {
-        **_base_result(ctx, item), "kind": "approval", "winner": t.winner, "tie": t.tie,
-        "scores": [{"text_id": ct.id, "author": tn.get(ct.author_id), "text": ct.text,
-                    "score": t.scores[ct.id]} for ct in texts],
-        "abstained": len(t.abstained), "votes": _votes_view(ctx, item, ballots, t.weights),
-    }
-    if t.winner is not None:
-        result["note"] = "En çok onayı alan metin Karar oldu."
-        item.result = result
-        proposals.accept(ctx, p, winner_text_id=t.winner, note=result["note"])
-    else:
-        result["note"] = ("Eşitlik: Karar çıkmadı." if t.tie else "Hiç onay yok: Karar çıkmadı.")
-        item.result = result
-        proposals.reject(ctx, p, result["note"])
-
-
 def _close_proposal(ctx: Ctx, session: DecisionSession, p: Proposal, items: list[SessionItem],
                     reg: Regulation) -> None:
-    """Önerinin bütün oylamalarını açar ve sayar; öneri ancak hepsinde çoğunluk alırsa geçer."""
-    main = next(i for i in items if not i.concurrent)
-    subs = [i for i in items if i.concurrent]
-    if p.type == "KAPANIS":
-        _close_approval(ctx, session, main, p)
-    else:
+    """Önerinin bütün oylamalarını açar, oylama biçimine göre sayar ve sonucu uygular."""
+    ballot_for(p).close(ctx, session, p, items, reg)
+    for it in items:
+        ledger.enqueue(ctx, "OYLAMA_SONUCU", {
+            "oturum": session.id, "oneri": p.id, "kapsam": it.vote_scope_id,
+            "sonuc": {k: v for k, v in (it.result or {}).items() if k != "votes"},
+        })
+
+
+# --- oylama biçimleri (Strategy) ----------------------------------------------------------------
+
+
+class BallotMethod(ABC):
+    """Karar Saati'nde bir önerinin nasıl oylanıp sayıldığı. Öneri türü biçimi seçer
+    (``ProposalKind.ballot``); oturum kodu biçimi sormaz, ona sorar."""
+
+    kind: ClassVar[str]
+
+    @abstractmethod
+    def normalize(self, ctx: Ctx, p: Proposal, choice: Any) -> Any:
+        """Pusuladan gelen seçimi doğrular ve saklanacak biçime çevirir."""
+
+    @abstractmethod
+    def oracle_choice(self, ctx: Ctx, p: Proposal, vote: bool) -> Any:
+        """Hâtif'in EVET/HAYIR kararının bu biçimdeki karşılığı."""
+
+    def ballot_extra(self, ctx: Ctx, p: Proposal) -> dict[str, Any]:
+        """Pusulada gösterilecek ek alanlar."""
+        return {}
+
+    @abstractmethod
+    def close(self, ctx: Ctx, session: DecisionSession, p: Proposal, items: list[SessionItem],
+              reg: Regulation) -> None:
+        """Oyları açar, sayar, ``item.result``'ı yazar ve öneriyi kabul ya da reddeder."""
+
+
+class YesNoBallot(BallotMethod):
+    """EVET/HAYIR: eşik maddesine göre ağırlıklı sayım. Bölünebilir kaynakta orantısız etkilenen
+    her alt kapsam da ayrıca oylar; öneri ancak hepsinde geçerse kabul edilir."""
+
+    kind = "binary"
+
+    def normalize(self, ctx: Ctx, p: Proposal, choice: Any) -> Any:
+        if not isinstance(choice, bool):
+            raise DomainError("Bu oylamada EVET ya da HAYIR seçilmeli.")
+        return YES if choice else NO
+
+    def oracle_choice(self, ctx: Ctx, p: Proposal, vote: bool) -> Any:
+        return vote
+
+    def close(self, ctx: Ctx, session: DecisionSession, p: Proposal, items: list[SessionItem],
+              reg: Regulation) -> None:
+        main = next(i for i in items if not i.concurrent)
+        subs = [i for i in items if i.concurrent]
         results = {it.id: _binary_result(ctx, session, it, p, reg) for it in [main, *subs]}
         passed = all(r["passed"] for r in results.values())
         summary = None
@@ -471,11 +479,61 @@ def _close_proposal(ctx: Ctx, session: DecisionSession, p: Proposal, items: list
         else:
             proposals.reject(ctx, p, note)
         main.result = {**results[main.id], "overall": overall}
-    for it in items:
-        ledger.enqueue(ctx, "OYLAMA_SONUCU", {
-            "oturum": session.id, "oneri": p.id, "kapsam": it.vote_scope_id,
-            "sonuc": {k: v for k, v in (it.result or {}).items() if k != "votes"},
-        })
+
+
+class ApprovalBallot(BallotMethod):
+    """Onay oylaması (kapanış): seçmen kabul edilebilir bulduğu metinleri işaretler; en çok
+    ağırlıklı onayı alan metin Karar olur. Eşitlik ya da sıfır onay: Karar çıkmaz."""
+
+    kind = "approval"
+
+    def normalize(self, ctx: Ctx, p: Proposal, choice: Any) -> Any:
+        if not isinstance(choice, list):
+            raise DomainError("Kapanış oylamasında kabul edilebilir metinleri işaretleyin.")
+        valid = {ct.id for ct in proposals.closure_texts(ctx, p)}
+        ids = sorted({int(c) for c in choice})
+        if not set(ids) <= valid:
+            raise DomainError("Geçersiz karar metni.")
+        return ids
+
+    def oracle_choice(self, ctx: Ctx, p: Proposal, vote: bool) -> Any:
+        return [ct.id for ct in proposals.closure_texts(ctx, p)] if vote else []
+
+    def ballot_extra(self, ctx: Ctx, p: Proposal) -> dict[str, Any]:
+        texts = proposals.closure_texts(ctx, p)
+        tn = nickname_map(ctx, [ct.author_id for ct in texts])
+        return {"texts": [{"id": ct.id, "author": tn.get(ct.author_id), "text": ct.text}
+                          for ct in texts]}
+
+    def close(self, ctx: Ctx, session: DecisionSession, p: Proposal, items: list[SessionItem],
+              reg: Regulation) -> None:
+        item = next(i for i in items if not i.concurrent)
+        ballots = _reveal(ctx, session, p, item)
+        texts = proposals.closure_texts(ctx, p)
+        votes = {b.voter_id: set(b.choice) for b in ballots}
+        t = tally_approval(votes, item.resolved, set(item.eligible), [ct.id for ct in texts])
+        tn = nickname_map(ctx, [ct.author_id for ct in texts])
+        result = {
+            **_base_result(ctx, item), "kind": "approval", "winner": t.winner, "tie": t.tie,
+            "scores": [{"text_id": ct.id, "author": tn.get(ct.author_id), "text": ct.text,
+                        "score": t.scores[ct.id]} for ct in texts],
+            "abstained": len(t.abstained), "votes": _votes_view(ctx, item, ballots, t.weights),
+        }
+        if t.winner is not None:
+            result["note"] = "En çok onayı alan metin Karar oldu."
+            item.result = result
+            proposals.accept(ctx, p, winner_text_id=t.winner, note=result["note"])
+        else:
+            result["note"] = ("Eşitlik: Karar çıkmadı." if t.tie else "Hiç onay yok: Karar çıkmadı.")
+            item.result = result
+            proposals.reject(ctx, p, result["note"])
+
+
+BALLOTS: dict[str, BallotMethod] = {b.kind: b for b in (YesNoBallot(), ApprovalBallot())}
+
+
+def ballot_for(p: Proposal) -> BallotMethod:
+    return BALLOTS[proposals.ballot_kind(p)]
 
 
 def close_session(ctx: Ctx, session: DecisionSession) -> None:
@@ -491,8 +549,8 @@ def close_session(ctx: Ctx, session: DecisionSession) -> None:
     for pid, items in groups.items():
         _close_proposal(ctx, session, ctx.db.get(Proposal, pid), items, reg)
     session.status, session.closed_at = "CLOSED", ctx.now
-    # Oy verenlere ve öneri sahiplerine sonuç bildirimi (site içi zil).
-    notifications.session_closed(ctx, session, all_items)
+    # Oy verenlere ve öneri sahiplerine sonuç bildirimi (site içi zil) olaya abone.
+    events.publish(ctx, events.SessionClosed(session, all_items))
     ledger.enqueue(ctx, "OTURUM_KAPANDI", {"oturum": session.id, "kapanis": ctx.now.isoformat()})
     # Oturumda kabul edilen değişikliklerden sonra yönetmeliğin tam hâli ve hash'i.
     regulation.record_state(ctx, session.id)
@@ -502,29 +560,14 @@ def close_session(ctx: Ctx, session: DecisionSession) -> None:
 # --- zamanlayıcı olayları -----------------------------------------------------------------------
 
 
-def due_events(ctx: Ctx, until: datetime, last: datetime | None) -> list:
-    events: list[tuple[datetime, str, Callable[[Ctx], None]]] = []
-    current = open_session_row(ctx)
-    if current is not None and current.closes_at <= until:
-        sid = current.id
-        events.append((current.closes_at, f"Karar Saati #{sid} kapandı",
-                       lambda c, sid=sid: _close_scheduled(c, sid)))
-    if last is not None:
-        occ = next_occurrence(last, ctx.reg.decision_hour())
-        if occ <= until:
-            events.append((occ, "haftalık Karar Saati açıldı",
-                           lambda c, occ=occ: _open_scheduled(c, occ)))
-    return events
-
-
-def _close_scheduled(ctx: Ctx, session_id: int) -> None:
+def close_scheduled(ctx: Ctx, session_id: int) -> None:
     """Zamanlanmış kapanış idempotenttir: oturum zaten kapandıysa hiçbir şey yazmaz."""
     session = get_session(ctx, session_id)
     if session.status == "OPEN":
         close_session(ctx, session)
 
 
-def _open_scheduled(ctx: Ctx, occ: datetime) -> None:
+def open_scheduled(ctx: Ctx, occ: datetime) -> None:
     exists = ctx.db.execute(
         select(DecisionSession.id).where(DecisionSession.scheduled_for == occ)
     ).first()
@@ -610,7 +653,7 @@ def ballot(ctx: Ctx, user: User) -> dict:
             "vote_scope": {"id": item.vote_scope_id,
                            "name": ontology.scope_label(ctx, item.vote_scope_id)},
             "concurrent": item.concurrent,
-            "kind": "approval" if p.type == "KAPANIS" else "binary",
+            "kind": ballot_for(p).kind,
             "voted": voted,
             "eligible": user.id in item.eligible or user.id in flagged,
             "my_choice": mine.choice if mine is not None else None,
@@ -631,10 +674,7 @@ def ballot(ctx: Ctx, user: User) -> dict:
             entry.update(can_vote=False, reason=f"Oyunuz havale zinciriyle {name} adlı yurttaşa gidiyor.")
         else:
             entry.update(can_vote=not voted, reason=None if not voted else "Oyunuz mühürlendi.")
-        if p.type == "KAPANIS":
-            tn = nickname_map(ctx, [ct.author_id for ct in proposals.closure_texts(ctx, p)])
-            entry["texts"] = [{"id": ct.id, "author": tn.get(ct.author_id), "text": ct.text}
-                              for ct in proposals.closure_texts(ctx, p)]
+        entry.update(ballot_for(p).ballot_extra(ctx, p))
         out.append(entry)
     return {"session": {"id": session.id, "opened_at": session.opened_at,
                         "closes_at": session.closes_at}, "items": out}

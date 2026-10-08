@@ -1,14 +1,18 @@
 """Denetim kuralları R1, R2, R3, R5, R6, R7, R8, R9 (R4 havalede: ``domain.delegation``).
 
 Her öneri açılırken çalışır; ihlaller Türkçe gerekçeyle döner. Hâtif oylama anında
-aynı kuralları yeniden çalıştırır.
+aynı kuralları yeniden çalıştırır. Kurallar bir denetim zinciridir (Chain of Responsibility,
+dosyanın sonunda): her halka kendi türlerini denetler ve öneriyi bir sonrakine iletir.
 """
 
 from __future__ import annotations
 
+import itertools
+from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import ClassVar
 
 from mesveret.domain import addressees
 from mesveret.domain.ontology import OntologyView, ResourceInfo, ResourceKind, ScopeInfo
@@ -105,8 +109,6 @@ def _scope_label(scope: ScopeInfo) -> str:
 
 
 def _check_r1(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
-    if d.type is not ProposalType.ALT_KONU:
-        return
     parent_area_id = c.onto.topic_area(d.parent_topic_id) if d.parent_topic_id else None
     if parent_area_id is None:
         report.violations.append(Violation("GECERLILIK", "Üst konu bulunamadı."))
@@ -252,8 +254,6 @@ def _check_r6(c: RuleContext, report: RuleReport) -> None:
 
 def _check_r7(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
     """Silme gerekçesi: başkasının içeriğini silmek bir içerik kuralına ve alıntıya dayanır."""
-    if d.type is not ProposalType.SILME:
-        return
     known = c.reg.content_rules()
     unknown = [code for code in d.content_rules if code not in known]
     if unknown:
@@ -281,7 +281,7 @@ def _check_r7(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
 
 def _check_r8(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
     """Yönetmeliğin tabanı: değiştirilemez maddeye dokunulamaz; parametre izinli aralığında kalır."""
-    if d.type is not ProposalType.YONETMELIK or not d.article_key:
+    if not d.article_key:
         return
     key = d.article_key
     if c.reg.is_unchangeable(key):
@@ -304,8 +304,6 @@ def _check_r8(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
 def _check_r9(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
     """Muhatap: konu önerisi bir yere iletilmek için açılır; kapsam yalnızca yetki alanındaki
     muhataba yazar (R2'nin muhatap karşılığı)."""
-    if d.type not in (ProposalType.KONU, ProposalType.ALT_KONU):
-        return
     if not d.addressee:
         report.violations.append(Violation(
             "R9", "Muhatap seçilmeli: konu önerisi bir yere iletilmek için açılır (Meşveret "
@@ -321,19 +319,104 @@ def _check_r9(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
 
 
 def _check_area(d: ProposalDraft, c: RuleContext, report: RuleReport) -> None:
-    needs_area = d.type in (ProposalType.KONU, ProposalType.ALT_KONU)
-    if needs_area and (d.area_id is None or c.onto.area(d.area_id) is None):
+    if d.area_id is None or c.onto.area(d.area_id) is None:
         report.violations.append(Violation("GECERLILIK", "Alan bulunamadı."))
 
 
+# --- denetim zinciri (Chain of Responsibility) -------------------------------------------------
+
+
+class Rule(ABC):
+    """Denetim zincirinin bir halkası. Halka, öneri türü kendisini ilgilendiriyorsa denetler,
+    bulduğunu rapora ekler ve öneriyi bir sonraki halkaya iletir. Zincir ihlalde kesilmez: kişi
+    bütün gerekçeleri tek seferde görür. Yeni bir kural, zincire yeni bir halka eklemektir;
+    mevcut halkalar değişmez."""
+
+    code: ClassVar[str]
+    types: ClassVar[frozenset[ProposalType] | None] = None  # None: her tür
+
+    def __init__(self, next_rule: Rule | None = None) -> None:
+        self.next = next_rule
+
+    def handle(self, d: ProposalDraft, c: RuleContext, report: RuleReport) -> RuleReport:
+        if self.types is None or d.type in self.types:
+            self.check(d, c, report)
+        return self.next.handle(d, c, report) if self.next else report
+
+    @abstractmethod
+    def check(self, d: ProposalDraft, c: RuleContext, report: RuleReport) -> None: ...
+
+
+_TOPICS = frozenset({ProposalType.KONU, ProposalType.ALT_KONU})
+
+
+class AreaExists(Rule):
+    code, types = "GECERLILIK", _TOPICS
+
+    def check(self, d, c, report):
+        _check_area(d, c, report)
+
+
+class SubtopicArea(Rule):
+    code, types = "R1", frozenset({ProposalType.ALT_KONU})
+
+    def check(self, d, c, report):
+        _check_r1(d, c, report)
+
+
+class OwnershipAndRegulation(Rule):
+    code = "R2–R3"
+
+    def check(self, d, c, report):
+        _check_r2_r3(d, c, report)
+
+
+class ProposerVoteRight(Rule):
+    code = "R5"
+
+    def check(self, d, c, report):
+        _check_r5(c, report)
+
+
+class RejectionCooldown(Rule):
+    code = "R6"
+
+    def check(self, d, c, report):
+        _check_r6(c, report)
+
+
+class DeletionGround(Rule):
+    code, types = "R7", frozenset({ProposalType.SILME})
+
+    def check(self, d, c, report):
+        _check_r7(d, c, report)
+
+
+class RegulationFloor(Rule):
+    code, types = "R8", frozenset({ProposalType.YONETMELIK})
+
+    def check(self, d, c, report):
+        _check_r8(d, c, report)
+
+
+class AddresseeJurisdiction(Rule):
+    code, types = "R9", _TOPICS
+
+    def check(self, d, c, report):
+        _check_r9(d, c, report)
+
+
+def chain(*rules: Rule) -> Rule:
+    """Halkaları verilen sırayla birbirine bağlar; zincirin başını döner."""
+    for a, b in itertools.pairwise(rules):
+        a.next = b
+    return rules[0]
+
+
+def proposal_chain() -> Rule:
+    return chain(AreaExists(), SubtopicArea(), OwnershipAndRegulation(), ProposerVoteRight(),
+                 RejectionCooldown(), DeletionGround(), RegulationFloor(), AddresseeJurisdiction())
+
+
 def check_proposal(d: ProposalDraft, c: RuleContext) -> RuleReport:
-    report = RuleReport()
-    _check_area(d, c, report)
-    _check_r1(d, c, report)
-    _check_r2_r3(d, c, report)
-    _check_r5(c, report)
-    _check_r6(c, report)
-    _check_r7(d, c, report)
-    _check_r8(d, c, report)
-    _check_r9(d, c, report)
-    return report
+    return proposal_chain().handle(d, c, RuleReport())

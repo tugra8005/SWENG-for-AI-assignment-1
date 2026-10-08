@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from mesveret import clock
 from mesveret.context import Ctx
 from mesveret.db.models import DecisionSession, LedgerOutbox
-from mesveret.services import decision_hour, delegation, devtools, proposals, scheduler
+from mesveret.services import decision_hour, delegation, devtools, jobs, proposals, scheduler
 from mesveret.services.proposals import ProposalInput
 from tests.integration.helpers import open_topic, post, reload
 from tests.integration.world import make_user
@@ -76,10 +76,10 @@ def test_every_scheduled_job_is_idempotent(ctx):
 
     occ = decision_hour.next_occurrence(ctx.now, later.reg.decision_hour())
     at_open = later.at(occ)
-    twice(lambda: decision_hour._open_scheduled(at_open, occ))
+    twice(lambda: jobs.OpenDecisionHour(occ).run(at_open))
     [session] = later.db.execute(select(DecisionSession)).scalars().all()
     at_close = later.at(session.closes_at)
-    twice(lambda: decision_hour._close_scheduled(at_close, session.id))
+    twice(lambda: jobs.CloseDecisionHour(session.closes_at, session.id).run(at_close))
     assert session.status == "CLOSED"
 
 

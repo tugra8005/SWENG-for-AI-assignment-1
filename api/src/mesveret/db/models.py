@@ -225,6 +225,58 @@ class PetitionReply(Base):
     ledger_hash: Mapped[str | None] = mapped_column(String(64))
 
 
+# --- takvim --------------------------------------------------------------------------------------
+
+
+class CalendarEvent(Base):
+    """Takvime giden konunun etkinliği: konu kabul edilince planlanır (bkz. services/calendar).
+
+    Durum hesaplanır: başlamadan önce yaklaşan, başlangıç ile bitiş arası sürüyor, sonra
+    gerçekleşti. Rapor ve fotoğraflar etkinlikten sonra katılım bildirenlerden gelir.
+    """
+
+    __tablename__ = "calendar_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"), unique=True)
+    proposal_id: Mapped[int] = mapped_column(ForeignKey("proposals.id"))
+    title: Mapped[str] = mapped_column(String(200))
+    starts_at: Mapped[datetime] = mapped_column(TS, index=True)
+    ends_at: Mapped[datetime] = mapped_column(TS)
+    venue_kind: Mapped[str] = mapped_column(String(12))  # SALON | ADRES | CEVRIMICI
+    venue_text: Mapped[str] = mapped_column(String(300))
+    venue_resource_id: Mapped[str | None] = mapped_column(String(64))  # SALON: "salon"
+    created_at: Mapped[datetime] = mapped_column(TS)
+    ledger_hash: Mapped[str | None] = mapped_column(String(64))
+
+
+class EventAttendance(Base):
+    """"Geliyorum": etkinlik başlamadan bildirilir ve geri alınabilir."""
+
+    __tablename__ = "event_attendance"
+    __table_args__ = (UniqueConstraint("event_id", "user_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("calendar_events.id"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(TS)
+
+
+class EventReport(Base):
+    """Etkinlik raporu: katılım bildiren biri etkinlik bittikten sonra yazar; kişi başına bir."""
+
+    __tablename__ = "event_reports"
+    __table_args__ = (UniqueConstraint("event_id", "author_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("calendar_events.id"), index=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    text: Mapped[str] = mapped_column(Text)
+    headcount: Mapped[int | None] = mapped_column(Integer)  # yazarın saydığı katılımcı
+    created_at: Mapped[datetime] = mapped_column(TS)
+    ledger_hash: Mapped[str | None] = mapped_column(String(64))
+
+
 # --- öneriler ------------------------------------------------------------------------------------
 
 

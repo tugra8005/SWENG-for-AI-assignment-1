@@ -32,7 +32,7 @@ from mesveret.db.models import (
 from mesveret.domain import addressees
 from mesveret.domain.addressees import Addressee, AddresseeKind
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
-from mesveret.services import ledger, media, ontology
+from mesveret.services import events, ledger, media, ontology
 from mesveret.services.profile import nickname_map
 
 REPLY_DAYS = 30  # 3071 sayılı Kanun, md. 7
@@ -98,10 +98,20 @@ def send(ctx: Ctx, topic: Topic, p: Proposal, kind: str, text: str) -> Petition 
         "alicilar": [r.name for r in to], "baslik": pet.subject, "metin": text,
         "dayanak": pet.basis,
     }, ref=pet)
-    from mesveret.services import notifications
-
-    notifications.petition_sent(ctx, pet, p.proposer_id)
+    events.publish(ctx, events.PetitionSent(pet, p.proposer_id))
     return pet
+
+
+@events.subscribe(events.TopicAccepted)
+def _on_topic_accepted(ctx: Ctx, e: events.TopicAccepted) -> None:
+    """Kurum muhataplı konu: kabul edilen talep kuruma dilekçe olarak gider."""
+    send(ctx, e.topic, e.proposal, "TALEP", e.proposal.body)
+
+
+@events.subscribe(events.DecisionMade)
+def _on_decision_made(ctx: Ctx, e: events.DecisionMade) -> None:
+    """Kurum muhataplı konunun Kararı aynı kuruma karar bildirimi olarak iletilir."""
+    send(ctx, e.topic, e.proposal, "KARAR", e.decision.text)
 
 
 # --- yanıt ------------------------------------------------------------------------------------------
@@ -167,9 +177,7 @@ def add_reply(ctx: Ctx, user: User, petition_id: int, *, recipient_id: str, text
         "tarih": replied_on.isoformat(), "sayi": reply.reference, "isleyen": user.nickname,
     }, ref=reply)
     media.attach(ctx, scan, "yanit", reply.id)
-    from mesveret.services import notifications
-
-    notifications.petition_replied(ctx, pet, reply, names[recipient_id], user.id)
+    events.publish(ctx, events.PetitionReplied(pet, reply, names[recipient_id], user.id))
     ctx.commit()
     return reply
 

@@ -12,6 +12,7 @@ from mesveret.config import Settings, get_settings
 from mesveret.errors import DomainError
 from mesveret.routers import (
     auth,
+    calendar,
     cellar,
     decision_hour,
     health,
@@ -99,7 +100,7 @@ def create_app(
         )
 
     for module in (health, auth, users, ontology, topics, proposals, decision_hour, cellar,
-                   notifications, media, petitions, ledger_router):
+                   notifications, media, petitions, calendar, ledger_router):
         app.include_router(module.router)
     if settings.is_dev:
         # Hesap değiştirici ve demo adımı: üretimde bu uç noktalar hiç yoktur.

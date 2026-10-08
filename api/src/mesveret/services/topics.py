@@ -257,6 +257,12 @@ def list_topics(ctx: Ctx, area_id: str | None = None) -> list[dict]:
     return [topic_summary(ctx, t) for t in ctx.db.execute(q).scalars()]
 
 
+def _event(ctx: Ctx, topic: Topic) -> dict | None:
+    from mesveret.services import calendar  # calendar media'yı, media bu modülü içe aktarır
+
+    return calendar.for_topic(ctx, topic)
+
+
 def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
     from mesveret.services import decision_hour, petitions, proposals  # bu modülü içe aktarırlar
 
@@ -337,6 +343,7 @@ def topic_view(ctx: Ctx, topic_id: int, viewer: User | None) -> dict:
         "pending_deletion": pending.get(None),
         "decision": decision_view,
         "petitions": petitions.for_topic(ctx, topic.id),
+        "event": _event(ctx, topic),
         "narrowings": narrowings,
         "subtopics": [topic_summary(ctx, t) for t in subtopics],
         "proposals": related,

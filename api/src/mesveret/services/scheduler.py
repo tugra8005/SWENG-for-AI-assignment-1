@@ -1,5 +1,8 @@
 """Zamanlayıcı: sahte saate göre vadesi gelen işleri sırayla, her birini kendi vade anında işler.
 
+İşlerin kendisi ``services.jobs``'taki komut nesneleridir (Command); zamanlayıcı yalnızca
+çağırıcıdır (invoker): en erken vadeli işi seçer, o anın bağlamında çalıştırır.
+
 API içindeki arka plan iş parçacığı ``interval`` saniyede bir ``tick`` çağırır; geliştirme
 CLI'ı ``advance-time`` ile aynı fonksiyonu hedef anla çağırır.
 
@@ -24,18 +27,17 @@ from __future__ import annotations
 
 import logging
 import threading
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
 
-from sqlalchemy import Engine, select, text
+from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 
 from mesveret import clock
 from mesveret.context import Ctx
-from mesveret.db.models import Proposal, SchedulerState
-from mesveret.errors import DomainError
-from mesveret.services import ledger, proposals
+from mesveret.db.models import SchedulerState
+from mesveret.services import jobs, ledger
 
 log = logging.getLogger("mesveret.scheduler")
 
@@ -95,58 +97,6 @@ def exclusive(bind: Engine | Session, *, wait: bool = True) -> Iterator[bool]:
         finally:
             conn.close()
 
-Event = tuple[datetime, str, Callable[[Ctx], None]]
-
-
-def _proposal_events(ctx: Ctx, until: datetime) -> list[Event]:
-    events: list[Event] = []
-    for status, label, handler in (
-        ("SILENT", "sessiz onay süresi doldu", proposals.end_silent_period),
-        ("RIVAL_PERIOD", "rakip metin süresi doldu", proposals.end_rival_period),
-    ):
-        row = ctx.db.execute(
-            select(Proposal).where(Proposal.status == status, Proposal.deadline_at <= until)
-            .order_by(Proposal.deadline_at, Proposal.id).limit(1)
-        ).scalar_one_or_none()
-        if row is not None:
-            pid = row.id
-
-            def run(c: Ctx, pid=pid, handler=handler) -> None:
-                p = proposals.get_proposal(c, pid)
-                try:
-                    handler(c, p)
-                except DomainError as exc:
-                    proposals.reject(c, p, f"Uygulanamadı: {exc.message}")
-
-            events.append((row.deadline_at, f"#{pid}: {label}", run))
-    return events
-
-
-def _delegation_events(ctx: Ctx, until: datetime) -> list[Event]:
-    from mesveret.services import delegation
-
-    events: list[Event] = []
-    edge = delegation.next_expiry(ctx, until)
-    if edge is not None and edge.expires_at is not None:
-        giver, target = delegation.nicknames(ctx, [edge.user_id, edge.target_id])
-        area = f" ({edge.area_id})" if edge.area_id else ""
-        events.append((edge.expires_at, f"havale süresi doldu: {giver} → {target}{area}",
-                       lambda c, u=edge.user_id, a=edge.area_id: delegation.expire(c, u, a)))
-    req = delegation.next_request_expiry(ctx, until)
-    if req is not None:
-        giver, target = delegation.nicknames(ctx, [req.giver_id, req.target_id])
-        area = f" ({req.area_id})" if req.area_id else ""
-        events.append((req.decide_by, f"havale kabul süresi doldu: {giver} → {target}{area}",
-                       lambda c, rid=req.id: delegation.expire_request(c, rid)))
-    return events
-
-
-def _decision_hour_events(ctx: Ctx, until: datetime, last: datetime | None) -> list[Event]:
-    from mesveret.services import decision_hour
-
-    return decision_hour.due_events(ctx, until, last)
-
-
 def ensure_state(ctx: Ctx) -> SchedulerState:
     """Zamanlayıcının başlangıç anını kurar (tohum ve testler bunu kurulum anında çağırır)."""
     return _state(ctx)
@@ -172,17 +122,14 @@ def _tick_locked(ctx: Ctx, until: datetime) -> list[str]:
     st = _state(ctx)
     done: list[str] = []
     while True:
-        # Aynı andaki olaylarda havale dolumu önce gelir (min ilk en küçüğü seçer): o anda açılan
-        # oturumun anlık görüntüsü zaten bitişi gelmiş havaleyi almaz.
-        events = (_delegation_events(ctx, until) + _proposal_events(ctx, until)
-                  + _decision_hour_events(ctx, until, st.last_tick_at))
-        if not events:
+        due = jobs.due(ctx, until, st.last_tick_at)
+        if not due:
             break
-        when, label, run = min(events, key=lambda e: e[0])
-        run(ctx.at(when))
-        st.last_tick_at = max(st.last_tick_at or when, when)
+        job = min(due, key=lambda j: j.due_at)  # eşitlikte kaynak sırası (bkz. jobs.SOURCES)
+        job.run(ctx.at(job.due_at))
+        st.last_tick_at = max(st.last_tick_at or job.due_at, job.due_at)
         ctx.db.flush()
-        done.append(f"{when.isoformat()} {label}")
+        done.append(f"{job.due_at.isoformat()} {job.label}")
     st.last_tick_at = max(st.last_tick_at or until, until)
     ctx.db.commit()
     ledger.flush(ctx)

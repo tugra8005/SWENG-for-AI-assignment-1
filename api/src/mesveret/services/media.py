@@ -14,14 +14,22 @@ from typing import Any
 from sqlalchemy import func, select
 
 from mesveret.context import Ctx
-from mesveret.db.models import Media, Message, Petition, PetitionReply, Topic, User
+from mesveret.db.models import (
+    CalendarEvent,
+    EventReport,
+    Media,
+    Message,
+    Petition,
+    PetitionReply,
+    Topic,
+    User,
+)
 from mesveret.domain import images
 from mesveret.errors import Conflict, DomainError, Forbidden, NotFound
 from mesveret.services import ledger
 
 MAX_PER_ITEM = 4  # bir mesaja eklenebilecek görsel
 MAX_UNATTACHED = 12  # kişi başına yüklenmiş ama henüz eklenmemiş görsel
-KINDS = ("mesaj", "oneri", "yanit")
 VARIANTS = {"baski": "image/png", "ozgun": "image/jpeg"}
 
 
@@ -131,6 +139,36 @@ def cover(ctx: Ctx, proposal_id: int) -> dict | None:
     return view(m) if m is not None and gone_reason(ctx, m) is None else None
 
 
+def _topic_of_message(ctx: Ctx, ref_id: int) -> Topic | None:
+    msg = ctx.db.get(Message, ref_id)
+    return ctx.db.get(Topic, msg.topic_id) if msg is not None else None
+
+
+def _topic_of_proposal(ctx: Ctx, ref_id: int) -> Topic | None:
+    return ctx.db.execute(
+        select(Topic).where(Topic.accepted_proposal_id == ref_id)
+    ).scalar_one_or_none()
+
+
+def _topic_of_reply(ctx: Ctx, ref_id: int) -> Topic | None:
+    reply = ctx.db.get(PetitionReply, ref_id)
+    pet = ctx.db.get(Petition, reply.petition_id) if reply is not None else None
+    return ctx.db.get(Topic, pet.topic_id) if pet is not None else None
+
+
+def _topic_of_report(ctx: Ctx, ref_id: int) -> Topic | None:
+    report = ctx.db.get(EventReport, ref_id)
+    event = ctx.db.get(CalendarEvent, report.event_id) if report is not None else None
+    return ctx.db.get(Topic, event.topic_id) if event is not None else None
+
+
+# Eklenti türü → görselin bağlı olduğu konuyu bulan fonksiyon. Yeni bir eklenti türü yalnızca
+# buraya bir satır ekler; ``gone_reason`` değişmez.
+_TOPIC_OF = {"mesaj": _topic_of_message, "oneri": _topic_of_proposal,
+             "yanit": _topic_of_reply, "rapor": _topic_of_report}
+KINDS = tuple(_TOPIC_OF)
+
+
 def gone_reason(ctx: Ctx, m: Media) -> str | None:
     """Görselin bağlı olduğu içerik oylamayla silindiyse gerekçe, değilse ``None``."""
     if m.attached_kind == "mesaj":
@@ -138,24 +176,11 @@ def gone_reason(ctx: Ctx, m: Media) -> str | None:
         if msg is not None and msg.deleted_by_proposal_id is not None:
             return (f"Bu görselin bulunduğu mesaj #{msg.deleted_by_proposal_id} numaralı "
                     "oylamayla silindi.")
-        topic = ctx.db.get(Topic, msg.topic_id) if msg is not None else None
-        if topic is not None and topic.deleted_by_proposal_id is not None:
-            return (f"Bu görselin bulunduğu konu #{topic.deleted_by_proposal_id} numaralı "
-                    "oylamayla silindi.")
-    elif m.attached_kind == "oneri":
-        topic = ctx.db.execute(
-            select(Topic).where(Topic.accepted_proposal_id == m.attached_id)
-        ).scalar_one_or_none()
-        if topic is not None and topic.deleted_by_proposal_id is not None:
-            return (f"Bu görselin bulunduğu konu #{topic.deleted_by_proposal_id} numaralı "
-                    "oylamayla silindi.")
-    elif m.attached_kind == "yanit":
-        reply = ctx.db.get(PetitionReply, m.attached_id)
-        pet = ctx.db.get(Petition, reply.petition_id) if reply is not None else None
-        topic = ctx.db.get(Topic, pet.topic_id) if pet is not None else None
-        if topic is not None and topic.deleted_by_proposal_id is not None:
-            return (f"Bu görselin bulunduğu konu #{topic.deleted_by_proposal_id} numaralı "
-                    "oylamayla silindi.")
+    find = _TOPIC_OF.get(m.attached_kind or "")
+    topic = find(ctx, m.attached_id) if find is not None else None
+    if topic is not None and topic.deleted_by_proposal_id is not None:
+        return (f"Bu görselin bulunduğu konu #{topic.deleted_by_proposal_id} numaralı "
+                "oylamayla silindi.")
     return None
 
 

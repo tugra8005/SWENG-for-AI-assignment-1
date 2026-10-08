@@ -12,7 +12,8 @@ Bildirimler yalnızca sitedeki zilde görünür; e-posta ya da push yoktur. Dör
 Gizli oy yalnızca sahibine gösterilir. Havaleyle kullanılan oyda temsilcinin oyu zaten açıktır.
 Bildirimler deftere yazılmaz: kişiye özeldir ve karar kaydı değildir.
 
-Bu modül ``proposals``'ı içe aktarmaz; ``proposals`` bildirim üretmek için bunu çağırır.
+Bu modül ``proposals``'ı içe aktarmaz: alan olaylarına abonedir (``events``, Observer). Öneri
+motoru, Karar Saati ve dilekçeler bildirimden habersiz yalnızca olayı yayımlar.
 """
 
 from __future__ import annotations
@@ -34,7 +35,7 @@ from mesveret.db.models import (
     Topic,
     User,
 )
-from mesveret.services import ontology
+from mesveret.services import events, ontology
 from mesveret.services.oracle import ORACLE_ID
 from mesveret.services.profile import nickname_map
 
@@ -159,6 +160,34 @@ def petition_replied(ctx: Ctx, pet: Petition, reply: PetitionReply, institution:
         _add(ctx, uid, "DILEKCE", f"{institution} yanıt verdi",
              [f"{pet.number} · {pet.subject}", excerpt], f"/dilekce/{pet.id}")
     ctx.db.flush()
+
+
+# --- abonelikler ---------------------------------------------------------------------------------
+
+
+@events.subscribe(events.SessionClosed)
+def _on_session_closed(ctx: Ctx, e: events.SessionClosed) -> None:
+    session_closed(ctx, e.session, e.items)
+
+
+@events.subscribe(events.SilentPeriodEnded)
+def _on_silent_period_ended(ctx: Ctx, e: events.SilentPeriodEnded) -> None:
+    silent_period_ended(ctx, e.proposal)
+
+
+@events.subscribe(events.MovedToSlowLane)
+def _on_moved_to_slow_lane(ctx: Ctx, e: events.MovedToSlowLane) -> None:
+    moved_to_slow_lane(ctx, e.proposal, e.count, e.threshold)
+
+
+@events.subscribe(events.PetitionSent)
+def _on_petition_sent(ctx: Ctx, e: events.PetitionSent) -> None:
+    petition_sent(ctx, e.petition, e.proposer_id)
+
+
+@events.subscribe(events.PetitionReplied)
+def _on_petition_replied(ctx: Ctx, e: events.PetitionReplied) -> None:
+    petition_replied(ctx, e.petition, e.reply, e.institution, e.entered_by)
 
 
 # --- okuma ---------------------------------------------------------------------------------------

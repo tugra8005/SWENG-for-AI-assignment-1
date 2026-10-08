@@ -32,6 +32,7 @@ class ProposalIn(BaseModel):
     share_effect: dict[str, dict[str, Any]] | None = None
     cover_media_id: str | None = None
     addressee: str | None = None
+    event: dict[str, Any] | None = None
 
 
 class RivalIn(BaseModel):
@@ -39,9 +40,9 @@ class RivalIn(BaseModel):
 
 
 @router.get("")
-def list_proposals(state: str | None = None, ctx: Ctx = Depends(get_ctx),
+def list_proposals(state: str | None = None, mine: bool = False, ctx: Ctx = Depends(get_ctx),
                    viewer: User | None = Depends(optional_user)) -> list[dict]:
-    return proposals.list_proposals(ctx, state, viewer)
+    return proposals.list_proposals(ctx, state, viewer, mine=mine)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
