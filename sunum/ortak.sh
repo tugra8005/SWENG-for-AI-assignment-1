@@ -31,7 +31,9 @@ dev() { (cd "$ROOT" && docker compose exec -T api meşveret-dev "$@" </dev/null)
 yigin() {
   adim "Docker yığını (PostgreSQL, Neo4j, defter, API)"
   docker info >/dev/null 2>&1 || hata "Docker çalışmıyor. Başlatın: sudo systemctl start docker"
-  (cd "$ROOT" && docker compose up -d --wait >"$CACHE/docker.log" 2>&1) \
+  # --build: kod değiştiyse imaj yeniden derlenir; değişmediyse önbellekten birkaç saniyede geçer.
+  # Olmazsa istemci yeni, API eski kalır ve yeni sayfalar "Not Found" alır.
+  (cd "$ROOT" && docker compose up -d --build --wait >"$CACHE/docker.log" 2>&1) \
     || hata "docker compose up başarısız; ayrıntı: $CACHE/docker.log"
   bekle 120 "API" curl -sf "$API/health"
   tamam "API hazır: $API"

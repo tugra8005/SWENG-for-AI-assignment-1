@@ -37,7 +37,7 @@ Her adımda kumanda adımın başlığını, sorusunu ve hangi kullanıcıyla ha
 
 **Saat donmuştur.** Demo boyunca geri sayımlar akmaz, zamanlayıcı kendiliğinden bir şey işlemez. Zamanı yalnızca adım geçişleri ilerletir; iki çalıştırma ekranda aynı sayıları gösterir. Demodan çıkmak için `meşveret-dev demo bitir`.
 
-**Kurtarma.** Bir adım bozulursa kumandada `g N` (ya da `meşveret-dev demo goto N`) o adımı baştan kurar (~20 sn). Başlatıcılar olmadan elle: `docker compose up -d`, `cd client && npx expo start --web`, `docker compose exec api meşveret-dev demo goto 1`, ardından her adımda `docker compose exec api meşveret-dev demo next`.
+**Kurtarma.** Bir adım bozulursa kumandada `g N` (ya da `meşveret-dev demo goto N`) o adımı baştan kurar (~20 sn). Başlatıcılar olmadan elle: `docker compose up -d --build`, `cd client && npx expo start --web`, `docker compose exec api meşveret-dev demo goto 1`, ardından her adımda `docker compose exec api meşveret-dev demo next`.
 
 ## Adımlar
 
