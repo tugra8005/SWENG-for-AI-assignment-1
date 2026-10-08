@@ -8,6 +8,7 @@ from mesveret.services import proposals
 from mesveret.services.proposals import ProposalInput
 from tests.integration.helpers import headers_for
 from tests.integration.test_media import _upload
+from tests.integration.test_seed import seeded  # noqa: F401  (fikstür)
 from tests.integration.world import make_user
 
 SALON = {"kind": "SALON"}
@@ -148,3 +149,29 @@ def test_topic_accepted_after_the_start_time_gets_no_event(ctx):
     assert ctx.db.execute(select(CalendarEvent)).first() is None
     note = ctx.db.execute(select(Notification).where(Notification.kind == "TAKVIM")).scalar_one()
     assert note.title == "Etkinlik takvime eklenemedi" and "geçmişti" in note.lines[0]
+
+
+def test_seed_calendar_and_front_page(seeded, client):  # noqa: F811
+    from mesveret.services import scheduler
+
+    cal = client.get("/calendar").json()
+    assert [e["title"] for e in cal["upcoming"]] == ["Menon okuması"]
+    [past] = cal["past"]
+    assert past["title"] == "Dekalog I gösterimi" and past["reports"] == 1
+    assert past["venue"]["kind"] == "SALON" and past["attendees"] == 6
+
+    page = client.get("/news").json()
+    kinds = {it["kind"] for it in [page["lead"], *page["items"]]}
+    assert {"GERCEKLESTI", "YANIT", "DILEKCE", "ETKINLIK", "KONU"} <= kinds
+    held = next(it for it in [page["lead"], *page["items"]] if it["kind"] == "GERCEKLESTI")
+    assert held["headline"] == "Gerçekleşti: Dekalog I gösterimi"
+    assert held["dek"].startswith("14 kişi katıldı.")
+    assert [e["title"] for e in page["upcoming"]] == ["Menon okuması"]
+
+    # Şiir akşamı itiraz süresinde: saat bir gün ilerleyince kabul edilir ve takvime düşer.
+    target = seeded.now + timedelta(days=1)
+    clock.set_now(seeded.db, target)
+    seeded.db.commit()
+    scheduler.tick(seeded.at(target), target)
+    titles = [e["title"] for e in client.get("/calendar").json()["upcoming"]]
+    assert titles == ["Menon okuması", "Şiir akşamı: Cemal Süreya"]

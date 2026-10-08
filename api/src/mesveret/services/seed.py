@@ -39,6 +39,7 @@ from sqlalchemy import select
 from mesveret import clock
 from mesveret.context import Ctx
 from mesveret.db.models import (
+    CalendarEvent,
     CellarPost,
     DevVotePlan,
     Petition,
@@ -51,6 +52,7 @@ from mesveret.domain.ontology import ResourceInfo, ResourceKind
 from mesveret.domain.scopes import ScopeSubtype
 from mesveret.services import (
     auth,
+    calendar,
     cellar,
     delegation,
     ontology,
@@ -847,6 +849,68 @@ def _scenario_istanbul(w: World) -> None:
         )).id))
 
 
+def _event_topic(w: World, key: str, author: str, parent: str, title: str, body: str,
+                 area: str, opened: datetime, starts: datetime, minutes: int, venue: dict,
+                 *, accept: bool = True) -> None:
+    """Takvime giden alt konu: etkinlik bilgisiyle açılır, 24 saat sonra kabul edilir."""
+    def open_(c: Ctx) -> None:
+        w.ids[f"p:{key}"] = proposals.open_proposal(c, w.users[author], ProposalInput(
+            type="ALT_KONU", title=title, body=body, area_id=area, scope_id="genel",
+            parent_topic_id=w.ids[parent], addressee="takvim",
+            event={"starts_at": starts.isoformat(), "duration_min": minutes, "venue": venue},
+        )).id
+
+    def accept_(c: Ctx) -> None:
+        p = c.db.get(Proposal, w.ids[f"p:{key}"])
+        proposals.accept(c, p)
+        c.commit()
+        topic_id = c.db.execute(select(Topic.id).where(Topic.accepted_proposal_id == p.id)
+                                ).scalar_one()
+        w.ids[key] = topic_id
+        w.ids[f"e:{key}"] = c.db.execute(select(CalendarEvent.id).where(
+            CalendarEvent.topic_id == topic_id)).scalar_one()
+
+    w.at(opened, open_)
+    if accept:
+        w.at(opened + timedelta(hours=24), accept_)
+
+
+def _attend(w: World, key: str, who: list[str], first: datetime) -> None:
+    for i, nick in enumerate(who):
+        w.at(first + timedelta(hours=5 * i), lambda c, nick=nick: calendar.attend(
+            c, w.users[nick], w.ids[f"e:{key}"], True))
+
+
+def _scenario_calendar(w: World) -> None:
+    """Takvim: gerçekleşmiş ve raporlanmış bir gösterim, yaklaşan bir okuma, itiraz süresindeki
+    bir şiir akşamı (saat bir gün ilerleyince kabul edilir ve takvime düşer)."""
+    # Cuma 25 Eylül 20:00 İstanbul; öneri 22 Eylül'de açıldı.
+    dekalog = datetime(2026, 9, 25, 17, 0, tzinfo=UTC)
+    _event_topic(w, "dekalog", "nazli", "film", "Dekalog I gösterimi",
+                 "Film günlerinin ilk buluşması: Kieślowski'nin Dekalog'unun ilk bölümü. "
+                 "Gösterimden sonra yarım saat konuşalım.", "sinema", _t(days=7, hours=4, minutes=30),
+                 dekalog, 120, {"kind": "SALON"})
+    _attend(w, "dekalog", ["nazli", "leyla", "mert", "hakan", "irem", "gizem"],
+            _t(days=6, hours=3))
+    w.at(_t(days=2, hours=22), lambda c: calendar.add_report(
+        c, w.users["nazli"], w.ids["e:dekalog"],
+        "On dört kişi geldik; altı kişi Geliyorum demişti, gerisi kapıda katıldı. Gösterimden "
+        "sonra bir saat 'yalan söylemek her zaman yanlış mı' sorusunu konuştuk. Bir sonraki "
+        "buluşma için Dekalog II önerildi; altyazılı kopya iyi çalıştı.", 14, []))
+    # Perşembe 1 Ekim 20:00 İstanbul, çevrim içi.
+    _event_topic(w, "menon", "selin", "felsefe", "Menon okuması",
+                 "İlk okuma buluşması: Menon'un köle çocuk sahnesi. Metni önceden okuyup gelin.",
+                 "felsefe", _t(days=7, hours=4), datetime(2026, 10, 1, 17, 0, tzinfo=UTC), 90,
+                 {"kind": "CEVRIMICI", "text": "Görüntülü toplantı; bağlantı buluşmadan bir saat "
+                                               "önce konuya yazılır"})
+    _attend(w, "menon", ["selin", "kaan", "tolga", "deniz", "elif"], _t(days=5))
+    # Cuma 2 Ekim 20:00 İstanbul, ortak salon; öneri tohum anından 5 dakika önce açıldı.
+    _event_topic(w, "siir_aksami", "okan", "siir", "Şiir akşamı: Cemal Süreya",
+                 "Ekimin şiir akşamında herkes Cemal Süreya'dan bir şiir okusun.", "siir",
+                 _t(minutes=5), datetime(2026, 10, 2, 17, 0, tzinfo=UTC), 120, {"kind": "SALON"},
+                 accept=False)
+
+
 def _scenario_maturation(w: World) -> None:
     """9. Olgunlaşma: Genel kapsamlı yönetmelik önerisi Karar Saati'nden 10 dakika önce açılır.
 
@@ -975,6 +1039,7 @@ def _build(ctx: Ctx) -> Iterator[str]:
     _raiders(w)
     _scenario_istanbul(w)
     _scenario_maturation(w)
+    _scenario_calendar(w)
     w.run(ctx)
     w.users["ayse"].cellar_warned_at = None  # sunumda Mahzen giriş uyarısı görünsün
     _vote_plan(ctx, w)

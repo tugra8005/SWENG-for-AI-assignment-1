@@ -52,7 +52,8 @@ def test_session_close_notifies_voters_delegators_and_proposers(seeded):  # noqa
                                       Ballot.proposal_id == ids["pay_yarisi"])
         .group_by(Ballot.voter_id).having(func.count() == 2)
     ).scalars().first()
-    [n] = ctx.db.execute(select(Notification).where(Notification.user_id == both)).scalars()
+    [n] = ctx.db.execute(select(Notification).where(
+        Notification.user_id == both, Notification.kind == "KARAR_SAATI")).scalars()
     [line] = [x for x in n.lines if x.startswith(f"№{ids['pay_yarisi']} ")]
     assert "(Genel)" in line and "(İstanbul)" in line
 
