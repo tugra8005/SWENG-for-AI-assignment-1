@@ -1,0 +1,667 @@
+{
+ "sonuclar": [
+  {
+   "tespitci": "rastgele",
+   "kume": "sinama",
+   "aciklama": "Her hesabı %3.36 olasılıkla işaretler (eğitimdeki oran).",
+   "dp": 7,
+   "yn": 316,
+   "yp": 324,
+   "dn": 8854,
+   "dogruluk": 0.9326,
+   "kesinlik": 0.0211,
+   "duyarlilik": 0.0217,
+   "f1": 0.0214,
+   "f2": 0.0216,
+   "f05": 0.0213,
+   "maliyet": 1936.0
+  },
+  {
+   "tespitci": "rastgele",
+   "kume": "yeni",
+   "aciklama": "Her hesabı %3.36 olasılıkla işaretler (eğitimdeki oran).",
+   "dp": 7,
+   "yn": 316,
+   "yp": 39,
+   "dn": 964,
+   "dogruluk": 0.7323,
+   "kesinlik": 0.1522,
+   "duyarlilik": 0.0217,
+   "f1": 0.0379,
+   "f2": 0.0262,
+   "f05": 0.069,
+   "maliyet": 511.0
+  },
+  {
+   "tespitci": "hic_kimse",
+   "kume": "sinama",
+   "aciklama": "Hiç kimseyi işaretlemez (çoğunluk sınıfı: 'baskın yok').",
+   "dp": 0,
+   "yn": 323,
+   "yp": 0,
+   "dn": 9178,
+   "dogruluk": 0.966,
+   "kesinlik": 0.0,
+   "duyarlilik": 0.0,
+   "f1": 0.0,
+   "f2": 0.0,
+   "f05": 0.0,
+   "maliyet": 323.0
+  },
+  {
+   "tespitci": "hic_kimse",
+   "kume": "yeni",
+   "aciklama": "Hiç kimseyi işaretlemez (çoğunluk sınıfı: 'baskın yok').",
+   "dp": 0,
+   "yn": 323,
+   "yp": 0,
+   "dn": 1003,
+   "dogruluk": 0.7564,
+   "kesinlik": 0.0,
+   "duyarlilik": 0.0,
+   "f1": 0.0,
+   "f2": 0.0,
+   "f05": 0.0,
+   "maliyet": 323.0
+  },
+  {
+   "tespitci": "yeni_uye",
+   "kume": "sinama",
+   "aciklama": "Son 7 günde katılan her hesabı işaretler.",
+   "dp": 323,
+   "yn": 0,
+   "yp": 1003,
+   "dn": 8175,
+   "dogruluk": 0.8944,
+   "kesinlik": 0.2436,
+   "duyarlilik": 1.0,
+   "f1": 0.3918,
+   "f2": 0.6169,
+   "f05": 0.287,
+   "maliyet": 5015.0
+  },
+  {
+   "tespitci": "yeni_uye",
+   "kume": "yeni",
+   "aciklama": "Son 7 günde katılan her hesabı işaretler.",
+   "dp": 323,
+   "yn": 0,
+   "yp": 1003,
+   "dn": 0,
+   "dogruluk": 0.2436,
+   "kesinlik": 0.2436,
+   "duyarlilik": 1.0,
+   "f1": 0.3918,
+   "f2": 0.6169,
+   "f05": 0.287,
+   "maliyet": 5015.0
+  },
+  {
+   "tespitci": "kume",
+   "kume": "sinama",
+   "aciklama": "Son 7 günde katılanlar arasında, en az 4 hesaplık, yoğunluğu ≥ 1/2, katılım yayılımı ≤ 24 saat olan küme (kenar ağırlığı ≥ 1.0).",
+   "dp": 104,
+   "yn": 219,
+   "yp": 289,
+   "dn": 8889,
+   "dogruluk": 0.9465,
+   "kesinlik": 0.2646,
+   "duyarlilik": 0.322,
+   "f1": 0.2905,
+   "f2": 0.3086,
+   "f05": 0.2744,
+   "maliyet": 1664.0
+  },
+  {
+   "tespitci": "kume",
+   "kume": "yeni",
+   "aciklama": "Son 7 günde katılanlar arasında, en az 4 hesaplık, yoğunluğu ≥ 1/2, katılım yayılımı ≤ 24 saat olan küme (kenar ağırlığı ≥ 1.0).",
+   "dp": 104,
+   "yn": 219,
+   "yp": 289,
+   "dn": 714,
+   "dogruluk": 0.6169,
+   "kesinlik": 0.2646,
+   "duyarlilik": 0.322,
+   "f1": 0.2905,
+   "f2": 0.3086,
+   "f05": 0.2744,
+   "maliyet": 1664.0
+  },
+  {
+   "tespitci": "karar_agaci",
+   "kume": "sinama",
+   "aciklama": "İşaretle: kümede katılım yayılımı (saat) < 79.74 ve üyelik yaşı (saat) < 1.04; ya da kümede katılım yayılımı (saat) ≥ 79.74 ve eski üyelerle etkileşim ağırlığı < 0.50.",
+   "dp": 28,
+   "yn": 295,
+   "yp": 1,
+   "dn": 9177,
+   "dogruluk": 0.9688,
+   "kesinlik": 0.9655,
+   "duyarlilik": 0.0867,
+   "f1": 0.1591,
+   "f2": 0.106,
+   "f05": 0.3189,
+   "maliyet": 300.0
+  },
+  {
+   "tespitci": "karar_agaci",
+   "kume": "yeni",
+   "aciklama": "İşaretle: kümede katılım yayılımı (saat) < 79.74 ve üyelik yaşı (saat) < 1.04; ya da kümede katılım yayılımı (saat) ≥ 79.74 ve eski üyelerle etkileşim ağırlığı < 0.50.",
+   "dp": 28,
+   "yn": 295,
+   "yp": 1,
+   "dn": 1002,
+   "dogruluk": 0.7768,
+   "kesinlik": 0.9655,
+   "duyarlilik": 0.0867,
+   "f1": 0.1591,
+   "f2": 0.106,
+   "f05": 0.3189,
+   "maliyet": 300.0
+  }
+ ],
+ "ek": {
+  "veri": {
+   "egitim": {
+    "senaryo": 284,
+    "hesap": 23633,
+    "baskinci": 795,
+    "baskinli_senaryo": 136,
+    "yeni_uye": 3381,
+    "gruplar": {
+     "baskin_bolunmus": 106,
+     "baskin_hizli": 143,
+     "baskin_kamufle": 200,
+     "baskin_sabirli": 150,
+     "baskin_sessiz": 196,
+     "duyuru": 901,
+     "eski": 20252,
+     "sinif": 784,
+     "tekil": 901
+    }
+   },
+   "sinama": {
+    "senaryo": 116,
+    "hesap": 9501,
+    "baskinci": 323,
+    "baskinli_senaryo": 57,
+    "yeni_uye": 1326,
+    "gruplar": {
+     "baskin_bolunmus": 51,
+     "baskin_hizli": 46,
+     "baskin_kamufle": 54,
+     "baskin_sabirli": 68,
+     "baskin_sessiz": 104,
+     "duyuru": 373,
+     "eski": 8175,
+     "sinif": 269,
+     "tekil": 361
+    }
+   }
+  },
+  "esik_taramasi": [
+   {
+    "kume": 3,
+    "yogunluk": "1/3",
+    "dp": 146,
+    "yn": 177,
+    "yp": 367,
+    "dn": 8811,
+    "dogruluk": 0.9427,
+    "kesinlik": 0.2846,
+    "duyarlilik": 0.452,
+    "f1": 0.3493,
+    "f2": 0.4044,
+    "f05": 0.3074,
+    "maliyet": 2012.0
+   },
+   {
+    "kume": 3,
+    "yogunluk": "1/2",
+    "dp": 132,
+    "yn": 191,
+    "yp": 342,
+    "dn": 8836,
+    "dogruluk": 0.9439,
+    "kesinlik": 0.2785,
+    "duyarlilik": 0.4087,
+    "f1": 0.3312,
+    "f2": 0.3737,
+    "f05": 0.2974,
+    "maliyet": 1901.0
+   },
+   {
+    "kume": 3,
+    "yogunluk": "2/3",
+    "dp": 90,
+    "yn": 233,
+    "yp": 312,
+    "dn": 8866,
+    "dogruluk": 0.9426,
+    "kesinlik": 0.2239,
+    "duyarlilik": 0.2786,
+    "f1": 0.2483,
+    "f2": 0.2656,
+    "f05": 0.233,
+    "maliyet": 1793.0
+   },
+   {
+    "kume": 3,
+    "yogunluk": "1",
+    "dp": 76,
+    "yn": 247,
+    "yp": 81,
+    "dn": 9097,
+    "dogruluk": 0.9655,
+    "kesinlik": 0.4841,
+    "duyarlilik": 0.2353,
+    "f1": 0.3167,
+    "f2": 0.2622,
+    "f05": 0.3996,
+    "maliyet": 652.0
+   },
+   {
+    "kume": 4,
+    "yogunluk": "1/3",
+    "dp": 118,
+    "yn": 205,
+    "yp": 314,
+    "dn": 8864,
+    "dogruluk": 0.9454,
+    "kesinlik": 0.2731,
+    "duyarlilik": 0.3653,
+    "f1": 0.3126,
+    "f2": 0.3422,
+    "f05": 0.2877,
+    "maliyet": 1775.0
+   },
+   {
+    "kume": 4,
+    "yogunluk": "1/2",
+    "dp": 104,
+    "yn": 219,
+    "yp": 289,
+    "dn": 8889,
+    "dogruluk": 0.9465,
+    "kesinlik": 0.2646,
+    "duyarlilik": 0.322,
+    "f1": 0.2905,
+    "f2": 0.3086,
+    "f05": 0.2744,
+    "maliyet": 1664.0
+   },
+   {
+    "kume": 4,
+    "yogunluk": "2/3",
+    "dp": 62,
+    "yn": 261,
+    "yp": 259,
+    "dn": 8919,
+    "dogruluk": 0.9453,
+    "kesinlik": 0.1931,
+    "duyarlilik": 0.192,
+    "f1": 0.1925,
+    "f2": 0.1922,
+    "f05": 0.1929,
+    "maliyet": 1556.0
+   },
+   {
+    "kume": 4,
+    "yogunluk": "1",
+    "dp": 50,
+    "yn": 273,
+    "yp": 68,
+    "dn": 9110,
+    "dogruluk": 0.9641,
+    "kesinlik": 0.4237,
+    "duyarlilik": 0.1548,
+    "f1": 0.2268,
+    "f2": 0.1773,
+    "f05": 0.3145,
+    "maliyet": 613.0
+   },
+   {
+    "kume": 5,
+    "yogunluk": "1/3",
+    "dp": 91,
+    "yn": 232,
+    "yp": 273,
+    "dn": 8905,
+    "dogruluk": 0.9468,
+    "kesinlik": 0.25,
+    "duyarlilik": 0.2817,
+    "f1": 0.2649,
+    "f2": 0.2748,
+    "f05": 0.2558,
+    "maliyet": 1597.0
+   },
+   {
+    "kume": 5,
+    "yogunluk": "1/2",
+    "dp": 77,
+    "yn": 246,
+    "yp": 248,
+    "dn": 8930,
+    "dogruluk": 0.948,
+    "kesinlik": 0.2369,
+    "duyarlilik": 0.2384,
+    "f1": 0.2377,
+    "f2": 0.2381,
+    "f05": 0.2372,
+    "maliyet": 1486.0
+   },
+   {
+    "kume": 5,
+    "yogunluk": "2/3",
+    "dp": 43,
+    "yn": 280,
+    "yp": 234,
+    "dn": 8944,
+    "dogruluk": 0.9459,
+    "kesinlik": 0.1552,
+    "duyarlilik": 0.1331,
+    "f1": 0.1433,
+    "f2": 0.137,
+    "f05": 0.1502,
+    "maliyet": 1450.0
+   },
+   {
+    "kume": 5,
+    "yogunluk": "1",
+    "dp": 38,
+    "yn": 285,
+    "yp": 52,
+    "dn": 9126,
+    "dogruluk": 0.9645,
+    "kesinlik": 0.4222,
+    "duyarlilik": 0.1176,
+    "f1": 0.184,
+    "f2": 0.1375,
+    "f05": 0.2782,
+    "maliyet": 545.0
+   },
+   {
+    "kume": 6,
+    "yogunluk": "1/3",
+    "dp": 62,
+    "yn": 261,
+    "yp": 257,
+    "dn": 8921,
+    "dogruluk": 0.9455,
+    "kesinlik": 0.1944,
+    "duyarlilik": 0.192,
+    "f1": 0.1931,
+    "f2": 0.1924,
+    "f05": 0.1939,
+    "maliyet": 1546.0
+   },
+   {
+    "kume": 6,
+    "yogunluk": "1/2",
+    "dp": 48,
+    "yn": 275,
+    "yp": 232,
+    "dn": 8946,
+    "dogruluk": 0.9466,
+    "kesinlik": 0.1714,
+    "duyarlilik": 0.1486,
+    "f1": 0.1592,
+    "f2": 0.1527,
+    "f05": 0.1663,
+    "maliyet": 1435.0
+   },
+   {
+    "kume": 6,
+    "yogunluk": "2/3",
+    "dp": 28,
+    "yn": 295,
+    "yp": 219,
+    "dn": 8959,
+    "dogruluk": 0.9459,
+    "kesinlik": 0.1134,
+    "duyarlilik": 0.0867,
+    "f1": 0.0982,
+    "f2": 0.091,
+    "f05": 0.1068,
+    "maliyet": 1390.0
+   },
+   {
+    "kume": 6,
+    "yogunluk": "1",
+    "dp": 28,
+    "yn": 295,
+    "yp": 37,
+    "dn": 9141,
+    "dogruluk": 0.9651,
+    "kesinlik": 0.4308,
+    "duyarlilik": 0.0867,
+    "f1": 0.1443,
+    "f2": 0.1032,
+    "f05": 0.2401,
+    "maliyet": 480.0
+   },
+   {
+    "kume": 8,
+    "yogunluk": "1/3",
+    "dp": 16,
+    "yn": 307,
+    "yp": 174,
+    "dn": 9004,
+    "dogruluk": 0.9494,
+    "kesinlik": 0.0842,
+    "duyarlilik": 0.0495,
+    "f1": 0.0624,
+    "f2": 0.054,
+    "f05": 0.0739,
+    "maliyet": 1177.0
+   },
+   {
+    "kume": 8,
+    "yogunluk": "1/2",
+    "dp": 8,
+    "yn": 315,
+    "yp": 161,
+    "dn": 9017,
+    "dogruluk": 0.9499,
+    "kesinlik": 0.0473,
+    "duyarlilik": 0.0248,
+    "f1": 0.0325,
+    "f2": 0.0274,
+    "f05": 0.04,
+    "maliyet": 1120.0
+   },
+   {
+    "kume": 8,
+    "yogunluk": "2/3",
+    "dp": 8,
+    "yn": 315,
+    "yp": 149,
+    "dn": 9029,
+    "dogruluk": 0.9512,
+    "kesinlik": 0.051,
+    "duyarlilik": 0.0248,
+    "f1": 0.0333,
+    "f2": 0.0276,
+    "f05": 0.0421,
+    "maliyet": 1060.0
+   },
+   {
+    "kume": 8,
+    "yogunluk": "1",
+    "dp": 8,
+    "yn": 315,
+    "yp": 19,
+    "dn": 9159,
+    "dogruluk": 0.9648,
+    "kesinlik": 0.2963,
+    "duyarlilik": 0.0248,
+    "f1": 0.0457,
+    "f2": 0.0303,
+    "f05": 0.0928,
+    "maliyet": 410.0
+   }
+  ],
+  "maliyet_orani": [
+   {
+    "oran": 0.2,
+    "kume": 3,
+    "yogunluk": "1/3",
+    "maliyet": 250.4,
+    "yn": 177,
+    "yp": 367
+   },
+   {
+    "oran": 1,
+    "kume": 3,
+    "yogunluk": "1",
+    "maliyet": 328,
+    "yn": 247,
+    "yp": 81
+   },
+   {
+    "oran": 5,
+    "kume": 8,
+    "yogunluk": "1",
+    "maliyet": 410,
+    "yn": 315,
+    "yp": 19
+   },
+   {
+    "oran": 20,
+    "kume": 8,
+    "yogunluk": "1",
+    "maliyet": 695,
+    "yn": 315,
+    "yp": 19
+   }
+  ],
+  "bicime_gore": {
+   "baskin_bolunmus": {
+    "hesap": 51,
+    "isaretlenen": 18,
+    "oran": 0.353
+   },
+   "baskin_hizli": {
+    "hesap": 46,
+    "isaretlenen": 46,
+    "oran": 1.0
+   },
+   "baskin_kamufle": {
+    "hesap": 54,
+    "isaretlenen": 40,
+    "oran": 0.741
+   },
+   "baskin_sabirli": {
+    "hesap": 68,
+    "isaretlenen": 0,
+    "oran": 0.0
+   },
+   "baskin_sessiz": {
+    "hesap": 104,
+    "isaretlenen": 0,
+    "oran": 0.0
+   },
+   "duyuru": {
+    "hesap": 373,
+    "isaretlenen": 19,
+    "oran": 0.051
+   },
+   "sinif": {
+    "hesap": 269,
+    "isaretlenen": 263,
+    "oran": 0.978
+   },
+   "tekil": {
+    "hesap": 361,
+    "isaretlenen": 7,
+    "oran": 0.019
+   }
+  },
+  "sinif_payi": [
+   {
+    "sinif_payi": 0.0,
+    "dp": 211,
+    "yn": 392,
+    "yp": 45,
+    "kesinlik": 0.824,
+    "duyarlilik": 0.35,
+    "basabas_orani": 4.69
+   },
+   {
+    "sinif_payi": 0.1,
+    "dp": 207,
+    "yn": 398,
+    "yp": 170,
+    "kesinlik": 0.549,
+    "duyarlilik": 0.342,
+    "basabas_orani": 1.22
+   },
+   {
+    "sinif_payi": 0.2,
+    "dp": 214,
+    "yn": 362,
+    "yp": 330,
+    "kesinlik": 0.393,
+    "duyarlilik": 0.372,
+    "basabas_orani": 0.65
+   },
+   {
+    "sinif_payi": 0.35,
+    "dp": 249,
+    "yn": 332,
+    "yp": 649,
+    "kesinlik": 0.277,
+    "duyarlilik": 0.429,
+    "basabas_orani": 0.38
+   },
+   {
+    "sinif_payi": 0.5,
+    "dp": 262,
+    "yn": 321,
+    "yp": 867,
+    "kesinlik": 0.232,
+    "duyarlilik": 0.449,
+    "basabas_orani": 0.3
+   }
+  ]
+ },
+ "yapilandirma": {
+  "veri": {
+   "senaryo": 400,
+   "tohum": 2026,
+   "sinama_payi": 0.3,
+   "sinama_dosyasi": "sinama_kumesi.json"
+  },
+  "maliyet": {
+   "kacan": 1,
+   "yanlis": 5
+  },
+  "tespitciler": [
+   {
+    "tur": "rastgele",
+    "parametreler": {
+     "seed": 42
+    }
+   },
+   {
+    "tur": "hic_kimse"
+   },
+   {
+    "tur": "yeni_uye",
+    "parametreler": {
+     "gun": 7
+    }
+   },
+   {
+    "tur": "kume",
+    "ad": "kume"
+   },
+   {
+    "tur": "karar_agaci",
+    "ad": "karar_agaci"
+   }
+  ],
+  "cikti": "sonuclar.json"
+ }
+}

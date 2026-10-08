@@ -1,0 +1,28 @@
+# Baskın tespitinin değerlendirmesi (bkz. api/src/mesveret/evaluation/).
+#   cd api && uv run python -m mesveret.evaluation ../docs/degerlendirme/config.yaml
+# Tespitçi seçimi buradan yapılır: "tur" kayıt defterindeki adtır, "parametreler" kurucuya gider.
+
+veri:
+  senaryo: 400          # üretilecek senaryo sayısı (tohumla belirlenir)
+  tohum: 2026
+  sinama_payi: 0.3      # senaryo adının hash'iyle ayrılır
+  sinama_dosyasi: sinama_kumesi.json   # bir kez yazılır, sonra değiştirilmez
+
+# Hata maliyeti: kaçan bir baskıncı 1 birim; yanlışlıkla işaretlenen gerçek bir üye (o oturumda
+# oy hakkını kaybeder) 5 birim. Oran paydaşlarla tartışılacak bir karardır; rapordaki taramaya bakın.
+maliyet:
+  kacan: 1
+  yanlis: 5
+
+tespitciler:
+  - tur: rastgele
+    parametreler: {seed: 42}
+  - tur: hic_kimse
+  - tur: yeni_uye
+    parametreler: {gun: 7}
+  - tur: kume            # üretimdeki kural, yönetmelikteki varsayılan eşiklerle
+    ad: kume
+  - tur: karar_agaci     # maliyetle öğrenilen derinliği 2 ağaç (c_fn, c_fp yukarıdan)
+    ad: karar_agaci
+
+cikti: sonuclar.json
