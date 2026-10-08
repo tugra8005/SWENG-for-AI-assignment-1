@@ -6,9 +6,24 @@ import pytest
 from sqlalchemy import select
 
 from mesveret.context import Ctx
-from mesveret.db.models import DelegationRequest, Message, Proposal, SessionItem, User
+from mesveret.db.models import (
+    DelegationRequest,
+    Message,
+    MessageVersion,
+    Proposal,
+    SessionItem,
+    User,
+)
 from mesveret.errors import Conflict, DomainError, Forbidden
-from mesveret.services import cellar, decision_hour, delegation, proposals, scheduler, seed
+from mesveret.services import (
+    cellar,
+    decision_hour,
+    delegation,
+    proposals,
+    scheduler,
+    seed,
+    seed_posts,
+)
 from mesveret.services.proposals import ProposalInput
 
 
@@ -207,6 +222,15 @@ def test_cellar_discussions_replace_filler_replies(seeded):
     # Yanıtlar bir sonraki dolgu başlıktan önce biter: liste sırası açılış sırasıdır.
     fillers = [t["id"] for t in listing if t["title"] in seed.MAHZEN_PROMPTS]
     assert fillers == sorted(fillers, reverse=True)
+
+
+def test_chatter_posts_land_in_their_topics(seeded):
+    """Gündelik tartışma (seed_posts): her paylaşım metniyle, kendi konusunda durur."""
+    rows = seeded.db.execute(select(MessageVersion.text, Message.topic_id).join(
+        Message, Message.id == MessageVersion.message_id)).all()
+    topic_of = dict(rows)
+    for topic, posts in seed_posts.MEYDAN_POSTS.items():
+        assert len({topic_of[text] for _, _, _, text, _ in posts}) == 1, topic
 
 
 def test_owner_account_logs_in_with_nickname_or_email(seeded, client):

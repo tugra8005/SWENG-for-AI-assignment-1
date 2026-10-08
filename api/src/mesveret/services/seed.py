@@ -60,6 +60,7 @@ from mesveret.services import (
     petitions,
     proposals,
     scheduler,
+    seed_posts,
     topics,
 )
 from mesveret.services.proposals import ProposalInput
@@ -282,6 +283,9 @@ MAHZEN_DISCUSSIONS: dict[int, list[tuple[str, str]]] = {
         ("op", "Yine de sahipsiz demeyi bırakalım. Sahibi mahalle."),
     ],
 }
+# Ek tartışmalar (seed_posts): soru metninden dolgu sırasına.
+MAHZEN_DISCUSSIONS.update(
+    {MAHZEN_PROMPTS.index(q): replies for q, replies in seed_posts.MAHZEN_MORE.items()})
 
 # Mahzen'in doğası: Meydan'da içerik kuralları ve silme oylaması var, Mahzen'de yok. Anonim,
 # denetimsiz bir başlık yalnızca aşağı düşüp çürüyerek kaybolur. Şiir kullanıcının verdiği
@@ -911,6 +915,13 @@ def _scenario_calendar(w: World) -> None:
                  accept=False)
 
 
+def _chatter(w: World) -> None:
+    """Gündelik tartışma (seed_posts): senaryolara dokunmaz, Meydan konularını doldurur."""
+    for topic, posts in seed_posts.MEYDAN_POSTS.items():
+        for key, who, days, text, reply_to in posts:
+            _msg(w, key, who, topic, text, _t(days=days), reply_to=reply_to)
+
+
 def _scenario_maturation(w: World) -> None:
     """9. Olgunlaşma: Genel kapsamlı yönetmelik önerisi Karar Saati'nden 10 dakika önce açılır.
 
@@ -1040,6 +1051,7 @@ def _build(ctx: Ctx) -> Iterator[str]:
     _scenario_istanbul(w)
     _scenario_maturation(w)
     _scenario_calendar(w)
+    _chatter(w)
     w.run(ctx)
     w.users["ayse"].cellar_warned_at = None  # sunumda Mahzen giriş uyarısı görünsün
     _vote_plan(ctx, w)
