@@ -1,4 +1,4 @@
-"""Tohum: Meydan konularındaki ve Mahzen başlıklarındaki gündelik tartışma.
+"""Tohum: Meydan konularındaki (etkinlik konuları dahil) ve Mahzen başlıklarındaki gündelik tartışma.
 
 Senaryolardan bağımsızdır; forumun dolu ve çok sesli görünmesi içindir. Sağdan ve soldan, ılımlı
 ve uç görüşler, felsefe ve mizah. Hiçbiri içerik kuralı ihlali değildir: sert görüş var, hakaret,
@@ -306,8 +306,8 @@ MEYDAN_POSTS: dict[str, list[tuple[str, str, float, str, str | None]]] = {
           "seçsin."),
          "s_film4"),
         ("s_film6", "irem", 16.5,
-         ("Altyazı konusunda hakan'a katılıyorum. Bir de film başlamadan sessiz mod hatırlatması; geçen "
-          "sefer arka sırada biri maç izliyordu."),
+         ("Altyazı konusunda hakan'a katılıyorum. Bir de film başlamadan sessiz mod "
+          "hatırlatması; geçen sefer arka sırada biri maç izliyordu."),
          None),
         ("s_film7", "melis", 16.4, "O bendim. Penaltıydı, affedin.", "s_film6"),
         ("s_film8", "gizem", 14.0, "Animasyon da sinemadır. Ghibli gecesi isteyen var mı?", None),
@@ -434,6 +434,187 @@ MEYDAN_POSTS: dict[str, list[tuple[str, str, float, str, str | None]]] = {
          "s_men4"),
         ("s_men6", "deniz", 1.0,
          ("Okuma notu: 80d'deki Menon paradoksuyla başlayalım; köle çocuk sahnesi 82b'de."),
+         None),
+    ],
+    "siir_eylul": [
+        ("s_sev1", "kerem", 5.8,
+         ("Kaldırımlar'ı ben okuyorum. Ezberden okumaya çalışacağım; takılırsam kâğıda bakarım."),
+         None),
+        ("s_sev2", "gulsen", 5.7,
+         ("Ben de Memleketimden İnsan Manzaraları'ndan tren bölümünü seçtim. Uzun, ama "
+          "kısaltmayacağım."),
+         "s_sev1"),
+        ("s_sev3", "vedat", 5.2,
+         ("Çanakkale Şehitlerine'yi ben getiriyorum. Sonda okunmasını isterdim, ama kuraya "
+          "razıyım."),
+         None),
+        ("s_sev4", "harun", 5.1,
+         ("Kuraya herkes razıysa kurayı ben çekerim. En tarafsız elim bu."),
+         "s_sev3"),
+        ("s_sev5", "rana", 4.3,
+         ("Dün fark ettim: Kaldırımlar ile tren bölümü arka arkaya okununca ikisi de yalnız bir "
+          "adamın gecesini anlatıyor. Kura iyi çekilmiş."),
+         None),
+        ("s_sev6", "pinar", 3.9,
+         ("Kadın şairler akşamı için öneri açacağım; Gülten Akın'dan başlarız. Listeye eklemek "
+          "istediğiniz şair varsa yazın."),
+         None),
+        ("s_sev7", "melis", 3.8,
+         ("Kendi şiirimi okuyacağımı söylemiştim; cesaretim kura çekilene kadar sürdü. Seçkide "
+          "okurum."),
+         None),
+    ],
+    "bisiklet_turu": [
+        ("s_btu1", "deniz", 4.9,
+         ("Paylaşımlı bisiklet istasyonu iskelenin hemen yanında; bisikleti olmayanlar oradan "
+          "alabilir."),
+         None),
+        ("s_btu2", "melis", 4.8,
+         ("Bisikletim yok, binmeyi de bilmiyorum. Yine de geliyorum; en arkadan iterek de olsa."),
+         None),
+        ("s_btu3", "ceren", 4.7,
+         ("En arkada ben olurum melis, yalnız kalmazsın. Hız yok, mola çok."),
+         "s_btu2"),
+        ("s_btu4", "fatih", 4.2,
+         ("Sahildeki kafelerin önündeki park sorununu da fotoğraflayın. Esnafla konuşursanız "
+          "belki onlar da yol ister; müşteri bisikletle de gelir."),
+         None),
+        ("s_btu5", "cansu", 2.6,
+         ("Fotoğrafları bir klasörde topladım; yolun bittiği iki yer çok net görünüyor. "
+          "Dilekçenin takibine ekleyelim."),
+         None),
+        ("s_btu6", "emre", 2.5,
+         ("İskeleden Moda'ya yirmi beş dakika sürdü; aynı saatte arabayla trafikte daha uzun "
+          "sürüyor. Bunu da yazalım."),
+         "s_btu5"),
+    ],
+    "kisa_film": [
+        ("s_kf1", "gizem", 4.6,
+         ("Dört film seçtim, toplam yetmiş dakika. Bağlantıyı gösterimden yarım saat önce buraya "
+          "yazacağım."),
+         None),
+        ("s_kf2", "kaan", 4.4,
+         ("İzmir'den bağlanacağım. Altyazılar ayrı dosya mı, filmin içinde mi?"),
+         None),
+        ("s_kf3", "gizem", 4.3, "Filmlerin içinde. Sesi başta birlikte deneriz.", "s_kf2"),
+        ("s_kf4", "irem", 2.4,
+         ("Bağlantı ikinci filmde koptu ama sonra düzeldi. Rapor yazacak olan var mı? Sonunu "
+          "kaçırdığım için ben yazamıyorum."),
+         None),
+        ("s_kf5", "leyla", 2.3,
+         ("Ben de sonuna yetişemedim. Gizem yazarsa iyi olur; filmleri seçen o."),
+         "s_kf4"),
+    ],
+    "park_temizlik": [
+        ("s_pt1", "burak", 3.8,
+         ("Eldiven ve torbayı belediyeden istedik; gelmezse herkes kendi eldiveniyle gelsin."),
+         None),
+        ("s_pt2", "kerem", 3.5,
+         ("Camiden de birkaç kişi gelecek. Kahvaltıyı biz getiriyoruz."),
+         None),
+        ("s_pt3", "pinar", 2.6,
+         ("Kültürpark'ın arka tarafındaki çocuk parkını da ekleyelim; orada kırık şişe çok."),
+         None),
+        ("s_pt4", "fatih", 1.6,
+         ("Bankları kimin yapacağı tartışmasını burada sürdürelim: belediye bütçesinden mi, "
+          "mahalle bağışıyla mı? Ben bağıştan yanayım; daha hızlı olur."),
+         None),
+        ("s_pt5", "umut", 1.5,
+         ("Bağış hızlıdır ama hep aynı mahalleler bağış toplar. Park herkesin; bank da ortak "
+          "bütçeden yapılmalı."),
+         "s_pt4"),
+        ("s_pt6", "ilker", 1.4,
+         ("İkisini birden deneyelim: bir bankı bağışla hemen yapalım, kalanını belediyeden "
+          "isteyelim. Hangisi daha çabuk geliyor, görürüz."),
+         "s_pt5"),
+    ],
+    "dekalog2": [
+        ("s_dk1", "hakan", 1.9,
+         ("Altyazılı kopya hazır. Dekalog II bir doktorun vermek zorunda kaldığı bir karar "
+          "üzerine; sonrasında konuşacak çok şey çıkar."),
+         None),
+        ("s_dk2", "nevzat", 1.7, "İlkinden çok etkilenmiştim, buna da geliyorum.", None),
+        ("s_dk3", "harun", 1.6,
+         ("Ben de. Bu sefer kapıda katılanları baştan sayalım; rapor kolaylaşır."),
+         "s_dk2"),
+    ],
+    "burke_paine": [
+        ("s_bp1", "selin", 1.8,
+         ("Okuma: Burke'ün 'Fransız Devrimi Üzerine Düşünceler'inin ilk bölümleri ve Paine'in "
+          "'İnsan Hakları'nın birinci kısmı. Her biri otuz sayfa kadar."),
+         None),
+        ("s_bp2", "nevzat", 1.6, "Burke'ü ben anlatabilirim.", "s_bp1"),
+        ("s_bp3", "gulsen", 1.5,
+         ("Paine bende. Söz veriyorum, Burke'ü de sonuna kadar dinleyeceğim."),
+         "s_bp2"),
+        ("s_bp4", "ipek", 1.2, "Bir zaman tutucu olsun: her taraf on dakika, sonra herkes.", None),
+    ],
+    "ankara_surus": [
+        ("s_as1", "elif", 1.7,
+         ("Hale'nin güzergâhı: Güvenpark'tan Eskişehir yolu boyunca ODTÜ'ye, dokuz kilometre kadar. "
+          "Dönüşte yorulan metroya biner."),
+         None),
+        ("s_as2", "dogan", 1.5,
+         ("Bu sefer oylanmış bir sürüş; ben de geliyorum. Usulüyle yapılan sürüşe kimse bir şey "
+          "diyemez."),
+         None),
+        ("s_as3", "harun", 1.4,
+         ("Gördün mü dogan, devrim de takvime yazılınca sakinleşiyor."),
+         "s_as2"),
+        ("s_as4", "aylin", 1.2,
+         ("Yokuş için elektrikli bisiklet kiralayacağım. Yavaş tempo sözü verildi, unutmayalım."),
+         None),
+    ],
+    "pazar_aksam": [
+        ("s_pa1", "ceren", 1.6,
+         ("Üç tezgâhçı akşam kurmayı kabul etti: bir sebzeci, bir peynirci, bir de çiçekçi. Daha "
+          "fazlası gelirse haber veririm."),
+         None),
+        ("s_pa2", "gulsen", 1.5,
+         ("Üretici kooperatifinden de birini çağırdım. Akşam pazarı tutarsa tezgâh kirasını da "
+          "konuşalım."),
+         None),
+        ("s_pa3", "rana", 1.4, "Simitçi gelecek mi? Hakan'a göre asıl istikrar onda.", None),
+        ("s_pa4", "hakan", 1.3,
+         ("Simitçiyi ben davet ettim. O gelirse deneme başarılı sayılır."),
+         "s_pa3"),
+    ],
+    "yesilcam": [
+        ("s_ye1", "hakan", 1.0,
+         ("Hababam Sınıfı'nın ilk filmi. Film bir buçuk saat kadar, gerisi sohbet."),
+         None),
+        ("s_ye2", "melis", 0.95,
+         ("Hafize Ana'nın repliklerini ezbere söyleyen olursa ne yapacağız?"),
+         None),
+        ("s_ye3", "nevzat", 0.9, "Bırakın söylesinler; Yeşilçam topluca izlenir.", "s_ye2"),
+        ("s_ye4", "vedat", 0.8,
+         ("Sonraki ay bir Kemal Sunal filmi daha olsun; Yeşilçam ayı tek filmle olmaz."),
+         None),
+    ],
+    "belgesel_acilis": [
+        ("s_ba1", "nazli", 0.9,
+         ("Hangi şehir belgeseli olsun? Üç aday var; bu konuda yazın, en çok istenen gösterilir."),
+         None),
+        ("s_ba2", "mert", 0.85,
+         ("Soruyu şimdiden yazayım: belgesel kendi şehrinin sakinlerine mi anlatıyor, dışarıdan "
+          "bakana mı?"),
+         None),
+        ("s_ba3", "cansu", 0.7,
+         ("Şehrin yeşil alanlarını da gösteren biri olsun; iklim haftasından önce iyi bir "
+          "başlangıç olur."),
+         "s_ba1"),
+    ],
+    "siir_seckisi": [
+        ("s_ss1", "leyla", 0.85,
+         ("Yıl boyunca okunanları bu konuya yazalım: şair, şiir, okuyan. Aralık'ta seçkiyi "
+          "buradan yaparız."),
+         None),
+        ("s_ss2", "okan", 0.8,
+         ("Eylül akşamından: 'Kaldırımlar' (kerem), 'Memleketimden İnsan Manzaraları' (gulsen), "
+          "'Çanakkale Şehitlerine' (vedat)."),
+         "s_ss1"),
+        ("s_ss3", "pinar", 0.7,
+         ("Ekim'in Cemal Süreya listesi de buraya gelecek. Basılı küçük bir kitapçık yapalım mı?"),
          None),
     ],
 }
