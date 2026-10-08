@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Meşveret — Politikalar ve Çözümler Raporu</title>
+<style>
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/400Regular/Newsreader_400Regular.ttf'); font-weight: 400; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/400Regular_Italic/Newsreader_400Regular_Italic.ttf'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/600SemiBold/Newsreader_600SemiBold.ttf'); font-weight: 600; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/800ExtraBold/Newsreader_800ExtraBold.ttf'); font-weight: 800; }
+@font-face { font-family: 'Plex Mono'; src: url('../../client/node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf'); font-weight: 400; }
+@font-face { font-family: 'Plex Mono'; src: url('../../client/node_modules/@expo-google-fonts/ibm-plex-mono/500Medium/IBMPlexMono_500Medium.ttf'); font-weight: 500; }
+
+@page { size: A4; margin: 17mm 17mm 18mm 17mm; }
+:root { --ink: #1B1A17; --soft: #4A463E; --muted: #6B6558; --hair: #CFC6B3; --seal: #7A1E2B; --wash: #F4EFE4; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: 'Newsreader', serif; font-size: 10.6pt; line-height: 1.42; color: var(--ink); background: #fff; }
+p { margin: 0 0 6pt; }
+h1, h2, h3 { font-family: 'Newsreader', serif; color: var(--ink); }
+h2 { font-weight: 800; font-size: 17pt; margin: 0 0 4pt; padding-top: 2pt; border-bottom: 2.2pt double var(--ink); padding-bottom: 3pt; break-after: avoid; }
+h2 .no { font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 10pt; color: var(--seal); margin-right: 6pt; vertical-align: 3pt; }
+h3 { font-weight: 600; font-size: 12pt; margin: 10pt 0 3pt; break-after: avoid; }
+.lead { font-size: 11.6pt; line-height: 1.4; margin: 6pt 0 8pt; }
+.kicker { font-family: 'Plex Mono', monospace; font-size: 7.6pt; letter-spacing: 0.9pt; text-transform: uppercase; color: var(--muted); }
+section { margin-bottom: 14pt; }
+.newpage { break-before: page; }
+ul, ol { margin: 0 0 7pt; padding-left: 15pt; }
+li { margin-bottom: 2pt; }
+b, strong { font-weight: 600; }
+code, .mono { font-family: 'Plex Mono', monospace; font-size: 8.6pt; }
+table { width: 100%; border-collapse: collapse; margin: 4pt 0 9pt; font-size: 9.2pt; line-height: 1.3; break-inside: auto; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th { font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 7.4pt; letter-spacing: 0.5pt; text-transform: uppercase; text-align: left; color: var(--soft); border-bottom: 1pt solid var(--ink); padding: 3pt 5pt 3pt 0; vertical-align: bottom; }
+td { border-bottom: 0.5pt solid var(--hair); padding: 3.5pt 5pt 3.5pt 0; vertical-align: top; }
+td.k { font-family: 'Plex Mono', monospace; font-size: 8.2pt; white-space: nowrap; color: var(--seal); }
+td.c { text-align: center; }
+.yes { color: #2F4A2A; font-weight: 600; }
+.no-x { color: var(--seal); font-weight: 600; }
+figure { margin: 8pt 0 10pt; break-inside: avoid; }
+figure img { display: block; width: 100%; border: 0.6pt solid var(--ink); }
+figure.narrow img { width: 72%; margin: 0 auto; }
+figure.half img { width: 58%; margin: 0 auto; }
+figcaption { font-size: 8.8pt; line-height: 1.35; color: var(--soft); margin-top: 4pt; font-style: italic; }
+figcaption b { font-style: normal; font-family: 'Plex Mono', monospace; font-weight: 500; font-size: 7.8pt; color: var(--seal); letter-spacing: 0.4pt; margin-right: 3pt; }
+.side { display: flex; gap: 12pt; align-items: flex-start; break-inside: avoid; }
+.side > div { flex: 1; }
+.side figure { flex: 0 0 34%; margin-top: 2pt; }
+.box { border: 0.8pt solid var(--ink); background: #FAF7F0; padding: 6pt 9pt; margin: 6pt 0 10pt; break-inside: avoid; }
+.box .kicker { color: var(--seal); display: block; margin-bottom: 2pt; }
+.box p:last-child { margin-bottom: 0; }
+svg { display: block; width: 100%; height: auto; margin: 4pt 0 2pt; }
+svg text { font-family: 'Newsreader', serif; }
+svg .m { font-family: 'Plex Mono', monospace; }
+
+/* kapak */
+.cover { height: 258mm; display: flex; flex-direction: column; break-after: page; }
+.cover .top { display: flex; justify-content: space-between; font-family: 'Plex Mono', monospace; font-size: 8pt; letter-spacing: 1pt; color: var(--soft); border-bottom: 2.4pt double var(--ink); padding-bottom: 4pt; }
+.cover .mast { text-align: center; margin-top: 34mm; }
+.cover .mast img { width: 30mm; }
+.cover .mast .name { font-weight: 800; font-size: 52pt; letter-spacing: 6pt; line-height: 1; margin-top: 6mm; }
+.cover .mast .tag { font-style: italic; color: var(--soft); font-size: 12pt; margin-top: 3mm; }
+.cover .title { text-align: center; margin-top: 22mm; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); padding: 7mm 0; }
+.cover .title .t { font-weight: 800; font-size: 25pt; line-height: 1.15; }
+.cover .title .s { font-size: 12pt; color: var(--soft); margin-top: 3mm; line-height: 1.4; }
+.cover .meta { margin-top: auto; display: flex; justify-content: space-between; font-size: 10.5pt; border-top: 2.4pt double var(--ink); padding-top: 4mm; }
+.cover .meta .kicker { display: block; margin-bottom: 1mm; }
+.toc { columns: 2; column-gap: 14mm; font-size: 10pt; margin-top: 4pt; }
+.toc div { break-inside: avoid; padding: 1.5pt 0; border-bottom: 0.4pt dotted var(--hair); }
+.toc span { font-family: 'Plex Mono', monospace; font-size: 8pt; color: var(--seal); display: inline-block; width: 18pt; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1pt solid var(--ink); border-bottom: 1pt solid var(--ink); margin: 8pt 0 10pt; }
+.stats div { padding: 5pt 6pt; border-left: 0.5pt solid var(--hair); }
+.stats div:first-child { border-left: 0; padding-left: 0; }
+.stats .n { font-weight: 800; font-size: 18pt; line-height: 1.05; }
+.stats .l { font-size: 8.4pt; color: var(--soft); line-height: 1.25; }
+</style>

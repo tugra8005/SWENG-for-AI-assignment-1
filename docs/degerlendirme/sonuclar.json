@@ -162,6 +162,80 @@
   }
  ],
  "ek": {
+  "canli": {
+   "senaryo": [
+    "karar-saati-1"
+   ],
+   "secmen": 45,
+   "baskinci": 5,
+   "sonuclar": {
+    "rastgele": {
+     "dp": 0,
+     "yn": 5,
+     "yp": 1,
+     "dn": 39,
+     "dogruluk": 0.8667,
+     "kesinlik": 0.0,
+     "duyarlilik": 0.0,
+     "f1": 0.0,
+     "f2": 0.0,
+     "f05": 0.0,
+     "maliyet": 10.0
+    },
+    "hic_kimse": {
+     "dp": 0,
+     "yn": 5,
+     "yp": 0,
+     "dn": 40,
+     "dogruluk": 0.8889,
+     "kesinlik": 0.0,
+     "duyarlilik": 0.0,
+     "f1": 0.0,
+     "f2": 0.0,
+     "f05": 0.0,
+     "maliyet": 5.0
+    },
+    "yeni_uye": {
+     "dp": 5,
+     "yn": 0,
+     "yp": 0,
+     "dn": 40,
+     "dogruluk": 1.0,
+     "kesinlik": 1.0,
+     "duyarlilik": 1.0,
+     "f1": 1.0,
+     "f2": 1.0,
+     "f05": 1.0,
+     "maliyet": 0.0
+    },
+    "kume": {
+     "dp": 5,
+     "yn": 0,
+     "yp": 0,
+     "dn": 40,
+     "dogruluk": 1.0,
+     "kesinlik": 1.0,
+     "duyarlilik": 1.0,
+     "f1": 1.0,
+     "f2": 1.0,
+     "f05": 1.0,
+     "maliyet": 0.0
+    },
+    "karar_agaci": {
+     "dp": 0,
+     "yn": 5,
+     "yp": 0,
+     "dn": 40,
+     "dogruluk": 0.8889,
+     "kesinlik": 0.0,
+     "duyarlilik": 0.0,
+     "f1": 0.0,
+     "f2": 0.0,
+     "f05": 0.0,
+     "maliyet": 5.0
+    }
+   }
+  },
   "veri": {
    "egitim": {
     "senaryo": 284,

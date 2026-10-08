@@ -1,0 +1,61 @@
+{
+ "n": 300,
+ "olcumler": {
+  "Meydan ön sayfası (/news)": {
+   "yol": "/news",
+   "ortalama": 65.0,
+   "p50": 62.7,
+   "p95": 78.0,
+   "p99": 91.6,
+   "en_buyuk": 137.8
+  },
+  "Açık öneriler": {
+   "yol": "/proposals?state=open",
+   "ortalama": 40.2,
+   "p50": 39.2,
+   "p95": 47.5,
+   "p99": 56.0,
+   "en_buyuk": 126.2
+  },
+  "Konu sayfası": {
+   "yol": "/topics/5",
+   "ortalama": 21.5,
+   "p50": 21.2,
+   "p95": 24.3,
+   "p99": 26.6,
+   "en_buyuk": 29.7
+  },
+  "Dilekçe": {
+   "yol": "/petitions/1",
+   "ortalama": 13.7,
+   "p50": 13.5,
+   "p95": 15.7,
+   "p99": 16.7,
+   "en_buyuk": 18.0
+  },
+  "Takvim": {
+   "yol": "/calendar",
+   "ortalama": 15.9,
+   "p50": 15.4,
+   "p95": 19.7,
+   "p99": 24.5,
+   "en_buyuk": 26.9
+  },
+  "Arama (istanbul)": {
+   "yol": "/search?q=istanbul",
+   "ortalama": 9.8,
+   "p50": 9.7,
+   "p95": 11.5,
+   "p99": 12.5,
+   "en_buyuk": 14.0
+  },
+  "Karar Saati durumu": {
+   "yol": "/decision-hour",
+   "ortalama": 15.4,
+   "p50": 14.8,
+   "p95": 17.7,
+   "p99": 19.6,
+   "en_buyuk": 86.9
+  }
+ }
+}
