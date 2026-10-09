@@ -1,0 +1,143 @@
+<section id="denetim" class="newpage">
+<h2><span class="no">#</span>Tasarım denetimi</h2>
+<p class="lead">Arayüz 28 Eylül 2026'da ödev belgesinin tasarım bölümüne (§10 Tasarım) karşı denetlendi: 38 ekran iki genişlikte görüntülendi, kontrast ve taşma otomatik ölçüldü, Mahzen'in ifşa geçişi kare kare kaydedildi. Bulunan hatalar 29 Eylül'de düzeltildi ve ekranlar yeniden ölçüldü.</p>
+<p class="note">Denetim kaydı 28–29 Eylül tarihlidir ve o günkü hâliyle aktarılmıştır. O günden sonra değişenler bölümün sonunda ayrıca yazılıdır; öneri numaraları denetim günündeki tohuma göredir. Görüntüler, betik (<code>denetim.mjs</code>) ve ölçüm dosyası (<code>denetim-olcumleri.json</code>) <code>docs/screens/</code> klasöründedir (116 MB; depoya eklenmedi).</p>
+
+<h3>Toplanan görüntüler</h3>
+<p>Her ekran iki genişlikte, tam sayfa: masaüstü 1440 × 900 (1×), telefon 390 × 844 (2×). Tam sayfa için görüntü alanı, sayfanın kaydırma kabının içerik yüksekliğine ayarlandı; uygulama o genişlikte kendi düzeniyle, kaydırmasız çizildi. Üst sınır 16.000 CSS px. Sınıra takılan üç görüntü kesik: 20, 21 (Mahzen listesi, 91 başlık) ve 29 (sonuç sayımı), hepsi telefonda.</p>
+<table>
+<thead><tr><th style="width:10%">No</th><th>Ekran</th><th style="width:28%">Veri durumu</th></tr></thead>
+<tbody>
+<tr><td>01–03</td><td>Giriş, kayıt, doğrulama kodu</td><td>tohum, oturumsuz</td></tr>
+<tr><td>04–05</td><td>Ana sayfa (anonim / girişli): ana akış, iki şerit, Karar Saati geri sayımı</td><td>tohum</td></tr>
+<tr><td>06</td><td>Alan sayfası (Ulaşım)</td><td>tohum</td></tr>
+<tr><td>07</td><td>Öneri: hızlı şerit, R2 daraltılmış (№20; ilk denetimde №19)</td><td>tohum</td></tr>
+<tr><td>08</td><td>Öneri: yavaş şerit (№9)</td><td>tohum</td></tr>
+<tr><td>09</td><td>Öneri: pay etkisi, eşzamanlı çoğunluk öncesi (№17)</td><td>tohum</td></tr>
+<tr><td>10</td><td>Öneri: silme gerekçesi (№10)</td><td>tohum</td></tr>
+<tr><td>11</td><td>Konu ve tartışma (Bisiklet yolları)</td><td>tohum</td></tr>
+<tr><td>12</td><td>Mesaj sürümleri ve düzenleme farkı (#13, denetim sırasında düzenlendi)</td><td>tohum</td></tr>
+<tr><td>13</td><td>Karar Saati: geri sayım ve kuyruk</td><td>tohum</td></tr>
+<tr><td>14–15</td><td>Profil: kendi (resmî belge) / Müşavir damgalı (selin)</td><td>tohum</td></tr>
+<tr><td>16</td><td>Yönetmelik, Değiştirilemez Maddeler dahil</td><td>tohum</td></tr>
+<tr><td>17</td><td>Defter ve Yönetmelik bütünlüğü: TUTARLI</td><td>tohum</td></tr>
+<tr><td>18</td><td>Havale</td><td>tohum</td></tr>
+<tr><td>19</td><td>Mahzen giriş uyarısı</td><td>tohum, ayse onaydan önce</td></tr>
+<tr><td>20–21</td><td>Mahzen listesi, CRT açık / kapalı</td><td>tohum</td></tr>
+<tr><td>22</td><td>Mahzen başlığı, ifşa oylaması (No.91)</td><td>tohum</td></tr>
+<tr><td>23</td><td>Mahzen başlığı, çürümüş (No.1, sıra 91)</td><td>tohum</td></tr>
+<tr><td>24</td><td>İfşa sonrası başlık</td><td>ayse EVET verdikten sonra</td></tr>
+<tr><td>25</td><td>Defter: bütünlük FARKLI</td><td><code>yonetmelik_esigi</code> oylamasız 1/2</td></tr>
+<tr><td>26</td><td>Ana sayfa, pencere açık</td><td>oturum #1 açık</td></tr>
+<tr><td>27</td><td>Karar Saati oy pusulası (ceren)</td><td>oturum #1 açık</td></tr>
+<tr><td>28</td><td>Defter: açılışta tespit edilen değişiklik</td><td>oturum #1 açık</td></tr>
+<tr><td>29a</td><td>Sonuç sayımı, sayım sırasında (№17, 2,5 sn)</td><td>oturum #1 kapalı</td></tr>
+<tr><td>29</td><td>Sonuç sayımı, son hâl</td><td>oturum #1 kapalı</td></tr>
+<tr><td>29b</td><td>Sonuç özeti (sayfa açılışı)</td><td>oturum #1 kapalı</td></tr>
+<tr><td>30</td><td>Sonuç sayımı, azaltılmış hareket, ilk an</td><td>oturum #1 kapalı</td></tr>
+<tr><td>31</td><td>Öneri: eşzamanlı çoğunluk sonucu (№17)</td><td>oturum #1 kapalı</td></tr>
+<tr><td>32</td><td>Konu: sansür şeridi</td><td>oturum #1 kapalı</td></tr>
+<tr><td>33</td><td>Konu: Karar ve kapanış</td><td>oturum #1 kapalı</td></tr>
+<tr><td>34</td><td>Defter: geçmiş listesi</td><td>oturum #1 kapalı</td></tr>
+<tr><td>35–38</td><td>Havale uyarı şeridi (Havale, ana sayfa, profil, alınan havale)</td><td>+140 gün</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><b>Videolar:</b> ifşa geçişi canlı oyla (masaüstü), ifşadan sonra ilk açılış (telefon), sonuç sayımı (masaüstü ve telefon, yaklaşık 27 sn).</li>
+  <li><b>İfşa kareleri:</b> 0, 300, 600, 900, 1.200 ve 1.500 ms. Kareler Playwright'ın sahte saatiyle geçiş adım adım ilerletilerek alındı. Masaüstü ve telefon için ayrı; masaüstü ayrıca azaltılmış hareketle. Her dizinin sonunda bir "son hâl" karesi var.</li>
+  <li><b>Ölçümler:</b> her ekran ve genişlik için yatay taşan öğeler ve WCAG kontrastı. Kontrast, metin rengi ile ilk opak ata zemininin opaklık hesaba katılarak karşılaştırılmasıyla ölçüldü. Doku görseli ve CRT katmanı DOM rengi olmadığı için ölçümün dışında; CRT ayrıca hesaplandı.</li>
+  <li><b>Yeniden üretmek:</b> <code>denetim.mjs</code>, yığın <code>seed --reset</code> ile baştan tohumlanmışken aşama aşama çalıştırılır; komut sırası dosyanın başında. Betik yerel bir <code>playwright-core</code> ve Chromium yolu ister.</li>
+</ul>
+
+<h3>Fark listesi (§10'a karşı)</h3>
+<p>Önem: <b>Hata</b> tarife ya da WCAG AA'ya aykırı; <b>Sapma</b> tariften bilinçli ya da tartışmalı fark; <b>Not</b> küçük gözlem. İlk denetimde düzeltme yapılmadı; düzeltmeler bir sonraki gün yapıldı (aşağıda).</p>
+<table>
+<thead><tr><th style="width:17%">Konu</th><th style="width:11%">Önem</th><th>Bulgu</th></tr></thead>
+<tbody>
+<tr><td>Renkler</td><td>Uyan</td><td>Kâğıt #F4EFE4 ve doku, mürekkep #1B1A17, bordo #7A1E2B; Mahzen'de #000, #FFB000, #7A5500.</td></tr>
+<tr><td></td><td>Sapma</td><td>"Tek vurgu rengi" dışında onay durumları için yeşil #2F4A2A kullanılıyor: Defter'de "✓ Üç düğüm tutarlı", TUTARLI ve GERİ ALINDI etiketleri (17, 28, 34).</td></tr>
+<tr><td></td><td>Not</td><td>Mahzen'de tarifte olmayan iki ton var: #A87300 (çürüyen metnin alt sınırı) ve #3A2900 (çizgiler).</td></tr>
+<tr><td>Fontlar</td><td>Uyan</td><td>Newsreader metin ve başlıklarda; IBM Plex Mono hash ve sayılarda; Mahzen'de her yerde mono, başlıklarda VT323.</td></tr>
+<tr><td></td><td>Sapma</td><td>Mono yalnızca hash ve sayılarda değil. Gezinme, üst başlıklar, düğmeler, etiketler, sayım fişleri ve Hâtif görüşü de büyük harfli, harf aralıklı IBM Plex Mono. Tarif mono'yu "hash'ler ve sayılar için" diyor.</td></tr>
+<tr><td>Sansür şeridi</td><td>Uyan</td><td>Tam genişlikte siyah şerit (#0E0D0B), mono yazı, oylama numarası ve dayanılan kural ("#11 · IK-1 gereğince silindi").</td></tr>
+<tr><td></td><td>Sapma</td><td>Yazı bordo (#7A1E2B) değil, açık bordo (#D4576B). Bordo siyah üstünde 2,0:1 kalıyor; gerekçe tasarım belgesinde (§13.1).</td></tr>
+<tr><td></td><td>Hata</td><td>Şeritteki "defterde: ⌗ …" bağlantısı 11 px ve 3,87:1 (AA için 4,5 gerekli). Nedeni <code>opacity: 0.85</code> (<code>client/src/components/paper.tsx:280</code>). Görüntü: 32.</td></tr>
+<tr><td></td><td>Not</td><td>Telefonda "#12 · yazarının isteğiyle silindi" şeridinde blok karakterler alt satıra kayıp 2×2 bir yığın oluşturuyor (32, telefon).</td></tr>
+<tr><td>Mühür hash'i</td><td>Uyan</td><td>Her mesajda takma ad, zaman damgası ve bordo çerçeveli küçük mono hash var. Aynı mühür açılış metninde, kararda, oylarda ve ifşa kaydında da görünüyor (11, 29, 33).</td></tr>
+<tr><td>Çürüme</td><td>Uyan</td><td>Soluklaşma (#FFB000 → #A87300), deterministik bozulma ve ömür çubuğu var. Erişilebilir etiket özgün metni taşıyor.</td></tr>
+<tr><td></td><td>Sapma</td><td>Bozulma "hafifçe" değil. Silinmeye yakın başlıklarda karakterlerin %16'sına kadarı tam blok glifleriyle (▓ ▙ ░ ▚) değişiyor. VT323 başlıkta kelimeler okunmaz hâle geliyor ("devri░░irse ve kims▙"). Kod: <code>client/src/components/cellar.tsx:94-106</code>. Görüntüler: 23, 20 listesinin alt kısmı.</td></tr>
+<tr><td>CRT çizgileri ve kapatılabilirlik</td><td>Uyan</td><td>Çizgiler hafif ve tek görsel katman (performans maliyeti düşük). "crt: açık/kapalı" anahtarıyla kapatılabiliyor, tercih saklanıyor (20 / 21).</td></tr>
+<tr><td></td><td>Hata</td><td>Kontrast: çizgiler her üç piksel satırından birini yaklaşık %39 karartıyor (<code>scanlines.png</code> alfa 110/255 × 0,9). O satırlarda kontrast düşüyor: amber 11,5 → 4,5:1; çürümüş amber 5,1 → 2,5:1; sönük amber 3,1 → 1,8:1. Çizgiler varsayılan olarak açık. Tasarım belgesindeki (§13.2) "Kontrast 4,5:1'in altına inmez" iddiası CRT katmanını hesaba katmıyor. Kod: <code>client/src/components/cellar.tsx:50-66</code>.</td></tr>
+<tr><td>prefers-reduced-motion</td><td>Uyan</td><td>Sonuç sayımı azaltılmış harekette ilk anda son hâlde açılıyor; tüm fişler ve mühür görünüyor, "yeniden oynat" gizli (30).</td></tr>
+<tr><td></td><td>Hata</td><td>İfşa geçişi azaltılmış harekette kapanmıyor. 300. ms karesinde zemin (20,20,19); normal geçişte bu değer (18,17,17). Geçiş yaklaşık 600 ms oynuyor, sonra son hâle sıçrıyor. Neden: <code>useReducedMotion</code> ilk çizimde <code>false</code> döner (<code>client/src/lib/motion.ts:5-17</code>), animasyon başlar; değer <code>true</code> olunca animasyon durdurulmaz, son hâle geçiş 600 ms bekler (<code>client/src/app/mahzen/[id].tsx:108-111</code>). Tasarım belgesindeki (§13.4) "son hâl anında gösterilir" iddiası web'de tutmuyor.</td></tr>
+<tr><td></td><td>Doğrulanmadı</td><td>Mahzen girişindeki kararma geçişi azaltılmış harekette denenmedi.</td></tr>
+<tr><td>Kontrast (WCAG AA, Mahzen dahil)</td><td>Uyan</td><td>Otomatik ölçüme göre, aşağıdakiler dışında 38 ekrandaki tüm metin öğeleri AA'yı geçiyor. Mahzen'deki soluk ve çürümüş metin de CRT'siz ölçümde geçiyor.</td></tr>
+<tr><td></td><td>Hata</td><td>Pencere açıkken ana sayfadaki Karar Saati bandında geri sayım görünmüyor. Bant mürekkep rengine dönüyor, sayaç da mürekkep renginde kalıyor: 1:1. Kod: <code>client/src/app/index.tsx:38</code> (renk verilmiyor), <code>client/src/components/paper.tsx:455</code> ve <code>:602</code> (<code>countBig</code> rengi mürekkep). Görüntü: 26.</td></tr>
+<tr><td></td><td>Hata</td><td>Sansür şeridindeki "defterde" bağlantısı 3,87:1 (yukarıda).</td></tr>
+<tr><td></td><td>Hata</td><td>CRT çizgi satırları (yukarıda).</td></tr>
+<tr><td></td><td>Not</td><td>Pasif düğmeler 2,8–3,0:1. Meydan: Giriş yap, Kodu yeniden gönder, İtiraz et, Getir, Havale et, Gönder. Mahzen: <code>[ gönder ]</code> 2,85:1. WCAG 1.4.3 etkin olmayan arayüz öğelerini muaf tutar; bilgi olarak.</td></tr>
+<tr><td></td><td>Not</td><td>İfşa geçişinin ortasında zemin griye (128,125,119) dönerken metin kontrastı kısa süre düşüyor. Geçiş anı; kabul edilebilir.</td></tr>
+<tr><td>Telefon genişliğinde taşma</td><td>Uyan</td><td>390 px'te 38 ekranın hiçbirinde yatay taşma yok (otomatik ölçüm: sayfa genişliği = ekran genişliği, sağ kenarı taşan öğe yok).</td></tr>
+<tr><td></td><td>Not</td><td>Gezinme iki satıra kırılıyor. "İtiraza açık öneriler" başlığı yan etiketiyle iki satıra bölünüyor (05, telefon).</td></tr>
+<tr><td></td><td>Not</td><td>Profil belge satırları dar ekranda sıkışıyor: uzun değerler iki satıra iniyor, etiketle hizası kayıyor (14, telefon).</td></tr>
+<tr><td></td><td>Not</td><td>Sonuç sayımı sayfası telefonda 16.000 px'i aşıyor; 12 oylamanın bütün fişleri alt alta (29, telefon).</td></tr>
+<tr><td>Diğer</td><td>Hata</td><td>İfşa geçişi masaüstünde sayfa sütununa oturmuyor. Sahne tam genişlikte, yazılar küçük (11–14 px mono), ekranın alt yaklaşık dörtte üçü boş. Geçiş bitince 780 px sütunlu, künyeli sayfaya sıçrıyor. Tarif "Bu ekranı özenle yap" diyor. Telefonda sahne düzgün oturuyor.</td></tr>
+<tr><td></td><td>Not</td><td>İfşa geçişindeki görsel değişim yaklaşık 1.200 ms'de bitiyor (inOut cubic); 1.500 ms karesi 1.200 ile aynı.</td></tr>
+<tr><td></td><td>Not</td><td>Ayrı bir öneri listesi ekranı yok. Öneriler ana sayfadaki iki şeritte ve Karar Saati kuyruğunda listeleniyor; alan sayfası o alandaki açık önerileri göstermiyor (06).</td></tr>
+<tr><td></td><td>Not</td><td>Mahzen giriş uyarısının arkasındaki başlık satırı "kapasite … başlık" gösteriyor; liste onaydan sonra yükleniyor (19).</td></tr>
+<tr><td></td><td>Not</td><td>Kayıt formunda il yer tutucusu "ör. Istanbul" (İ yerine I) (02).</td></tr>
+<tr><td></td><td>Not</td><td>Masaüstünde (1440) içerik 780 px'lik sütunda, kenarlar boş. Kâğıt ve belge düzeninin tercihi; ifşa sahnesiyle tutarsız.</td></tr>
+</tbody>
+</table>
+
+<h3>Android (ilk denetim)</h3>
+<p>İlk denetimde açılamadı: makinede Android SDK, emülatör ve <code>adb</code> yoktu; bağlı bir cihaz da yoktu. Denenebilen iki şey:</p>
+<ul>
+  <li><code>npx expo export --platform android</code> hatasız derleniyor (Hermes paketi, 3 MB). Modül çözümleme ya da yalnız web'de olan içe aktarma kaynaklı bir kırılma yok.</li>
+  <li>Web'e özgü kullanımlar (<code>document</code>, <code>cursor</code>, <code>outlineStyle</code>) <code>Platform.OS === 'web'</code> ile korunuyor. <code>Pressable</code>'daki <code>hovered</code> yerelde tanımsız kalıyor; zararsız.</li>
+</ul>
+<p>Cihazda görülmeden bilinemeyenler: yazı tiplerinin çizimi; <code>ImageBackground resizeMode="repeat"</code> ile kâğıt dokusu ve CRT çizgileri; azaltılmış hareketin sistem ayarından okunması; Expo Go sürümünün SDK 57'yi desteklemesi; yerel ağdaki API'ye düz HTTP erişimi. Üç ekran görüntüsü (giriş, öneri detayı, Mahzen) alınamadı.</p>
+
+<h3>Düzeltmelerden sonra (29 Eylül)</h3>
+<p>Hatalar ve ardından gelen düzeltme listesi iki commit'le düzeltildi (<code>63f75d0</code>, <code>a97d787</code>). Görüntüler aynı adlarla, aynı aşamalarla yeniden alındı (1440 ve 390).</p>
+<ul>
+  <li><b>Ölçüm:</b> 01–38 arası bütün ekranlarda, iki genişlikte de kontrast hatası 0 ve yatay taşma 0. Tek istisna 29a telefonda: sayım sırasında henüz belirmekte olan fişler (opaklık 0'a yakın). Bu geçici bir animasyon anı.</li>
+  <li><b>Yeni görüntüler:</b> 29a (sayım sırasında, №17), 29b (sonuç sayfası açılışta özetle gelir) ve Android'den üç görüntü (giriş, öneri, Mahzen).</li>
+</ul>
+<table>
+<thead><tr><th style="width:5%">#</th><th style="width:28%">Hata</th><th>Durum</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Pencere açıkken geri sayım</td><td class="yes">Düzeltildi. Bantta açık renk ve "kapanışa" öneki var (26).</td></tr>
+<tr><td>2</td><td>Sansür şeridindeki "defterde" bağlantısı</td><td class="yes">Düzeltildi. Opaklık kaldırıldı, 12 px, 5,4:1. Telefonda şerit tek satır ve süs blokları yok (32).</td></tr>
+<tr><td>3</td><td>CRT satırları</td><td class="yes">Düzeltildi. Çizgi opaklığı düşürüldü (satır %14 kararır) ve amber tonları açıldı: çürümüş #B88000, sönük #8F6400. Çizgi satırında çürümüş amber 4,7:1, sönük amber 3,2:1.</td></tr>
+<tr><td>4</td><td>İfşa azaltılmış harekette</td><td class="yes">Düzeltildi. Tercih ilk çizimden önce <code>matchMedia</code> ile okunur ve 600 ms bekleme kaldırıldı; ilk kare son hâl.</td></tr>
+<tr><td>5</td><td>İfşa sahnesi masaüstünde</td><td class="yes">Düzeltildi. Sahne sayfa sütununda ve tipografisi son sayfayla aynı. Künye t &gt; 0,7'de belirir, son kare son sayfanın kendisidir.</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><b>Sonuç sayımı videosu (29 Eylül akşam):</b> ilk düzeltme turundaki videolar ve 29a/29 görüntüleri hareketsiz bir özet gösteriyordu. <code>?izle=17</code> sayımı oynatıyordu, ama №17 sayfanın aşağısında kaldığı için kayıt ekranın dışında kalıyordu. Sayfa artık sayımı oynatılan önerinin bölümüne kayıyor. Videolar ve 29–30 görüntüleri yeniden alındı: sayım 4. saniyeden 16. saniyeye kadar düşüyor. Bu görüntülerin veri durumu, demo modunun 5. adımıdır.</li>
+  <li><b>Kayıt formundaki "ör. Istanbul":</b> nedeni metin değildi. Chrome yer tutucuyu satır kutusuna kırpıyor ve "İ"nin noktası düşüyordu. Genel CSS ile (<code>::placeholder { overflow: visible }</code>) düzeltildi.</li>
+  <li><b>Çürümedeki bozulma yoğunluğu</b> ("Sapma") değiştirilmedi.</li>
+  <li><b>Android:</b> emülatörde denendi (Pixel 7 AVD, Android 36, Expo Go 57.0.9, <code>adb reverse</code> ile 8081 ve 8000). Bulunup düzeltilenler: uygulama Mahzen ekranıyla açılıyordu; üst kenar durum çubuğunun altında kalıyordu (Meydan ve Mahzen); Mahzen'de durum çubuğu simgeleri koyu renkteydi; bölüm başlığının sağındaki not satırdan taşıyordu. Yazı tipleri, kâğıt dokusu ve CRT çizgileri cihazda doğru çiziliyor. Android'de azaltılmış hareket denenmedi.</li>
+</ul>
+<figure data-fig="denetim-geri-sayim">
+<img src="gorseller/denetim-geri-sayim.png" alt="Pencere açıkken ana sayfadaki Karar Saati bandı">
+<figcaption><b>Şekil #.</b> Düzeltmeden sonra ana sayfa, Karar Saati penceresi açıkken (görüntü 26, 29 Eylül): koyu bantta açık renkli "kapanışa 00:59:40". İlk denetimde sayaç bantla aynı renkteydi (1:1). Görüntü 1 Ekim'deki geniş ekran düzeninden öncedir.</figcaption>
+</figure>
+<figure data-fig="denetim-crt">
+<img src="gorseller/denetim-crt.png" alt="Mahzen listesi, CRT çizgileri açık ve kapalı">
+<figcaption><b>Şekil #.</b> Mahzen listesi, <span class="a4">solda</span><span class="a5">üstte</span> CRT çizgileri açık, <span class="a4">sağda</span><span class="a5">altta</span> kapalı (görüntü 20 ve 21, düzeltmeden sonra). Çizgiler satırı %14 karartır; çizgi satırında bile amber metin AA eşiğinin üstünde kalır.</figcaption>
+</figure>
+<figure data-fig="denetim-ifsa">
+<img src="gorseller/denetim-ifsa-kareleri.png" alt="İfşa geçişinin altı karesi">
+<figcaption><b>Şekil #.</b> Mahzen başlığının ifşa geçişi, masaüstü, 0–1.500 ms arasında altı kare (düzeltmeden sonra). Siyah Mahzen sayfası kâğıda döner; sahne sayfa sütununda kalır, son kare son sayfanın kendisidir.</figcaption>
+</figure>
+
+<h3>Sonradan değişenler</h3>
+<ul>
+  <li><b>Geniş ekran düzeni (1 Ekim):</b> 1.024 px ve üstünde sayfalar 1.240 px'lik sütunda, ana ve yan sütunlu düzenle çizilir; "Masaüstünde içerik 780 px'lik sütunda" notu bu düzenden öncedir. Telefon düzeni değişmedi.</li>
+  <li><b>Numaralar:</b> tohuma sonradan eklenen öneri ve etkinlikler yüzünden numaralar kaydı; denetimdeki №20 (R2 daraltılmış öneri) bugün №33 numarasını taşır.</li>
+  <li><b>Kullanım testi (9 Ekim):</b> görsel denetimin yerine geçmez; akışları kullanıcı gözüyle sınar. Bulguları ve düzeltmeleri §{{ref:sorunlar}} ve §{{ref:test}} bölümlerindedir.</li>
+</ul>
+</section>
+

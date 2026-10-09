@@ -1,0 +1,137 @@
+<section id="teknik" class="newpage">
+<h2><span class="no">#</span>Veri modeli, ontoloji ve arayüzler</h2>
+<p class="lead">Bu bölüm sistemin teknik iskeletini anlatır: bileşenler ve katmanlar, depolar arasındaki tutarlılık, hangi verinin nerede durduğu, Neo4j ontolojisi, PostgreSQL tabloları, HTTP arayüzü, defterin protokolü, sahte saat ve geliştirme araçları, istemci. Kaynak tasarım belgesidir (<code>DESIGN.md</code>); uç nokta ve tablo listeleri koddan çıkarıldı.</p>
+
+<h3>Bileşenler</h3>
+<table>
+<thead><tr><th style="width:18%">Bileşen</th><th>Sorumluluk</th></tr></thead>
+<tbody>
+<tr><td class="k">api/</td><td>Kimlik, öneri motoru, şeritler, havale, Karar Saati, Mahzen, Hâtif, takvim, dilekçe, görseller, haberler, arama, zamanlayıcı, geliştirme CLI'ı (FastAPI, Python 3.12)</td></tr>
+<tr><td class="k">ledger/</td><td>Sadece eklenebilir, hash zincirli kayıt; üç düğüm, sabit lider, HTTP çoğaltma, <code>/verify</code></td></tr>
+<tr><td class="k">client/</td><td>Expo + expo-router + TypeScript; tek kod tabanı (web ve Android)</td></tr>
+<tr><td>PostgreSQL</td><td>Kimlik, içerik, sürümler, öneriler, itirazlar, oturumlar, oylar ve tuzlar, anlık görüntüler, Mahzen, takvim, dilekçe, görseller, bildirimler, defter outbox'ı, sahte saat</td></tr>
+<tr><td>Neo4j</td><td>Kullanıcı grafı, havale grafı, etkileşim grafı, alan hiyerarşisi, kapsam ve kaynak sahipliği, yönetmelik maddeleri</td></tr>
+</tbody>
+</table>
+<h3>API'nin katmanları</h3>
+<ul>
+  <li><code>domain/</code>: saf fonksiyonlar. Havale çözümleme, döngü kontrolü, ağırlık ve sayım, R1–R9 (denetim zinciri), önerinin yaşam döngüsü (durum sınıfları), muhataplar, Hâtif etiket denetimi, baskın tespiti, başlık kimliği, görsel işleme (yarım ton), diff. Veritabanı bilmez; testlerin büyük kısmı burada.</li>
+  <li><code>graph/</code>: Neo4j erişimi; <code>OntologyView</code> protokolünün Neo4j uygulaması (Cypher).</li>
+  <li><code>db/</code>: SQLAlchemy 2 modelleri.</li>
+  <li><code>services/</code>: iş akışları; domain fonksiyonlarını veri katmanlarıyla birleştirir.</li>
+  <li><code>routers/</code>: HTTP uç noktaları.</li>
+  <li><code>evaluation/</code>: baskın tespitinin değerlendirme düzeneği (§{{ref:baskin}}); üretim kodunu çağırır, üretim onu çağırmaz.</li>
+</ul>
+<p><code>OntologyView</code> protokolünün bir bellek içi, bir de Neo4j uygulaması vardır. İkisi aynı sözleşme testlerinden geçer. Böylece kurallar Docker olmadan test edilir, Cypher sorguları da aynı beklentilere karşı doğrulanır.</p>
+
+<h3>Depolar arasında tutarlılık</h3>
+<ul>
+  <li>Üç depo arasında dağıtık işlem yoktur. PostgreSQL işlemsel çekirdektir.</li>
+  <li>Bir servis çağrısı önce PostgreSQL işlemini tamamlar, ardından Neo4j'yi günceller.</li>
+  <li>Deftere gidecek kayıt, aynı PostgreSQL işlemi içinde <code>ledger_outbox</code> tablosuna yazılır. İstek sonunda lidere senkron gönderilir; başarısız olursa arka planda sırayla yeniden denenir. Defterdeki sıra böylece PostgreSQL'deki sırayla aynı kalır.</li>
+  <li>Gönderim topludur: bekleyen kayıtlar sırayla, 200'lük parçalar hâlinde lidere tek istekte gider (<code>/append-batch</code>). Lider parçayı zincire bağlayıp tek SQLite işleminde yazar ve takipçilere tek istekte çoğaltır (<code>/replicate-batch</code>). Zaman damgası azalırsa parçanın hiçbir kaydı eklenmez. Kayıt başına ayrı istek, 250 oyluk bir Karar Saati açılışını 15 sn sürdürüyordu; toplu gönderimle 2,7 sn sürüyor. Zincir, kayıtları tek tek eklemekle aynıdır (<code>ledger/tests/test_replication.py</code>).</li>
+  <li>Neo4j yazımı PostgreSQL commit'inden sonra başarısız olursa iki depo ayrışabilir. Ödev ölçeğinde bu kabul edilmiştir. <code>meşveret-dev seed --reset</code> her şeyi yeniden kurar.</li>
+</ul>
+
+<h3>Veri yerleşimi</h3>
+<table>
+<thead><tr><th>Veri</th><th>Depo</th><th>Not</th></tr></thead>
+<tbody>
+<tr><td>Kullanıcı kimliği, şifre özeti (argon2), adres, doğum tarihi</td><td>PostgreSQL</td><td>Ad soyad, adres ve doğum tarihi yalnızca sahibine döner</td></tr>
+<tr><td><code>User</code> düğümü (id, takma ad)</td><td>Neo4j</td><td>Graf ilişkileri için</td></tr>
+<tr><td>Konu, mesaj, mesaj sürümleri</td><td>PostgreSQL</td><td>Her satır kendi defter hash'ini taşır</td></tr>
+<tr><td>Öneri kaydı, durum, itirazlar</td><td>PostgreSQL</td><td><code>Oneri</code> düğümü ile <code>ETKILER</code>/<code>SECMEN</code> Neo4j'de</td></tr>
+<tr><td>Oylar, tuzlar, anlık görüntüler</td><td>PostgreSQL</td><td>Commit ve açılış deftere de yazılır</td></tr>
+<tr><td>Alan ağacı, Kapsam, UYE, Kaynak, SAHIBI</td><td>Neo4j</td><td>Ontoloji</td></tr>
+<tr><td>HAVALE, ETKILESIM</td><td>Neo4j</td><td>Karar Saati'nde PostgreSQL'e anlık görüntü alınır</td></tr>
+<tr><td>YonetmelikMaddesi (değerler)</td><td>Neo4j</td><td>Kod eşik ya da süre sabiti içermez</td></tr>
+<tr><td>Takvim etkinlikleri, katılım, raporlar; dilekçeler ve yanıtlar; görseller</td><td>PostgreSQL</td><td>Görseller bytea olarak; özgün ve baskı sürümü</td></tr>
+<tr><td>Bildirimler</td><td>PostgreSQL</td><td>Yalnızca sahibine döner; deftere yazılmaz</td></tr>
+<tr><td>Mahzen başlıkları ve mesajları</td><td>PostgreSQL</td><td><code>Diskur</code> düğümü ve yazar ilişkileri Neo4j'de (baskın tespiti için)</td></tr>
+<tr><td>Defter kayıtları</td><td>ledger-1..3 (her birinde ayrı SQLite)</td><td>Silinmez</td></tr>
+</tbody>
+</table>
+
+<h3>Ontoloji (Neo4j): düğümler</h3>
+<table>
+<thead><tr><th style="width:22%">Etiket</th><th>Temel özellikler</th></tr></thead>
+<tbody>
+<tr><td class="k">User</td><td><code>id</code>, <code>takma_ad</code>, <code>rol</code> (CITIZEN / ORACLE), <code>created_at</code></td></tr>
+<tr><td class="k">Alan</td><td><code>id</code>, <code>ad</code>, <code>anahtar_kelimeler</code> (Hâtif için)</td></tr>
+<tr><td class="k">Kapsam</td><td><code>id</code>, <code>tur</code> (GENEL / NITELIK / ILGI), <code>alt_tur</code> (SEHIR / YAS_GRUBU), <code>deger</code> (ör. "İstanbul", "25-34", alan id)</td></tr>
+<tr><td class="k">Kaynak</td><td><code>id</code>, <code>tur</code> (ALAN / KONU / YONETMELIK_MADDESI / ORTAK), <code>ad</code>, <code>bolunebilir</code>, <code>bolunme_turu</code> (ör. SEHIR), <code>paylar</code> (ör. şehir → puan)</td></tr>
+<tr><td class="k">Konu</td><td><code>id</code>, <code>baslik</code>, <code>alan_id</code>; aynı zamanda bir Kaynak</td></tr>
+<tr><td class="k">Oneri</td><td><code>id</code>, <code>tur</code>, <code>durum</code></td></tr>
+<tr><td class="k">Karar</td><td><code>id</code>, <code>konu_id</code>, <code>metin_id</code></td></tr>
+<tr><td class="k">YonetmelikMaddesi</td><td><code>anahtar</code>, <code>deger</code> (tipli JSON), <code>sema</code>, <code>aciklama</code>; aynı zamanda bir Kaynak</td></tr>
+<tr><td class="k">Diskur</td><td><code>id</code> (Mahzen başlığı; başlık silinince düğüm de silinir)</td></tr>
+</tbody>
+</table>
+<p><code>Konu</code> ve <code>YonetmelikMaddesi</code> düğümleri ek olarak <code>Kaynak</code> etiketini taşır. Böylece sahiplik kuralları her kaynak türüne aynı biçimde uygulanır.</p>
+<h3>Ontoloji: ilişkiler</h3>
+<table>
+<thead><tr><th style="width:42%">İlişki</th><th>Anlam</th></tr></thead>
+<tbody>
+<tr><td class="k">(Alan)-[:ALT_ALANI]-&gt;(Alan)</td><td>Ağaç. Ok alttan üste gider: "alt, üstün alt alanıdır"; ALT_KUMESI ve ALT_KONUSU ile aynı yön</td></tr>
+<tr><td class="k">(User)-[:UYE {since, neden}]-&gt;(Kapsam)</td><td><code>neden</code>: KAYIT, ADRES_DEGISIKLIGI, YAS, KATILIM</td></tr>
+<tr><td class="k">(Kapsam)-[:ALT_KUMESI]-&gt;(Kapsam)</td><td>Ontolojik alt küme ilişkisi. Her NITELIK ve ILGI kapsamı GENEL'in alt kümesidir</td></tr>
+<tr><td class="k">(Kaynak)-[:SAHIBI]-&gt;(Kapsam)</td><td>Kaynağın sahibi olan kapsam</td></tr>
+<tr><td class="k">(User)-[:HAVALE {alan_id | null, since}]-&gt;(User)</td><td><code>alan_id = null</code> genel havale</td></tr>
+<tr><td class="k">(Oneri)-[:ETKILER]-&gt;(Kaynak)</td><td>Önerinin etkilediği kaynaklar</td></tr>
+<tr><td class="k">(Oneri)-[:SECMEN]-&gt;(Kapsam)</td><td>Önerinin seçmen kapsamı (tek)</td></tr>
+<tr><td class="k">(User)-[:ETKILESIM {agirlik}]-&gt;(User)</td><td>Türetilmiş ilişki grafı (baskın tespiti)</td></tr>
+<tr><td class="k">(User)-[:YAZDI {ilk}]-&gt;(Diskur)</td><td>Mahzen başlığına ilk yazış anı</td></tr>
+<tr><td class="k">(Konu)-[:ALANINDA]-&gt;(Alan), (Konu)-[:ALT_KONUSU]-&gt;(Konu)</td><td>Konu yerleşimi</td></tr>
+</tbody>
+</table>
+<h3>Kapsam türleri</h3>
+<ul>
+  <li><b>GENEL:</b> e-postası doğrulanmış herkes. Oy hakkı hemen doğar.</li>
+  <li><b>NITELIK:</b> profil verisinden sistem hesaplar; kullanıcı katılamaz ya da ayrılamaz. Şehir adresin il alanından, yaş grubu doğum tarihinden (18-24, 25-34, 35-49, 50+) o anki sahte saate göre hesaplanır. Adres değişikliğinde eski şehir üyeliği hemen biter; yeni şehirde oy hakkı <code>adres_bekleme</code> (90 gün) sonra doğar. Kayıttaki ilk şehirde oy hakkı hemen doğar.</li>
+  <li><b>ILGI:</b> bir Alan'a üyelik. Kullanıcı katılır ya da ayrılır. Oy hakkı <code>ilgi_bekleme</code> (14 gün) sonra doğar.</li>
+</ul>
+<p><b>Alt küme ilişkisi ontolojiktir.</b> "İstanbul ⊂ GENEL" bir <code>ALT_KUMESI</code> kenarıyla tanımlanır, iki kapsamın o anki üye listeleri karşılaştırılarak hesaplanmaz. Üye listesi zamanla değişir; kimin kimin parçası olduğu ise yapısal bir iddiadır. Kaynak sahipliği tablosu için bkz. §{{ref:sinirlama}}. Bütçe yalnızca paylarıyla temsil edilir; kaynağın toplamı payların toplamıdır (tohumda 20.000 puan). Bütün adına oylanan öneri etkisini kapsam başına yeni paylarla bildirir; kabul edilen önerinin yeni payları kaynağa işlenir ve deftere <code>PAY_DEGISTI</code> olarak yazılır.</p>
+
+<h3>PostgreSQL tabloları ({{v:teknik.tablo_sayisi}})</h3>
+{{t:teknik_tablolar}}
+
+<h3>HTTP arayüzü ({{v:teknik.uc_nokta}} uç nokta)</h3>
+<p>Kimlik doğrulama JWT ile taşınır (<code>Authorization: Bearer</code>). <code>/_dev</code> ile başlayanlar yalnızca geliştirme ortamında (<code>ENV=dev</code>) eklenir; üretim yapılandırmasında yönlendiricileri hiç yoktur.</p>
+{{t:teknik_api}}
+<p>Defter düğümlerinin kendi arayüzü: <code>GET /health</code>, <code>GET /tip</code>, <code>POST /append</code>, <code>POST /append-batch</code>, <code>POST /replicate</code>, <code>POST /replicate-batch</code>, <code>POST /sync</code>, <code>GET /records</code>, <code>GET /records/{seq}</code>, <code>GET /records/by-hash/{prefix}</code>, <code>GET /records/of-type/{type}</code>, <code>GET /records/last-of-type/{type}</code>, <code>GET /verify</code> ve yalnızca geliştirmede <code>POST /_dev/reset</code>. Yazan uç noktalar paylaşılan bir belirteç ister.</p>
+
+<h3>Defterin protokolü</h3>
+<ul>
+  <li><b>Kayıt:</b> <code>{seq, prev_hash, ts, type, payload, payload_hash, hash}</code>. <code>payload_hash = sha256(kanonik_json(payload))</code>; <code>hash = sha256(prev_hash ‖ payload_hash ‖ ts ‖ type)</code>. <code>prev_hash</code> ve <code>payload_hash</code> 64 karakter hex, <code>ts</code> sabit biçimli ISO-8601 (mikrosaniye, Z) olduğu için birleştirme belirsiz değildir. Genesis kaydının <code>prev_hash</code> değeri 64 sıfırdır.</li>
+  <li><b>Zaman:</b> <code>ts</code> değerini API sahte saatten verir; defter azalmayan <code>ts</code> şartı koyar.</li>
+  <li><b>Yazılanlar:</b> kabul edilmiş içerik (tam metin), tartışma mesajları ve sürümleri, öneriler, oy commit'leri, açılan oylar, sonuçlar, silme olayları, havale olayları, Karar ve Şerhler, açığa çıkarılmış Mahzen başlıkları, dilekçeler ve yanıtları, etkinlikler ve raporları, görsellerin özetleri, yönetmeliğin durumu. Silinen içerik defterden silinmez.</li>
+  <li><b>Depolama:</b> her düğümde ayrı SQLite dosyası. UPDATE ve DELETE, SQLite tetikleyicileriyle reddedilir.</li>
+  <li><b>Çoğaltma:</b> ledger-1 sabit liderdir; API yalnızca lidere yazar. Lider kaydı yazar ve takipçilere gönderir. Takipçi, <code>prev_hash</code> ve <code>seq</code> kendi ucuyla uyuşuyorsa ve hash'i yeniden hesapladığında aynı değeri buluyorsa kaydı ekler. Geride kalan takipçi <code>GET /records?from=</code> ile liderden yetişir. Oylama algoritması (Raft vb.) ya da lider devri yoktur.</li>
+  <li><b>Doğrulama:</b> her düğümdeki <code>/verify</code> zinciri baştan yeniden hesaplar; ilk bozuk seq'i ve nedenini döner. API'deki <code>/ledger/verify</code> üç düğümü toplar ve durumu üçe ayırır: <b>bütünlük bozuk</b> (hash tutmuyor), <b>geride</b> (kısa ama önek aynı), <b>tutarsız</b> (aynı seq'te farklı hash).</li>
+  <li><b>İstemci:</b> Meydan'da her içeriğin altında kısaltılmış hash (mühür) gösterilir. "Defteri doğrula" ekranı üç düğümün durumunu gösterir ve hash ile kayıt görüntüler. <code>GET /ledger/recent</code> defterin ucunu ve son kayıtları türlerinin okunur adlarıyla döner; yalnızca okur, gönderim kuyruğunu boşaltmaz.</li>
+  <li><b>Geliştirme aracı:</b> <code>docker compose exec ledger-2 python -m ledger.tamper --seq N</code> bir düğümün kaydını bozar; doğrulamanın bozulmayı yakaladığını göstermek içindir.</li>
+</ul>
+
+<h3>Zaman, zamanlayıcı ve geliştirme araçları</h3>
+<ul>
+  <li><b>Sahte saat:</b> PostgreSQL'de tek satırlık ofset tutulur, <code>now = gerçek_utc + ofset</code>. Tüm zaman karşılaştırmaları bu saatle yapılır. Demo modunda saat durur: geri sayımlar akmaz, zamanlayıcı kendiliğinden bir iş işlemez, zamanı yalnızca komutlar ilerletir. İstemci de sunucunun durmuş anında durur.</li>
+  <li><b>Zamanlayıcı:</b> API içindeki arka plan iş parçacığı 5 saniyede bir <code>tick(now)</code> çağırır. Vadesi gelen işler (Command nesneleri, §{{ref:desen}}): havale süresi dolumu, havale kabul süresi, sessiz onay bitişi, rakip metin süresi, haftalık Karar Saati açılışı ve kapanışı.</li>
+  <li><b>Zamanlayıcı kilidi:</b> tek bir PostgreSQL advisory lock. Kilit oturum düzeyindedir ve ayrı bir bağlantıda tutulur; işlerin içindeki ara commit'ler onu bırakmaz. Zamanı değiştiren geliştirme komutları kilidi saati değiştirmeden önce alır ve aradaki bütün vadesi gelen işleri kendileri işler. Arka plan iş parçacığı kilidi beklemez, dener; alamazsa o adımı atlar. Her iş ayrıca idempotenttir: durumu denetler ve ikinci çalıştırmada deftere yazmaz.</li>
+  <li><b><code>meşveret-dev</code></b> (yalnızca <code>ENV=dev</code>): <code>advance-time</code> (ofseti ilerletir, aradaki işleri vade sırasıyla işler), <code>run-karar-saati</code> (hemen bir oturum açar: anlık görüntü, kilit, baskın tespiti, Hâtif oyu, tohumun oy planı), <code>run-karar-saati --close</code> (oyları açar, sayar, sonuçları uygular), <code>tamper-regulation</code> (operatörün oylamasız değişikliğini taklit eder), <code>seed [--reset]</code>, <code>now</code>, <code>demo goto | next | prev | durum | bitir</code> (sınıf gösterimi; her adım yığını deterministik bir duruma getirir).</li>
+  <li><b>Tekrarlanabilirlik:</b> tohum kullanıcılarının kimliği takma addan türetilir (<code>uuid5</code>); geliştirme ortamında oy tuzu sunucu anahtarından HMAC ile türetilir (üretimde rastgeledir); saat demo boyunca durur. Demo iki çalıştırmada ekranda aynı sayıları ve aynı defter zincirini üretir (<code>scripts/demo-kaydi.mjs</code> karşılaştırır).</li>
+  <li><b>Tohum:</b> geçmiş tarihli içeriği bir zaman çizelgesine yazar ve zaman sırasıyla oluşturur; defter kayıtlarının zaman damgaları içeriğin zamanıyla aynı olur. Senaryolardaki yüzdeler bir geliştirme oy planına dayanır; <code>test_seed.py</code> sonuçları doğrular.</li>
+</ul>
+
+<h3>İstemci</h3>
+<ul>
+  <li>Expo SDK 57, expo-router (<code>client/src/app/</code> altındaki her dosya bir ekran), TypeScript. Web ve Android aynı kod tabanıdır.</li>
+  <li><code>src/components/paper.tsx</code> Meydan bileşenlerini (gazete başlığı, mühür, sansür şeridi, düğme, form alanları, geri sayım, geniş ekran düzeni), <code>src/components/cellar.tsx</code> Mahzen bileşenlerini (CRT katmanı, çürüyen metin, ömür çubuğu, uyarı) içerir.</li>
+  <li><code>src/lib/clock.tsx</code> istemciyi sunucunun sahte saatine eşitler; tüm geri sayımlar bu saate göre işler.</li>
+  <li>Geniş ekran düzeni (≥ 1024 px): <code>useWide</code>, <code>Columns</code>, <code>Split</code>, <code>Grid</code>, <code>PageHead</code>. Dar ekranda sayfa kendi tek sütunlu sırasını çizer; telefon düzeni değişmez.</li>
+  <li><code>src/components/reveal-tally.tsx</code> Karar Saati sonuç açıklamasını, <code>src/components/reveal-transition.tsx</code> ifşa geçişini oynatır; <code>src/components/proposal-title.tsx</code> daralan önerinin talep/etki başlığını ve pay çubuğunu üretir.</li>
+  <li><code>src/app/nasil-isler.tsx</code> kılavuzdur (on dokuz bölüm, on dört canlandırmalı şekil); şekiller tek bir zaman çizelgesi değerinden anahtar karelerle çizilir, azaltılmış harekette son karede durur.</li>
+  <li>Ön sayfa <code>GET /news</code>'ten, takvim <code>src/app/takvim.tsx</code> ve <code>src/app/etkinlik/[id].tsx</code>'ten, arama <code>src/app/ara.tsx</code>'ten çizilir.</li>
+  <li>API adresi <code>EXPO_PUBLIC_API_URL</code> ile verilir. Adres <code>localhost</code> gösteriyor ama sayfa başka bir makineden açılmışsa (telefon, aynı ağ) istemci API'yi o makinede arar.</li>
+</ul>
+</section>
+

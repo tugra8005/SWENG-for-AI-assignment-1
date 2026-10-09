@@ -8,6 +8,7 @@
   <div><div class="n">{{v:test.toplam}}</div><div class="l">otomatik test: {{v:test.birim}} birim, {{v:test.defter}} defter, {{v:test.entegrasyon}} entegrasyon; hepsi geçti ({{v:test.tarih}})</div></div>
 </div>
 <p>Rapor dört bölümdür. <b>Birinci bölüm</b> problemi ders notlarındaki yöntemle çerçeveler: iş hedefinden karara ve göreve giden huni, problem kanvası, paydaşlar, kısıtlar ve ön-otopsi. Ardından her karar noktası için yapay zekânın gerekip gerekmediğini sorar, başarı metriklerini üç katmanda tanımlar ve veriden karar üreten tek bileşeni, baskın tespitini temel çizgilere karşı ölçer. <b>İkinci bölüm</b> kodun tasarım desenleriyle yeniden düzenlenmesini anlatır: bulunan anti-desenler, uygulanan desenler, uygulanmayanlar ve gerekçeleri. <b>Üçüncü bölüm</b> sistemin kurallarını, <b>dördüncü bölüm</b> karşılaşılan sorunları, bilinçli açıkları, testleri ve yapay zekâ kullanım beyanını içerir.</p>
+<p>Baskın tespiti iki döngüde incelenir: önce CRISP-DM'in altı aşamasıyla tohum verisinde (§{{ref:crisp}}), sonra temel çizgilere karşı ölçülerek (§{{ref:baskin}}). İkinci bölüm sistemin veri modelini, Neo4j ontolojisini, PostgreSQL tablolarını, HTTP arayüzünü ve defterin protokolünü de verir (§{{ref:teknik}}). Dördüncü bölümde arayüzün tasarım denetimi de yer alır (§{{ref:denetim}}).</p>
 <p>Ekran görüntüleri çalışan sistemden, tohum verisiyle alınmıştır. Sistemin saati sahtedir: 29 Eylül 2026 Salı 10:00. Ölçümler ve tablolar ölçüm dosyalarından üretilir (<code>docs/degerlendirme/</code>); rapor <code>docs/rapor/olustur.py</code> ile yeniden oluşturulabilir. Ayrıntılı tasarım belgesi <code>DESIGN.md</code>, kurulum ve senaryolar <code>README.md</code> dosyasındadır.</p>
 </section>
 
@@ -144,9 +145,11 @@
 <p>"Yakalanan baskıncı sayısı" hedef olsaydı, eşikleri düşürmek sayıyı artırırdı; aynı saatte kaydolan gerçek bir sınıf da dışlanırdı. Koruyucu metrik bu yüzden yanlış işaretlenen gerçek üye sayısıdır. "Sessiz onayla kabul" hedef olsaydı itiraz eşiğini yükseltmek oranı artırırdı; izinli aralık eşiği en çok 20 itiraza ya da aktif üyelerin %20'sine bağlar. Model metriği iş metriğinden kopuk okunmaz: baskın tespitinin duyarlılığı yükseldiğinde gerçek üyelerin oy hakkı azalıyorsa sistem iş hedefinden uzaklaşır.</p></div>
 </section>
 
+{{include:crisp.html}}
 <section id="baskin" class="newpage">
 <h2><span class="no">#</span>Baskın tespiti: ölçüm</h2>
 <p class="lead">Baskın tespiti sistemde veriden karar üreten tek bileşendir: Karar Saati açılırken yeni katılmış ve birbirine yoğun bağlı hesap kümelerini oylamanın paydasından çıkarır. Bileşeni ders notundaki yöntemle ölçtük: temel çizgi merdiveni, karışıklık matrisi, kesinlik ve duyarlılık, hata maliyeti ve eşik seçimi.</p>
+<p>Bu, baskın tespitinin ikinci döngüsüdür. İlk döngü CRISP-DM'in altı aşamasıyla tohum verisinde yapıldı (§{{ref:crisp}}); orada tohumda baskıncı olmayan yeni üye bulunmadığı için yanlış işaret oranı ölçülemedi. Bu döngüde etiketli bir benzetim kuruldu ve bileşen temel çizgilere karşı ölçüldü.</p>
 <h3>Veri: etiketli benzetim</h3>
 <p>Gerçek veride baskın nadirdir ve etiketsizdir. Ölçüm, üretimdeki ETKİLEŞİM sinyallerini (yakın kayıt, yanıt, ortak başlık) aynı ağırlıklarla üreten bir benzetimle yapıldı. Her senaryo bir Karar Saati anlık görüntüsüdür: eski üyeler, tek tük yeni gelenler, aynı öğleden sonra kaydolup birbirine yazan gerçek bir grup (sınıf), bir duyurudan sonra iki güne yayılan katılım ve senaryoların yaklaşık yarısında beş biçimden birinde bir baskın. Biçimler: hızlı (dakikalar arayla kayıt ve yanıt; tohumdaki biçim), sabırlı (günlere yayılmış), sessiz (etkileşimsiz), bölünmüş (iki küçük küme), kamufle (eski üyelere de yazan). Eğitim ve sınama ayrımı senaryo adının özetiyle yapıldı; sınama kümesi bir kez yazılıp sabitlendi.</p>
 {{t:veri}}
