@@ -9,24 +9,13 @@
 <tr><td>Çoğunluk, azınlığa ait bir kaynak hakkında karar verebiliyordu.</td><td>Kaynak sahipliği ontolojide tanımlandı; yalnızca sahip kapsam ya da alt kümesi karar verir, alt küme kendi payına daraltılır.</td><td>R2, §{{ref:sinirlama}}</td></tr>
 <tr><td>Genel kapsam bir şehrin payını oylamayla başka şehre aktarabiliyordu.</td><td>Bölünebilir kaynakta pay etkisi zorunlu oldu; payı orantısız azalan kapsam ayrıca oylar.</td><td>D5, §{{ref:azinlik}}</td></tr>
 <tr><td>2/3'lük bir çoğunluk bütün güvenceleri iki oylamada kaldırabilirdi.</td><td>Değiştirilemez maddeler ve izinli aralıklar; R8 bu yöndeki öneriyi açılışta reddeder.</td><td>R8, §{{ref:yonetmelik}}</td></tr>
-<tr><td>Gerekçesiz silme çoğunluk sansürüne dönüşebilirdi.</td><td>Üç dar içerik kuralı, kural ve alıntı zorunluluğu, 2/3 eşiği, Hâtif'in alıntı denetimi.</td><td>R7, H4</td></tr>
-<tr><td>Silinen içerik iz bırakmadan kayboluyordu.</td><td>Silme gizlemedir: sansür şeridi, gerekçe ve defterdeki kayıt kalır.</td><td>D4, §{{ref:silme}}</td></tr>
-<tr><td>Karşı oy verenler görülüp baskı altına alınabilirdi.</td><td>Commit-reveal ile gizli oy; yalnızca temsilci ve Hâtif oyu açık.</td><td>§{{ref:butunluk}}</td></tr>
-<tr><td>Havale istenmeden yüklenebiliyor ve alan kişinin gizli oyunu açığa çıkarabiliyordu.</td><td>Havale kabulü: istek, kabul, ret, iade; kabul edilmeyen havale oylamaya katılmaz.</td><td>§{{ref:havale}}</td></tr>
-<tr><td>Unutulmuş havaleler süresiz güç biriktiriyordu.</td><td>180 günlük süre, 14 gün önce uyarı ve yenileme.</td><td>havale_suresi</td></tr>
-<tr><td>Oturum sırasında eşik ya da seçmen listesi değişirse sayım kayabilirdi.</td><td>Açılışta yönetmelik, seçmen ve havale anlık görüntüsü; değişiklik sonraki oturumda geçerli.</td><td>§{{ref:yonetmelik}}</td></tr>
 <tr><td>Aynı gün katılan yeni hesaplarla oylama ele geçirilebilirdi.</td><td>Etkileşim grafında yeni üye kümelerinin tespiti; işaretlenenler o oturumun paydasından çıkar.</td><td>§{{ref:baskin}}</td></tr>
-<tr><td>Sunucuyu işleten kişi yönetmeliği veritabanından oylamasız değiştirebilirdi.</td><td>Yönetmelik özeti defterde; açılış ve kapanışta karşılaştırma, kayıt ve geri alma.</td><td>§{{ref:butunluk}}</td></tr>
-<tr><td>Aynı bütçeye dokunan iki öneri aynı oturumda kabul edilince ikincisi geçersiz paylara dayanıyordu.</td><td>Öneri dayandığı payları saklar; paylar değiştiyse "pay çakışması" ile uygulanmaz.</td><td>§{{ref:akis}}</td></tr>
-<tr><td>Öneriler fark edilmeden aceleyle oylanabiliyordu.</td><td>Olgunlaşma süresi: 48 saat, 72 saat, 7 gün.</td><td>olgunlasma_*</td></tr>
-<tr><td>Bir kapsam yetkisi dışındaki kuruma yazabilirdi.</td><td>Kapsam–muhatap yetki matrisi açılışta denetlenir.</td><td>R9</td></tr>
-<tr><td>Bir şehir grubu ortak salonu kendi başına ayırabilirdi; iki etkinlik aynı saate düşebilirdi.</td><td>Salon Genel kapsamın kaynağıdır (R2); aynı saatte planlı etkinlik varsa öneri açılmaz.</td><td>R2, §{{ref:sonuc}}</td></tr>
+<tr><td>Gerekçesiz silme, görünür oy, istenmeyen ya da unutulmuş havale, oturumda kayan eşik, oylamasız yönetmelik değişikliği, geçersiz paya dayanan ikinci öneri, aceleyle oylama, yetkisiz muhatap, salon çakışması.</td><td>Her biri bir kurala ya da maddeye dönüştü: R7 ve 2/3 eşiği, gizli oy, havale kabulü ve süresi, açılış anlık görüntüsü, yönetmeliğin defterle karşılaştırılması, pay çakışması, olgunlaşma, R9, salonun Genel kapsamın kaynağı olması.</td><td>Bölüm III</td></tr>
 <tr><td colspan="3" class="sub">Altyapı ve arayüz</td></tr>
 <tr><td>Zamanlayıcı ile komut satırı aynı Karar Saati işini iki kez işleyebiliyordu.</td><td>PostgreSQL oturum kilidi; kilidi alamayan arka plan adımı atlar.</td><td>zamanlayıcı</td></tr>
 <tr><td>Defter lideri düşerse kayıtlar kaybolabilirdi.</td><td>Outbox: kayıt işlemle birlikte yazılır, lider dönünce sırayla gönderilir.</td><td>§{{ref:butunluk}}</td></tr>
 <tr><td>Kararlar dünyada hiçbir şeyi değiştirmiyordu.</td><td>Muhatap zorunlu; kuruma dilekçe, takvime etkinlik, ön sayfada haber.</td><td>§{{ref:sonuc}}</td></tr>
 <tr><td>Yüklenen fotoğraflar konum ve cihaz bilgisi sızdırabilirdi; silinen mesajın fotoğrafı adresiyle erişilebilir kalıyordu.</td><td>Yeniden kodlama, EXIF silme, piksel ve boyut sınırı; bağlı içerik silinince görsel 410 döner.</td><td>§{{ref:gorsel}}</td></tr>
-<tr><td>Bordo yazı siyah sansür şeridinde okunmuyordu (2,0:1).</td><td>Şeritte aynı tonun açık hâli kullanıldı (5,4:1).</td><td>arayüz</td></tr>
 <tr><td>Site telefondan açılınca giriş yapılamıyordu; hızlı giriş düğmesi API yeniden başlarken kayboluyordu.</td><td>İstemci API adresini sayfanın açıldığı makineden türetir; düğme API'ye ulaşamazsa yeniden sorar.</td><td>arayüz</td></tr>
 <tr><td colspan="3" class="sub">Bu sürümde: yeniden düzenleme ve ölçüm</td></tr>
 <tr><td>Öneri servisi 1.004 satıra ulaşmıştı; türe göre dallanma beş ayrı yerdeydi. Yeni bir öneri türü her zinciri değiştirmeyi gerektiriyordu.</td><td>Her öneri türü kendi sınıfında (Strategy), sınıflar bir kayıt defterinde (Registry); servis tek giriş kapısı (Facade).</td><td>§{{ref:desen}}</td></tr>
@@ -35,14 +24,10 @@
 <tr><td>Benzetim üreteci kamufle ve bölünmüş baskında bazı hesapların katılım anını geleceğe yazıyordu.</td><td>Kayma, kalan süreyle sınırlandı; üretecin testleri bunu yakalar.</td><td>§{{ref:baskin}}</td></tr>
 <tr><td>Karar ağacı benzetimin bir izini öğrendi: gerçek yeni üyelerin yanıt sayısı dar bir aralıkta üretiliyordu.</td><td>Aralıklar genişletildi. Ağaç yine de canlı veride baskıncıları yakalayamadı; bu bir sonuç olarak rapora yazıldı.</td><td>§{{ref:baskin}}</td></tr>
 <tr><td>Karar ağacının bölme araması karesel zamanlıydı; ölçüm yavaştı.</td><td>Değerler sıralanıp tek geçişte taranıyor.</td><td>evaluation/</td></tr>
-<tr><td>Geçmiş etkinlikte katılım hâlâ "7 kişi geliyor" diye yazıyordu.</td><td>Etkinlik başlayınca katılım kapanır ve satır "7 kişi Geliyorum dedi" olur.</td><td>§{{ref:sonuc}}</td></tr>
-<tr><td>Etkinlikli bir konu ön sayfada iki kez çıkıyordu (yeni konu ve takvim haberi).</td><td>Etkinlikli konu yalnızca etkinlik haberi olarak çıkar.</td><td>§{{ref:sonuc}}</td></tr>
 <tr><td>Tohum, etkinlik raporunu etkinlik bitmeden yazmaya çalışıyordu; kural raporu reddetti ve tohum yarıda kaldı.</td><td>Tohumdaki rapor zamanı etkinlik sonrasına alındı; kural değişmedi.</td><td>tohum</td></tr>
-<tr><td>Tohuma etkinlikler eklenince öneri numaraları kaydı; belgeler eski numaraları gösteriyordu.</td><td>README, sunum betiği ve kılavuz şekli yeni numaralara göre düzeltildi.</td><td>belgeler</td></tr>
 <tr><td colspan="3" class="sub">Kullanım testinde bulunanlar (9 Ekim)</td></tr>
 <tr><td>"Yanıtla"ya basınca bir şey olmuyor gibiydi: yazma alanı masaüstünde 3.200 piksel aşağıda kalıyordu.</td><td>Yanıt seçilince yazma alanı odaklanır ve görünür alana gelir.</td><td>konu sayfası</td></tr>
 <tr><td>İtiraz tek tıkla, onaysız deftere yazılıyordu; geri alınamıyor.</td><td>İtiraz önce ne olacağını söyler (defter, geri alınamaz, eşik) ve onay ister. Öneri sahibine düğme yerine "Kendi önerinize itiraz edemezsiniz" yazar.</td><td>§{{ref:akis}}</td></tr>
-<tr><td>Ziyaretçiye yaklaşan etkinlikte "rapor için giriş yapın", geçmiş etkinlikte "katılım için giriş yapın" deniyordu; giriş yapsa da yapamazdı.</td><td>Önce zamana bakılır: "rapor etkinlikten sonra", "katılım listesi kapandı"; giriş uyarısı en son.</td><td>takvim</td></tr>
 <tr><td>Takvim dosyasındaki (.ics) etkinlik bağlantısı API'nin adresine gidiyordu; takvim uygulamasından açılmıyordu.</td><td>Bağlantı sitenin adresine gider: tarayıcıda Referer'dan, abonelikte yapılandırmadan.</td><td>takvim</td></tr>
 <tr><td>Veritabanının küçük harf işlevi Türkçe I/İ'yi çevirmez; "İSTANBUL" araması "İstanbul"u bulmazdı.</td><td>Eşleme Türkçe harf kurallarıyla uygulamada yapılır.</td><td>§{{ref:kolaylik}}</td></tr>
 </tbody>

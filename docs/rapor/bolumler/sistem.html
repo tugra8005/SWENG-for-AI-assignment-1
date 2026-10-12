@@ -1,34 +1,6 @@
 <section id="sistem">
 <h2><span class="no">#</span>Sistem nasıl kurulu ve ne kadar hızlı</h2>
 <p class="lead">Tek bir istemci (web ve Android), kuralları uygulayan bir API ve üç ayrı depo vardır: işlemler PostgreSQL'de, ilişkiler Neo4j grafında, kararların kanıtı üç düğümlü defterde durur.</p>
-<svg viewBox="0 0 760 200" role="img" aria-label="Mimari">
-  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
-  <g fill="none" stroke="#1B1A17" stroke-width="1.1">
-    <rect x="10" y="62" width="150" height="76" rx="4"/>
-    <rect x="215" y="40" width="190" height="120" rx="4" fill="#F4EFE4"/>
-    <rect x="470" y="10" width="280" height="50" rx="4"/>
-    <rect x="470" y="75" width="280" height="50" rx="4"/>
-    <rect x="470" y="140" width="280" height="50" rx="4"/>
-    <path d="M160 100H213" marker-end="url(#ar)"/>
-    <path d="M405 70L468 38" marker-end="url(#ar)"/>
-    <path d="M405 100H468" marker-end="url(#ar)"/>
-    <path d="M405 130L468 162" marker-end="url(#ar)"/>
-  </g>
-  <text x="85" y="88" text-anchor="middle" font-size="14" font-weight="600">İstemci</text>
-  <text x="85" y="106" text-anchor="middle" font-size="11" fill="#4A463E">Expo: web ve Android</text>
-  <text x="85" y="121" text-anchor="middle" font-size="11" fill="#4A463E">tek kod tabanı</text>
-  <text x="310" y="66" text-anchor="middle" font-size="14" font-weight="600">API (FastAPI)</text>
-  <text x="310" y="86" text-anchor="middle" font-size="11" fill="#4A463E">R1–R9 denetimi, Hâtif</text>
-  <text x="310" y="102" text-anchor="middle" font-size="11" fill="#4A463E">öneri akışı, Karar Saati</text>
-  <text x="310" y="118" text-anchor="middle" font-size="11" fill="#4A463E">zamanlayıcı, sahte saat</text>
-  <text x="310" y="134" text-anchor="middle" font-size="11" fill="#4A463E">defter outbox'ı</text>
-  <text x="482" y="31" font-size="13" font-weight="600">PostgreSQL</text>
-  <text x="482" y="49" font-size="10.5" fill="#4A463E">kimlik, içerik, sürümler, oylar, dilekçe, görsel</text>
-  <text x="482" y="96" font-size="13" font-weight="600">Neo4j (graf)</text>
-  <text x="482" y="114" font-size="10.5" fill="#4A463E">kapsam, alan, kaynak sahipliği, havale, etkileşim</text>
-  <text x="482" y="161" font-size="13" font-weight="600">Defter: lider + 2 takipçi</text>
-  <text x="482" y="179" font-size="10.5" fill="#4A463E">hash zinciri, sadece ekleme, /verify</text>
-</svg>
 <ul>
   <li><b>Yönetmelik veridir.</b> Bütün eşikler ve süreler graf düğümlerinde durur; kod sabit eşik yazmaz.</li>
   <li><b>Kurallar saf fonksiyonlardır.</b> R1–R9 ontoloji üzerinden çalışır ve veritabanı olmadan test edilir.</li>

@@ -15,7 +15,7 @@
 
 <section id="cerceve" class="newpage">
 <h2><span class="no">#</span>Problem çerçeveleme</h2>
-<p class="lead">"Önce doğru problemi bul, sonra problemi doğru çöz." Çerçeveleme hunisini iki düzeyde uyguladık: bütün sistem için ve sistemde veriden karar üreten tek bileşen olan baskın tespiti için.</p>
+<p class="lead">"Önce doğru problemi bul, sonra problemi doğru çöz." Çerçeveleme hunisi iki düzeyde uygulandı: bütün sistem için ve veriden karar üreten tek bileşen olan baskın tespiti için.</p>
 <table>
 <thead><tr><th style="width:15%">Basamak</th><th style="width:43%">Meşveret (bütün sistem)</th><th>Baskın tespiti</th></tr></thead>
 <tbody>
@@ -27,26 +27,24 @@
 <tr><td class="k">Veri ve etiket</td><td>Yönetmelik, ontoloji (kapsamlar, alanlar, kaynak sahipliği), oylar</td><td>Katılım anları ve ETKİLEŞİM grafı. Gerçek etiket yok: tohumdaki beş baskıncı dışında kimin baskıncı olduğu bilinmez. Ölçüm etiketli bir benzetimle yapıldı (§{{ref:baskin}}).</td></tr>
 </tbody>
 </table>
-<p>Huninin son basamağı bir uyarı içerir. Baskın tespiti için etiketli veri yoktur ve toplanması da zordur: baskıncı kendini bildirmez. Bu, ders notundaki "Veri var mı / toplanabilir mi?" sorusunun hayır yanıtıdır ve yapay zekâ kararını belirler (§{{ref:yz}}).</p>
-
+<p>Huninin son basamağı yapay zekâ kararını belirler: baskın tespiti için etiketli veri yoktur ve toplanması zordur, çünkü baskıncı kendini bildirmez (§{{ref:yz}}).</p>
 <h3>Tek sayfalık problem kanvası</h3>
 <table class="canvas">
 <tbody>
-<tr><td><span class="kicker">1 · İş hedefi ve değer</span>Moderatörsüz bir toplulukta konu, kural ve silme kararlarını oylamayla almak; azınlığın kaynağını ve sesini korumak; kararı bir muhataba iletmek.</td>
-<td><span class="kicker">2 · Karar ve eylem</span>Her öneri için kabul ya da ret, seçmen kapsamı ve eşik. Kabulde konu açılır, takvime ya da kuruma iletilir. Sıklık: hızlı şerit sürekli (24 saat), Karar Saati haftada bir.</td></tr>
-<tr><td><span class="kicker">3 · Görev</span>Kural tabanlı denetim (R1–R9) ve ağırlıklı sayım. Veriden karar üreten tek bileşen baskın tespitidir: hesap başına ikili sınıflandırma.</td>
-<td><span class="kicker">4 · Veri</span>Üyelik, şehir (adresten), yaş grubu (doğum tarihinden), ilgi alanları, oylar, etkileşim grafı. Ad, adres ve doğum tarihi yalnızca sahibine görünür; defterde takma kimlik vardır, kişisel veri yoktur.</td></tr>
-<tr><td><span class="kicker">5 · Metrikler</span>İş: kurum muhataplı kararların yanıt alma oranı, etkinliklerin gerçekleşmesi. Ürün: itiraz ve sessiz onay oranları. Model: baskın tespitinde kesinlik, duyarlılık ve hata maliyeti. Koruyucu: yanlış işaretlenen gerçek üye (§{{ref:metrik}}).</td>
-<td><span class="kicker">6 · Temel çizgi</span>Bugünkü durum: moderatörlü forum ya da basit çoğunluk oylaması. Baskın tespitinde merdiven: rastgele, hiç kimse, basit kural, üretimdeki kural, basit öğrenen model.</td></tr>
-<tr><td><span class="kicker">7 · Kısıtlar</span>Tek kişilik dönem ödevi; bütçe sıfır, GPU yok, ücretli servis yok. Oy hakkını kısıtlayan her karar açıklanabilir olmalı. Dilekçede yasal yanıt süresi 30 gün (3071 sayılı Kanun).</td>
-<td><span class="kicker">8 · Risk ve başarı</span>Ön-otopsi bulguları için bkz. §{{ref:paydas}}. Kabul ölçütü: tohumdaki senaryoların otomatik testlerle beklenen sonucu vermesi; tohumdaki baskının gerçek üye dışlanmadan yakalanması.</td></tr>
+<tr><td><span class="kicker">1 · İş hedefi ve değer</span>Moderatörsüz bir toplulukta kararları oylamayla almak, azınlığın kaynağını ve sesini korumak, kararı bir muhataba iletmek.</td>
+<td><span class="kicker">2 · Karar ve eylem</span>Her öneri için kabul ya da ret, seçmen kapsamı ve eşik; hızlı şerit sürekli (24 saat), Karar Saati haftada bir.</td></tr>
+<tr><td><span class="kicker">3 · Görev</span>Kural tabanlı denetim (R1–R9) ve ağırlıklı sayım; baskın tespiti hesap başına ikili sınıflandırma.</td>
+<td><span class="kicker">4 · Veri</span>Üyelik, şehir, yaş grubu, ilgiler, oylar, etkileşim grafı; kişisel veri yalnızca sahibine görünür, defterde takma kimlik vardır.</td></tr>
+<tr><td><span class="kicker">5 · Metrikler</span>İş: dilekçe yanıt oranı, etkinliklerin gerçekleşmesi. Ürün: itiraz ve sessiz onay oranları. Model: kesinlik, duyarlılık, hata maliyeti. Koruyucu: yanlış işaretlenen üye (§{{ref:metrik}}).</td>
+<td><span class="kicker">6 · Temel çizgi</span>Moderatörlü forum ya da basit çoğunluk; baskın tespitinde rastgele, hiç kimse, basit kural, üretimdeki kural, öğrenen model.</td></tr>
+<tr><td><span class="kicker">7 · Kısıtlar</span>Tek kişilik ödev, sıfır bütçe, GPU ve ücretli servis yok; oy hakkını kısıtlayan karar açıklanabilir olmalı; dilekçede 30 gün.</td>
+<td><span class="kicker">8 · Risk ve başarı</span>Ön-otopsi bir sonraki bölümdedir (§{{ref:paydas}}). Kabul: tohum senaryolarının testlerde beklenen sonucu vermesi; baskının gerçek üye dışlanmadan yakalanması.</td></tr>
 </tbody>
 </table>
-
 <div class="side">
 <div class="box" style="flex:1"><span class="kicker">Kötü problem tanımı</span>
 <p>"Yapay zekâ destekli, demokratik ve güvenli bir forum geliştirilecektir."</p>
-<p class="note">Kim kullanacak, hangi kararı verecek? "Demokratik" ve "güvenli" nasıl ölçülecek? Çözüm (yapay zekâ) problemden önce seçilmiş.</p></div>
+<p class="note">Kullanıcı, karar ve ölçüt yok; çözüm (yapay zekâ) problemden önce seçilmiş.</p></div>
 <div class="box" style="flex:1.4"><span class="kicker">İyi problem tanımı</span>
 <p>"Moderatörü olmayan bir toplulukta her yapısal değişiklik bir öneridir. Sistem öneriyi kimin oylayacağını kaynağın sahipliğinden çıkarır, kararı bir muhataba iletir ve deftere mühürler. Başarı: tohumdaki senaryoların beklenen sonucu vermesi; bir şehrin payını başka şehre aktaran önerinin (№17) o şehrin ayrı oylamasında durması; baskın tespitinin gerçek üyeyi dışlamadan tohumdaki baskını yakalaması."</p>
 <p class="note">✓ kullanıcı ✓ karar ✓ görev ✓ metrik ✓ temel çizgi</p></div>
@@ -55,7 +53,7 @@
 
 <section id="paydas">
 <h2><span class="no">#</span>Paydaşlar, kısıtlar ve ön-otopsi</h2>
-<p class="lead">Paydaşlar farklı şeyler ister; ödünleşimleri yazılı karara bağladık. Kısıtlar seçimlerin bir kısmını baştan belirledi. Ön-otopsi, sistemin altı ay sonra başarısız olduğunu varsayıp nedenlerini sıralar.</p>
+<p class="lead">Paydaşların ödünleşimleri yazılı karara bağlandı; kısıtlar seçimlerin bir kısmını baştan belirledi; ön-otopsi, sistemin altı ay sonra başarısız olduğunu varsayıp nedenlerini sıralar.</p>
 <table>
 <thead><tr><th style="width:20%">Paydaş</th><th style="width:27%">İstediği</th><th style="width:22%">Kiminle çatışır</th><th>Sistemdeki karşılığı</th></tr></thead>
 <tbody>
@@ -69,17 +67,7 @@
 </tbody>
 </table>
 <p>Paydaşların sistemdeki karşılığı aktörlerdir. Aktörler ve yaptıkları işler kullanım durumu diyagramlarındadır (§{{ref:kullanim}}).</p>
-<table>
-<thead><tr><th style="width:20%">Kısıt</th><th>Değer</th><th style="width:40%">Seçime etkisi</th></tr></thead>
-<tbody>
-<tr><td>Zaman</td><td>Tek kişilik dönem ödevi, birkaç haftalık geliştirme</td><td>Eşzamanlılık yerine tek lider; dağıtık uzlaşma yok</td></tr>
-<tr><td>Bütçe</td><td>Sıfır: ücretli API, bulut yok</td><td>Hâtif kural tabanlı; gerçek kuruma gönderim yok</td></tr>
-<tr><td>Gecikme</td><td>Sayfa yanıtı yerelde 100 ms'nin altında (p95); Karar Saati açılışı birkaç saniye</td><td>Defter kayıtları toplu gönderilir (§{{ref:sistem}})</td></tr>
-<tr><td>Gizlilik (KVKK)</td><td>Ad, adres, doğum tarihi yalnızca sahibine</td><td>Defterde takma kimlik; görsellerde EXIF silinir</td></tr>
-<tr><td>Donanım</td><td>Dizüstü bilgisayar, Docker; telefon için Expo Go</td><td>Tek kod tabanı (web ve Android)</td></tr>
-<tr><td>Yasal ve etik</td><td>Oy hakkını kısıtlayan karar gerekçeli olmalı; dilekçede 30 gün</td><td>Baskın tespiti gerekçe yazar; kara kutu model kullanılamaz</td></tr>
-</tbody>
-</table>
+<p><b>Kısıtlar.</b> Tek kişilik dönem ödevi: tek defter lideri, dağıtık uzlaşma yok. Sıfır bütçe: Hâtif kural tabanlı, gerçek kuruma gönderim yok. Yerelde 100 ms altı yanıt (p95): defter kayıtları toplu gönderilir (§{{ref:sistem}}). KVKK: kişisel veri yalnızca sahibine, defterde takma kimlik, görsellerde EXIF silinir. Dizüstü ve Docker: tek kod tabanı (web ve Android). Oy hakkını kısıtlayan karar gerekçeli olmalı: kara kutu model kullanılamaz.</p>
 <h3>Ön-otopsi: "Altı ay geçti ve Meşveret başarısız oldu. Neden?"</h3>
 <table>
 <thead><tr><th style="width:36%">Olası neden</th><th>Olasılık</th><th>Etki</th><th style="width:38%">Önlem</th></tr></thead>
@@ -98,7 +86,7 @@
 {{include:kullanim.html}}
 <section id="yz">
 <h2><span class="no">#</span>Yapay zekâ gerekli mi?</h2>
-<p class="lead">Ders notundaki karar ağacını (etik ve yasal mı → basit bir kural işi görüyor mu → veri var mı → hatanın bedeli yönetilebilir mi) sistemdeki her karar noktasına uyguladık. Hiçbir nokta öğrenen bir model gerektirmiyor. Kurallar ya yeterli ya da açıklanabilirlik nedeniyle zorunlu; tek veri odaklı bileşende öğrenen model ölçüldü ve kuralı geçemedi.</p>
+<p class="lead">Ders notundaki karar ağacı (etik ve yasal mı → basit bir kural işi görüyor mu → veri var mı → hatanın bedeli yönetilebilir mi) her karar noktasına uygulandı. Hiçbir nokta öğrenen bir model gerektirmiyor; tek veri odaklı bileşende öğrenen model ölçüldü ve kuralı geçemedi.</p>
 <table>
 <thead><tr><th style="width:21%">Karar noktası</th><th style="width:13%">Etik ve yasal mı</th><th style="width:22%">Basit kural yetiyor mu</th><th style="width:11%">Veri</th><th style="width:15%">Hatanın bedeli</th><th>Seçim</th></tr></thead>
 <tbody>
@@ -107,32 +95,20 @@
 <tr><td>Hâtif'in etiket denetimi (alan, kaynak, şehir)</td><td>evet</td><td>büyük ölçüde: anahtar kelime eşlemesi</td><td>etiketli öneri yok</td><td>orta: tek oy, gerekçesi yazılı</td><td><b>Kural</b>; dil modeli ileride yalnızca öneri olarak</td></tr>
 <tr><td>Silmenin içerik kuralına uyması (H4)</td><td>dikkat: ifade özgürlüğü</td><td>kısmen: kelime eşlemesi anlamı kaçırır</td><td>yok</td><td>yüksek</td><td><b>Kural ve insan oyu</b> (2/3)</td></tr>
 <tr><td>Baskın tespiti</td><td>dikkat: oy hakkını kısıtlar, gerekçe zorunlu</td><td>ölçüldü: hızlı baskını yakalıyor</td><td>gerçek etiket yok</td><td>yüksek, iki yönde</td><td><b>Kural</b>; öğrenen model ölçüldü, reddedildi</td></tr>
-<tr><td>Muhatap yetkisi (R9)</td><td>evet</td><td>evet: tablo</td><td>—</td><td>orta</td><td><b>Kural</b></td></tr>
-<tr><td>Haber üretimi</td><td>evet</td><td>evet: kalıp</td><td>—</td><td>düşük</td><td><b>Kural</b></td></tr>
-<tr><td>Yarım ton baskı</td><td>evet</td><td>evet: algoritma</td><td>—</td><td>düşük</td><td><b>Algoritma</b></td></tr>
+<tr><td>Muhatap yetkisi (R9), haber üretimi, yarım ton baskı</td><td>evet</td><td>evet: tablo, kalıp, algoritma</td><td>—</td><td>orta ya da düşük</td><td><b>Kural, algoritma</b></td></tr>
 </tbody>
 </table>
 <h3>Yelpazenin solundan başlamak</h3>
-<p>Kural, klasik makine öğrenmesi, derin öğrenme ve büyük dil modeli bir yelpazedir: sağa gittikçe esneklik, maliyet ve karmaşıklık artar. Ders notunun kuralı, sola ancak sol yetmediğini ölçtüğünüzde geçmektir. Baskın tespitinde bunu ölçtük (§{{ref:baskin}}): öğrenen karar ağacı benzetimde kurala göre daha ucuz çıktı ama duyarlılığı {{v:sonuc.karar_agaci.duyarlilik}} kaldı; gerçek tohum verisinde beş baskıncının hiçbirini yakalamadı. Öğrendiği kural benzetimin izlerine dayanıyordu. Yeni veri geçmişe benzemedi; ders notundaki beşinci koşul ("benzer yeni veri") sağlanmadı. Baskıncı da kurala uyum sağlayan bir karşı taraftır: kural yayımlandığında (Meşveret'te eşikler herkese açık yönetmelik maddeleridir) baskın biçim değiştirir.</p>
+<p>Kural, klasik makine öğrenmesi, derin öğrenme ve büyük dil modeli bir yelpazedir; ders notunun kuralı, sola ancak sol yetmediği ölçülünce geçmektir. Baskın tespitinde öğrenen karar ağacı benzetimde kuraldan ucuz çıktı ama duyarlılığı {{v:sonuc.karar_agaci.duyarlilik}} kaldı ve gerçek tohum verisinde beş baskıncının hiçbirini yakalamadı: benzetimin izlerini öğrenmişti, "benzer yeni veri" koşulu sağlanmadı (§{{ref:baskin}}). Baskıncı da kurala uyum sağlayan bir karşı taraftır; eşikler yayımlandıkça biçim değiştirir.</p>
 <h3>Hâtif: yapay zekâ değil, bilerek</h3>
-<p>Ödev yapay zekâ tabanlı bir bilirkişi öneriyordu. Hâtif kural tabanlıdır ve bu bilinçli bir seçimdir:</p>
-<ul>
-  <li><b>Belirlenimcilik.</b> Aynı öneri her seferinde aynı oyu almalıdır. Dil modelleri olasılıksaldır: aynı girdiye farklı yanıt verebilir, girdideki küçük bir fark çıktıyı değiştirebilir. Hâtif'in oyu defterde mühürlüdür ve itiraz edilebilir olmalıdır; yeniden çalıştırınca değişen bir oy savunulamaz.</li>
-  <li><b>Halüsinasyon.</b> Bir dil modeli olmayan bir kural ihlali uydurabilir. Oylamada bu, bir seçmenin oyunu uydurma bir gerekçeye dayandırmak demektir.</li>
-  <li><b>Açıklanabilirlik.</b> Hâtif her HAYIR'ın gerekçesini kural koduyla yazar: "R2: …", "H4: IK-2 kuralının belirtilen kısımda karşılığı yok".</li>
-  <li><b>Maliyet belirleyici değil.</b> Öneri başına 1.500 girdi ve 300 çıktı jetonu, milyon jeton başına varsayımsal 1 $ ve 4 $ fiyatla öneri başına yaklaşık 0,003 $ tutar; tohumdaki 24 öneri için birkaç sent. Seçimi maliyet değil, belirlenimcilik ve açıklama zorunluluğu belirledi.</li>
-</ul>
-<div class="side">
-<div class="box" style="flex:1"><span class="kicker">Yapay zekânın üründeki rolü (Hâtif)</span>
-<p><b>Tamamlayıcı:</b> sistem Hâtif olmadan da çalışır; Hâtif yalnızca bir oy ve bir yorumdur. <b>Tepkisel:</b> öneri açılınca ve Karar Saati açılınca çalışır. <b>Statik:</b> kuralları kişiye göre değişmez; yönetmelik değişince herkes için değişir.</p></div>
-<div class="box" style="flex:1"><span class="kicker">İnsan döngüde: emekle, yürü, koş</span>
-<p>Karar her zaman seçmenlerindir; Hâtif bir oydur. Etiket denetimine bir dil modeli eklenseydi "emekle" aşamasında kalırdı: formda öneri sahibine alan ve kaynak önerir, kişi seçer. Oy veremez, gerekçesi Hâtif'in kural gerekçesinin yerine geçemez.</p></div>
-</div>
+<p>Ödev yapay zekâ tabanlı bir bilirkişi öneriyordu; Hâtif bilerek kural tabanlıdır. Oyu defterde mühürlü ve itiraz edilebilir olduğu için belirlenimci olmalıdır; dil modeli aynı girdiye farklı yanıt verebilir ve olmayan bir ihlal uydurabilir. Hâtif her HAYIR'ın gerekçesini kural koduyla yazar ("R2: …", "H4: …"). Maliyet belirleyici değildi: bir dil modeli öneri başına yaklaşık 0,003 $ tutardı.</p>
+<div class="box"><span class="kicker">Yapay zekânın üründeki rolü ve insan döngüde</span>
+<p>Hâtif tamamlayıcıdır (sistem onsuz da çalışır), tepkiseldir (öneri ve Karar Saati açılınca çalışır) ve statiktir (kuralları kişiye göre değişmez). Karar her zaman seçmenlerindir; Hâtif yalnızca bir oy ve bir yorumdur. Etiket denetimine bir dil modeli eklenseydi "emekle" aşamasında kalırdı: formda alan ve kaynak önerir, kişi seçer, oy veremez.</p></div>
 </section>
 
 <section id="metrik">
 <h2><span class="no">#</span>Başarı metrikleri</h2>
-<p class="lead">Metrikler üç katmanda tanımlandı ve birbirine bağlandı: iş metriği kararların dünyada karşılık bulup bulmadığını, ürün metriği sistemin nasıl kullanıldığını, model metriği tek veri odaklı bileşenin başarımını ölçer. Her biri için bir koruyucu metrik vardır.</p>
+<p class="lead">Metrikler üç katmandadır ve birbirine bağlıdır: iş metriği kararların dünyada karşılık bulmasını, ürün metriği kullanımı, model metriği baskın tespitini ölçer. Her birinin bir koruyucusu vardır.</p>
 <table>
 <thead><tr><th style="width:11%">Katman</th><th style="width:34%">Metrik</th><th style="width:22%">Tohumdaki değer</th><th>Koruyucu (guardrail)</th></tr></thead>
 <tbody>
@@ -145,54 +121,47 @@
 </tbody>
 </table>
 <div class="box"><span class="kicker">Goodhart yasası: ölçüt hedef olunca bozulur</span>
-<p>"Yakalanan baskıncı sayısı" hedef olsaydı, eşikleri düşürmek sayıyı artırırdı; aynı saatte kaydolan gerçek bir sınıf da dışlanırdı. Koruyucu metrik bu yüzden yanlış işaretlenen gerçek üye sayısıdır. "Sessiz onayla kabul" hedef olsaydı itiraz eşiğini yükseltmek oranı artırırdı; izinli aralık eşiği en çok 20 itiraza ya da aktif üyelerin %20'sine bağlar. Model metriği iş metriğinden kopuk okunmaz: baskın tespitinin duyarlılığı yükseldiğinde gerçek üyelerin oy hakkı azalıyorsa sistem iş hedefinden uzaklaşır.</p></div>
+<p>"Yakalanan baskıncı" hedef olsaydı eşikleri düşürmek sayıyı artırır, aynı saatte kaydolan gerçek bir sınıfı da dışlardı; koruyucu metrik bu yüzden yanlış işaretlenen gerçek üye sayısıdır. "Sessiz onayla kabul" hedef olsaydı itiraz eşiğini yükseltmek oranı artırırdı; izinli aralık bunu sınırlar.</p></div>
 </section>
 
 {{include:crisp.html}}
 <section id="baskin" class="newpage">
 <h2><span class="no">#</span>Baskın tespiti: ölçüm</h2>
-<p class="lead">Baskın tespiti sistemde veriden karar üreten tek bileşendir: Karar Saati açılırken yeni katılmış ve birbirine yoğun bağlı hesap kümelerini oylamanın paydasından çıkarır. Bileşeni ders notundaki yöntemle ölçtük: temel çizgi merdiveni, karışıklık matrisi, kesinlik ve duyarlılık, hata maliyeti ve eşik seçimi.</p>
-<p>Bu, baskın tespitinin ikinci döngüsüdür. İlk döngü CRISP-DM'in altı aşamasıyla tohum verisinde yapıldı (§{{ref:crisp}}); orada tohumda baskıncı olmayan yeni üye bulunmadığı için yanlış işaret oranı ölçülemedi. Bu döngüde etiketli bir benzetim kuruldu ve bileşen temel çizgilere karşı ölçüldü.</p>
+<p class="lead">Baskın tespiti, Karar Saati açılırken yeni katılmış ve birbirine yoğun bağlı hesap kümelerini oylamanın paydasından çıkarır. Bu ikinci döngüde (ilki §{{ref:crisp}}) bileşen ders notundaki yöntemle ölçüldü: temel çizgi merdiveni, karışıklık matrisi, kesinlik ve duyarlılık, hata maliyeti, eşik seçimi.</p>
 <p>Tespitin adımları etkinlik diyagramında (Şekil {{fig:ac-karar-saati}}), ölçümü yapan değerlendirme düzeneğinin sınıfları sınıf diyagramındadır (Şekil {{fig:cd-degerlendirme}}).</p>
 <h3>Veri: etiketli benzetim</h3>
-<p>Gerçek veride baskın nadirdir ve etiketsizdir. Ölçüm, üretimdeki ETKİLEŞİM sinyallerini (yakın kayıt, yanıt, ortak başlık) aynı ağırlıklarla üreten bir benzetimle yapıldı. Her senaryo bir Karar Saati anlık görüntüsüdür: eski üyeler, tek tük yeni gelenler, aynı öğleden sonra kaydolup birbirine yazan gerçek bir grup (sınıf), bir duyurudan sonra iki güne yayılan katılım ve senaryoların yaklaşık yarısında beş biçimden birinde bir baskın. Biçimler: hızlı (dakikalar arayla kayıt ve yanıt; tohumdaki biçim), sabırlı (günlere yayılmış), sessiz (etkileşimsiz), bölünmüş (iki küçük küme), kamufle (eski üyelere de yazan). Eğitim ve sınama ayrımı senaryo adının özetiyle yapıldı; sınama kümesi bir kez yazılıp sabitlendi.</p>
+<p>Gerçek veride baskın nadir ve etiketsizdir; ölçüm, üretimdeki ETKİLEŞİM sinyallerini aynı ağırlıklarla üreten bir benzetimle yapıldı. Her senaryo bir Karar Saati anlık görüntüsüdür: eski üyeler, tek tük yeni gelenler, birlikte kaydolup birbirine yazan gerçek bir grup (sınıf), bir duyurudan sonraki katılım ve senaryoların yarısında beş biçimden birinde baskın (hızlı, sabırlı, sessiz, bölünmüş, kamufle). Sınama kümesi bir kez yazılıp sabitlendi.</p>
 {{t:veri}}
 <h3>Temel çizgi merdiveni</h3>
-<p>Beş tespitçi aynı sınama kümesinde ölçüldü. Hata maliyeti: kaçan baskıncı 1, yanlışlıkla işaretlenen gerçek üye 5 birim. Gerekçe: yanlış işaret, gerçek bir üyenin o oturumdaki oy hakkını alır; kaçan bir baskıncı ise sonucu ancak oylama yakınsa değiştirir. Oran paydaşlarla tartışılacak bir karardır; aşağıda başka oranlar da tarandı.</p>
+<p>Beş tespitçi aynı sınama kümesinde ölçüldü. Hata maliyeti: kaçan baskıncı 1, yanlış işaretlenen gerçek üye 5 birim, çünkü yanlış işaret bir üyenin o oturumdaki oy hakkını alır; başka oranlar aşağıda tarandı.</p>
 {{t:merdiven}}
 {{svg:merdiven}}
-<ul>
-  <li><b>Doğruluk tuzağı.</b> Hiç kimseyi işaretlemeyen tespitçinin doğruluğu {{p:sonuc.hic_kimse.dogruluk}}, duyarlılığı sıfırdır. Eski üyeler kolay negatiftir ve doğruluğu şişirir; yalnızca son yedi günde katılanlar arasında aynı tespitçinin doğruluğu {{p:yeni.hic_kimse.dogruluk}} olur. Doğruluk bu problemde neredeyse bilgi taşımaz.</li>
-  <li><b>Basit kural</b> (son yedi günde katılan herkes) bütün baskıncıları yakalar ama {{v:sonuc.yeni_uye.yp}} gerçek yeni üyeyi de dışlar; maliyeti en yüksek olandır.</li>
-  <li><b>Üretimdeki küme kuralı</b> {{v:sonuc.kume.dp}} baskıncıyı yakalar, {{v:sonuc.kume.yp}} gerçek üyeyi yanlış işaretler. F2 değeri {{v:sonuc.kume.f2}}.</li>
-  <li><b>Öğrenen karar ağacı</b> (hesap başına altı öznitelikten, hata maliyetiyle öğrenilen derinliği 2 ağaç) maliyette en iyisidir ama "hiç kimse"ye çok yakındır: kesinliği yüksek, duyarlılığı {{v:sonuc.karar_agaci.duyarlilik}}. Öğrendiği kural: <i>{{v:sonuc.karar_agaci.aciklama}}</i></li>
-</ul>
+<p>Hiç kimseyi işaretlemeyen tespitçinin doğruluğu {{p:sonuc.hic_kimse.dogruluk}}, duyarlılığı sıfırdır; eski üyeler doğruluğu şişirir (yalnız yeni üyelerde {{p:yeni.hic_kimse.dogruluk}}), yani doğruluk bu problemde bilgi taşımaz. Basit kural (son yedi günde katılan herkes) bütün baskıncıları yakalar ama {{v:sonuc.yeni_uye.yp}} gerçek yeni üyeyi de dışlar. Üretimdeki küme kuralı {{v:sonuc.kume.dp}} baskıncıyı yakalar, {{v:sonuc.kume.yp}} üyeyi yanlış işaretler (F2 {{v:sonuc.kume.f2}}). Öğrenen karar ağacı maliyette en iyisidir ama duyarlılığı {{v:sonuc.karar_agaci.duyarlilik}}; öğrendiği kural: <i>{{v:sonuc.karar_agaci.aciklama}}</i></p>
 <div class="side">
 <div style="flex:0 0 42%">
 <h3 style="margin-top:2pt">Karışıklık matrisi (küme kuralı)</h3>
 {{t:karisiklik}}
-<p class="note">Kesinlik = DP / (DP + YP); duyarlılık = DP / (DP + YN). Ders notundaki örnekle (DP 40, YN 10, YP 60, DN 890) aynı formüller; metrik kodu bu örnekle test edilir.</p>
+<p class="note">Kesinlik = DP / (DP + YP); duyarlılık = DP / (DP + YN). Metrik kodu ders notundaki örnekle (DP 40, YN 10, YP 60, DN 890) test edilir.</p>
 </div>
 <div style="flex:1">
 <h3 style="margin-top:2pt">Hangi baskın yakalanıyor, kim yanlış işaretleniyor</h3>
 {{t:bicim}}
 </div>
 </div>
-<p>Kuralın başarısı baskının biçimine bağlıdır. Hızlı baskın neredeyse her zaman yakalanır; sabırlı ve sessiz baskın hiç yakalanmaz, çünkü kural katılımın 24 saat içinde toplanmasını ve hesapların birbirine bağlı olmasını ister. Asıl sorun yanlış işaretlerdir: aynı öğleden sonra kaydolup birbirine yazan gerçek bir grup, yapı olarak hızlı baskından ayırt edilemez. Bu, ders notundaki "tek hata kabul edilemezse" uyarısının bu problemdeki karşılığıdır.</p>
+<p>Hızlı baskın neredeyse her zaman yakalanır; sabırlı ve sessiz baskın hiç yakalanmaz. Asıl sorun yanlış işaretlerdir: birlikte kaydolup birbirine yazan gerçek bir grup, yapı olarak hızlı baskından ayırt edilemez.</p>
 <h3>Eşik bir iş kararıdır</h3>
-<p>Kuralın iki eşiği (en küçük küme ve yoğunluk) tarandı; hücrelerde kesinlik / duyarlılık. İşaretli hücre yönetmelikteki varsayılandır.</p>
+<p>En küçük küme ve yoğunluk eşikleri tarandı; hücrelerde kesinlik / duyarlılık, işaretli hücre varsayılandır.</p>
 {{t:esik}}
-<p>Hangi eşiğin seçileceği, yanlış işaretin kaçan baskıncıya göre bedeline (r) bağlıdır. Ders notundaki maliyet hesabının (Maliyet = c<sub>YN</sub>·YN + c<sub>YP</sub>·YP) bu problemdeki karşılığı:</p>
+<p>Seçim, yanlış işaretin kaçan baskıncıya göre bedeline (r) bağlıdır; ders notundaki maliyet hesabı Maliyet = c<sub>YN</sub>·YN + c<sub>YP</sub>·YP'dir.</p>
 {{t:oran}}
-<p>Kural ancak yanlış işaretin bedeli kaçan baskıncınınkinin <b>DP/YP</b> katından azsa "hiç kimseyi işaretleme"den ucuzdur (başa baş oranı r*). Bu oran benzetimdeki bir varsayıma, birlikte kaydolan gerçek grupların sıklığına çok bağlıdır. Gerçek grup hiç yoksa r* {{v:sinif.0.basabas_orani}}, senaryoların %35'inde varsa {{v:sinif.3.basabas_orani}}:</p>
+<p>Kural ancak r başa baş oranı r* = DP/YP'den küçükse "hiç kimse"den ucuzdur. r* birlikte kaydolan gerçek grupların sıklığına bağlıdır: gerçek grup yoksa {{v:sinif.0.basabas_orani}}, senaryoların %35'inde varsa {{v:sinif.3.basabas_orani}}.</p>
 {{svg:basabas}}
-<p class="note">Okuma: eğri kesikli çizginin üstündeyse kural o oranda kârlıdır. Yanlış işaret kaçan baskıncıdan 5 kat pahalıysa (raporun varsayımı) kural benzetimdeki hiçbir durumda "hiç kimse"den ucuz değildir; gerçek grup hiç olmasa bile başa baş oranı 5'in altında kalır. İki hata eşit pahalıysa kural, gerçek grupların payı %10 ile %20 arasındaki bir değere kadar kârlıdır.</p>
+<p class="note">Eğri kesikli çizginin üstündeyse kural o oranda kârlıdır. Yanlış işaret 5 kat pahalıysa kural benzetimdeki hiçbir durumda "hiç kimse"den ucuz değildir; iki hata eşit pahalıysa gerçek grupların payı %10–20'ye kadar kârlıdır.</p>
 <h3>Canlı ölçüm: Karar Saati #1</h3>
-<p>Aynı tespitçiler tohumdaki gerçek oturumun anlık görüntüsünde de çalıştırıldı: {{v:canli.secmen}} seçmen, {{v:canli.baskinci}} baskıncı (tohumda bilinen).</p>
+<p>Aynı tespitçiler tohumdaki gerçek oturumda da çalıştırıldı ({{v:canli.secmen}} seçmen, {{v:canli.baskinci}} baskıncı).</p>
 {{t:canli}}
-<p>Küme kuralı beş baskıncıyı da yanlış işaretsiz yakaladı. Yeni üye kuralı da kusursuz göründü, ama bu tohumun bir sınırıdır: tohumda baskıncılardan başka son yedi günde katılan üye yoktur, yanlış işaret ölçülemez. Benzetimde eğitilen karar ağacı gerçek baskının hiçbir hesabını yakalamadı: öğrendiği kural benzetimin izlerine dayanıyordu ve gerçek veriye genellenmedi.</p>
+<p>Küme kuralı beş baskıncıyı yanlış işaretsiz yakaladı; tohumda başka yeni üye olmadığı için yanlış işaret burada ölçülemez. Benzetimde eğitilen karar ağacı gerçek baskının hiçbir hesabını yakalamadı.</p>
 <div class="box"><span class="kicker">Karar ve öneri</span>
-<p><b>Ölçümün söylediği:</b> kuralın yararı iki bilinmeyene bağlıdır: yanlış işaretin bedeli (r) ve birlikte kaydolan gerçek grupların sıklığı. İkisi de topluluğa göre değişir ve ölçülemez.</p>
-<p><b>Karar:</b> üretimde küme kuralı kaldı. Hızlı baskına karşı tek savunmadır; canlı veride doğru çalıştı; açıklanabilirdir (kişiye ve sonuç ekranına gerekçe yazılır); eşikleri topluluğun oylayabildiği yönetmelik maddeleridir; dışlama yalnızca o oturum içindir. Öğrenen model genellenmediği için reddedildi. Sınırlar bilinçli açık olarak yazıldı (§{{ref:aciklar}}).</p>
-<p><b>Öneri (yapılmadı; karar topluluğundur):</b> iki aşamalı sayım. Şüpheli hesapların oyları paydadan çıkarılmak yerine ayrıca sayılır. Sonuç onlarla ve onlarsız aynıysa kimse dışlanmaz; yanlış işaretin bedeli sıfıra iner. Sonuç değişiyorsa oylama "baskına duyarlı" diye işaretlenir ve karar, ders notundaki afet örneğinde olduğu gibi insana bırakılır: model sıralar, insan karar verir.</p></div>
+<p><b>Karar:</b> üretimde küme kuralı kaldı. Hızlı baskına karşı tek savunmadır, canlı veride doğru çalıştı, gerekçe yazar, eşikleri oylanabilir ve dışlama yalnızca o oturum içindir. Yararı iki ölçülemeyen değere bağlıdır: r ve gerçek grupların sıklığı. Öğrenen model genellenmediği için reddedildi (§{{ref:aciklar}}).</p>
+<p><b>Öneri (yapılmadı):</b> iki aşamalı sayım. Şüpheli oylar ayrıca sayılır; sonuç onlarla ve onlarsız aynıysa kimse dışlanmaz, değişiyorsa oylama "baskına duyarlı" diye işaretlenir ve karar insana bırakılır.</p></div>
 </section>

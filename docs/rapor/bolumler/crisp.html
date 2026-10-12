@@ -1,14 +1,13 @@
 <section id="crisp" class="newpage">
 <h2><span class="no">#</span>Baskın tespiti: CRISP-DM analizi</h2>
-<p class="lead">CRISP-DM (Cross-Industry Standard Process for Data Mining), bir veri problemini altı aşamada ele alan standart süreçtir: iş anlayışı, veri anlayışı, veri hazırlama, modelleme, değerlendirme ve yayılım. Meşveret'te veriden karar üreten bileşen baskın tespitidir. Bu analiz onu bu altı aşamadan geçirir.</p>
-<p class="note">Analiz ilk kez 2 Ekim 2026'da yapıldı (<code>docs/crisp/</code>). Bu rapor için ölçüm betiği (<code>docs/crisp/analiz.py</code>) güncel tohumla, Karar Saati #1'in açılış anındaki veriyle yeniden çalıştırıldı; aşağıdaki sayılar <code>docs/crisp/sonuclar.json</code>'dan gelir. Tohuma sonradan eklenen tartışma mesajları yalnızca köklü üyeler arasındaki etkileşim grafını büyüttü; adaylar, bulunan küme, eşik taraması ve yapay senaryoların sonuçları ilk ölçümle aynı çıktı. Bu bölüm baskın tespitinin ilk döngüsüdür; ikinci döngü, temel çizgilerle ölçüm, bir sonraki bölümdedir (§{{ref:baskin}}).</p>
+<p class="lead">CRISP-DM bir veri problemini altı aşamada ele alır: iş anlayışı, veri anlayışı, veri hazırlama, modelleme, değerlendirme, yayılım. Bu bölüm baskın tespitinin ilk döngüsüdür; ikincisi, temel çizgilerle ölçüm, sonraki bölümdedir (§{{ref:baskin}}). Ölçüm betiği (<code>docs/crisp/analiz.py</code>) güncel tohumla yeniden çalıştırıldı; sayılar <code>docs/crisp/sonuclar.json</code>'dan gelir.</p>
 <div class="stats">
   <div><div class="n">{{v:crisp.veri.secmen}}</div><div class="l">Karar Saati #1'de Genel kapsamın seçmeni</div></div>
   <div><div class="n">{{v:crisp.temel.skor.dogru_isaret}} / {{v:crispx.baskinci}}</div><div class="l">gerçek baskıncının işaretlenen sayısı; yanlış işaret {{v:crisp.temel.skor.yanlis_isaret}}</div></div>
   <div><div class="n">{{v:crisp.tarama.kusursuz}} / {{v:crisp.tarama.birlesim}}</div><div class="l">eşik birleşiminde kusursuz sonuç; kaçırmaların hepsi küme eşiği 6'da</div></div>
   <div><div class="n">{{v:crispx.zayif}} / {{v:crispx.senaryo}}</div><div class="l">yapay senaryoda bilinen bir zayıflık doğrulandı</div></div>
 </div>
-<p>Sonuç: kural tabanlı tespit, tohumdaki baskın biçimini (art arda açılmış, birbirine yanıt veren hesaplar) her makul eşikte yakalıyor. Ancak tohumda baskıncı olmayan yeni üye bulunmadığı için yanlış işaret oranı gerçek veriyle ölçülemedi. Yapay senaryolar, aynı gün katılan gerçek bir grubun baskın sanıldığını ve zamana yayılan, etkileşimsiz ya da bölünmüş baskınların kaçtığını gösterdi. Bu sınırlar tasarım belgesinde bilinçli açık olarak zaten yazılıydı; ölçüm onları sayıyla doğruladı.</p>
+<p>Sonuç: kural tabanlı tespit tohumdaki baskın biçimini her makul eşikte yakalıyor. Tohumda baskıncı olmayan yeni üye bulunmadığı için yanlış işaret oranı gerçek veriyle ölçülemedi. Yapay senaryolar, aynı gün katılan gerçek bir grubun baskın sanıldığını ve zamana yayılan, etkileşimsiz ya da bölünmüş baskınların kaçtığını gösterdi.</p>
 <svg viewBox="0 0 760 170" role="img" aria-label="CRISP-DM aşamaları">
   <defs><marker id="crispok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
   <g fill="none" stroke="#1B1A17" stroke-width="1.1">
@@ -42,17 +41,10 @@
 </svg>
 
 <h3>1. İş anlayışı</h3>
-<p>Amaç, kısa sürede açılmış ve birbirine bağlı hesaplarla bir oylamanın ele geçirilmesini, gerçek kimlik doğrulaması olmadan, oylama açılmadan önce tespit etmektir.</p>
-<ul>
-  <li><b>Sorun:</b> Meşveret'te oy hakkı e-posta doğrulamasıyla doğar ve kayıtta seçilen şehirde oy hakkı hemen başlar. Bir kişi ya da küçük bir grup, Karar Saati'nden önce hesap açıp birbirini destekleyerek bir oylamayı çevirebilir. Gerçek çözüm e-Devlet gibi bir kimlik doğrulamasıdır ve ödevin kapsamı dışındadır.</li>
-  <li><b>Paydaşlar:</b> oylamaya katılan yurttaşlar (sonucun meşruluğu), işaretlenen hesaplar (gerekçe hakkı), yönetmeliği oylayan topluluk (eşikler).</li>
-  <li><b>Başarı ölçütleri:</b> (1) tohumdaki baskın senaryosu yakalanmalı; (2) köklü üyeler işaretlenmemeli; (3) her işaretin okunabilir bir gerekçesi olmalı; (4) işaret içerik silmemeli, yalnızca o oylamada paydadan çıkarmalı; (5) eşikler oylanabilir olmalı.</li>
-  <li><b>Kısıtlar:</b> etiketli eğitim verisi yok; karar her denetçinin yeniden hesaplayabileceği kadar deterministik olmalı; Karar Saati açılışında saniyeler içinde çalışmalı.</li>
-</ul>
-<p>Veri madenciliği hedefi bu ölçütlerden çıkar: oylama anındaki seçmenler arasında yeni ve yoğun bağlantılı kümeleri bulan, açıklanabilir bir sınıflandırma.</p>
+<p>Amaç, kısa sürede açılmış ve birbirine bağlı hesaplarla bir oylamanın ele geçirilmesini, gerçek kimlik doğrulaması olmadan, oylama açılmadan önce tespit etmektir; gerçek çözüm e-Devlet gibi bir kimlik doğrulamasıdır ve kapsam dışıdır. Başarı ölçütleri: tohumdaki baskın yakalanmalı, köklü üyeler işaretlenmemeli, her işaretin okunabilir bir gerekçesi olmalı, işaret içerik silmemeli, eşikler oylanabilir olmalı. Kısıtlar: etiketli veri yok; karar deterministik olmalı ve Karar Saati açılışında saniyeler içinde çalışmalı.</p>
 
 <h3>2. Veri anlayışı</h3>
-<p>Kullanılan iki veri vardır: her seçmenin kapsama katılım anı ve kullanıcılar arasındaki ETKİLEŞİM ağırlıkları. Karar Saati #1'in açılış anında (29 Eylül 2026, 10:00 İstanbul) Genel kapsamın {{v:crisp.veri.secmen}} seçmeni vardı.</p>
+<p>Karar Saati #1'in açılış anında (29 Eylül 2026, 10:00) Genel kapsamın {{v:crisp.veri.secmen}} seçmeni vardı. Kullanılan veri, katılım anları ve kullanıcılar arasındaki ETKİLEŞİM ağırlıklarıdır.</p>
 <table>
 <thead><tr><th>Sinyal</th><th>Nereden gelir</th><th>Ağırlık</th></tr></thead>
 <tbody>
@@ -63,23 +55,13 @@
 </tbody>
 </table>
 {{t:crisp_veri}}
-<ul>
-  <li><b>Veri kalitesi:</b> sinyaller niyetin değil davranışın vekilidir. Yanıt ağırlığı bir tartışmayla bir ittifakı ayırmaz. Yakın kayıt sinyali, aynı derste birlikte kaydolan gerçek öğrencileri de birbirine bağlar.</li>
-  <li><b>Etiket:</b> gerçek kullanımda hangi hesabın baskıncı olduğu bilinmez. Tohumda bilinir: <code>seed.RAIDERS</code> listesindeki {{v:crispx.baskinci}} hesap. Değerlendirme bu etiketi kullanır.</li>
-  <li><b>Önemli bulgu:</b> tohumda son 7 günde katılan ve baskıncı olmayan hiçbir üye yoktur. Bu yüzden gerçek veride yanlış işaret çıkma olanağı yoktu; bu soru yapay senaryolarla sınanmıştır (aşağıda, 5. aşama).</li>
-</ul>
+<p>Sinyaller niyetin değil davranışın vekilidir: yanıt bir tartışmayla bir ittifakı ayırmaz, yakın kayıt birlikte kaydolan gerçek öğrencileri de bağlar. Etiket yalnızca tohumda bilinir (<code>seed.RAIDERS</code>, {{v:crispx.baskinci}} hesap). Tohumda son 7 günde katılan ve baskıncı olmayan üye yoktur; yanlış işaret sorusu yapay senaryolarla sınandı.</p>
 
 <h3>3. Veri hazırlama</h3>
-<p>Ham etkileşim grafı üç adımda kümelemeye hazır hâle gelir. Hazırlama, Karar Saati açılışının anlık görüntüsüyle yapılır: o andan sonraki etkileşimler hesaba girmez.</p>
-<ol>
-  <li><b>Aday seçimi:</b> katılım anı oylama anından en çok <code>baskin_yeni_uye_suresi</code> (7 gün) önce olan seçmenler. Köklü üyeler baştan dışarıda kalır; bu, yanlış işareti sınırlayan ilk kararımızdır.</li>
-  <li><b>Yön birleştirme:</b> A→B ve B→A ağırlıkları toplanıp tek yönsüz kenara çevrilir. Karşılıklı etkileşim tek yönlüden ağır basar.</li>
-  <li><b>Kenar eşiği:</b> toplam ağırlığı <code>baskin_min_agirlik</code> (1) ve üstü olan çiftler kenar olur. Tek bir ortak başlık (0,5) tek başına iki kişiyi bağlamaz.</li>
-</ol>
-<p>Her kümenin üç özniteliği hesaplanır: büyüklük (hesap sayısı), yoğunluk (içerideki kenar / olası kenar) ve katılım yayılımı (en erken ile en geç katılım arasındaki süre).</p>
+<p>Karar Saati açılışının anlık görüntüsünde üç adım uygulanır: aday seçimi (son 7 günde katılanlar; köklü üyeler baştan dışarıda kalır), yön birleştirme (A→B ve B→A ağırlıkları tek yönsüz kenarda toplanır) ve kenar eşiği (toplam ağırlık en az 1; tek bir ortak başlık iki kişiyi bağlamaz). Her kümenin büyüklüğü, yoğunluğu ve katılım yayılımı hesaplanır.</p>
 
 <h3>4. Modelleme</h3>
-<p>Model kural tabanlıdır: aday grafının bağlı bileşenleri bulunur ve üç eşiği birlikte geçen bileşenler işaretlenir. Makine öğrenmesi bilinçli olarak kullanılmadı.</p>
+<p>Model kural tabanlıdır: aday grafının bağlı bileşenlerinden üç eşiği birlikte geçenler işaretlenir.</p>
 <table>
 <thead><tr><th>Eşik (yönetmelik maddesi)</th><th>Varsayılan</th><th>İzinli aralık</th><th>Anlamı</th></tr></thead>
 <tbody>
@@ -91,15 +73,12 @@
 </tbody>
 </table>
 <div class="box"><span class="kicker">Neden makine öğrenmesi değil</span>
-<p>Etiketli veri yok; bir sınıflandırıcıyı eğitecek gerçek baskın örneği bulunmuyor. Bir yurttaşın oyunu sayım dışı bırakan karar, kişinin okuyabileceği bir gerekçe ister: "{{v:crispx.gerekce}}". Eşikler topluluğun oylayabileceği sayılardır; bir modelin ağırlıkları oylanamaz. Sonuç deterministiktir: herkes aynı veriyle aynı kararı yeniden hesaplayabilir. (İkinci döngüde öğrenen bir model benzetim verisiyle denendi ve gerçek veride genellenmedi; §{{ref:baskin}}.)</p></div>
+<p>Etiketli veri yok. Bir oyu sayım dışı bırakan karar, kişinin okuyabileceği bir gerekçe ister: "{{v:crispx.gerekce}}". Eşikler topluluğun oylayabileceği sayılardır, bir modelin ağırlıkları oylanamaz; sonuç herkesçe yeniden hesaplanabilir.</p></div>
 
 <h3>5. Değerlendirme</h3>
-<p>Tohumdaki gerçek veriyle tespit kusursuz sonuç verdi: {{v:crispx.baskinci}} baskıncının {{v:crisp.temel.skor.dogru_isaret}}'i işaretlendi, {{v:crisp.temel.skor.dogru_temiz}} seçmenin hiçbiri yanlış işaretlenmedi. Bu sonuç güçlü bir genelleme değildir, çünkü veride baskıncı olmayan yeni üye yoktu.</p>
-<h3>Tohum verisi, varsayılan eşikler</h3>
+<p>Tohumdaki gerçek veride {{v:crispx.baskinci}} baskıncının {{v:crisp.temel.skor.dogru_isaret}}'i işaretlendi, {{v:crisp.temel.skor.dogru_temiz}} seçmenin hiçbiri yanlış işaretlenmedi. Veride baskıncı olmayan yeni üye bulunmadığı için bu güçlü bir genelleme değildir.</p>
 {{t:crisp_karisiklik}}
-<p>Bulunan küme: {{v:crispx.kume_boyu}} hesap, yoğunluk {{v:crispx.kume_yogunluk}} ({{v:crispx.aday_cift}} çiftin {{v:crispx.aday_cift}}'u bağlı), katılım yayılımı {{v:crispx.yayilim_dk}} dakika. Karar Saati #1'in sonuç ekranında iki oylamada da "5 hesabın oyu baskın şüphesiyle sayılmadı" satırı görünür; hesaplar adıyla listelenmez (Şekil {{fig:kararsaati}}).</p>
-<h3>Eşik taraması ({{v:crisp.tarama.birlesim}} birleşim)</h3>
-<p>Beş eşik birlikte tarandı: küme 3, 4, 5, 6; yoğunluk 1/3, 1/2, 2/3, 1; kenar ağırlığı 0,5, 1, 2, 3; yenilik 1, 7, 30 gün; yayılım 1, 24, 168 saat.</p>
+<p>Bulunan küme {{v:crispx.kume_boyu}} hesaplık, yoğunluğu {{v:crispx.kume_yogunluk}}, katılım yayılımı {{v:crispx.yayilim_dk}} dakikadır; sonuç ekranında "5 hesabın oyu baskın şüphesiyle sayılmadı" görünür, adlar listelenmez (Şekil {{fig:kararsaati}}). Beş eşik birlikte tarandı ({{v:crisp.tarama.birlesim}} birleşim: küme 3–6, yoğunluk 1/3–1, kenar ağırlığı 0,5–3, yenilik 1–30 gün, yayılım 1–168 saat):</p>
 <table>
 <thead><tr><th>Sonuç</th><th>Birleşim</th><th>Açıklama</th></tr></thead>
 <tbody>
@@ -108,10 +87,8 @@
 <tr><td>Yanlış işaret</td><td>{{v:crisp.tarama.yanlis_isaret_var}}</td><td>Adayların hepsi baskıncı olduğu için yanlış işaret mümkün değildi</td></tr>
 </tbody>
 </table>
-<p>Yorum: baskıncılar kayıtları 60 dakika içinde olduğu için birbirine iki yönde bağlı (ağırlık 2) ve ilk mesaja yanıt verdikleri için ek bağlı. Bu yüzden yoğunluk, ağırlık, yenilik ve yayılım eşiklerinin hiçbiri sonucu değiştirmedi; yalnızca küme büyüklüğü belirleyiciydi. Model, tohumdaki biçime karşı sağlam ama bu biçim kolay bir örnektir.</p>
-<h3>Yapay senaryolar (varsayılan eşikler, 30 köklü üye)</h3>
+<p>Yalnızca küme büyüklüğü belirleyiciydi: baskıncılar birbirine iki yönde ve yanıtlarla bağlıydı. Model bu biçime karşı sağlam, ama bu biçim kolay bir örnektir. Yapay senaryolar (varsayılan eşikler, 30 köklü üye):</p>
 {{t:crisp_senaryo}}
-<h3>İş hedefleriyle karşılaştırma</h3>
 <table>
 <thead><tr><th>Başarı ölçütü</th><th>Durum</th></tr></thead>
 <tbody>
@@ -125,22 +102,6 @@
 </table>
 
 <h3>6. Yayılım</h3>
-<p>Tespit iki yerde çalışır: her Karar Saati açılışında her oylamanın seçmen anlık görüntüsünde ve Mahzen'deki "öneriye dönüştür" oylamasının seçmen listesinde.</p>
-<ul>
-  <li><b>Etki:</b> işaretlenen hesaplar o oylamanın paydasından çıkar; onlara verilen havaleler çekimser sayılır. İçerikleri silinmez, sonraki oylamalarda yeniden değerlendirilirler.</li>
-  <li><b>Şeffaflık:</b> kişi kendi oylama sayfasında gerekçeyi görür. Sonuç ekranında yalnızca sayı ve gerekçe görünür, adlar listelenmez (Şekil {{fig:kararsaati}}). Sayılar deftere OYLAMA_SONUCU kaydıyla yazılır.</li>
-  <li><b>Yönetişim:</b> beş eşik yönetmelik maddesidir; topluluk onları 2/3 ile, izinli aralıklar içinde değiştirir. Model güncellemesi bir oylamadır.</li>
-  <li><b>İzleme:</b> her oturumda işaretlenen sayısı defterde durur; ani artış ya da hiç işaret olmaması incelenebilir.</li>
-  <li><b>Test:</b> tespitin birim testleri (<code>tests/domain/test_raid.py</code>) ve tohum senaryosu (7. senaryo) sürekli çalışır. Bu analizin betiği <code>docs/crisp/analiz.py</code>, sonuçları <code>docs/crisp/sonuclar.json</code> dosyasındadır.</li>
-</ul>
-<h3>Bir sonraki döngü için öneriler</h3>
-<p>Değerlendirme iki iş hedefinin karşılanmadığını gösterdi. CRISP-DM'de bu, iş anlayışına geri dönmek demektir. Önerilenler henüz uygulanmamıştır.</p>
-<ol>
-  <li><b>İtiraz yoluyla etiket toplamak:</b> işaretlenen hesabın itiraz edebilmesi ve topluluğun kararı, ileride gerçek etiketli veri üretir.</li>
-  <li><b>Birikimi izlemek:</b> sabırlı baskın için yenilik penceresinin yerine hesapların zaman içinde aynı yönde oy verme örüntüsüne bakmak (oy gizliliğiyle çelişmeden, yalnızca açık temsilci oyları üzerinden).</li>
-  <li><b>Sessiz baskın için oylama anı:</b> etkileşimsiz ama aynı dakikalarda ilk kez oy veren yeni hesapları ayrı bir sinyal olarak eklemek.</li>
-  <li><b>Gerçek grupları ayırmak:</b> gerçek kimlik doğrulaması olmadan yapısal olarak mümkün değil; bilinçli açık olarak kalır (§{{ref:aciklar}}). Gerekçe gösterme ve içerik silmeme, yanlış işaretin zararını sınırlar.</li>
-</ol>
-<p>Bir sonraki döngü bu raporda yapıldı: benzetim verisiyle temel çizgi merdiveni, hata maliyeti ve canlı ölçüm (§{{ref:baskin}}).</p>
+<p>Tespit her Karar Saati açılışında ve Mahzen'in ifşa oylamasında çalışır. İşaretlenen hesaplar yalnızca o oylamada paydadan çıkar, onlara verilen havaleler çekimser sayılır, içerikleri silinmez. Kişi gerekçeyi kendi sayfasında görür; sonuç ekranında ve defterde (OYLAMA_SONUCU) yalnızca sayı durur. Beş eşik yönetmelik maddesidir; model güncellemesi bir oylamadır. Tespitin birim testleri ve tohum senaryosu sürekli çalışır.</p>
+<p><b>Bir sonraki döngü için öneriler</b> (uygulanmadı): itiraz yoluyla etiket toplamak; sabırlı baskın için açık temsilci oylarında aynı yönde birikimi izlemek; sessiz baskın için ilk oyların zamanını ayrı bir sinyal yapmak. Gerçek grupları ayırmak kimlik doğrulaması olmadan mümkün değildir (§{{ref:aciklar}}). İkinci döngü bu raporda yapıldı (§{{ref:baskin}}).</p>
 </section>
-

@@ -601,26 +601,13 @@ SVGS = {"merdiven": svg_merdiven, "basabas": svg_basabas, "gecikme": svg_gecikme
 
 # A5: görsel → kırpılacak bölgeler (x0, y0, x1, y1, metin genişliğinin yüzdesi). Bölgeler alt alta durur.
 CROPS_A5: dict[str, list[tuple[int, int, int, int, int]]] = {
-    "istanbul-daralma.png": [(20, 110, 890, 600, 100)],
-    "r9-red.png": [(0, 0, 830, 530, 100)],
     "karar-saati-sonuc.png": [(95, 235, 712, 805, 72), (728, 235, 1345, 785, 72)],
-    "yonetmelik.png": [(368, 228, 1340, 900, 100)],
-    "sansur-seridi.png": [(0, 0, 840, 740, 95)],
-    "mahzen.png": [(0, 0, 840, 880, 100)],
-    "konu-pazar.png": [(95, 115, 935, 840, 100), (985, 282, 1343, 392, 75)],
-    "dilekce.png": [(0, 0, 820, 730, 100)],
-    "dilekce-telefon.png": [(0, 0, 390, 844, 50)],
-    "etkinlik-formu.png": [(245, 0, 1040, 742, 100)],
-    "takvim.png": [(0, 0, 690, 955, 78), (700, 0, 1380, 640, 78)],
+    "mahzen.png": [(0, 0, 840, 880, 70)],
+    "dilekce.png": [(0, 0, 820, 730, 82)],
+    "takvim.png": [(0, 0, 690, 955, 66), (700, 0, 1380, 640, 66)],
     "etkinlik.png": [(35, 115, 915, 420, 100), (965, 135, 1285, 350, 60)],
     "gazete.png": [(95, 225, 960, 720, 100), (1000, 225, 1345, 800, 55)],
-    "gazete-telefon.png": [(0, 0, 390, 812, 50)],
-    "gorsel-mesaj.png": [(0, 0, 880, 560, 100)],
-    "gorsel-yukleme.png": [(0, 0, 880, 225, 100)],
     "defter.png": [(0, 0, 640, 800, 75)],
-    "arama.png": [(30, 190, 870, 460, 100), (870, 270, 1290, 400, 60)],
-    "denetim-geri-sayim.png": [(320, 0, 1120, 560, 100)],
-    "denetim-crt.png": [(0, 0, 880, 620, 80), (904, 0, 1784, 620, 80)],
     "denetim-ifsa-kareleri.png": [(0, 0, 2180, 910, 100)],
 }
 
