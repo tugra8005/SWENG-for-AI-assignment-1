@@ -449,6 +449,35 @@ A5_MIN = 0.205
 A5_MAX = 0.26
 
 
+# A5'te tam sayfa diyagramlar metnin arasında kalırsa önlerindeki sayfa yarım kalır. Bu gruplardaki
+# bölümlerin tam sayfa diyagramları grubun son bölümünün sonuna, sırası korunarak taşınır; metin
+# kesintisiz akar, diyagramlar art arda gelir. Numaralar taşımadan önce verildiği için değişmez.
+A5_FIG_GROUPS = [["kullanim", "modeller"], ["diyagram", "sinif", "etkilesim", "davranis", "mimari", "veri"],
+                 ["gelisim"]]
+
+
+def defer_figures(body: str) -> str:
+    def section(sid: str) -> str:
+        m = re.search(rf'<section id="{sid}"[^>]*>.*?</section>', body, flags=re.S)
+        if m is None:
+            raise SystemExit(f"A5 diyagram grubu: bölüm yok: {sid}")
+        return m.group(0)
+
+    for group in A5_FIG_GROUPS:
+        moved: list[str] = []
+        for sid in group:
+            sec = section(sid)
+            figs = re.findall(r'<figure class="uml (?:turn|page)".*?</figure>', sec, flags=re.S)
+            new = sec
+            for f in figs:
+                new = new.replace(f, "", 1)
+            moved += figs
+            body = body.replace(sec, new, 1)
+        last = section(group[-1])
+        body = body.replace(last, last[: -len("</section>")] + "".join(moved) + "</section>", 1)
+    return body
+
+
 def uml_figures(body: str, edition: str) -> str:
     sys.path.insert(0, str(ROOT))
     import diyagramlar
@@ -675,6 +704,7 @@ def build(edition: str = "a4") -> str:
     body = re.sub(rf'<span class="{edition}">(.*?)</span>', r"\1", body, flags=re.S)
     if edition == "a5":
         body = crop_images(body)
+        body = defer_figures(body)
 
     left = re.findall(r"\{\{[^}]+\}\}|<span class=\"no\">#</span>|Şekil #\.", body + cover)
     if left:
