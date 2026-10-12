@@ -44,7 +44,16 @@ pre { font-size: 6.4pt; padding: 4pt 5pt; }
 
 /* Geniş diyagramlarda küçük yazılar dar sütunda okunur kalsın. */
 /* Sınıf şemasının kutuları dar; o şema özgün boyutunda kalır (büyütülünce yazı taşar). */
-svg[viewBox^="0 0 760"]:not([aria-label="Öneri türlerinin sınıf şeması"]) :is([font-size="9"], [font-size="9.5"], [font-size="10"], [font-size="10.5"]) { font-size: 11.5px; }
+svg[viewBox^="0 0 760"]:not(.uml):not([aria-label="Öneri türlerinin sınıf şeması"]) :is([font-size="9"], [font-size="9.5"], [font-size="10"], [font-size="10.5"]) { font-size: 11.5px; }
+
+/* Sütunda küçük kalacak diyagram kendi sayfasına geçer; enine diyagram sayfaya yan çevrilerek
+   oturur (üstü sayfanın soluna gelir). Ölçek olustur.py'de hesaplanır. */
+figure.uml.page, figure.uml.turn { break-before: page; break-after: page; height: 185mm; margin: 0; }
+figure.uml.page { display: flex; flex-direction: column; justify-content: center; }
+figure.uml.turn { position: relative; }
+figure.uml.turn .rot { position: absolute; left: 0; top: 185mm; width: 185mm; height: 126mm;
+  transform-origin: 0 0; transform: rotate(-90deg); display: flex; flex-direction: column; justify-content: center; }
+figure.uml.page svg.uml, figure.uml.turn svg.uml { height: 100%; }
 
 /* Kapak ve içindekiler. */
 .cover { height: 184mm; }
@@ -62,7 +71,7 @@ svg[viewBox^="0 0 760"]:not([aria-label="Öneri türlerinin sınıf şeması"]) 
 .cover .author .no { font-size: 8.5pt; }
 .cover .meta { font-size: 8.4pt; }
 .tocpage h2 { margin-bottom: 4pt; }
-.tocpage .toc { font-size: 9pt; margin-top: 2pt; }
-.tocpage .toc div { padding: 0.9pt 0; }
-.tocpage .toc .part { margin-top: 4pt; }
+.tocpage .toc { font-size: 7.8pt; line-height: 1.15; margin-top: 2pt; }
+.tocpage .toc div { padding: 0.3pt 0; }
+.tocpage .toc .part { margin-top: 2.5pt; }
 </style>

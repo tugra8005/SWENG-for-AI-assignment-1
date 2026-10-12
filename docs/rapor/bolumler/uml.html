@@ -1,0 +1,122 @@
+<section id="diyagram" class="newpage">
+<h2><span class="no">#</span>UML ve diğer diyagramlar</h2>
+<p class="lead">Bu ve sonraki beş bölüm sistemi diyagramlarla anlatır: UML 2.5'in on dört diyagram türünün hepsi, ayrıca varlık–ilişki, graf şeması, veri akışı ve Gantt. Kullanım durumu, alan modeli, nesne ve veri akış diyagramları birinci bölümdedir (§{{ref:kullanim}}, §{{ref:modeller}}); geliştirme takvimi dördüncü bölümdedir (§{{ref:gelisim}}).</p>
+<p>Diyagramlar elle çizilmiş resim değildir; <code>docs/rapor/diyagramlar.py</code> onları rapor üretilirken SVG olarak çizer. Sınıf adları, alanlar, soyut işlemler, tablolar, sütunlar ve yabancı anahtarlar <code>sema.json</code>'dan okunur. Bu dosyayı <code>sema.py</code> SQLAlchemy metadata'sından ve modüllerin kendisinden üretir. Kodda bir sınıf yeniden adlandırılırsa ya da soyut işlemleri değişirse rapor üretimi hata verir; diyagram koddan sessizce sapamaz. Gantt şeması git geçmişinden çizilir. Sıralama, durum ve etkinlik diyagramlarındaki akışlar ilgili işlevler okunarak çizildi; her diyagramın kaynağı işlevin belgesinde yazılıdır.</p>
+<p>Rapor siyah-beyaz basılacağı için ayrım renkle değil çizgiyle yapılır. Düz çizgi ilişki ya da çağrı, kesikli çizgi bağımlılık ya da dönüş iletisidir. İçi boş üçgen kalıtım, kesikli çizgiyle içi boş üçgen gerçeklemedir. Dolu eşkenar dörtgen bileşim, boş eşkenar dörtgen kümelenmedir. Gri dolgu başlık ya da etkinlik çubuğudur. <span class="a5">Sütuna sığmayan diyagramlar A5 sürümünde kendi sayfasına, gerekirse yan çevrilerek konur; üstleri sayfanın soluna gelir.</span></p>
+
+<h3>Kapsam</h3>
+<table>
+<thead><tr><th style="width:27%">Diyagram türü</th><th style="width:13%">Grup</th><th style="width:17%">Şekil</th><th>Ne gösterir</th></tr></thead>
+<tbody>
+<tr><td>Sınıf</td><td>UML yapı</td><td>{{fig:cd-oneri}}–{{fig:cd-degerlendirme}}</td><td>Desenlerin koddaki sınıfları: öneri türleri, durumlar, kural zinciri, işler, oylama biçimleri, olaylar, depolar, değerlendirme düzeneği</td></tr>
+<tr><td>Nesne</td><td>UML yapı</td><td>{{fig:od-havale}}</td><td>Tohumdaki bir havale zinciri ve oylamadaki ağırlığı</td></tr>
+<tr><td>Paket</td><td>UML yapı</td><td>{{fig:pkg-bagimlilik}}</td><td>Alt paketler arasındaki içe aktarmalar (tamamı DSM tablosunda)</td></tr>
+<tr><td>Bileşen</td><td>UML yapı</td><td>{{fig:cmp-sistem}}</td><td>İstemci, API, defter ve veritabanları; sağlanan ve gereken arayüzler</td></tr>
+<tr><td>Bileşik yapı</td><td>UML yapı</td><td>{{fig:cs-api}}</td><td>API sürecinin parçaları ve dış kapıları</td></tr>
+<tr><td>Dağıtım</td><td>UML yapı</td><td>{{fig:dep-dagitim}}</td><td>Docker Compose yığını, kapılar, birimler, istemciler</td></tr>
+<tr><td>Profil</td><td>UML yapı</td><td>{{fig:pf-desen}}</td><td>Diyagramlarda kullanılan desen klişeleri</td></tr>
+<tr><td>Kullanım durumu</td><td>UML davranış</td><td>{{fig:uc-hesap}}–{{fig:uc-sonuc}}</td><td>Aktörler ve 47 kullanım durumu</td></tr>
+<tr><td>Etkinlik</td><td>UML davranış</td><td>{{fig:ac-oneri}}, {{fig:ac-karar-saati}}</td><td>Bir önerinin yolu (kulvarlı); Karar Saati'nin açılışı ve baskın tespiti</td></tr>
+<tr><td>Durum makinesi</td><td>UML davranış</td><td>{{fig:st-oneri}}–{{fig:st-etkinlik}}</td><td>Öneri, havale isteği, Mahzen başlığı, etkinlik, dilekçe alıcısı</td></tr>
+<tr><td>Sıralama</td><td>UML etkileşim</td><td>{{fig:sd-oneri-ac}}–{{fig:sd-ifsa}}</td><td>Öneri açma, oy, kapanış, defter yazımı, ifşa</td></tr>
+<tr><td>İletişim</td><td>UML etkileşim</td><td>{{fig:com-sessiz}}</td><td>Sessiz onayla kabul ve takvime yazılma</td></tr>
+<tr><td>Zamanlama</td><td>UML etkileşim</td><td>{{fig:tm-hafta}}</td><td>Bir haftada üç öneri, pencere ve havale kilidi</td></tr>
+<tr><td>Etkileşime genel bakış</td><td>UML etkileşim</td><td>{{fig:io-hafta}}</td><td>Sıralama ve iletişim diyagramlarının hangi sırayla bağlandığı</td></tr>
+<tr><td>Alan modeli</td><td>analiz</td><td>{{fig:dm-kimlik}}, {{fig:dm-oneri}}</td><td>Kavramlar ve ilişkileri, koddan bağımsız</td></tr>
+<tr><td>Varlık–ilişki</td><td>veri</td><td>{{fig:er-kimlik}}–{{fig:er-mahzen}}</td><td>PostgreSQL'in 31 tablosu, kaz ayağı gösterimiyle</td></tr>
+<tr><td>Graf şeması</td><td>veri</td><td>{{fig:gs-neo4j}}</td><td>Neo4j düğüm etiketleri, ilişkiler, kısıtlar</td></tr>
+<tr><td>Veri akışı</td><td>analiz</td><td>{{fig:dfd-baglam}}, {{fig:dfd-duzey1}}</td><td>Bağlam ve birinci düzey</td></tr>
+<tr><td>Gantt</td><td>süreç</td><td>{{fig:gantt}}</td><td>Geliştirme aşamaları ve commit'ler</td></tr>
+</tbody>
+</table>
+
+<figure class="uml" data-fig="pf-desen">{{uml:pf_desen}}<figcaption><b>Şekil #.</b> Profil diyagramı. Sınıf diyagramlarındaki «Strategy», «Repository» gibi klişelerin tanımı: her biri UML'nin Class üst sınıfını genişletir (dolu üçgen). Örnek sınıfların kodda var olduğu rapor üretilirken denetlenir. Desenlerin gerekçesi §{{ref:desen}}'dedir.</figcaption></figure>
+</section>
+
+<section id="sinif" class="newpage">
+<h2><span class="no">#</span>Sınıf diyagramları</h2>
+<p class="lead">Sınıf diyagramları §{{ref:desen}}'de anlatılan desenlerin koddaki biçimini gösterir. Her diyagram bir deseni ya da birbirine bağlı birkaç sınıfı kapsar; bütün sınıfları tek diyagrama koymak okunmaz bir ağ verirdi. İşlem adları ve imzalar kodla aynıdır (İngilizce); açıklamalar Türkçedir. <code>{abstract}</code> soyut işlem, eğik ad soyut sınıftır.</p>
+
+<figure class="uml" data-fig="cd-oneri">{{uml:cd_oneri}}<figcaption><b>Şekil #.</b> Öneri türleri. <code>proposals</code> modülü dış dünyaya tek yüzdür (Facade); türler <code>KINDS</code> kaydında (Registry) durur ve her biri <code>ProposalKind</code>'ın bir stratejisidir. Yedi somut tür vardır; konu ve alt konu ortak kodu <code>_NewTopic</code>'te paylaşır.</figcaption></figure>
+
+<figure class="uml" data-fig="cd-durum">{{uml:cd_durum}}<figcaption><b>Şekil #.</b> Önerinin durumları (State). Her durum bir sınıftır ve yalnızca kendisinde geçerli işlemleri tanımlar; geçersiz işlem durumun Türkçe gerekçesiyle <code>InvalidTransition</code> yükseltir. Karar bekleyen durumlar ortak davranışı <code>_Pending</code>'den alır.</figcaption></figure>
+
+<figure class="uml" data-fig="cd-kurallar">{{uml:cd_kurallar}}<figcaption><b>Şekil #.</b> Kural zinciri (Chain of Responsibility). Sekiz halka R1–R9'u denetler (R4 havale modülündedir). Halka kendi türlerini denetleyip zinciri sürdürür; böylece öneri sahibi bütün ihlalleri bir kerede görür.</figcaption></figure>
+
+<figure class="uml" data-fig="cd-isler">{{uml:cd_isler}}<figcaption><b>Şekil #.</b> Zamanlanmış işler (Command). <code>jobs.due</code> vadesi gelmiş işleri üç kaynaktan toplar; <code>scheduler</code> onları vade sırasıyla çalıştırır. Aynı kod hem arka plan iş parçacığında hem de geliştirme komutu <code>advance-time</code>'da kullanılır.</figcaption></figure>
+
+<figure class="uml" data-fig="cd-oylama">{{uml:cd_oylama_olaylar}}<figcaption><b>Şekil #.</b> Oylama biçimleri (Strategy) ve alan olayları (Observer). Kapanış önerisi onay oylamasıyla, ötekiler EVET/HAYIR ile sayılır. Yedi olay türü yayımlanır; dilekçe, takvim ve bildirim modülleri olaylara abone olur, böylece öneri motoru onları tanımaz.</figcaption></figure>
+
+<figure class="uml" data-fig="cd-depolar">{{uml:cd_depolar}}<figcaption><b>Şekil #.</b> Depolar ve uyarlayıcılar. Kurallar ve servisler yalnızca protokolleri bilir. Bellek içi graf ve Neo4j aynı sözleşme testlerinden geçer; defter istemcisinin HTTP ve bellek içi iki uygulaması vardır. <code>Ctx</code> her isteğin bağlamıdır.</figcaption></figure>
+
+<figure class="uml" data-fig="cd-degerlendirme">{{uml:cd_degerlendirme}}<figcaption><b>Şekil #.</b> Baskın tespitinin değerlendirme düzeneği (§{{ref:baskin}}). <code>Evaluation</code> senaryoları bir depodan alır, beş dedektörü çalıştırır, sonucu gözlemcilere bildirir. Karışıklık matrisi kesinliği, duyarlılığı ve maliyeti hesaplar.</figcaption></figure>
+</section>
+
+<section id="etkilesim" class="newpage">
+<h2><span class="no">#</span>Etkileşim diyagramları</h2>
+<p class="lead">Etkileşim diyagramları nesnelerin hangi sırayla birbirini çağırdığını gösterir. Genel bakış diyagramı bunların bir önerinin yolunda nasıl art arda geldiğini verir; sıralama diyagramları tek tek akışları, iletişim diyagramı bir akışı nesneler arasındaki bağlantılar üzerinden, zamanlama diyagramı durumların zamanla değişimini gösterir.</p>
+
+<figure class="uml" data-fig="io-hafta">{{uml:io_hafta}}<figcaption><b>Şekil #.</b> Etkileşime genel bakış. Her <code>ref</code> kutusu bu bölümdeki bir diyagramdır. Öneri ya doğrudan ya da Mahzen ifşasından gelen taslakla açılır; hızlı şeritte sessiz onayla, yavaş şeritte Karar Saati'nde karara bağlanır. İki yol da deftere yazımla biter.</figcaption></figure>
+
+<figure class="uml" data-fig="sd-oneri-ac">{{uml:sd_oneri_ac}}<figcaption><b>Şekil #.</b> Öneri açma. <code>alt</code> parçası iki yolu ayırır: ihlal varsa hiçbir şey yazılmadan 422 döner. Defter kaydı önce aynı veritabanı işleminde outbox'a yazılır, COMMIT'ten sonra deftere gönderilir; defter erişilemezse öneri yine açılır, kayıt bekler.</figcaption></figure>
+
+<figure class="uml" data-fig="sd-oy">{{uml:sd_oy}}<figcaption><b>Şekil #.</b> Karar Saati'nde oy verme. Deftere oy değil yalnızca commit gider; seçim ve tuz pencere kapanana kadar gizli kalır (commit-reveal).</figcaption></figure>
+
+<figure class="uml" data-fig="sd-kapanis">{{uml:sd_kapanis}}<figcaption><b>Şekil #.</b> Karar Saati'nin kapanışı. Öneriler numara sırasıyla kapanır; önce kabul edilen öneri bir kaynağın paylarını değiştirmişse sonrakinin pay hedefi eskir ve öneri Çakışma'ya düşer. Kabul olayı aboneler aracılığıyla dilekçeye, takvime ve bildirimlere ulaşır.</figcaption></figure>
+
+<figure class="uml" data-fig="sd-defter">{{uml:sd_defter}}<figcaption><b>Şekil #.</b> Defter yazımı ve çoğaltma. Danışma kilidi (<code>pg_try_advisory_xact_lock</code>) iki gönderimin aynı kayıtları göndermesini önler. Lider kayıtları 200'lük parçalar hâlinde zincire ekler ve takipçilere çoğaltır; her kaydın sırası ve hash'i outbox satırına geri yazılır.</figcaption></figure>
+
+<figure class="uml" data-fig="sd-ifsa">{{uml:sd_ifsa}}<figcaption><b>Şekil #.</b> Mahzen başlığının ifşası. Seçmenler oylama açılırken dondurulur; oylar değiştirilebilir. EVET seçmenlerin yarısını aştığı an başlık donar ve bir KONU taslağı oluşur.</figcaption></figure>
+
+<figure class="uml" data-fig="com-sessiz">{{uml:com_sessiz}}<figcaption><b>Şekil #.</b> İletişim diyagramı: sessiz onayla kabul. İletiler iç içe numaralanır (1.1.2.1 = 1.1.2'nin içinde ilk ileti). Öneri motoru takvimi tanımaz; takvime yazılma <code>TopicAccepted</code> olayının sonucudur.</figcaption></figure>
+
+<figure class="uml" data-fig="tm-hafta">{{uml:tm_hafta}}<figcaption><b>Şekil #.</b> Zamanlama diyagramı. A hızlı şeritte açılır, itirazla yavaş şeride düşer ve olgunlaşma süresi (geniş kapsam, 72 saat) o andan işler; Pazar'ki oturuma yetişir. B genel kapsamlıdır, 7 günlük olgunlaşması dolmadığı için bu oturuma alınmaz. C itirazsız 24 saatte kabul edilir. Pencere açıkken havale grafı kilitlidir.</figcaption></figure>
+</section>
+
+<section id="davranis" class="newpage">
+<h2><span class="no">#</span>Durum ve etkinlik diyagramları</h2>
+<p class="lead">Durum diyagramları bir nesnenin yaşam döngüsünü, etkinlik diyagramları bir işin adımlarını gösterir. Öneri, havale isteği ve Mahzen başlığının durumu saklanır; etkinliğin ve dilekçe alıcısının durumu saklanmaz, saatten ve kayıtlardan hesaplanır.</p>
+
+<figure class="uml" data-fig="st-oneri">{{uml:st_oneri}}<figcaption><b>Şekil #.</b> Önerinin yaşam döngüsü. Açılışta ihlal varsa öneri hiç oluşmaz. Hızlı şeritteki öneri ya itirazsız kabul edilir ya da yavaş şeride düşer; kapanış önerisi önce 48 saat rakip metin toplar. Pay çakışması ret sayılmaz, red bekleme süresi başlatmaz.</figcaption></figure>
+
+<figure class="uml" data-fig="st-havale">{{uml:st_havale}}<figcaption><b>Şekil #.</b> Havale isteğinin durumları. Yalnızca Yürürlükte durumu grafa girer ve oy ağırlığını etkiler. Hâtif'e verilen havale beklemeden yürürlüğe girer.</figcaption></figure>
+
+<figure class="uml" data-fig="st-mahzen">{{uml:st_mahzen}}<figcaption><b>Şekil #.</b> Mahzen başlığının durumları. Yaşayan başlık bileşik bir durumdur; kapasiteden düşmek iki alt durumdan da çıkarır, ifşa oylaması da başlıkla silinir.</figcaption></figure>
+
+<figure class="uml" data-fig="st-etkinlik">{{uml:st_etkinlik_dilekce}}<figcaption><b>Şekil #.</b> Etkinliğin ve dilekçe alıcısının durumları. Etkinlik ancak konu kabul edildiğinde başlangıcı ileride ve salon boşsa oluşur. Dilekçede süre 3071 sayılı Kanun'un 30 günüdür; süre geçtikten sonra işlenen yanıt da kaydedilir.</figcaption></figure>
+
+<figure class="uml" data-fig="ac-oneri">{{uml:ac_oneri}}<figcaption><b>Şekil #.</b> Bir önerinin yolu, dört kulvarda. Kum saati zaman olayıdır; kalın çubuklar birleşmedir: Karar Saati ancak hem öneri kuyrukta hem de saat gelmişken açılır, sayım ancak oylar verilmiş ve pencere dolmuşken yapılır.</figcaption></figure>
+
+<figure class="uml" data-fig="ac-karar-saati">{{uml:ac_karar_saati}}<figcaption><b>Şekil #.</b> Karar Saati'nin açılışı ve baskın tespiti. Tırmık işaretli eylem sağdaki etkinliği çağırır. Açılış önce oylamasız değişiklikleri geri alır, sonra her olgun öneri ve orantısız etkilenen her alt kapsam için seçmenleri, işaretlileri ve havaleleri anlık görüntüye alır.</figcaption></figure>
+</section>
+
+<section id="mimari" class="newpage">
+<h2><span class="no">#</span>Bileşen, paket ve dağıtım diyagramları</h2>
+<p class="lead">Mimari diyagramlar sistemi dört düzeyde gösterir: bileşenler ve aralarındaki arayüzler, API sürecinin iç parçaları, Python paketleri arasındaki bağımlılıklar ve yığının makinelere, kapsayıcılara dağılımı. Katmanların sözlü anlatımı §{{ref:sistem}} ve §{{ref:teknik}}'tedir.</p>
+
+<figure class="uml" data-fig="cmp-sistem">{{uml:cmp_sistem}}<figcaption><b>Şekil #.</b> Bileşen diyagramı. İstemci API'ye yalnızca HTTP/JSON ile bağlanır. API defteri HTTP ile, PostgreSQL'i SQL ile, Neo4j'yi Bolt ile kullanır. <code>domain</code> saf mantıktır, hiçbir dış sisteme bağlı değildir.</figcaption></figure>
+
+<figure class="uml" data-fig="cs-api">{{uml:cs_api}}<figcaption><b>Şekil #.</b> Bileşik yapı: API süreci. Graf, defter istemcisi ve ayarlar süreç başında bir kez kurulur; <code>Ctx</code> her istekte ve her zamanlanmış işte yeniden kurulur. Testler aynı yapıyı bellek içi graf ve sahte defterle kurar.</figcaption></figure>
+
+<figure class="uml" data-fig="pkg-bagimlilik">{{uml:pkg_bagimlilik}}<figcaption><b>Şekil #.</b> Paket diyagramı. Bağımlılıklar yukarıdan aşağı akar: giriş noktaları, yönlendiriciler, servisler, depolar, saf alan mantığı. Tek döngü <code>services</code> ile <code>context</code> arasındadır.</figcaption></figure>
+
+<p>Aşağıdaki bağımlılık yapı matrisi (DSM) paket diyagramının tamamıdır: satırdaki paket sütundaki paketi o kadar satırda içe aktarır. Paketler katman sırasıyla dizildi; köşegenin üstündeki her sayı yukarıdan aşağı, izin verilen yönde bir bağımlılıktır. Köşegenin altında tek hücre vardır, <code>context</code> → <code>services</code>: paket diyagramındaki döngü budur.</p>
+{{t:dsm}}
+
+<figure class="uml" data-fig="dep-dagitim">{{uml:dep_dagitim}}<figcaption><b>Şekil #.</b> Dağıtım diyagramı (<code>docker-compose.yml</code>). Her defter düğümü kendi birimindeki SQLite dosyasına yazar; yalnızca lider API'den kayıt alır. İstemci Docker dışında, Expo'nun geliştirme sunucusundan gelir; telefon aynı ağdan bağlanır.</figcaption></figure>
+</section>
+
+<section id="veri">
+<h2><span class="no">#</span>Veri tabanı diyagramları</h2>
+<p class="lead">PostgreSQL'in 31 tablosu dört varlık–ilişki diyagramına bölündü. Gösterim kaz ayağıdır: çizginin ucundaki çatal "çok", dik çizgi "bir", halka "sıfır olabilir" demektir. <code>users</code>'a giden yabancı anahtarlar ilk diyagram dışında çizilmez, sütun adında yazılır. Neo4j'nin şeması ayrıca verilir.</p>
+
+<figure class="uml" data-fig="er-kimlik">{{uml:er_kimlik}}<figcaption><b>Şekil #.</b> Kimlik ve kişisel kayıtlar. Havale isteğinin iki ucu da <code>users</code>'tadır; yürürlükteki havale ayrıca grafta HAVALE kenarı olarak durur.</figcaption></figure>
+
+<figure class="uml" data-fig="er-oneri">{{uml:er_oneri}}<figcaption><b>Şekil #.</b> Öneri, Karar ve Karar Saati. Bir oylama satırı (<code>session_items</code>) önerinin o oturumdaki anlık görüntüsüdür: seçmenler, çözülmüş havaleler, işaretliler. Tekil kısıtlar kişi başına bir itirazı, bir kapanış metnini, bir şerhi ve oylama başına bir oyu veritabanı düzeyinde güvenceye alır.</figcaption></figure>
+
+<figure class="uml" data-fig="er-tartisma">{{uml:er_tartisma}}<figcaption><b>Şekil #.</b> Tartışma, takvim ve dilekçe. Mesaj sürümleri silinmez; silme oylaması mesajı gizler, sürümler ve defter kayıtları kalır.</figcaption></figure>
+
+<figure class="uml" data-fig="er-mahzen">{{uml:er_mahzen}}<figcaption><b>Şekil #.</b> Mahzen ve yabancı anahtarı olmayan işletim tabloları: defter outbox'ı, yönetmelik değişiklikleri, sahte saat, zamanlayıcı durumu, demo adımı.</figcaption></figure>
+
+<figure class="uml" data-fig="gs-neo4j">{{uml:gs_neo4j}}<figcaption><b>Şekil #.</b> Neo4j graf şeması. Konu ve yönetmelik maddesi düğümleri aynı zamanda <code>Kaynak</code> etiketini taşır; R2'nin sahiplik denetimi SAHIBI ve ALT_KUMESI üzerinden yürür. HAVALE kenarı bitiş zamanını taşır; okumalar o ana göre süzülür.</figcaption></figure>
+</section>

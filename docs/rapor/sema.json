@@ -1,0 +1,3670 @@
+{
+ "tables": {
+  "decision_sessions": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "scheduled_for",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "opened_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "closes_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "closed_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "status",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "regulation",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "scripted",
+     "type": "Boolean",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "scheduled_for"
+    ],
+    [
+     "scheduled_for"
+    ]
+   ]
+  },
+  "demo_state": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "step",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "updated_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "ledger_outbox": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "BigInteger",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "type",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "payload",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ts",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "sent_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "ledger_seq",
+     "type": "BigInteger",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "ref_table",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "ref_id",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "ref_attr",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "regulation_changes": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "key",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "old_value",
+     "type": "JSONB",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "new_value",
+     "type": "JSONB",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "changed_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "scheduler_state": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "last_tick_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "sim_clock": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "offset_us",
+     "type": "BigInteger",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "frozen_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "users": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "String",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "nickname",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "nickname_key",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "full_name",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "email",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "password_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "birth_date",
+     "type": "Date",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "city",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "city_scope_id",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "district",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "address_line",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "role",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "email_verified",
+     "type": "Boolean",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "last_login_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "address_changed_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "cellar_warned_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "refuses_delegations",
+     "type": "Boolean",
+     "pk": false,
+     "null": false,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "email"
+    ],
+    [
+     "nickname"
+    ],
+    [
+     "nickname"
+    ],
+    [
+     "nickname_key"
+    ],
+    [
+     "email"
+    ]
+   ]
+  },
+  "cellar_threads": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "title",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "creator_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "bumped_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "reply_count",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "frozen",
+     "type": "Boolean",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "revealed_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "draft_proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "delegation_requests": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "giver_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "target_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "area_id",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "status",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "decide_by",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "decided_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "media": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "String",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "owner_id",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "sha256",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "alt",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "credit",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "source_url",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "width",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "height",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "original",
+     "type": "LargeBinary",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "print_png",
+     "type": "LargeBinary",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "attached_kind",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "attached_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "position",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "notifications": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "user_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "kind",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "title",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "lines",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "link",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "read_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "proposals": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "type",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "status",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "lane",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "proposer_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "scope_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "area_id",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "resource_ids",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "title",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "body",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "payload",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "narrowings",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "target_key",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "oracle_comment",
+     "type": "Text",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "oracle_findings",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "deadline_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "queued_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "session_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "decided_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "outcome_note",
+     "type": "Text",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "topics": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "title",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "area_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "parent_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": [
+      "topics.id"
+     ]
+    },
+    {
+     "name": "owner_scope_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "author_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "status",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "closed_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "reopened_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "accepted_proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "deleted_by_proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "addressee",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "verification_codes": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "user_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "code",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "used_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "ballots": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "session_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "decision_sessions.id"
+     ]
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "proposals.id"
+     ]
+    },
+    {
+     "name": "vote_scope_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "voter_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "choice",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "salt",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "commit",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "commit_ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "reveal_ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "session_id",
+     "proposal_id",
+     "vote_scope_id",
+     "voter_id"
+    ]
+   ]
+  },
+  "calendar_events": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "topic_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "topics.id"
+     ]
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "proposals.id"
+     ]
+    },
+    {
+     "name": "title",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "starts_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ends_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "venue_kind",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "venue_text",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "venue_resource_id",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "topic_id"
+    ],
+    [
+     "topic_id"
+    ]
+   ]
+  },
+  "cellar_posts": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "thread_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "cellar_threads.id"
+     ]
+    },
+    {
+     "name": "author_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "signed",
+     "type": "Boolean",
+     "pk": false,
+     "null": false,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "cellar_votes": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "thread_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "cellar_threads.id"
+     ]
+    },
+    {
+     "name": "opened_by",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "opened_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "electorate",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "flagged",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "status",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "passed_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "closure_texts": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "proposals.id"
+     ]
+    },
+    {
+     "name": "author_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "proposal_id",
+     "author_id"
+    ]
+   ]
+  },
+  "dev_vote_plan": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "proposals.id"
+     ]
+    },
+    {
+     "name": "voter_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "choice",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "vote_scope_id",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "messages": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "topic_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "topics.id"
+     ]
+    },
+    {
+     "name": "author_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "reply_to_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": [
+      "messages.id"
+     ]
+    },
+    {
+     "name": "is_opening",
+     "type": "Boolean",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "current_version",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "deleted_by_proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "objections": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "proposals.id"
+     ]
+    },
+    {
+     "name": "user_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "proposal_id",
+     "user_id"
+    ]
+   ]
+  },
+  "petitions": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "kind",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "topic_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "topics.id"
+     ]
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "proposals.id"
+     ]
+    },
+    {
+     "name": "addressee",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "recipients",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "subject",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "text",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "basis",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "sent_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "session_items": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "session_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "decision_sessions.id"
+     ]
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "proposals.id"
+     ]
+    },
+    {
+     "name": "vote_scope_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "concurrent",
+     "type": "Boolean",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "area_id",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "eligible",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "resolved",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "flagged",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "open_voters",
+     "type": "JSONB",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "oracle_note",
+     "type": "JSONB",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "result",
+     "type": "JSONB",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "session_id",
+     "proposal_id",
+     "vote_scope_id"
+    ]
+   ]
+  },
+  "cellar_ballots": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "vote_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "cellar_votes.id"
+     ]
+    },
+    {
+     "name": "user_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "yes",
+     "type": "Boolean",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "updated_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "vote_id",
+     "user_id"
+    ]
+   ]
+  },
+  "decisions": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "topic_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "topics.id"
+     ]
+    },
+    {
+     "name": "proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "proposals.id"
+     ]
+    },
+    {
+     "name": "closure_text_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "closure_texts.id"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": []
+  },
+  "event_attendance": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "event_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "calendar_events.id"
+     ]
+    },
+    {
+     "name": "user_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "event_id",
+     "user_id"
+    ]
+   ]
+  },
+  "event_reports": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "event_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "calendar_events.id"
+     ]
+    },
+    {
+     "name": "author_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "headcount",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "event_id",
+     "author_id"
+    ]
+   ]
+  },
+  "message_versions": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "message_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "messages.id"
+     ]
+    },
+    {
+     "name": "version_no",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "text",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "editor_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "via_proposal_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "message_id",
+     "version_no"
+    ]
+   ]
+  },
+  "petition_replies": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "petition_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "petitions.id"
+     ]
+    },
+    {
+     "name": "recipient_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "text",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "reference",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    },
+    {
+     "name": "replied_on",
+     "type": "Date",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "entered_by",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "entered_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "petition_id",
+     "recipient_id"
+    ]
+   ]
+  },
+  "dissents": {
+   "columns": [
+    {
+     "name": "id",
+     "type": "Integer",
+     "pk": true,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "decision_id",
+     "type": "Integer",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "decisions.id"
+     ]
+    },
+    {
+     "name": "author_id",
+     "type": "String",
+     "pk": false,
+     "null": false,
+     "fk": [
+      "users.id"
+     ]
+    },
+    {
+     "name": "closure_text_id",
+     "type": "Integer",
+     "pk": false,
+     "null": true,
+     "fk": [
+      "closure_texts.id"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "Text",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "created_at",
+     "type": "DateTime",
+     "pk": false,
+     "null": false,
+     "fk": []
+    },
+    {
+     "name": "ledger_hash",
+     "type": "String",
+     "pk": false,
+     "null": true,
+     "fk": []
+    }
+   ],
+   "unique": [
+    [
+     "decision_id",
+     "author_id"
+    ]
+   ]
+  }
+ },
+ "packages": {
+  "units": [
+   "cli",
+   "clock",
+   "config",
+   "context",
+   "data",
+   "db",
+   "devserver",
+   "domain",
+   "errors",
+   "evaluation",
+   "graph",
+   "main",
+   "routers",
+   "services"
+  ],
+  "deps": {
+   "cli": {
+    "config": 2,
+    "context": 2,
+    "db": 2,
+    "errors": 4,
+    "main": 1,
+    "services": 11
+   },
+   "clock": {
+    "db": 1
+   },
+   "context": {
+    "config": 1,
+    "domain": 2,
+    "graph": 1,
+    "services": 2
+   },
+   "db": {
+    "config": 1
+   },
+   "devserver": {
+    "config": 1,
+    "context": 1,
+    "db": 1,
+    "graph": 1,
+    "main": 1,
+    "routers": 1,
+    "services": 1
+   },
+   "evaluation": {
+    "cli": 1,
+    "db": 1,
+    "domain": 3,
+    "services": 2
+   },
+   "graph": {
+    "config": 1,
+    "domain": 9
+   },
+   "main": {
+    "config": 1,
+    "db": 2,
+    "errors": 1,
+    "graph": 4,
+    "routers": 3,
+    "services": 2
+   },
+   "routers": {
+    "config": 1,
+    "context": 17,
+    "data": 1,
+    "db": 13,
+    "domain": 2,
+    "errors": 3,
+    "graph": 1,
+    "services": 19
+   },
+   "services": {
+    "clock": 2,
+    "config": 1,
+    "context": 25,
+    "data": 2,
+    "db": 27,
+    "domain": 56,
+    "errors": 17
+   }
+  }
+ },
+ "classes": {
+  "mesveret.services.proposal_kinds.ClosureKind": {
+   "name": "ClosureKind",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "ProposalKind"
+   ],
+   "abstract": [],
+   "methods": [
+    "prepare",
+    "apply",
+    "threshold_key",
+    "after_open",
+    "view"
+   ],
+   "fields": []
+  },
+  "mesveret.services.proposal_kinds.DeletionKind": {
+   "name": "DeletionKind",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "ProposalKind"
+   ],
+   "abstract": [],
+   "methods": [
+    "prepare",
+    "apply",
+    "threshold_key",
+    "draft_fields",
+    "content_check",
+    "view"
+   ],
+   "fields": []
+  },
+  "mesveret.services.proposal_kinds.EditKind": {
+   "name": "EditKind",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "ProposalKind"
+   ],
+   "abstract": [],
+   "methods": [
+    "prepare",
+    "apply",
+    "view"
+   ],
+   "fields": []
+  },
+  "mesveret.services.proposal_kinds.Prepared": {
+   "name": "Prepared",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "type",
+    "title",
+    "body",
+    "area_id",
+    "scope_id",
+    "resource_ids",
+    "target_key",
+    "payload",
+    "parent_resource_id"
+   ]
+  },
+  "mesveret.services.proposal_kinds.ProposalInput": {
+   "name": "ProposalInput",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "type",
+    "title",
+    "body",
+    "area_id",
+    "scope_id",
+    "resource_ids",
+    "parent_topic_id",
+    "target_message_id",
+    "target_topic_id",
+    "new_text",
+    "article_key",
+    "new_value",
+    "reopens_topic_id",
+    "content_rules",
+    "excerpt",
+    "article_action",
+    "share_effect",
+    "cover_media_id",
+    "addressee",
+    "event"
+   ]
+  },
+  "mesveret.services.proposal_kinds.ProposalKind": {
+   "name": "ProposalKind",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "ABC"
+   ],
+   "abstract": [
+    "apply",
+    "prepare"
+   ],
+   "methods": [
+    "prepare",
+    "apply",
+    "threshold_key",
+    "draft_fields",
+    "content_check",
+    "after_open",
+    "view"
+   ],
+   "fields": []
+  },
+  "mesveret.services.proposal_kinds.RegulationKind": {
+   "name": "RegulationKind",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "ProposalKind"
+   ],
+   "abstract": [],
+   "methods": [
+    "prepare",
+    "_prepare",
+    "apply",
+    "threshold_key",
+    "draft_fields",
+    "view"
+   ],
+   "fields": []
+  },
+  "mesveret.services.proposal_kinds.ReopenKind": {
+   "name": "ReopenKind",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "ProposalKind"
+   ],
+   "abstract": [],
+   "methods": [
+    "prepare",
+    "apply"
+   ],
+   "fields": []
+  },
+  "mesveret.services.proposal_kinds.SubtopicKind": {
+   "name": "SubtopicKind",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "_NewTopic"
+   ],
+   "abstract": [],
+   "methods": [
+    "_parent",
+    "_target_key"
+   ],
+   "fields": []
+  },
+  "mesveret.services.proposal_kinds.TopicKind": {
+   "name": "TopicKind",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "_NewTopic"
+   ],
+   "abstract": [],
+   "methods": [],
+   "fields": []
+  },
+  "mesveret.services.proposal_kinds._NewTopic": {
+   "name": "_NewTopic",
+   "module": "mesveret.services.proposal_kinds",
+   "bases": [
+    "ProposalKind"
+   ],
+   "abstract": [],
+   "methods": [
+    "_parent",
+    "_target_key",
+    "prepare",
+    "apply",
+    "view"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.Accepted": {
+   "name": "Accepted",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "ProposalState"
+   ],
+   "abstract": [],
+   "methods": [],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.Conflicted": {
+   "name": "Conflicted",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "ProposalState"
+   ],
+   "abstract": [],
+   "methods": [],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.Draft": {
+   "name": "Draft",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "ProposalState"
+   ],
+   "abstract": [],
+   "methods": [
+    "submit"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.InvalidTransition": {
+   "name": "InvalidTransition",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "Exception"
+   ],
+   "abstract": [],
+   "methods": [],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.ProposalState": {
+   "name": "ProposalState",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "_refuse",
+    "submit",
+    "object",
+    "add_rival",
+    "escalate",
+    "end_rival_period",
+    "enter_session",
+    "accept",
+    "reject",
+    "conflict"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.Queued": {
+   "name": "Queued",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "_Pending"
+   ],
+   "abstract": [],
+   "methods": [
+    "enter_session"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.Rejected": {
+   "name": "Rejected",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "ProposalState"
+   ],
+   "abstract": [],
+   "methods": [],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.RivalPeriod": {
+   "name": "RivalPeriod",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "_Pending"
+   ],
+   "abstract": [],
+   "methods": [
+    "add_rival",
+    "end_rival_period"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.Silent": {
+   "name": "Silent",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "_Pending"
+   ],
+   "abstract": [],
+   "methods": [
+    "object",
+    "escalate"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle.Voting": {
+   "name": "Voting",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "_Pending"
+   ],
+   "abstract": [],
+   "methods": [],
+   "fields": []
+  },
+  "mesveret.domain.lifecycle._Pending": {
+   "name": "_Pending",
+   "module": "mesveret.domain.lifecycle",
+   "bases": [
+    "ProposalState"
+   ],
+   "abstract": [],
+   "methods": [
+    "accept",
+    "reject",
+    "conflict"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.AddresseeJurisdiction": {
+   "name": "AddresseeJurisdiction",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "Rule"
+   ],
+   "abstract": [],
+   "methods": [
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.AreaExists": {
+   "name": "AreaExists",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "Rule"
+   ],
+   "abstract": [],
+   "methods": [
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.DeletionGround": {
+   "name": "DeletionGround",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "Rule"
+   ],
+   "abstract": [],
+   "methods": [
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.Narrowing": {
+   "name": "Narrowing",
+   "module": "mesveret.domain.rules",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "resource_id",
+    "scope_id",
+    "share",
+    "message",
+    "total",
+    "effect_title"
+   ]
+  },
+  "mesveret.domain.rules.OwnershipAndRegulation": {
+   "name": "OwnershipAndRegulation",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "Rule"
+   ],
+   "abstract": [],
+   "methods": [
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.ProposalDraft": {
+   "name": "ProposalDraft",
+   "module": "mesveret.domain.rules",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "type",
+    "proposer_id",
+    "scope_id",
+    "area_id",
+    "resource_ids",
+    "parent_topic_id",
+    "target_key",
+    "title",
+    "body",
+    "content_rules",
+    "excerpt",
+    "target_text",
+    "own_content",
+    "share_effect",
+    "article_key",
+    "article_action",
+    "new_value",
+    "addressee"
+   ]
+  },
+  "mesveret.domain.rules.ProposerVoteRight": {
+   "name": "ProposerVoteRight",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "Rule"
+   ],
+   "abstract": [],
+   "methods": [
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.RegulationFloor": {
+   "name": "RegulationFloor",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "Rule"
+   ],
+   "abstract": [],
+   "methods": [
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.RejectionCooldown": {
+   "name": "RejectionCooldown",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "Rule"
+   ],
+   "abstract": [],
+   "methods": [
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.Rule": {
+   "name": "Rule",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "ABC"
+   ],
+   "abstract": [
+    "check"
+   ],
+   "methods": [
+    "handle",
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.RuleContext": {
+   "name": "RuleContext",
+   "module": "mesveret.domain.rules",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "onto",
+    "reg",
+    "now",
+    "proposer_right",
+    "last_rejection"
+   ]
+  },
+  "mesveret.domain.rules.RuleReport": {
+   "name": "RuleReport",
+   "module": "mesveret.domain.rules",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "ok"
+   ],
+   "fields": [
+    "violations",
+    "narrowings"
+   ]
+  },
+  "mesveret.domain.rules.SubtopicArea": {
+   "name": "SubtopicArea",
+   "module": "mesveret.domain.rules",
+   "bases": [
+    "Rule"
+   ],
+   "abstract": [],
+   "methods": [
+    "check"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.rules.Violation": {
+   "name": "Violation",
+   "module": "mesveret.domain.rules",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "rule",
+    "message"
+   ]
+  },
+  "mesveret.domain.rules.VoteRight": {
+   "name": "VoteRight",
+   "module": "mesveret.domain.rules",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "has_right",
+    "reason"
+   ]
+  },
+  "mesveret.services.decision_hour.ApprovalBallot": {
+   "name": "ApprovalBallot",
+   "module": "mesveret.services.decision_hour",
+   "bases": [
+    "BallotMethod"
+   ],
+   "abstract": [],
+   "methods": [
+    "normalize",
+    "oracle_choice",
+    "ballot_extra",
+    "close"
+   ],
+   "fields": []
+  },
+  "mesveret.services.decision_hour.BallotMethod": {
+   "name": "BallotMethod",
+   "module": "mesveret.services.decision_hour",
+   "bases": [
+    "ABC"
+   ],
+   "abstract": [
+    "close",
+    "normalize",
+    "oracle_choice"
+   ],
+   "methods": [
+    "normalize",
+    "oracle_choice",
+    "ballot_extra",
+    "close"
+   ],
+   "fields": []
+  },
+  "mesveret.services.decision_hour.YesNoBallot": {
+   "name": "YesNoBallot",
+   "module": "mesveret.services.decision_hour",
+   "bases": [
+    "BallotMethod"
+   ],
+   "abstract": [],
+   "methods": [
+    "normalize",
+    "oracle_choice",
+    "close"
+   ],
+   "fields": []
+  },
+  "mesveret.services.jobs.CloseDecisionHour": {
+   "name": "CloseDecisionHour",
+   "module": "mesveret.services.jobs",
+   "bases": [
+    "Job"
+   ],
+   "abstract": [],
+   "methods": [
+    "label",
+    "run"
+   ],
+   "fields": [
+    "due_at",
+    "session_id"
+   ]
+  },
+  "mesveret.services.jobs.EndRivalPeriod": {
+   "name": "EndRivalPeriod",
+   "module": "mesveret.services.jobs",
+   "bases": [
+    "_ProposalJob"
+   ],
+   "abstract": [],
+   "methods": [
+    "_transition"
+   ],
+   "fields": [
+    "due_at",
+    "proposal_id",
+    "what"
+   ]
+  },
+  "mesveret.services.jobs.EndSilentPeriod": {
+   "name": "EndSilentPeriod",
+   "module": "mesveret.services.jobs",
+   "bases": [
+    "_ProposalJob"
+   ],
+   "abstract": [],
+   "methods": [
+    "_transition"
+   ],
+   "fields": [
+    "due_at",
+    "proposal_id",
+    "what"
+   ]
+  },
+  "mesveret.services.jobs.ExpireDelegation": {
+   "name": "ExpireDelegation",
+   "module": "mesveret.services.jobs",
+   "bases": [
+    "Job"
+   ],
+   "abstract": [],
+   "methods": [
+    "label",
+    "run"
+   ],
+   "fields": [
+    "due_at",
+    "user_id",
+    "area_id",
+    "description"
+   ]
+  },
+  "mesveret.services.jobs.ExpireDelegationRequest": {
+   "name": "ExpireDelegationRequest",
+   "module": "mesveret.services.jobs",
+   "bases": [
+    "Job"
+   ],
+   "abstract": [],
+   "methods": [
+    "label",
+    "run"
+   ],
+   "fields": [
+    "due_at",
+    "request_id",
+    "description"
+   ]
+  },
+  "mesveret.services.jobs.Job": {
+   "name": "Job",
+   "module": "mesveret.services.jobs",
+   "bases": [
+    "ABC"
+   ],
+   "abstract": [
+    "label",
+    "run"
+   ],
+   "methods": [
+    "label",
+    "run"
+   ],
+   "fields": [
+    "due_at"
+   ]
+  },
+  "mesveret.services.jobs.OpenDecisionHour": {
+   "name": "OpenDecisionHour",
+   "module": "mesveret.services.jobs",
+   "bases": [
+    "Job"
+   ],
+   "abstract": [],
+   "methods": [
+    "label",
+    "run"
+   ],
+   "fields": [
+    "due_at"
+   ]
+  },
+  "mesveret.services.jobs._ProposalJob": {
+   "name": "_ProposalJob",
+   "module": "mesveret.services.jobs",
+   "bases": [
+    "Job"
+   ],
+   "abstract": [],
+   "methods": [
+    "label",
+    "_transition",
+    "run"
+   ],
+   "fields": [
+    "due_at",
+    "proposal_id",
+    "what"
+   ]
+  },
+  "mesveret.services.events.DecisionMade": {
+   "name": "DecisionMade",
+   "module": "mesveret.services.events",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "topic",
+    "proposal",
+    "decision"
+   ]
+  },
+  "mesveret.services.events.EventBus": {
+   "name": "EventBus",
+   "module": "mesveret.services.events",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "subscribe",
+    "subscribers",
+    "publish"
+   ],
+   "fields": []
+  },
+  "mesveret.services.events.MovedToSlowLane": {
+   "name": "MovedToSlowLane",
+   "module": "mesveret.services.events",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "proposal",
+    "count",
+    "threshold"
+   ]
+  },
+  "mesveret.services.events.PetitionReplied": {
+   "name": "PetitionReplied",
+   "module": "mesveret.services.events",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "petition",
+    "reply",
+    "institution",
+    "entered_by"
+   ]
+  },
+  "mesveret.services.events.PetitionSent": {
+   "name": "PetitionSent",
+   "module": "mesveret.services.events",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "petition",
+    "proposer_id"
+   ]
+  },
+  "mesveret.services.events.SessionClosed": {
+   "name": "SessionClosed",
+   "module": "mesveret.services.events",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "session",
+    "items"
+   ]
+  },
+  "mesveret.services.events.SilentPeriodEnded": {
+   "name": "SilentPeriodEnded",
+   "module": "mesveret.services.events",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "proposal"
+   ]
+  },
+  "mesveret.services.events.TopicAccepted": {
+   "name": "TopicAccepted",
+   "module": "mesveret.services.events",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "topic",
+    "proposal"
+   ]
+  },
+  "mesveret.domain.registry.Registry": {
+   "name": "Registry",
+   "module": "mesveret.domain.registry",
+   "bases": [
+    "Generic"
+   ],
+   "abstract": [],
+   "methods": [
+    "register",
+    "get",
+    "create"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.detectors.ClusterDetector": {
+   "name": "ClusterDetector",
+   "module": "mesveret.evaluation.detectors",
+   "bases": [
+    "Detector"
+   ],
+   "abstract": [],
+   "methods": [
+    "predict"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.detectors.DecisionTreeDetector": {
+   "name": "DecisionTreeDetector",
+   "module": "mesveret.evaluation.detectors",
+   "bases": [
+    "Detector"
+   ],
+   "abstract": [],
+   "methods": [
+    "fit",
+    "_decide",
+    "predict",
+    "explain"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.detectors.Detector": {
+   "name": "Detector",
+   "module": "mesveret.evaluation.detectors",
+   "bases": [
+    "ABC"
+   ],
+   "abstract": [
+    "predict"
+   ],
+   "methods": [
+    "fit",
+    "predict",
+    "explain"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.detectors.NewMemberRule": {
+   "name": "NewMemberRule",
+   "module": "mesveret.evaluation.detectors",
+   "bases": [
+    "Detector"
+   ],
+   "abstract": [],
+   "methods": [
+    "predict"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.detectors.NobodyDetector": {
+   "name": "NobodyDetector",
+   "module": "mesveret.evaluation.detectors",
+   "bases": [
+    "Detector"
+   ],
+   "abstract": [],
+   "methods": [
+    "predict"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.detectors.RandomDetector": {
+   "name": "RandomDetector",
+   "module": "mesveret.evaluation.detectors",
+   "bases": [
+    "Detector"
+   ],
+   "abstract": [],
+   "methods": [
+    "fit",
+    "predict",
+    "explain"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.detectors._Split": {
+   "name": "_Split",
+   "module": "mesveret.evaluation.detectors",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "goes_right"
+   ],
+   "fields": [
+    "feature",
+    "threshold"
+   ]
+  },
+  "mesveret.evaluation.repository.GeneratedScenarioRepository": {
+   "name": "GeneratedScenarioRepository",
+   "module": "mesveret.evaluation.repository",
+   "bases": [
+    "ScenarioRepository"
+   ],
+   "abstract": [],
+   "methods": [
+    "load"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.repository.InMemoryScenarioRepository": {
+   "name": "InMemoryScenarioRepository",
+   "module": "mesveret.evaluation.repository",
+   "bases": [
+    "ScenarioRepository"
+   ],
+   "abstract": [],
+   "methods": [
+    "load"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.repository.JsonScenarioRepository": {
+   "name": "JsonScenarioRepository",
+   "module": "mesveret.evaluation.repository",
+   "bases": [
+    "ScenarioRepository"
+   ],
+   "abstract": [],
+   "methods": [
+    "load",
+    "freeze"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.repository.LiveScenarioRepository": {
+   "name": "LiveScenarioRepository",
+   "module": "mesveret.evaluation.repository",
+   "bases": [
+    "ScenarioRepository"
+   ],
+   "abstract": [],
+   "methods": [
+    "load"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.repository.ScenarioRepository": {
+   "name": "ScenarioRepository",
+   "module": "mesveret.evaluation.repository",
+   "bases": [
+    "ABC"
+   ],
+   "abstract": [
+    "load"
+   ],
+   "methods": [
+    "load"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.observers.ConsoleReporter": {
+   "name": "ConsoleReporter",
+   "module": "mesveret.evaluation.observers",
+   "bases": [
+    "EvaluationObserver"
+   ],
+   "abstract": [],
+   "methods": [
+    "on_start",
+    "on_result"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.observers.EvaluationObserver": {
+   "name": "EvaluationObserver",
+   "module": "mesveret.evaluation.observers",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "on_start",
+    "on_result",
+    "on_extra",
+    "on_finish"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.observers.JsonReporter": {
+   "name": "JsonReporter",
+   "module": "mesveret.evaluation.observers",
+   "bases": [
+    "EvaluationObserver"
+   ],
+   "abstract": [],
+   "methods": [
+    "on_start",
+    "on_result",
+    "on_extra",
+    "on_finish"
+   ],
+   "fields": []
+  },
+  "mesveret.evaluation.harness.Evaluation": {
+   "name": "Evaluation",
+   "module": "mesveret.evaluation.harness",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "costs",
+    "detectors",
+    "_notify",
+    "run"
+   ],
+   "fields": [
+    "config",
+    "repository",
+    "observers"
+   ]
+  },
+  "mesveret.evaluation.metrics.Confusion": {
+   "name": "Confusion",
+   "module": "mesveret.evaluation.metrics",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "total",
+    "accuracy",
+    "precision",
+    "recall",
+    "f_beta",
+    "f1",
+    "cost"
+   ],
+   "fields": [
+    "tp",
+    "fn",
+    "fp",
+    "tn"
+   ]
+  },
+  "mesveret.evaluation.scenarios.Scenario": {
+   "name": "Scenario",
+   "module": "mesveret.evaluation.scenarios",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "accounts",
+    "newcomers",
+    "to_json",
+    "from_json"
+   ],
+   "fields": [
+    "name",
+    "at",
+    "joined",
+    "interactions",
+    "raiders",
+    "groups"
+   ]
+  },
+  "mesveret.evaluation.scenarios._Builder": {
+   "name": "_Builder",
+   "module": "mesveret.evaluation.scenarios",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "_add",
+    "account",
+    "reply",
+    "same_thread",
+    "build"
+   ],
+   "fields": []
+  },
+  "mesveret.services.ledger.FakeLedgerClient": {
+   "name": "FakeLedgerClient",
+   "module": "mesveret.services.ledger",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "append",
+    "append_batch",
+    "node_urls",
+    "get",
+    "reset",
+    "of_type"
+   ],
+   "fields": []
+  },
+  "mesveret.services.ledger.HttpLedgerClient": {
+   "name": "HttpLedgerClient",
+   "module": "mesveret.services.ledger",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "append",
+    "append_batch",
+    "node_urls",
+    "get",
+    "reset"
+   ],
+   "fields": []
+  },
+  "mesveret.services.ledger.LedgerClient": {
+   "name": "LedgerClient",
+   "module": "mesveret.services.ledger",
+   "bases": [
+    "Protocol"
+   ],
+   "abstract": [],
+   "methods": [
+    "append",
+    "append_batch",
+    "node_urls",
+    "get",
+    "reset"
+   ],
+   "fields": []
+  },
+  "mesveret.services.ledger.NodeReport": {
+   "name": "NodeReport",
+   "module": "mesveret.services.ledger",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "reachable",
+    "ok",
+    "length",
+    "reason",
+    "hash_at"
+   ]
+  },
+  "mesveret.domain.ontology.AreaInfo": {
+   "name": "AreaInfo",
+   "module": "mesveret.domain.ontology",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "id",
+    "name",
+    "parent_id",
+    "keywords"
+   ]
+  },
+  "mesveret.domain.ontology.AreaTree": {
+   "name": "AreaTree",
+   "module": "mesveret.domain.ontology",
+   "bases": [
+    "Protocol"
+   ],
+   "abstract": [],
+   "methods": [
+    "area_ancestors",
+    "area_descendants_bfs",
+    "all_area_ids_bfs"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.ontology.InMemoryOntology": {
+   "name": "InMemoryOntology",
+   "module": "mesveret.domain.ontology",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "area",
+    "all_areas",
+    "area_ancestors",
+    "_rebuild_children",
+    "_bfs",
+    "area_descendants_bfs",
+    "all_area_ids_bfs",
+    "area_subtree",
+    "scope",
+    "city_scopes",
+    "is_strict_subset",
+    "resource",
+    "all_resources",
+    "topic_area"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.ontology.OntologyView": {
+   "name": "OntologyView",
+   "module": "mesveret.domain.ontology",
+   "bases": [
+    "AreaTree",
+    "Protocol"
+   ],
+   "abstract": [],
+   "methods": [
+    "area",
+    "all_areas",
+    "area_subtree",
+    "scope",
+    "city_scopes",
+    "is_strict_subset",
+    "resource",
+    "all_resources",
+    "topic_area"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.ontology.ResourceInfo": {
+   "name": "ResourceInfo",
+   "module": "mesveret.domain.ontology",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "id",
+    "kind",
+    "name",
+    "owner_scope_id",
+    "divisible",
+    "division_type",
+    "shares",
+    "aliases"
+   ]
+  },
+  "mesveret.domain.ontology.ResourceKind": {
+   "name": "ResourceKind",
+   "module": "mesveret.domain.ontology",
+   "bases": [
+    "StrEnum"
+   ],
+   "abstract": [],
+   "methods": [
+    "_generate_next_value_",
+    "_new_member_"
+   ],
+   "fields": []
+  },
+  "mesveret.domain.ontology.ScopeInfo": {
+   "name": "ScopeInfo",
+   "module": "mesveret.domain.ontology",
+   "bases": [],
+   "abstract": [],
+   "methods": [],
+   "fields": [
+    "id",
+    "type",
+    "name",
+    "subtype",
+    "value"
+   ]
+  },
+  "mesveret.graph.store.GraphStore": {
+   "name": "GraphStore",
+   "module": "mesveret.graph.store",
+   "bases": [
+    "OntologyView",
+    "Protocol"
+   ],
+   "abstract": [],
+   "methods": [
+    "reset",
+    "upsert_area",
+    "upsert_scope",
+    "upsert_resource",
+    "upsert_user",
+    "set_membership",
+    "remove_membership",
+    "memberships",
+    "scope_members",
+    "delegations",
+    "delegation_edges",
+    "outgoing_delegations",
+    "incoming_delegations",
+    "set_delegation",
+    "renew_delegation",
+    "remove_delegation",
+    "add_interaction",
+    "interactions_among",
+    "articles",
+    "set_article",
+    "delete_article",
+    "set_unchangeable",
+    "clear_unchangeable",
+    "unchangeable_articles",
+    "record_proposal",
+    "set_proposal_status",
+    "record_decision",
+    "add_discourse_author",
+    "discourse_authors",
+    "remove_discourse"
+   ],
+   "fields": []
+  },
+  "mesveret.graph.memory.InMemoryGraph": {
+   "name": "InMemoryGraph",
+   "module": "mesveret.graph.memory",
+   "bases": [
+    "InMemoryOntology"
+   ],
+   "abstract": [],
+   "methods": [
+    "reset",
+    "upsert_area",
+    "upsert_scope",
+    "upsert_resource",
+    "upsert_user",
+    "set_membership",
+    "remove_membership",
+    "memberships",
+    "scope_members",
+    "delegation_edges",
+    "delegations",
+    "outgoing_delegations",
+    "incoming_delegations",
+    "set_delegation",
+    "renew_delegation",
+    "remove_delegation",
+    "add_interaction",
+    "interactions_among",
+    "articles",
+    "set_article",
+    "delete_article",
+    "set_unchangeable",
+    "clear_unchangeable",
+    "unchangeable_articles",
+    "record_proposal",
+    "set_proposal_status",
+    "record_decision",
+    "add_discourse_author",
+    "discourse_authors",
+    "remove_discourse"
+   ],
+   "fields": []
+  },
+  "mesveret.graph.neo4j_store.Neo4jGraph": {
+   "name": "Neo4jGraph",
+   "module": "mesveret.graph.neo4j_store",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "_run",
+    "ensure_constraints",
+    "reset",
+    "_area",
+    "area",
+    "all_areas",
+    "area_ancestors",
+    "area_descendants_bfs",
+    "all_area_ids_bfs",
+    "area_subtree",
+    "upsert_area",
+    "_scope",
+    "scope",
+    "city_scopes",
+    "is_strict_subset",
+    "upsert_scope",
+    "_resource",
+    "resource",
+    "all_resources",
+    "topic_area",
+    "upsert_resource",
+    "upsert_user",
+    "set_membership",
+    "remove_membership",
+    "memberships",
+    "scope_members",
+    "delegation_edges",
+    "delegations",
+    "outgoing_delegations",
+    "incoming_delegations",
+    "set_delegation",
+    "renew_delegation",
+    "remove_delegation",
+    "add_interaction",
+    "interactions_among",
+    "articles",
+    "set_article",
+    "set_unchangeable",
+    "clear_unchangeable",
+    "unchangeable_articles",
+    "delete_article",
+    "record_proposal",
+    "set_proposal_status",
+    "record_decision",
+    "add_discourse_author",
+    "discourse_authors",
+    "remove_discourse"
+   ],
+   "fields": []
+  },
+  "mesveret.context.Ctx": {
+   "name": "Ctx",
+   "module": "mesveret.context",
+   "bases": [],
+   "abstract": [],
+   "methods": [
+    "reg",
+    "cities",
+    "invalidate_regulation",
+    "at",
+    "commit"
+   ],
+   "fields": [
+    "db",
+    "graph",
+    "now",
+    "settings",
+    "ledger",
+    "_reg",
+    "_cities"
+   ]
+  }
+ }
+}

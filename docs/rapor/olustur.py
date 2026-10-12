@@ -9,13 +9,21 @@ A5 sürümünde yazılar A5'te gerçek boyutunda okunur; grafikler dar genişli�
 ekran görüntüleri ``CROPS_A5``'teki bölgelere kırpılır. Açıklamadaki ``<span class="a4">`` ve
 ``<span class="a5">`` parçaları yalnızca kendi sürümünde kalır ("solda" / "üstte" gibi).
 
+Diyagramlar ``diyagramlar.py``'den gelir (``uml.py`` çizer; yazı genişliği Pillow ile raporun
+yazı tiplerinden ölçülür). Sınıflar, tablolar ve paket bağımlılıkları ``sema.json``'dadır; kod
+değişince ``uv run --directory api python ../docs/rapor/sema.py`` ile yeniden üretilir. Gantt
+şeması ``git log``'dan çizilir.
+
 Sayılar elle yazılmaz: baskın tespitinin sonuçları ``docs/degerlendirme/sonuclar.json``'dan,
 gecikme ``docs/degerlendirme/gecikme.json``'dan, test sayıları ``testler.json``'dan okunur.
 Parçalardaki yer tutucular:
 
 - ``{{t:ad}}``  tablo, ``{{svg:ad}}`` grafik, ``{{v:yol}}`` tek değer (ör. ``{{v:canli.secmen}}``),
 - ``{{ref:bolum}}`` bölüm numarası (``<section id="bolum">``),
-- ``<b>Şekil #.</b>`` ve ``{{fig:ad}}``: şekiller sırayla numaralanır (``data-fig="ad"``).
+- ``<b>Şekil #.</b>`` ve ``{{fig:ad}}``: şekiller sırayla numaralanır (``data-fig="ad"``),
+- ``<figure class="uml" data-fig="ad">{{uml:islev}}…</figure>``: ``diyagramlar.py``'deki diyagram.
+  A4'te sütuna, A5'te yazı okunur kalsın diye sütuna ya da tam sayfaya (gerekirse yan çevrilmiş)
+  yerleşir.
 """
 
 from __future__ import annotations
@@ -29,15 +37,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 EVAL = ROOT.parent / "degerlendirme"
 PARTS = [
-    ("I", "Problem ve analiz", ["ozet", "cerceve", "paydas", "yz", "metrik", "crisp", "baskin"]),
-    ("II", "Tasarım ve kod", ["desen", "sistem", "teknik"]),
+    ("I", "Problem ve analiz", ["ozet", "cerceve", "paydas", "kullanim", "modeller", "yz", "metrik",
+                                "crisp", "baskin"]),
+    ("II", "Tasarım ve kod", ["desen", "sistem", "teknik", "diyagram", "sinif", "etkilesim", "davranis",
+                              "mimari", "veri"]),
     ("III", "Politikalar", ["azinlik", "kapsam", "sinirlama", "akis", "yonetmelik", "havale",
                             "silme", "mahzen", "sonuc", "gorsel", "butunluk", "kolaylik"]),
-    ("IV", "Süreç", ["sorunlar", "aciklar", "test", "denetim", "beyan", "kaynak"]),
+    ("IV", "Süreç", ["gelisim", "sorunlar", "aciklar", "test", "denetim", "beyan", "kaynak"]),
 ]
 # Parçalar sırayla birleşir; ``{{include:ad.html}}`` bir parçanın içine başka bir parça koyar
-# (CRISP-DM analizi baskın ölçümünden önce, tasarım denetimi testlerden sonra).
-FRAGMENTS = ["analiz.html", "desenler.html", "sistem.html", "teknik.html", "politikalar.html",
+# (kullanım durumları paydaşlardan sonra, CRISP-DM analizi baskın ölçümünden önce, geliştirme
+# takvimi sorunlardan önce, tasarım denetimi testlerden sonra).
+FRAGMENTS = ["analiz.html", "desenler.html", "sistem.html", "teknik.html", "uml.html", "politikalar.html",
              "kolaylik.html", "surec.html"]
 NAMES = {"rastgele": "Rastgele", "hic_kimse": "Hiç kimse", "yeni_uye": "Yeni üye kuralı",
          "kume": "Küme kuralı (üretim)", "karar_agaci": "Karar ağacı (öğrenilen)"}
@@ -380,6 +391,93 @@ def t_teknik_api() -> str:
             "<tbody>" + "".join(rows) + "</tbody></table>")
 
 
+def t_dsm() -> str:
+    """Paket bağımlılık matrisi (sema.json): satır içe aktaran, sütun içe aktarılan paket."""
+    pk = json.loads((ROOT / "sema.json").read_text(encoding="utf-8"))["packages"]
+    # Katman sırası: bir paket yalnızca kendinden sonrakileri içe aktarıyorsa sayılar köşegenin üstünde kalır.
+    units = [u for u in ["devserver", "evaluation", "cli", "main", "routers", "services", "context", "graph",
+                         "clock", "db", "domain", "config", "errors", "data"] if u in pk["units"]]
+    if set(units) != set(pk["units"]):
+        raise SystemExit(f"DSM paket listesi güncel değil: {sorted(set(pk['units']) - set(units))}")
+    head = "".join(f'<th class="n" style="writing-mode:vertical-rl;transform:rotate(180deg);'
+                   f'padding:2pt 0">{u}</th>' for u in units)
+    rows = []
+    for u in units:
+        deps = pk["deps"].get(u, {})
+        cells = "".join(
+            '<td class="n" style="background:#E6E1D6">·</td>' if v == u else
+            f'<td class="n">{deps[v]}</td>' if v in deps else '<td class="n"></td>' for v in units)
+        rows.append(f'<tr><td class="k">{u}</td>{cells}<td class="n">{sum(deps.values())}</td></tr>')
+    return ('<table class="num grid"><thead><tr><th>paket</th>' + head + '<th class="n">top.</th></tr></thead>'
+            "<tbody>" + "".join(rows) + "</tbody></table>")
+
+
+def t_gantt() -> str:
+    """Aşama başına commit sayısı ve tarih aralığı (git geçmişinden, diyagramlar._GANTT)."""
+    import diyagramlar
+    commits = diyagramlar._commits()
+    phase_of = {h: i for i, (_, hs) in enumerate(diyagramlar._GANTT) for h in hs.split()}
+    rows: dict[int, list] = {i: [] for i in range(len(diyagramlar._GANTT))}
+    names = [n.replace("\n", " ") for n, _ in diyagramlar._GANTT]
+    for h, t, subj in commits:
+        i = phase_of.get(h)
+        if i is None:
+            i = names.index("Tohum içeriği") if subj.startswith("Tohum") else len(names) - 1
+        rows[i].append(t)
+    out = []
+    for i, n in enumerate(names):
+        ts = sorted(rows[i])
+        if not ts:
+            continue
+        a, b = ts[0], ts[-1]
+        span = (f"{a.day}.{a.month:02d}" if a.date() == b.date()
+                else f"{a.day}.{a.month:02d} – {b.day}.{b.month:02d}")
+        out.append(f'<tr><td>{n}</td><td class="n">{len(ts)}</td><td class="n">{span}</td></tr>')
+    total = sum(len(v) for v in rows.values())
+    out.append(f'<tr><td><b>Toplam</b></td><td class="n"><b>{total}</b></td><td></td></tr>')
+    return ('<table class="num"><thead><tr><th>Aşama</th><th class="n">Commit</th><th class="n">Tarih</th>'
+            "</tr></thead><tbody>" + "".join(out) + "</tbody></table>")
+
+
+# --- UML ve diğer diyagramlar (diyagramlar.py) -----------------------------------------------------
+
+# Milimetre: A4 sütunu 176, A5 sütunu 126, A5 sayfa yüksekliği (kenar boşluklarından sonra) 185.
+A4_COL, A5_COL, A5_PAGE = 176.0, 126.0, 185.0
+# A5'te sütuna konan diyagramın en küçük ölçeği (mm/birim): 9,6 birimlik yazı 5,6 pt olur. Daha
+# küçüğünü gerektiren diyagram kendi sayfasına, sığmazsa yan çevrilerek yerleşir.
+A5_MIN = 0.205
+A5_MAX = 0.26
+
+
+def uml_figures(body: str, edition: str) -> str:
+    sys.path.insert(0, str(ROOT))
+    import diyagramlar
+
+    def one(m: re.Match) -> str:
+        attrs, name, rest = m.group(1), m.group(2), m.group(3)
+        d = getattr(diyagramlar, name)()
+        if edition == "a4":
+            width = min(A4_COL, d.w * A4_COL / 760)
+            return (f'<figure class="uml"{attrs}><div class="umlbox" style="width:{width:.1f}mm">'
+                    f'{d.svg}</div>{rest}</figure>')
+        inline = min(A5_COL / d.w, A5_MAX)
+        if inline >= A5_MIN and d.h * inline <= 120:
+            return (f'<figure class="uml"{attrs}><div class="umlbox" style="width:{d.w * inline:.1f}mm">'
+                    f'{d.svg}</div>{rest}</figure>')
+        cap = 18  # açıklamaya ayrılan yükseklik
+        portrait = min(A5_COL / d.w, (A5_PAGE - cap) / d.h, A5_MAX)
+        landscape = min(A5_PAGE / d.w, (A5_COL - cap) / d.h, A5_MAX)
+        sc = max(portrait, landscape)
+        box = (f'<div class="umlbox" style="width:{d.w * sc:.1f}mm;height:{d.h * sc:.1f}mm">'
+               f'{d.svg}</div>{rest}')
+        if landscape > portrait * 1.04:
+            return f'<figure class="uml turn"{attrs}><div class="rot">{box}</div></figure>'
+        return f'<figure class="uml page"{attrs}>{box}</figure>'
+
+    return re.sub(r'<figure class="uml"([^>]*)>\s*\{\{uml:([a-z0-9_]+)\}\}(.*?)</figure>', one, body,
+                  flags=re.S)
+
+
 # --- grafikler (SVG) --------------------------------------------------------------------------------
 
 
@@ -464,7 +562,8 @@ def svg_gecikme() -> str:
 TABLES = {"merdiven": t_merdiven, "karisiklik": t_karisiklik, "bicim": t_bicim, "esik": t_esik,
           "oran": t_oran, "canli": t_canli, "gecikme": t_gecikme, "veri": t_veri,
           "crisp_veri": t_crisp_veri, "crisp_karisiklik": t_crisp_karisiklik,
-          "crisp_senaryo": t_crisp_senaryo, "teknik_tablolar": t_teknik_tablolar, "teknik_api": t_teknik_api}
+          "crisp_senaryo": t_crisp_senaryo, "teknik_tablolar": t_teknik_tablolar, "teknik_api": t_teknik_api,
+          "dsm": t_dsm, "gantt": t_gantt}
 SVGS = {"merdiven": svg_merdiven, "basabas": svg_basabas, "gecikme": svg_gecikme}
 
 
@@ -531,6 +630,8 @@ def build(edition: str = "a4") -> str:
     while "{{include:" in body:
         body = re.sub(r"\{\{include:([a-z0-9_-]+\.html)\}\}",
                       lambda m: (ROOT / "bolumler" / m.group(1)).read_text(encoding="utf-8"), body)
+
+    body = uml_figures(body, edition)
 
     order = re.findall(r'<section id="([a-z]+)"', body)
     expected = [s for _, _, ids in PARTS for s in ids]

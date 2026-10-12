@@ -7,6 +7,7 @@
 @font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/400Regular/Newsreader_400Regular.ttf'); font-weight: 400; }
 @font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/400Regular_Italic/Newsreader_400Regular_Italic.ttf'); font-weight: 400; font-style: italic; }
 @font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/600SemiBold/Newsreader_600SemiBold.ttf'); font-weight: 600; }
+@font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/600SemiBold_Italic/Newsreader_600SemiBold_Italic.ttf'); font-weight: 600; font-style: italic; }
 @font-face { font-family: 'Newsreader'; src: url('../../client/node_modules/@expo-google-fonts/newsreader/800ExtraBold/Newsreader_800ExtraBold.ttf'); font-weight: 800; }
 @font-face { font-family: 'Plex Mono'; src: url('../../client/node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf'); font-weight: 400; }
 @font-face { font-family: 'Plex Mono'; src: url('../../client/node_modules/@expo-google-fonts/ibm-plex-mono/500Medium/IBMPlexMono_500Medium.ttf'); font-weight: 500; }
@@ -53,6 +54,10 @@ figcaption b { font-style: normal; font-family: 'Plex Mono', monospace; font-wei
 svg { display: block; width: 100%; height: auto; margin: 4pt 0 2pt; }
 svg text { font-family: 'Newsreader', serif; }
 svg .m { font-family: 'Plex Mono', monospace; }
+/* UML ve diğer diyagramlar (diyagramlar.py): genişlik olustur.py'de, ölçek korunarak verilir. */
+figure.uml .umlbox { margin: 0 auto; }
+figure.uml svg.uml { margin: 0; width: 100%; height: auto; }
+figure.uml figcaption { margin-top: 6pt; }
 
 /* kapak */
 .cover { height: 258mm; display: flex; flex-direction: column; break-after: page; }
@@ -74,10 +79,10 @@ svg .m { font-family: 'Plex Mono', monospace; }
 .cover .meta .kicker { display: block; margin-bottom: 1mm; }
 .tocpage { break-after: page; }
 .tocpage h2 { margin-bottom: 8pt; }
-.tocpage .toc { columns: 1; font-size: 11.5pt; margin-top: 6pt; }
-.tocpage .toc div { padding: 3pt 0; }
+.tocpage .toc { columns: 1; font-size: 10pt; line-height: 1.3; margin-top: 6pt; }
+.tocpage .toc div { padding: 1.2pt 0; }
 .tocpage .toc span { width: 26pt; font-size: 9pt; }
-.tocpage .toc .part { margin-top: 10pt; }
+.tocpage .toc .part { margin-top: 7pt; }
 .toc { columns: 2; column-gap: 14mm; font-size: 9.6pt; margin-top: 3pt; }
 .toc div { break-inside: avoid; padding: 1.2pt 0; border-bottom: 0.4pt dotted var(--hair); }
 .toc span { font-family: 'Plex Mono', monospace; font-size: 8pt; color: var(--seal); display: inline-block; width: 18pt; }

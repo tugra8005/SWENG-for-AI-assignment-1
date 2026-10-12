@@ -1,0 +1,134 @@
+<section id="kullanim" class="newpage">
+<h2><span class="no">#</span>Aktörler ve kullanım durumları</h2>
+<p class="lead">Paydaşlar sistemde aktör olarak yer alır. Bir aktörün sistemle yaptığı her iş bir kullanım durumudur. 47 kullanım durumu dört diyagrama bölündü: hesap, okuma ve tartışma; yönetişim (öneri, oy, havale); Mahzen; kararların sonuçları. Numaralar diyagramlar arasında tekildir. Sistemin özgün işleri olan UC-01–UC-07 bölümün sonunda ayrıntılı tanımlanır; ret iletileri koddaki metinlerdir.</p>
+
+<h3>Aktörler</h3>
+<table>
+<thead><tr><th style="width:20%">Aktör</th><th style="width:17%">Tür</th><th>Sistemdeki işi</th></tr></thead>
+<tbody>
+<tr><td>Ziyaretçi</td><td>insan</td><td>Giriş yapmadan okur: ön sayfa, takvim, konular, öneriler, dilekçeler, Karar Saati sonuçları, defter, arama, kılavuz. Defteri doğrulayabilir.</td></tr>
+<tr><td>Yurttaş</td><td>insan; Ziyaretçi'nin özeli</td><td>Kayıtlı, e-postası doğrulanmış, 18 yaşını doldurmuş üye. Öneri açar, itiraz eder, oy verir, havale eder, tartışmaya ve Mahzen'e yazar.</td></tr>
+<tr><td>Temsilci</td><td>Yurttaş'ın özeli (rol)</td><td>Havale alan yurttaş. İsteği kabul eder, reddeder ya da sonradan iade eder. Oyu taşıdığı havaleler kadar ağırlıklıdır ve açık sayılır.</td></tr>
+<tr><td>Konu katılımcısı</td><td>Yurttaş'ın özeli (rol)</td><td>Konuyu açan ya da tartışmasında yazmış yurttaş. Kapanış önerir, rakip karar metni ekler, kurumun dilekçeye yanıtını işler.</td></tr>
+<tr><td>Başlık katılımcısı</td><td>Yurttaş'ın özeli (rol)</td><td>Bir Mahzen başlığında yazmış yurttaş. İfşa oylamasını açar ve o oylamada oy verir.</td></tr>
+<tr><td>Etkinlik katılımcısı</td><td>Yurttaş'ın özeli (rol)</td><td>Bir etkinliğe "Geliyorum" demiş yurttaş. Etkinlik bittikten sonra rapor ve fotoğraf ekler.</td></tr>
+<tr><td>Hâtif</td><td>sistem aktörü</td><td>Kural tabanlı danışman hesabı. Açılışta her öneriyi yorumlar (H1–H4), Karar Saati'nde R1–R9 ve etiket denetimine göre oy verir. Giriş yapamaz.</td></tr>
+<tr><td>Zamanlayıcı</td><td>zaman</td><td>Sessiz onay ve rakip metin sürelerini bitirir, Karar Saati'ni açıp kapatır, süresi dolan havaleleri ve istekleri düşürür.</td></tr>
+<tr><td>Defter</td><td>sistem</td><td>Üç düğümlü, hash zincirli kayıt. Kararları, oy mühürlerini ve ifşaları saklar; doğrulama isteklerine yanıt verir.</td></tr>
+<tr><td>Takvim uygulaması</td><td>dış sistem</td><td>Takvimi <code>.ics</code> aboneliğiyle okur.</td></tr>
+</tbody>
+</table>
+<p>Diyagramlarda düz çizgi aktörle kullanım durumu arasındaki ilişkidir. Kesikli ok «include» ise taban durum içerilen durumu her seferinde çalıştırır: öneri açmak kural zincirini (UC-28) ve Hâtif yorumunu (UC-27) içerir. Kesikli ok «extend» ise genişleyen durum yalnızca koşul sağlanınca devreye girer: etkinlik bilgisi (UC-29) yalnızca takvime giden konu önerisine eklenir. İçi boş üçgen genellemedir.</p>
+
+<figure class="uml" data-fig="uc-hesap">{{uml:uc_hesap}}<figcaption><b>Şekil #.</b> Hesap, okuma ve tartışma. Okuma işlerinin hepsi giriş istemez (yönlendiricilerde <code>optional_user</code>); yazma işleri doğrulanmış yurttaş ister. Mesajın her sürümü deftere yazılır (SURUM_EKLENDI); kayıt ve giriş yazılmaz.</figcaption></figure>
+
+<figure class="uml" data-fig="uc-yonetisim">{{uml:uc_yonetisim}}<figcaption><b>Şekil #.</b> Yönetişim: öneri, itiraz, oy, havale, kapanış. Hâtif ve Zamanlayıcı insan olmayan aktörlerdir; Karar Saati'ni açıp kapatan, oyları açıp sayan Zamanlayıcı'dır.</figcaption></figure>
+
+<figure class="uml" data-fig="uc-mahzen">{{uml:uc_mahzen}}<figcaption><b>Şekil #.</b> Mahzen. İfşa oylamasını yalnızca başlıkta yazmış olanlar açar; açılırken baskın tespiti çalışır. Yeni başlık açmak kapasiteyi aşarsa en alttaki başlık silinir (UC-40).</figcaption></figure>
+
+<figure class="uml" data-fig="uc-sonuc">{{uml:uc_sonuc}}<figcaption><b>Şekil #.</b> Kararların sonuçları: takvim, etkinlik, dilekçe. Kabul edilen konu muhatabına iletilir (UC-47); kurumun yanıtını sisteme konu katılımcısı işler.</figcaption></figure>
+
+<h3>Kullanım durumu tanımları</h3>
+<p>Her tanımda ön koşul, ana akış, alternatif akışlar ve son koşul vardır. Alternatif akışlardaki tırnaklı metinler kullanıcının gördüğü ret iletileridir (<code>services/</code> ve <code>domain/rules.py</code>).</p>
+
+<table class="uc">
+<thead><tr><th style="width:17%">UC-01</th><th>Öneri aç</th></tr></thead>
+<tbody>
+<tr><td>Aktör</td><td>Yurttaş; ikincil: Hâtif, Defter</td></tr>
+<tr><td>Ön koşul</td><td>Giriş yapılmış. Önerinin seçmen kapsamında oy hakkı var (R5).</td></tr>
+<tr><td>Ana akış</td><td><ol><li>Yurttaş türü, kapsamı, alanı, başlığı ve metni girer. Konu önerisinde muhatabı, gerekiyorsa etkilediği kaynakları ve pay etkisini de girer.</li><li>Sistem taslağı türüne göre hazırlar (<code>ProposalKind.prepare</code>) ve kural zincirini R1–R9 çalıştırır.</li><li>İhlal yoksa Hâtif'in yorumu eklenir. Önerinin ilk durumu şeridine göre seçilir: hızlı şerit SessizOnay, yavaş şerit Kuyruk, kapanış RakipSüresi.</li><li>Öneri PostgreSQL'e ve grafa yazılır. ONERI_ACILDI kaydı aynı işlemde outbox'a girer ve deftere gönderilir.</li><li>Öneri sayfası açılır.</li></ol></td></tr>
+<tr><td>Alternatif</td><td>2a. Bir ya da daha çok ihlal varsa öneri açılmaz ve ihlallerin hepsi birlikte döner (HTTP 422). Örnekler: R6 "Bu hedefe yönelik bir öneri … tarihinde oylamayla reddedildi; … tarihine kadar yeniden açılamaz." R9 "Muhatap seçilmeli: konu önerisi bir yere iletilmek için açılır …"<br>2b. Bölünebilir kaynakta öneri yalnızca öneren kapsamın payına daraltılır (R2): "Bu öneri '…' için … payına daraltıldı; …". Daraltma öneri sayfasında gerekçesiyle görünür.</td></tr>
+<tr><td>Son koşul</td><td>Öneri itiraza ya da Karar Saati'ne açık; açılışı defterde mühürlü.</td></tr>
+<tr><td>Kod</td><td><code>proposals.open_proposal</code>, <code>rules.proposal_chain</code>, Şekil {{fig:sd-oneri-ac}}</td></tr>
+</tbody>
+</table>
+
+<table class="uc">
+<thead><tr><th style="width:17%">UC-02</th><th>İtiraz et</th></tr></thead>
+<tbody>
+<tr><td>Aktör</td><td>Yurttaş</td></tr>
+<tr><td>Ön koşul</td><td>Öneri SessizOnay durumunda. Öneri başkasının. İtiraz edenin seçmen kapsamında oy hakkı var.</td></tr>
+<tr><td>Ana akış</td><td><ol><li>Yurttaş itirazını onaylar.</li><li>Sistem itirazı kaydeder ve sayar. Eşik, 3 ile kapsamda son 30 günde giriş yapmış üyelerin yirmide birinden büyük olanıdır (<code>itiraz_esigi</code>).</li><li>Sayı eşiğe ulaşırsa öneri yavaş şeride düşer (ONERI_YAVAS_SERIDE); öneri sahibine bildirim gider.</li></ol></td></tr>
+<tr><td>Alternatif</td><td>"Kendi önerinize itiraz edemezsiniz." · "Bu öneriye zaten itiraz ettiniz." · "İtiraz için seçmen kapsamında oy hakkı gerekir. …" · Öneri SessizOnay'da değilse durumun kendi gerekçesi (<code>InvalidTransition</code>).</td></tr>
+<tr><td>Son koşul</td><td>İtiraz sayısı arttı. Eşik aşıldıysa öneri Kuyruk'ta ve olgunlaşma süresi bu andan işliyor.</td></tr>
+<tr><td>Kod</td><td><code>proposals.object_to</code>, Şekil {{fig:st-oneri}}</td></tr>
+</tbody>
+</table>
+
+<table class="uc">
+<thead><tr><th style="width:17%">UC-03</th><th>Karar Saati'nde oy ver</th></tr></thead>
+<tbody>
+<tr><td>Aktör</td><td>Yurttaş (Temsilci ise oyu ağırlıklıdır)</td></tr>
+<tr><td>Ön koşul</td><td>Pencere açık (varsayılan Pazar 20:00, 60 dakika). Öneri bu oturumda. Kişi açılıştaki seçmen listesinde, baskın şüphesiyle işaretli değil, oyunu havale etmemiş.</td></tr>
+<tr><td>Ana akış</td><td><ol><li>Yurttaş pusulada EVET ya da HAYIR'ı seçer; kapanış önerisinde kabul edilebilir metinleri işaretler.</li><li>Sistem seçimi oylama biçimine göre doğrular (<code>BallotMethod.normalize</code>).</li><li>Tuz üretilir ve commit = sha256(oy belgesi ‖ tuz) hesaplanır. Oy ve tuz PostgreSQL'e yazılır; deftere yalnızca commit gider (OY_MUHUR).</li><li>"Oyunuz mühürlendi" görünür. Pencere kapanınca seçim ve tuz deftere açılır (OY_ACILDI); herkes commit'i yeniden hesaplayabilir.</li></ol></td></tr>
+<tr><td>Alternatif</td><td>"Şu anda açık bir Karar Saati penceresi yok." · "Bu öneride oy hakkınız yok (seçmen listesi pencere açılırken alındı)." · "Bu alanda oyunuzu havale ettiniz (zincir … adlı yurttaşta bitiyor); oy kullanamazsınız." · "Bu oylamada baskın şüphesiyle işaretlendiniz ve dışlandınız. …" · "Bu oylamada oyunuzu zaten verdiniz; mühürlü oy değiştirilemez."</td></tr>
+<tr><td>Son koşul</td><td>Oy mühürlü. Sayımda ağırlığı 1 artı zinciri kendisinde biten seçmen sayısıdır.</td></tr>
+<tr><td>Kod</td><td><code>decision_hour.cast_vote</code>, <code>_cast</code>, Şekil {{fig:sd-oy}}</td></tr>
+</tbody>
+</table>
+
+<table class="uc">
+<thead><tr><th style="width:17%">UC-04</th><th>Havale ver, geri al, yenile</th></tr></thead>
+<tbody>
+<tr><td>Aktör</td><td>Yurttaş; ikincil: Temsilci</td></tr>
+<tr><td>Ön koşul</td><td>Karar Saati penceresi kapalı. Alıcı havale kabul ediyor.</td></tr>
+<tr><td>Ana akış</td><td><ol><li>Yurttaş alıcının takma adını ve alanı (ya da genel havaleyi) seçer.</li><li>Sistem döngü denetimini alt alanlar dahil yapar ve isteği Bekliyor durumunda kaydeder; kabul süresi 7 gündür (<code>havale_kabul_suresi</code>). Aynı alandaki bekleyen eski istek iptal olur.</li><li>Temsilci kabul edince HAVALE kenarı grafa girer, bitişi kabulden 180 gün sonradır. Aynı alandaki eski havale sona erer.</li><li>Son 14 günde uyarı şeridi görünür; yenileme süreyi baştan başlatır.</li></ol></td></tr>
+<tr><td>Alternatif</td><td>"Karar Saati penceresi açık: havale grafı bu oturum için kilitli. …" · "… havale kabul etmiyor." · "Bu havale bir döngü oluşturur." · Alıcı Hâtif ise istek beklemeden kabul edilir. Temsilci reddederse veren "reddedildi" görür; süre dolarsa istek düşer.</td></tr>
+<tr><td>Son koşul</td><td>İstek bekliyor ya da havale yürürlükte. Yürürlükteki havale bir sonraki Karar Saati'nin anlık görüntüsüne girer.</td></tr>
+<tr><td>Kod</td><td><code>delegation.request_delegation</code>, <code>accept_request</code>, <code>renew_delegation</code>, Şekil {{fig:st-havale}}</td></tr>
+</tbody>
+</table>
+
+<table class="uc">
+<thead><tr><th style="width:17%">UC-05</th><th>İfşa oylaması aç</th></tr></thead>
+<tbody>
+<tr><td>Aktör</td><td>Başlık katılımcısı; ikincil: Defter</td></tr>
+<tr><td>Ön koşul</td><td>Mahzen uyarısı onaylanmış. Kişi başlıkta yazmış. Başlık donmamış ve açık bir oylaması yok.</td></tr>
+<tr><td>Ana akış</td><td><ol><li>Katılımcı "Öneriye dönüştür" oylamasını açar.</li><li>Sistem başlıkta yazmış olanları seçmen olarak dondurur, baskın tespitini çalıştırır (UC-38) ve işaretlileri dışlar.</li><li>Seçmenler gizli oy verir ve oylarını değiştirebilir (UC-37).</li><li>EVET sayısı seçmenlerin yarısını aştığı an başlık donar ve takma adlar açılır. MAHZEN_IFSA deftere yazılır, oylamayı açana bir KONU taslağı oluşur (UC-39).</li></ol></td></tr>
+<tr><td>Alternatif</td><td>"Başlık zaten ifşa edildi." · "Bu başlıkta yazmamış biri başlık üzerinde işlem yapamaz." · "Bu başlıkta zaten açık bir oylama var." · Başlık kapasiteden düşerse oylama da onunla silinir (bilinçli açık).</td></tr>
+<tr><td>Son koşul</td><td>Oylama açık ya da başlık ifşa edilmiş, taslak öneri sahibinin önünde.</td></tr>
+<tr><td>Kod</td><td><code>cellar.open_reveal_vote</code>, <code>cast_reveal_vote</code>, <code>_reveal</code>, Şekil {{fig:sd-ifsa}}</td></tr>
+</tbody>
+</table>
+
+<table class="uc">
+<thead><tr><th style="width:17%">UC-06</th><th>Etkinlik raporu yaz</th></tr></thead>
+<tbody>
+<tr><td>Aktör</td><td>Etkinlik katılımcısı; ikincil: Defter</td></tr>
+<tr><td>Ön koşul</td><td>Etkinlik bitmiş. Kişi katılım bildirmiş ve bu etkinliğe rapor yazmamış.</td></tr>
+<tr><td>Ana akış</td><td><ol><li>Katılımcı rapor metnini, isteğe bağlı katılımcı sayısını ve en çok dört fotoğrafı (UC-45) girer.</li><li>Sistem raporu kaydeder ve ETKINLIK_RAPORU olarak deftere yazar.</li><li>Rapor etkinlik sayfasında ve ön sayfanın "Gerçekleşti" haberinde görünür.</li></ol></td></tr>
+<tr><td>Alternatif</td><td>"Rapor etkinlik bittikten sonra yazılır (…)." · "Raporu etkinliğe katılacağını bildirenler yazar." · "Bu etkinliğe zaten bir rapor yazdınız." · "Rapor en az 10 karakter olmalı." · "Katılımcı sayısı 0 ile 100.000 arasında olmalı."</td></tr>
+<tr><td>Son koşul</td><td>Rapor ve fotoğraflar etkinliğe bağlı; defterde mühürlü.</td></tr>
+<tr><td>Kod</td><td><code>calendar.add_report</code>, <code>report_refusal</code>, Şekil {{fig:st-etkinlik}}</td></tr>
+</tbody>
+</table>
+
+<table class="uc">
+<thead><tr><th style="width:17%">UC-07</th><th>Kurum yanıtını işle</th></tr></thead>
+<tbody>
+<tr><td>Aktör</td><td>Konu katılımcısı; ikincil: Defter</td></tr>
+<tr><td>Ön koşul</td><td>Dilekçe iletilmiş. Kurum dilekçenin alıcıları arasında ve yanıtı daha önce işlenmemiş.</td></tr>
+<tr><td>Ana akış</td><td><ol><li>Katılımcı kurumu seçer; yanıt metnini, tarihini, varsa evrak sayısını ve taranmış belgeyi (UC-46) girer.</li><li>Sistem tarihi denetler ve DILEKCE_YANITI kaydını deftere yazar.</li><li>Dilekçe sayfasında o alıcı "yanıtlandı" olur. Konunun yazarına, tartışmasında yazanlara ve önerinin sahibine bildirim gider (yanıtı işleyen hariç).</li></ol></td></tr>
+<tr><td>Alternatif</td><td>"Kurumun yanıtını yalnızca konunun katılımcıları işleyebilir." · "Bu kurum dilekçenin alıcıları arasında değil." · "… yanıtı zaten işlendi." · "Yanıtın tarihi dilekçenin iletildiği günden önce olamaz." · "Yanıtın tarihi bugünden sonra olamaz."</td></tr>
+<tr><td>Son koşul</td><td>Yanıt dilekçeye bağlı. Defter yanıtı kimin işlediğini kaydeder, yanıtın gerçekliğini doğrulamaz (bilinçli açık).</td></tr>
+<tr><td>Kod</td><td><code>petitions.add_reply</code>, <code>reply_refusal</code>, Şekil {{fig:st-etkinlik}}</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="modeller">
+<h2><span class="no">#</span>Alan modeli ve veri akışı</h2>
+<p class="lead">Alan modeli sistemin kavramlarını ve aralarındaki ilişkileri koddan bağımsız, Türkçe adlarla gösterir. Kodla birebir eşleşen sınıflar ve tablolar ikinci bölümdedir (§{{ref:sinif}}, §{{ref:veri}}). Nesne diyagramı tohumdaki bir havale zincirini somutlaştırır. Veri akış diyagramları verinin dış dünyadan hangi süreçlere ve depolara gittiğini gösterir.</p>
+
+<figure class="uml" data-fig="dm-kimlik">{{uml:dm_kimlik}}<figcaption><b>Şekil #.</b> Alan modeli: yurttaş, kapsam, kaynak ve havale. Üyelik bir ilişki sınıfıdır: yurttaşın bir kapsama ne zaman ve neden (kayıt, adres, yaş, katılım) girdiğini taşır. Kaynağın sahibi bir kapsamdır; R2 kararı yalnızca sahip kapsama ya da alt kümelerine bırakır.</figcaption></figure>
+
+<figure class="uml" data-fig="dm-oneri">{{uml:dm_oneri}}<figcaption><b>Şekil #.</b> Alan modeli: öneri, tartışma, karar ve oylama. Konu, onu kabul eden önerinin seçmen kapsamına aittir. Karar, kapanış önerisinde en çok onay alan metindir; kaybeden metnin sahipleri ve onaylayanları Şerh yazabilir. Oylama, bir önerinin bir oturumdaki anlık görüntüsüdür; pusula oturumla birlikte yaşar.</figcaption></figure>
+
+<figure class="uml" data-fig="od-havale">{{uml:od_havale}}<figcaption><b>Şekil #.</b> Nesne diyagramı: Karar Saati #1'de №9 (Gece metro seferleri) için havale zinciri. aylin'in genel havalesi baris'e, baris'in Ulaşım havalesi ceren'e gider; ceren'in oyu 3 ağırlık taşır (<code>test_seed</code>). Reddedilen ve bekleyen istekler grafa girmez.</figcaption></figure>
+
+<p>Veri akış diyagramları Gane–Sarson gösterimindedir: yuvarlak köşeli kutu süreç, gölgeli kutu dış varlık, sağı açık dikdörtgen veri deposudur. Bağlam diyagramında sistem tek bir süreçtir; birinci düzey onu yedi sürece ayırır. İki düzeyin dış akışları denktir: bağlamdaki her akış birinci düzeyde bir sürece bağlanır.</p>
+
+<figure class="uml" data-fig="dfd-baglam">{{uml:dfd_baglam}}<figcaption><b>Şekil #.</b> Veri akış diyagramı, bağlam (düzey 0). Sistemin dışarıya giden tek resmî çıktıları dilekçe ve <code>.ics</code> takvimidir; e-posta doğrulama kodu bu sürümde konsola yazılır.</figcaption></figure>
+
+<figure class="uml" data-fig="dfd-duzey1">{{uml:dfd_duzey1}}<figcaption><b>Şekil #.</b> Veri akış diyagramı, düzey 1. D1, D3, D4, D5 ve D6 PostgreSQL'deki tablo gruplarıdır, D2 Neo4j grafı, D7 defter düğümlerindeki SQLite dosyalarıdır. Süreçler deftere doğrudan yazmaz: kayıtlar önce outbox'a (D6) girer, 7.0 onları sırayla gönderir.</figcaption></figure>
+</section>
