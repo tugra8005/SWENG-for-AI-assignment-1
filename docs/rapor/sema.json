@@ -69,9 +69,6 @@
    "unique": [
     [
      "scheduled_for"
-    ],
-    [
-     "scheduled_for"
     ]
    ]
   },
@@ -405,13 +402,7 @@
      "nickname"
     ],
     [
-     "nickname"
-    ],
-    [
      "nickname_key"
-    ],
-    [
-     "email"
     ]
    ]
   },
@@ -1222,9 +1213,6 @@
     }
    ],
    "unique": [
-    [
-     "topic_id"
-    ],
     [
      "topic_id"
     ]

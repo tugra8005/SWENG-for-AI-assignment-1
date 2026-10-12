@@ -30,12 +30,12 @@
 </tbody>
 </table>
 
-<figure class="uml" data-fig="pf-desen">{{uml:pf_desen}}<figcaption><b>Şekil #.</b> Profil diyagramı. Sınıf diyagramlarındaki «Strategy», «Repository» gibi klişelerin tanımı: her biri UML'nin Class üst sınıfını genişletir (dolu üçgen). Örnek sınıfların kodda var olduğu rapor üretilirken denetlenir. Desenlerin gerekçesi §{{ref:desen}}'dedir.</figcaption></figure>
+<figure class="uml" data-fig="pf-desen">{{uml:pf_desen}}<figcaption><b>Şekil #.</b> Profil diyagramı. Sınıf diyagramlarındaki «Strategy», «Repository» gibi klişelerin tanımı: her biri UML'nin Class üst sınıfını genişletir (dolu üçgen). Örnek sınıfların kodda var olduğu rapor üretilirken denetlenir. Desenlerin gerekçeleri tasarım desenleri bölümündedir (§{{ref:desen}}).</figcaption></figure>
 </section>
 
 <section id="sinif" class="newpage">
 <h2><span class="no">#</span>Sınıf diyagramları</h2>
-<p class="lead">Sınıf diyagramları §{{ref:desen}}'de anlatılan desenlerin koddaki biçimini gösterir. Her diyagram bir deseni ya da birbirine bağlı birkaç sınıfı kapsar; bütün sınıfları tek diyagrama koymak okunmaz bir ağ verirdi. İşlem adları ve imzalar kodla aynıdır (İngilizce); açıklamalar Türkçedir. <code>{abstract}</code> soyut işlem, eğik ad soyut sınıftır.</p>
+<p class="lead">Sınıf diyagramları tasarım desenleri bölümünde (§{{ref:desen}}) anlatılan desenlerin koddaki biçimini gösterir. Her diyagram bir deseni ya da birbirine bağlı birkaç sınıfı kapsar; bütün sınıfları tek diyagrama koymak okunmaz bir ağ verirdi. İşlem adları ve imzalar kodla aynıdır (İngilizce); açıklamalar Türkçedir. <code>{abstract}</code> soyut işlem, eğik ad soyut sınıftır.</p>
 
 <figure class="uml" data-fig="cd-oneri">{{uml:cd_oneri}}<figcaption><b>Şekil #.</b> Öneri türleri. <code>proposals</code> modülü dış dünyaya tek yüzdür (Facade); türler <code>KINDS</code> kaydında (Registry) durur ve her biri <code>ProposalKind</code>'ın bir stratejisidir. Yedi somut tür vardır; konu ve alt konu ortak kodu <code>_NewTopic</code>'te paylaşır.</figcaption></figure>
 
@@ -92,7 +92,7 @@
 
 <section id="mimari" class="newpage">
 <h2><span class="no">#</span>Bileşen, paket ve dağıtım diyagramları</h2>
-<p class="lead">Mimari diyagramlar sistemi dört düzeyde gösterir: bileşenler ve aralarındaki arayüzler, API sürecinin iç parçaları, Python paketleri arasındaki bağımlılıklar ve yığının makinelere, kapsayıcılara dağılımı. Katmanların sözlü anlatımı §{{ref:sistem}} ve §{{ref:teknik}}'tedir.</p>
+<p class="lead">Mimari diyagramlar sistemi dört düzeyde gösterir: bileşenler ve aralarındaki arayüzler, API sürecinin iç parçaları, Python paketleri arasındaki bağımlılıklar ve yığının makinelere, kapsayıcılara dağılımı. Katmanların sözlü anlatımı sistem ve teknik bölümlerindedir (§{{ref:sistem}}, §{{ref:teknik}}).</p>
 
 <figure class="uml" data-fig="cmp-sistem">{{uml:cmp_sistem}}<figcaption><b>Şekil #.</b> Bileşen diyagramı. İstemci API'ye yalnızca HTTP/JSON ile bağlanır. API defteri HTTP ile, PostgreSQL'i SQL ile, Neo4j'yi Bolt ile kullanır. <code>domain</code> saf mantıktır, hiçbir dış sisteme bağlı değildir.</figcaption></figure>
 

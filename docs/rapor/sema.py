@@ -47,10 +47,11 @@ def tables() -> dict:
                 "null": bool(c.nullable) and not c.primary_key,
                 "fk": [f"{f.column.table.name}.{f.column.name}" for f in c.foreign_keys],
             })
-        uniq = [[col.name for col in con.columns] for con in t.constraints
-                if con.__class__.__name__ == "UniqueConstraint"]
-        uniq += [[c.name] for c in t.columns if c.unique]
-        out[t.name] = {"columns": cols, "unique": uniq}
+        uniq = {tuple(col.name for col in con.columns) for con in t.constraints
+                if con.__class__.__name__ == "UniqueConstraint"}
+        uniq |= {(c.name,) for c in t.columns if c.unique}
+        # Kısıtlar kümeden gelir; sıralanmazsa dosya her üretimde değişir.
+        out[t.name] = {"columns": cols, "unique": [list(u) for u in sorted(uniq)]}
     return out
 
 

@@ -23,6 +23,7 @@
   <li><code>evaluation/</code>: baskın tespitinin değerlendirme düzeneği (§{{ref:baskin}}); üretim kodunu çağırır, üretim onu çağırmaz.</li>
 </ul>
 <p><code>OntologyView</code> protokolünün bir bellek içi, bir de Neo4j uygulaması vardır. İkisi aynı sözleşme testlerinden geçer. Böylece kurallar Docker olmadan test edilir, Cypher sorguları da aynı beklentilere karşı doğrulanır.</p>
+<p>Katmanlar arasındaki içe aktarmalar paket diyagramındadır (Şekil {{fig:pkg-bagimlilik}}); API sürecinin parçaları ve dış kapıları bileşik yapı diyagramındadır (Şekil {{fig:cs-api}}).</p>
 
 <h3>Depolar arasında tutarlılık</h3>
 <ul>
@@ -32,6 +33,7 @@
   <li>Gönderim topludur: bekleyen kayıtlar sırayla, 200'lük parçalar hâlinde lidere tek istekte gider (<code>/append-batch</code>). Lider parçayı zincire bağlayıp tek SQLite işleminde yazar ve takipçilere tek istekte çoğaltır (<code>/replicate-batch</code>). Zaman damgası azalırsa parçanın hiçbir kaydı eklenmez. Kayıt başına ayrı istek, 250 oyluk bir Karar Saati açılışını 15 sn sürdürüyordu; toplu gönderimle 2,7 sn sürüyor. Zincir, kayıtları tek tek eklemekle aynıdır (<code>ledger/tests/test_replication.py</code>).</li>
   <li>Neo4j yazımı PostgreSQL commit'inden sonra başarısız olursa iki depo ayrışabilir. Ödev ölçeğinde bu kabul edilmiştir. <code>meşveret-dev seed --reset</code> her şeyi yeniden kurar.</li>
 </ul>
+<p>Yazım ve çoğaltmanın sırası sıralama diyagramındadır (Şekil {{fig:sd-defter}}).</p>
 
 <h3>Veri yerleşimi</h3>
 <table>
@@ -84,6 +86,7 @@
 <tr><td class="k">(Konu)-[:ALANINDA]-&gt;(Alan), (Konu)-[:ALT_KONUSU]-&gt;(Konu)</td><td>Konu yerleşimi</td></tr>
 </tbody>
 </table>
+<p>Etiketler, ilişkiler ve kısıtlar graf şemasında bir aradadır (Şekil {{fig:gs-neo4j}}).</p>
 <h3>Kapsam türleri</h3>
 <ul>
   <li><b>GENEL:</b> e-postası doğrulanmış herkes. Oy hakkı hemen doğar.</li>
@@ -94,6 +97,7 @@
 
 <h3>PostgreSQL tabloları ({{v:teknik.tablo_sayisi}})</h3>
 {{t:teknik_tablolar}}
+<p>Tabloların sütunları, anahtarları ve ilişkileri varlık–ilişki diyagramlarındadır (Şekil {{fig:er-kimlik}}–{{fig:er-mahzen}}).</p>
 
 <h3>HTTP arayüzü ({{v:teknik.uc_nokta}} uç nokta)</h3>
 <p>Kimlik doğrulama JWT ile taşınır (<code>Authorization: Bearer</code>). <code>/_dev</code> ile başlayanlar yalnızca geliştirme ortamında (<code>ENV=dev</code>) eklenir; üretim yapılandırmasında yönlendiricileri hiç yoktur.</p>
@@ -121,6 +125,7 @@
   <li><b>Tekrarlanabilirlik:</b> tohum kullanıcılarının kimliği takma addan türetilir (<code>uuid5</code>); geliştirme ortamında oy tuzu sunucu anahtarından HMAC ile türetilir (üretimde rastgeledir); saat demo boyunca durur. Demo iki çalıştırmada ekranda aynı sayıları ve aynı defter zincirini üretir (<code>scripts/demo-kaydi.mjs</code> karşılaştırır).</li>
   <li><b>Tohum:</b> geçmiş tarihli içeriği bir zaman çizelgesine yazar ve zaman sırasıyla oluşturur; defter kayıtlarının zaman damgaları içeriğin zamanıyla aynı olur. Senaryolardaki yüzdeler bir geliştirme oy planına dayanır; <code>test_seed.py</code> sonuçları doğrular.</li>
 </ul>
+<p>İşlerin sınıfları sınıf diyagramında (Şekil {{fig:cd-isler}}), bir haftanın zaman çizelgesi zamanlama diyagramındadır (Şekil {{fig:tm-hafta}}).</p>
 
 <h3>İstemci</h3>
 <ul>

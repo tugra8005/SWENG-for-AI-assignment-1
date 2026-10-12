@@ -32,6 +32,7 @@
 <tr><td><b>İlgi</b></td><td>Bir alana katılma</td><td>Kişi katılır ya da ayrılır</td><td>14 gün sonra</td><td>Sinema, Felsefe, Bisiklet …</td></tr>
 </tbody>
 </table>
+<p>Kapsam, kaynak ve üyelik kavramları alan modelindedir (Şekil {{fig:dm-kimlik}}); graftaki karşılıkları graf şemasındadır (Şekil {{fig:gs-neo4j}}).</p>
 <svg viewBox="0 0 760 150" role="img" aria-label="Kapsamların alt küme ilişkisi">
   <g fill="none" stroke="#1B1A17" stroke-width="1.1">
     <rect x="300" y="8" width="160" height="34" rx="4" fill="#F4EFE4"/>
@@ -130,6 +131,7 @@
   <text x="383" y="110" font-size="9.5" fill="#6B6558">itiraz eşiği aşılırsa</text>
   <text x="560" y="34" font-size="9.5" fill="#6B6558">itiraz yetmezse</text>
 </svg>
+<p>Önerinin bütün durumları ve geçişleri durum diyagramında (Şekil {{fig:st-oneri}}), dört kulvarlı akış etkinlik diyagramında (Şekil {{fig:ac-oneri}}), bir haftanın zaman çizelgesi zamanlama diyagramındadır (Şekil {{fig:tm-hafta}}).</p>
 <table>
 <thead><tr><th>Öneri türü</th><th>Ne yapar</th><th>Şerit</th><th>Eşik (Karar Saati'nde)</th></tr></thead>
 <tbody>
@@ -210,6 +212,7 @@
   <li><b>Açık temsilci oyu:</b> ağırlığı 1'den büyük olan (başkalarının oyunu taşıyan) kişinin oyu açıktır; seçmenler temsilcilerinin ne oy verdiğini görür.</li>
   <li><b>Müşavir:</b> bir alanda en az 5 doğrudan havale alan kişi bu etiketi taşır. Etiket görünürlüktür, rütbe değildir. Ödevin "herkes eşit, bazıları daha eşit" ifadesi havale ağırlığıyla karşılanır.</li>
 </ul>
+<p>Havale isteğinin durumları durum diyagramında (Şekil {{fig:st-havale}}), tohumdaki bir zincirin oylamadaki ağırlığı nesne diyagramındadır (Şekil {{fig:od-havale}}).</p>
 </section>
 
 <section id="silme">
@@ -256,6 +259,7 @@
   <li><b>Rıza:</b> ilk yazışta bu sonuç açıkça yazılır; onaylanmadan mesaj kabul edilmez.</li>
 </ul>
 <p>Anonim konuşma serbesttir, ama karar kimliksiz alınmaz. İfşa oylamasının kendisi bir çoğunluk tiranlığıdır; bunu bilinçli açık olarak yazdık (§{{ref:aciklar}}).</p>
+<p>Başlığın durumları durum diyagramında (Şekil {{fig:st-mahzen}}), ifşanın adımları sıralama diyagramındadır (Şekil {{fig:sd-ifsa}}).</p>
 </div>
 <figure data-fig="mahzen">
 <img src="gorseller/mahzen.png" alt="Mahzen başlığı ve ifşa oylaması">
@@ -268,6 +272,7 @@
 <h2><span class="no">#</span>Kararların sonucu: muhatap, dilekçe, takvim, gazete</h2>
 <p class="lead">Her konu önerisi bir yere iletilmek için açılır: Meşveret Takvimi'ne ya da bir kuruma. Kurum muhataplı konu kabul edilince kuruma dilekçe gider; takvime giden konu kabul edilince etkinlik takvime yazılır. Meydan'ın ön sayfası bu sonuçları bir gazete gibi yayımlar.</p>
 <p>Bu bölüm, sistemin ilk sürümündeki bir eksikten doğdu: kabul edilen kararlar yalnızca forumu değiştiriyordu (konu açılıyor, metin değişiyor, kural değişiyordu) ve dünyada bir karşılığı yoktu. Artık her kararın bir alıcısı ve izlenebilir bir sonucu vardır.</p>
+<p>Bu bölümün kullanım durumları kullanım durumu diyagramında (Şekil {{fig:uc-sonuc}}), etkinliğin ve dilekçe alıcısının durumları durum diyagramındadır (Şekil {{fig:st-etkinlik}}). Kabulün takvime nasıl ulaştığı iletişim diyagramındadır (Şekil {{fig:com-sessiz}}).</p>
 <h3>Muhatap ve dilekçe</h3>
 <ul>
   <li><b>Muhataplar:</b> Meşveret Takvimi; üye şehirlerin belediyeleri (30 büyükşehir için "Büyükşehir Belediyesi", diğerleri için "Belediyesi"), bütün belediyeler birden; Ulaştırma ve Altyapı, Kültür ve Turizm, Çevre, Şehircilik ve İklim Değişikliği bakanlıkları. Yönetmelik, silme ve düzenleme önerileri Meşveret'in iç düzenine gider.</li>
@@ -356,6 +361,7 @@
 <p>Her kayıt bir öncekinin özetine bağlıdır: hash = sha256(önceki_hash ‖ içerik_hash ‖ zaman ‖ tür). Üç düğüm ayrı SQLite dosyalarında tutulur; güncelleme ve silme tetikleyicilerle engellenir. Lider kayıtları takipçilere çoğaltır, geride kalan takipçi yetişir. <code>/verify</code> her düğümün zincirini baştan hesaplar ve düğümleri karşılaştırır: tutarlı, geride, tutarsız ya da bütünlüğü bozuk. Lider erişilemezse kayıtlar API'de bekler ve sırayla gönderilir.</p>
 <h3>Gizli oy (commit-reveal)</h3>
 <p>Oy anında deftere seçimin kendisi değil, seçim ve gizli bir tuzdan üretilen mühür yazılır. Pencere kapanınca seçim ve tuz açılır; herkes mührü yeniden hesaplayıp doğrulayabilir. Seçmenin oyu oturuma özel bir takma kimlikle yazılır.</p>
+<p>Oyun mühürlenmesi ve açılıp sayılması sıralama diyagramlarındadır (Şekil {{fig:sd-oy}}, {{fig:sd-kapanis}}).</p>
 <h3>Oylamasız değişiklik tespiti</h3>
 <p>Yönetmeliğin tam hâli her Karar Saati sonunda özetiyle deftere yazılır. Açılışta ve kapanışta çalışan değerler bu kayıtla karşılaştırılır; veritabanına doğrudan yapılmış bir değişiklik bulunursa deftere yazılır ve son oylanmış hâle geri alınır.</p>
 </div>
@@ -366,6 +372,7 @@
 </div>
 <h3>Baskın tespiti</h3>
 <p>Kullanıcılar arasındaki etkileşimler (yanıt, havale, aynı dakikalarda kayıt, ortak başlık) graftaki ETKİLEŞİM kenarlarına ağırlık olarak işlenir. Karar Saati açılırken son 7 günde katılmış hesaplar arasında, katılım anları 24 saat içinde toplanan, en az 4 kişilik ve kenar yoğunluğu en az 1/2 olan kümeler işaretlenir. İşaretlenen hesaplar oylamanın paydasından çıkar; gerekçe kendilerine ve sonuç ekranında sayı olarak gösterilir, içerikleri silinmez. Kuralın ölçümü, temel çizgilerle karşılaştırması ve sınırları için bkz. §{{ref:baskin}}.</p>
+<p>Tespitin adımları etkinlik diyagramındadır (Şekil {{fig:ac-karar-saati}}).</p>
 <h3>Hesap güvenliği</h3>
 <p>Şifreler argon2 ile saklanır, oturum JWT ile taşınır. 18 yaş altı kayıt reddedilir. Profilde ad, adres ve doğum tarihi yalnızca sahibine görünür; başkaları takma adı, rolleri ve havale sayısını görür. E-posta doğrulama kodu bu sürümde gerçek e-postayla değil, sunucu günlüğüne yazılarak verilir.</p>
 </section>

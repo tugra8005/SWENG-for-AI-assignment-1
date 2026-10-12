@@ -68,6 +68,7 @@
 <tr><td>Baskıncılar (karşıt paydaş)</td><td>Bir oylamayı ele geçirmek</td><td>Herkes</td><td>Baskın tespiti, bekleme süreleri</td></tr>
 </tbody>
 </table>
+<p>Paydaşların sistemdeki karşılığı aktörlerdir. Aktörler ve yaptıkları işler kullanım durumu diyagramlarındadır (§{{ref:kullanim}}).</p>
 <table>
 <thead><tr><th style="width:20%">Kısıt</th><th>Değer</th><th style="width:40%">Seçime etkisi</th></tr></thead>
 <tbody>
@@ -152,6 +153,7 @@
 <h2><span class="no">#</span>Baskın tespiti: ölçüm</h2>
 <p class="lead">Baskın tespiti sistemde veriden karar üreten tek bileşendir: Karar Saati açılırken yeni katılmış ve birbirine yoğun bağlı hesap kümelerini oylamanın paydasından çıkarır. Bileşeni ders notundaki yöntemle ölçtük: temel çizgi merdiveni, karışıklık matrisi, kesinlik ve duyarlılık, hata maliyeti ve eşik seçimi.</p>
 <p>Bu, baskın tespitinin ikinci döngüsüdür. İlk döngü CRISP-DM'in altı aşamasıyla tohum verisinde yapıldı (§{{ref:crisp}}); orada tohumda baskıncı olmayan yeni üye bulunmadığı için yanlış işaret oranı ölçülemedi. Bu döngüde etiketli bir benzetim kuruldu ve bileşen temel çizgilere karşı ölçüldü.</p>
+<p>Tespitin adımları etkinlik diyagramında (Şekil {{fig:ac-karar-saati}}), ölçümü yapan değerlendirme düzeneğinin sınıfları sınıf diyagramındadır (Şekil {{fig:cd-degerlendirme}}).</p>
 <h3>Veri: etiketli benzetim</h3>
 <p>Gerçek veride baskın nadirdir ve etiketsizdir. Ölçüm, üretimdeki ETKİLEŞİM sinyallerini (yakın kayıt, yanıt, ortak başlık) aynı ağırlıklarla üreten bir benzetimle yapıldı. Her senaryo bir Karar Saati anlık görüntüsüdür: eski üyeler, tek tük yeni gelenler, aynı öğleden sonra kaydolup birbirine yazan gerçek bir grup (sınıf), bir duyurudan sonra iki güne yayılan katılım ve senaryoların yaklaşık yarısında beş biçimden birinde bir baskın. Biçimler: hızlı (dakikalar arayla kayıt ve yanıt; tohumdaki biçim), sabırlı (günlere yayılmış), sessiz (etkileşimsiz), bölünmüş (iki küçük küme), kamufle (eski üyelere de yazan). Eğitim ve sınama ayrımı senaryo adının özetiyle yapıldı; sınama kümesi bir kez yazılıp sabitlendi.</p>
 {{t:veri}}
