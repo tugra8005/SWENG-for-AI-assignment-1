@@ -58,7 +58,7 @@
 <p>Sinyaller niyetin değil davranışın vekilidir: yanıt bir tartışmayla bir ittifakı ayırmaz, yakın kayıt birlikte kaydolan gerçek öğrencileri de bağlar. Etiket yalnızca tohumda bilinir (<code>seed.RAIDERS</code>, {{v:crispx.baskinci}} hesap). Tohumda son 7 günde katılan ve baskıncı olmayan üye yoktur; yanlış işaret sorusu yapay senaryolarla sınandı.</p>
 
 <h3>3. Veri hazırlama</h3>
-<p>Karar Saati açılışının anlık görüntüsünde üç adım uygulanır: aday seçimi (son 7 günde katılanlar; köklü üyeler baştan dışarıda kalır), yön birleştirme (A→B ve B→A ağırlıkları tek yönsüz kenarda toplanır) ve kenar eşiği (toplam ağırlık en az 1; tek bir ortak başlık iki kişiyi bağlamaz). Her kümenin büyüklüğü, yoğunluğu ve katılım yayılımı hesaplanır.</p>
+<p>Karar Saati açılışının anlık görüntüsünde üç adım uygulanır: aday seçimi (son 7 günde katılanlar; köklü üyeler baştan dışarıda kalır), yön birleştirme (A→B ve B→A ağırlıkları tek yönsüz kenarda toplanır) ve kenar eşiği (toplam ağırlık en az 1; tek bir ortak başlık iki kişiyi bağlamaz). Yön birleştirme sayesinde karşılıklı etkileşim tek yönlüden ağır basar. Her kümenin üç özniteliği hesaplanır: büyüklük (hesap sayısı), yoğunluk (içerideki kenar / olası kenar) ve katılım yayılımı (en erken ile en geç katılım arasındaki süre).</p>
 
 <h3>4. Modelleme</h3>
 <p>Model kural tabanlıdır: aday grafının bağlı bileşenlerinden üç eşiği birlikte geçenler işaretlenir.</p>
@@ -102,6 +102,6 @@
 </table>
 
 <h3>6. Yayılım</h3>
-<p>Tespit her Karar Saati açılışında ve Mahzen'in ifşa oylamasında çalışır. İşaretlenen hesaplar yalnızca o oylamada paydadan çıkar, onlara verilen havaleler çekimser sayılır, içerikleri silinmez. Kişi gerekçeyi kendi sayfasında görür; sonuç ekranında ve defterde (OYLAMA_SONUCU) yalnızca sayı durur. Beş eşik yönetmelik maddesidir; model güncellemesi bir oylamadır. Tespitin birim testleri ve tohum senaryosu sürekli çalışır.</p>
+<p>Tespit her Karar Saati açılışında ve Mahzen'in ifşa oylamasında çalışır. İşaretlenen hesaplar yalnızca o oylamada paydadan çıkar, onlara verilen havaleler çekimser sayılır, içerikleri silinmez. Kişi gerekçeyi kendi sayfasında görür; sonuç ekranında ve defterde (OYLAMA_SONUCU) yalnızca sayı durur. Beş eşik yönetmelik maddesidir; model güncellemesi bir oylamadır. Her oturumda işaretlenen hesap sayısı deftere yazılır (OTURUM_ACILDI); ani bir artış ya da hiç işaret olmaması oradan izlenebilir. Tespitin birim testleri ve tohum senaryosu sürekli çalışır.</p>
 <p><b>Bir sonraki döngü için öneriler</b> (uygulanmadı): itiraz yoluyla etiket toplamak; sabırlı baskın için açık temsilci oylarında aynı yönde birikimi izlemek; sessiz baskın için ilk oyların zamanını ayrı bir sinyal yapmak. Gerçek grupları ayırmak kimlik doğrulaması olmadan mümkün değildir (§{{ref:aciklar}}). İkinci döngü bu raporda yapıldı (§{{ref:baskin}}).</p>
 </section>
