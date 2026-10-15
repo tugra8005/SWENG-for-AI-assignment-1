@@ -467,7 +467,8 @@ def defer_figures(body: str) -> str:
         moved: list[str] = []
         for sid in group:
             sec = section(sid)
-            figs = re.findall(r'<figure class="uml (?:turn|page)".*?</figure>', sec, flags=re.S)
+            # Sütuna sığan diyagram da taşınır; yoksa numara sırası bozulur.
+            figs = re.findall(r'<figure class="uml(?: turn| page)?".*?</figure>', sec, flags=re.S)
             new = sec
             for f in figs:
                 new = new.replace(f, "", 1)
