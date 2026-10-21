@@ -20,7 +20,7 @@
   <li><code>db/</code>: SQLAlchemy 2 modelleri.</li>
   <li><code>services/</code>: iş akışları; domain fonksiyonlarını veri katmanlarıyla birleştirir.</li>
   <li><code>routers/</code>: HTTP uç noktaları.</li>
-  <li><code>evaluation/</code>: baskın tespitinin değerlendirme düzeneği (§{{ref:baskin}}); üretim kodunu çağırır, üretim onu çağırmaz.</li>
+  <li><code>evaluation/</code>: baskın tespitinin değerlendirme düzeneği (§{{ref:baskin}}); üretim kodunu çağırır, üretim onu çağırmaz. Sonuçlar konsola, JSON dosyasına ve MLflow'a yazılır; MLflow yalnızca geliştirme bağımlılığıdır, API imajında yoktur.</li>
 </ul>
 <p><code>OntologyView</code> protokolünün bir bellek içi, bir de Neo4j uygulaması vardır. İkisi aynı sözleşme testlerinden geçer. Böylece kurallar Docker olmadan test edilir, Cypher sorguları da aynı beklentilere karşı doğrulanır.</p>
 <p>Katmanlar arasındaki içe aktarmalar paket diyagramındadır (Şekil {{fig:pkg-bagimlilik}}); API sürecinin parçaları ve dış kapıları bileşik yapı diyagramındadır (Şekil {{fig:cs-api}}).</p>

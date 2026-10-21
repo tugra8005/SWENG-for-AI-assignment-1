@@ -355,10 +355,16 @@ Pencere açıkken süresi dolan havale o oturum için geçerli kalır: oturum se
 
 ## Değerlendirme düzeneği: baskın tespiti
 
-Baskın tespitinin temel çizgilerle karşılaştırılması (rastgele, hiç kimse, yeni üye kuralı, üretimdeki küme kuralı, öğrenilen karar ağacı). Tespitçiler ve maliyetler [docs/degerlendirme/config.yaml](docs/degerlendirme/config.yaml) dosyasından seçilir; sınama kümesi `sinama_kumesi.json`'da sabittir; sonuçlar konsola ve `sonuclar.json`'a yazılır.
+Baskın tespitinin temel çizgilerle karşılaştırılması (rastgele, hiç kimse, yeni üye kuralı, üretimdeki küme kuralı, öğrenilen karar ağacı). Tespitçiler ve maliyetler [docs/degerlendirme/config.yaml](docs/degerlendirme/config.yaml) dosyasından seçilir; sınama kümesi `sinama_kumesi.json`'da sabittir; sonuçlar konsola, `sonuclar.json`'a ve MLflow'a yazılır (yerel SQLite deposu `docs/degerlendirme/mlflow.db`; MLflow `dev` grubundadır, API imajında yoktur).
 
 ```bash
 cd api && uv run python -m mesveret.evaluation ../docs/degerlendirme/config.yaml
+```
+
+MLflow arayüzü (her tespitçi bir alt koşu; metrikler yan yana):
+
+```bash
+cd api && uv run mlflow ui --backend-store-uri sqlite:///../docs/degerlendirme/mlflow.db
 ```
 
 Kod `api/src/mesveret/evaluation/`; sonuçların yorumu raporun "Baskın tespiti: ölçüm" bölümündedir.

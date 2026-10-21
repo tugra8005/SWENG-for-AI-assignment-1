@@ -499,9 +499,15 @@ def cd_degerlendirme() -> uml.Diagram:
                                                           "+ on_finish()"], stereo="Observer")
     edge(c, [ev.p("b", 0.5), ob.p("t", 0.5)], head="open", tail="odiamond", label="0..*",
          lpos=(ev.cx + 6, ev.b + 28), lanchor="start")
-    obs = [cls(c, 270, ob.b + 34, "ConsoleReporter", [], [], size=10)]
-    obs.append(cls(c, obs[0].r + 10, ob.b + 34, "JsonReporter", [], [], size=10))
-    tree(c, ob, obs)
+    obs = []
+    y = ob.b + 26
+    for n, a in [("ConsoleReporter", "konsol tablosu"), ("JsonReporter", "sonuclar.json"),
+                 ("MlflowReporter", "MLflow: üst koşu + tespitçi başına alt koşu")]:
+        _k(n)
+        b = cls(c, ob.x + 26, y, n, [a], [], size=10, mkind="serif")
+        obs.append(b)
+        y = b.b + 10
+    _spine(c, ob, obs, ob.x + 12)
     sc = cls(c, 0, reps[-1].b + 44, "Scenario", ["name, at, joined,", "interactions, raiders, groups"],
              ["+ newcomers(pencere)"], stereo="dataclass")
     edge(c, [(reps[-1].cx, reps[-1].b), (reps[-1].cx, sc.y)], head="open", dash=True,

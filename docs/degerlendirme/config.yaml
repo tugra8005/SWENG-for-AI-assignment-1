@@ -26,3 +26,11 @@ tespitciler:
     ad: karar_agaci
 
 cikti: sonuclar.json
+
+# Deney izleme (Observer): sonuçlar konsola, JSON dosyasına ve MLflow'a yazılır. Depo yereldir
+# (SQLite; göreli yollar bu dosyanın klasörüne göre), sunucu gerekmez. Arayüz:
+#   cd api && uv run mlflow ui --backend-store-uri sqlite:///../docs/degerlendirme/mlflow.db
+mlflow:
+  izleme: sqlite:///mlflow.db
+  deney: baskin-tespiti
+  ekler: mlartifacts

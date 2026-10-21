@@ -610,6 +610,7 @@ CROPS_A5: dict[str, list[tuple[int, int, int, int, int]]] = {
     "gazete.png": [(95, 225, 960, 720, 100), (1000, 225, 1345, 800, 55)],
     "defter.png": [(0, 0, 640, 800, 75)],
     "denetim-ifsa-kareleri.png": [(0, 0, 2180, 910, 100)],
+    "mlflow.png": [(0, 0, 1698, 520, 100)],
 }
 
 

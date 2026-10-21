@@ -99,9 +99,13 @@ class ClosureKind(ProposalKind):
 <tr><td>1</td><td>Model seçimi YAML'dan (Registry + Factory)</td><td><code>docs/degerlendirme/config.yaml</code>; tespitçiler <code>@DETECTORS.register</code> ile kaydolur, <code>DETECTORS.create(ad, **parametreler)</code> ile üretilir</td></tr>
 <tr><td>2</td><td>Ön işleme ve model tek nesnede (Pipeline)</td><td>Karar ağacı öznitelik çıkarımını kendi içinde yapar: eğitimde ve tahminde aynı kod. Küme tespitçisi üretimdeki fonksiyonun kendisini çağırır; eğitim–sunum farkı yoktur</td></tr>
 <tr><td>3</td><td>Veri kaynağı CSV ya da PostgreSQL (Repository)</td><td>Sabit sınama dosyası (JSON), tohumdan üretim, canlı yığın (PostgreSQL ve Neo4j) ve testler için bellek içi depo; hepsi tek arayüz</td></tr>
-<tr><td>4</td><td>Metrikler deney izleme sunucusuna ve konsola (Observer)</td><td>Konsol tablosu ve JSON dosyası birer gözlemci; dış sunucu yerine dosya (bütçe ve bağımlılık kısıtı)</td></tr>
+<tr><td>4</td><td>Metrikler MLflow'a ve konsola (Observer)</td><td>Konsol tablosu, JSON dosyası ve MLflow birer gözlemci (<code>MlflowReporter</code>): her değerlendirme bir üst koşu, her tespitçi onun altında bir koşu; depo yerel SQLite, sunucu gerekmez (Şekil {{fig:mlflow}})</td></tr>
 <tr><td>5</td><td>Tek uç noktadan sunum (Facade)</td><td><code>Evaluation.run()</code> ve <code>python -m mesveret.evaluation config.yaml</code></td></tr>
 <tr><td>6</td><td>Her bileşen için birim testi (sahte depo)</td><td><code>tests/domain/test_evaluation.py</code>: metrikler (ders notundaki örnekle), senaryolar, depolar, öznitelikler, tespitçiler, gözlemciler ve Facade</td></tr>
 </tbody>
 </table>
+<figure data-fig="mlflow">
+<img src="gorseller/mlflow.png" alt="MLflow arayüzünde baskın tespiti deneyinin koşuları ve metrikleri">
+<figcaption><b>Şekil #.</b> MLflow'da <code>baskin-tespiti</code> deneyi: üst koşu (<code>degerlendirme</code>) ve her tespitçi için bir alt koşu. Sağda sınama kümesindeki duyarlılık, F2, kesinlik ve maliyet; merdiven tablosundaki sayıların aynısıdır (§{{ref:baskin}}). Yapılandırma üst koşuda parametre, taramalar ek dosya olarak durur. Görüntüden boş sütunlar (veri kümesi, kaynak, model) kırpıldı.</figcaption>
+</figure>
 </section>

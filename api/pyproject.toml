@@ -27,7 +27,11 @@ dependencies = [
 "mesveret-dev" = "mesveret.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.5"]
+dev = [
+    "mlflow>=3.17.2",
+    "pytest>=8",
+    "ruff>=0.5",
+]
 
 [build-system]
 requires = ["hatchling"]

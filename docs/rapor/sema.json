@@ -3247,6 +3247,23 @@
    ],
    "fields": []
   },
+  "mesveret.evaluation.observers.MlflowReporter": {
+   "name": "MlflowReporter",
+   "module": "mesveret.evaluation.observers",
+   "bases": [
+    "EvaluationObserver"
+   ],
+   "abstract": [],
+   "methods": [
+    "_flatten",
+    "on_start",
+    "_child",
+    "on_result",
+    "on_extra",
+    "on_finish"
+   ],
+   "fields": []
+  },
   "mesveret.evaluation.harness.Evaluation": {
    "name": "Evaluation",
    "module": "mesveret.evaluation.harness",

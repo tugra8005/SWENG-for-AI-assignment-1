@@ -13,6 +13,7 @@ Ek analizler (rapordaki tablolar için):
 
 from __future__ import annotations
 
+import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -189,4 +190,23 @@ def from_config(path: str | Path, *, quiet: bool = False) -> Evaluation:
     repo = JsonScenarioRepository(test_file, fallback=generated)
     observers: list[EvaluationObserver] = [] if quiet else [ConsoleReporter()]
     observers.append(JsonReporter(path.parent / config["cikti"]))
+    if (ml := config.get("mlflow")) and not quiet:
+        observers.extend(_mlflow_observer(path.parent, ml))
     return Evaluation(config, repo, observers)
+
+
+def _mlflow_observer(base: Path, ml: dict[str, Any]) -> list[EvaluationObserver]:
+    """``mlflow`` bölümündeki göreli yollar yapılandırma dosyasının klasörüne göredir. MLflow
+    kurulu değilse (API imajında olduğu gibi) uyarı yazılır, değerlendirme onsuz sürer."""
+    uri = ml.get("izleme", "sqlite:///mlflow.db")
+    if uri.startswith("sqlite:///") and not uri.startswith("sqlite:////"):
+        uri = "sqlite:///" + str((base / uri.removeprefix("sqlite:///")).resolve())
+    try:
+        from mesveret.evaluation.observers import MlflowReporter
+
+        return [MlflowReporter(uri, ml.get("deney", "baskin-tespiti"),
+                               artifact_dir=base / ml.get("ekler", "mlartifacts"))]
+    except ImportError:
+        print("MLflow kurulu değil; sonuçlar yalnızca konsola ve JSON dosyasına yazıldı "
+              "(kurmak için: uv sync --group dev).", file=sys.stderr)
+        return []

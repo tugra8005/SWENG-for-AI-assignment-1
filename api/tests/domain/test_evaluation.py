@@ -161,3 +161,53 @@ def test_evaluation_facade_notifies_observers_and_passes_costs(tmp_path):
     saved = json.loads((tmp_path / "out.json").read_text())
     assert {r["tespitci"] for r in saved["sonuclar"]} == {"hic_kimse", "kume", "karar_agaci"}
     assert evaluate(dict(ev.detectors())["kume"], [_quiet_scenario()]).fp == 0
+
+
+# --- MLflow gözlemcisi (dev grubunda kurulu; API imajında yok) ------------------------------------
+
+
+def test_mlflow_reporter_records_parent_and_detector_runs(tmp_path):
+    from mlflow.tracking import MlflowClient
+
+    from mesveret.evaluation.observers import MlflowReporter
+
+    uri = f"sqlite:///{tmp_path / 'mlflow.db'}"
+    ml = MlflowReporter(uri, "deneme", artifact_dir=tmp_path / "ekler")
+    repo = InMemoryScenarioRepository([_raid_scenario("e1"), _quiet_scenario("e2")],
+                                      [_raid_scenario("s1"), _quiet_scenario("s2")])
+    Evaluation(CONFIG, repo, [ml]).run()
+    client = MlflowClient(tracking_uri=uri)
+    runs = client.search_runs([ml.experiment_id])
+    parents = [r for r in runs if "mlflow.parentRunId" not in r.data.tags]
+    children = {r.data.tags["tespitci"]: r for r in runs if "mlflow.parentRunId" in r.data.tags}
+    assert len(parents) == 1 and set(children) == {"hic_kimse", "kume", "karar_agaci"}
+    parent = parents[0]
+    assert parent.data.params["maliyet.yanlis"] == "5"
+    assert all(r.data.tags["mlflow.parentRunId"] == parent.info.run_id for r in children.values())
+    assert children["kume"].data.metrics["sinama.duyarlilik"] == 1.0
+    assert children["hic_kimse"].data.metrics["sinama.maliyet"] == 5.0
+    assert "yeni.kesinlik" in children["kume"].data.metrics
+    assert {r.info.status for r in runs} == {"FINISHED"}
+    extras = {a.path for a in client.list_artifacts(parent.info.run_id, "ek")}
+    assert "ek/esik_taramasi.json" in extras
+
+
+def test_config_adds_mlflow_observer_relative_to_config_dir(tmp_path, monkeypatch):
+    import sys
+
+    from mesveret.evaluation.harness import from_config
+    from mesveret.evaluation.observers import MlflowReporter
+
+    cfg = tmp_path / "config.yaml"
+    cfg.write_text(json.dumps({**CONFIG, "veri": {**CONFIG["veri"], "sinama_dosyasi": "s.json"},
+                               "cikti": "out.json",
+                               "mlflow": {"izleme": "sqlite:///kayit/mlflow.db", "deney": "d"}}))
+    (tmp_path / "kayit").mkdir()
+    ev = from_config(cfg)
+    ml = [o for o in ev.observers if isinstance(o, MlflowReporter)]
+    assert len(ml) == 1 and (tmp_path / "kayit" / "mlflow.db").exists()
+    # MLflow kurulu değilse (API imajı) değerlendirme onsuz sürer.
+    monkeypatch.setitem(sys.modules, "mlflow.tracking", None)
+    ev = from_config(cfg)
+    assert not any(isinstance(o, MlflowReporter) for o in ev.observers)
+
