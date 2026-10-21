@@ -45,7 +45,7 @@
 
 <figure class="uml" data-fig="cd-isler">{{uml:cd_isler}}<figcaption><b>Şekil #.</b> Zamanlanmış işler (Command). <code>jobs.due</code> vadesi gelmiş işleri üç kaynaktan toplar; <code>scheduler</code> onları vade sırasıyla çalıştırır. Aynı kod hem arka plan iş parçacığında hem de geliştirme komutu <code>advance-time</code>'da kullanılır.</figcaption></figure>
 
-<figure class="uml" data-fig="cd-oylama">{{uml:cd_oylama_olaylar}}<figcaption><b>Şekil #.</b> Oylama biçimleri (Strategy) ve alan olayları (Observer). Kapanış önerisi onay oylamasıyla, ötekiler EVET/HAYIR ile sayılır. Yedi olay türü yayımlanır; dilekçe, takvim ve bildirim modülleri olaylara abone olur, böylece öneri motoru onları tanımaz.</figcaption></figure>
+<figure class="uml" data-fig="cd-oylama">{{uml:cd_oylama_olaylar}}<figcaption><b>Şekil #.</b> Oylama biçimleri (Strategy) ve alan olayları (Observer). Kapanış önerisi onay oylamasıyla, ötekiler EVET/HAYIR ile sayılır. Yedi olay türü yayımlanır; dilekçe, takvim ve bildirim modülleri olaylara abone olur; kabul kodu onları çağırmaz.</figcaption></figure>
 
 <figure class="uml" data-fig="cd-depolar">{{uml:cd_depolar}}<figcaption><b>Şekil #.</b> Depolar ve uyarlayıcılar. Kurallar ve servisler yalnızca protokolleri bilir. Bellek içi graf ve Neo4j aynı sözleşme testlerinden geçer; defter istemcisinin HTTP ve bellek içi iki uygulaması vardır. <code>Ctx</code> her isteğin bağlamıdır.</figcaption></figure>
 
@@ -68,7 +68,7 @@
 
 <figure class="uml" data-fig="sd-ifsa">{{uml:sd_ifsa}}<figcaption><b>Şekil #.</b> Mahzen başlığının ifşası. Seçmenler oylama açılırken dondurulur; oylar değiştirilebilir. EVET seçmenlerin yarısını aştığı an başlık donar ve bir KONU taslağı oluşur.</figcaption></figure>
 
-<figure class="uml" data-fig="com-sessiz">{{uml:com_sessiz}}<figcaption><b>Şekil #.</b> İletişim diyagramı: sessiz onayla kabul. İletiler iç içe numaralanır (1.1.2.1 = 1.1.2'nin içinde ilk ileti). Öneri motoru takvimi tanımaz; takvime yazılma <code>TopicAccepted</code> olayının sonucudur.</figcaption></figure>
+<figure class="uml" data-fig="com-sessiz">{{uml:com_sessiz}}<figcaption><b>Şekil #.</b> İletişim diyagramı: sessiz onayla kabul. İletiler iç içe numaralanır (1.1.2.1 = 1.1.2'nin içinde ilk ileti). Kabul kodu takvimi çağırmaz; takvime yazılma <code>TopicAccepted</code> olayının sonucudur.</figcaption></figure>
 
 <figure class="uml" data-fig="tm-hafta">{{uml:tm_hafta}}<figcaption><b>Şekil #.</b> Zamanlama diyagramı. A hızlı şeritte açılır, itirazla yavaş şeride düşer ve olgunlaşma süresi (geniş kapsam, 72 saat) o andan işler; Pazar'ki oturuma yetişir. B genel kapsamlıdır, 7 günlük olgunlaşması dolmadığı için bu oturuma alınmaz. C itirazsız 24 saatte kabul edilir. Pencere açıkken havale grafı kilitlidir.</figcaption></figure>
 </section>

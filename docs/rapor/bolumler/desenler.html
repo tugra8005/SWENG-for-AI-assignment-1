@@ -37,7 +37,7 @@
 <ul>
   <li><b>Strategy ve Registry</b> (Şekil {{fig:cd-oneri}}): yeni bir öneri türü yeni bir sınıf ve bir <code>@KINDS.register</code> satırıdır; motor ve diğer türler değişmez.</li>
   <li><b>State</b> (Şekil {{fig:cd-durum}}, {{fig:st-oneri}}): son durumlar hiçbir geçişi kabul etmez; ikinci kabul "Öneri zaten karara bağlandı" gerekçesiyle reddedilir.</li>
-  <li><b>Observer</b> (Şekil {{fig:cd-oylama}}): takvim eklenirken öneri motorunda tek satır değişmedi; yeni bir abone yazıldı.</li>
+  <li><b>Observer</b> (Şekil {{fig:cd-oylama}}): kabul edilen konunun takvime yazılması yeni bir abonedir; kabul kodu değişmedi. Etkinlik alanlarının denetimi ise konu türünün hazırlık adımındadır (<code>TopicKind</code> → <code>calendar.prepare_event</code>).</li>
   <li><b>Chain of Responsibility</b> (Şekil {{fig:cd-kurallar}}): her halka yalnızca kendi türlerini denetler (R1 alt konu, R7 silme, R8 yönetmelik, R9 konu) ve öneriyi bir sonrakine iletir; Hâtif oylamada aynı zinciri yeniden çalıştırır.</li>
 </ul>
 

@@ -1962,7 +1962,7 @@ _GANTT = [
     ("Sınıf gösterimi ve sunum", "f85662d c987a03 d8b12b7 8c9a1be"),
     ("Kararların sonuçları: görsel, dilekçe,\ntakvim, gazete; desenler",
      "b938fa3 3f11538 db36421 d7ce844 3045399 7a3f14e"),
-    ("Analiz: CRISP-DM, değerlendirme", "defcd45 d6de9b3"),
+    ("Analiz: CRISP-DM, değerlendirme", "defcd45 d6de9b3 37ec89c"),
     ("Tohum içeriği", "1cd2e44 ca373c2 0793f0e"),
     ("Belgeler ve rapor", "5a4aca8 9cfc694 3211203 7b5cb13 707f57c ba38840 22eb85b 8ce1dfa 047b2ae eaec08c "
                           "880d43f 0fe8121 cd5b0f1"),
