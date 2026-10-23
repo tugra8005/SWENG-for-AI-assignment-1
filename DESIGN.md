@@ -1,6 +1,7 @@
 # Meşveret — Tasarım Belgesi
 
 > Durum: uygulamayla güncellenmiş son sürüm. Kurulum ve demo adımları için [README.md](README.md).
+> Merkezsiz sürümün (NDN, Pico 2) tasarımı: [DESIGN-NDN.md](DESIGN-NDN.md).
 
 ## 1. Amaç ve temel iddia
 
